@@ -39,9 +39,22 @@ export function SiteFooter() {
           </ul>
         </nav>
 
-        <p className="font-mono text-[11px] tracking-[0.06em] text-dune-500">
-          REDISEÑO 2026 · CONCEPTO
-        </p>
+        <div className="text-left md:text-right">
+          <p className="font-mono text-[11px] tracking-[0.06em] text-dune-500">
+            REDISEÑO 2026 · CONCEPTO
+          </p>
+          <p className="mt-1 text-[12.5px] text-dune-300">
+            Desarrollado por{" "}
+            <a
+              href="https://technologyconsultants.ventures"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-gold transition-colors hover:text-sand-100 hover:underline"
+            >
+              Technology Consultants
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );
