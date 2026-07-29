@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/content/site";
 
+export const dynamic = "force-static";
+
 /** Public marketing routes only — the Tenant Hub is intentionally noindex. */
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
