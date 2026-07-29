@@ -1,0 +1,682 @@
+[
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/alma-verde.png",
+  "name": "Alma Verde",
+  "c2": "Lun - Sáb\nDomingo",
+  "c3": "7:00 - 22:00\n8:00 - 20:00",
+  "phone": "(686) 516 1505",
+  "zone": "Zona 7"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2025/06/WhatsApp-Image-2025-06-13-at-5.36.54-PM.jpeg",
+  "name": "ARA Transportes",
+  "c2": "Lun- Vie",
+  "c3": "08:00 - 18:00",
+  "phone": "(686) 517 4394",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_Amoreme-300x83.png",
+  "name": "AmoreMe",
+  "c2": "Lun - Sáb\nDomingo",
+  "c3": "11:00 - 21:00 12:00 - 20:00",
+  "phone": "(686) 488 7771",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/08/images.png",
+  "name": "Ardena",
+  "c2": "Lun - Sáb  Domingo",
+  "c3": "8:00 - 16:00  9:00 - 16:00",
+  "phone": "(686) 514 4587",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/ary-casa-de-novias-300x300.jpeg",
+  "name": "Ary Casa de Novias",
+  "c2": "Lun - Vier  Sábado",
+  "c3": "13:00 - 19:00  11:00 - 17:00",
+  "phone": "(686) 355 7534",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/la-gran-via-mapa-ashley-300x162.png",
+  "name": "Ashley",
+  "c2": "Mar - Dom",
+  "c3": "15:00- 22:00",
+  "phone": "(663) 153 7173",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/asian-wok-box.png",
+  "name": "Asian Wok Box",
+  "c2": "Lun - Dom",
+  "c3": "09:00 - 22:00",
+  "phone": "(686) 516 7272",
+  "zone": "Zona 4"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/08/1_LGV_Comercio_Logotipos_ATT-300x99.jpg",
+  "name": "AT&T",
+  "c2": "Lun - Vier\nSab - Dom",
+  "c3": "10:00 - 19:00\n10:00 - 18:00",
+  "phone": "(686) 405 4490\n(686) 117 3951",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2025/05/LOGO-HERMEZ-FOTO.jpeg",
+  "name": "Hermez Diseño y Construcción",
+  "c2": "Lun - Vier",
+  "c3": "8:00 - 15:00",
+  "phone": "(686) 552 30 02",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/axa-logo-300x169.png",
+  "name": "AXA",
+  "c2": "Lun - Vier",
+  "c3": "8:00 - 14:00",
+  "phone": "(686) 557 1010",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/baja-brunch-300x300.jpeg",
+  "name": "Baja Brunch",
+  "c2": "Lun - Vie  Sab Domingo",
+  "c3": "7:30 - 13:00  8:30 - 13:00  8:30 - 13:30",
+  "phone": "(686) 488 7592",
+  "zone": "Zona 3"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/banorte-logo-300x90.jpg",
+  "name": "Banorte",
+  "c2": "Lun - Vier",
+  "c3": "8:30- 16:00",
+  "phone": "(686) 564 1453",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/logo-banregio-1-300x91.jpg",
+  "name": "Banregio",
+  "c2": "Lun - Vier",
+  "c3": "9:00 - 16:00",
+  "phone": "(686) 514 3380",
+  "zone": "Zona 4"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/Be-a-lash-girl-300x149.jpg",
+  "name": "Be a Lash Girl",
+  "c2": "Lun - Vier\nSábado\nDomingo",
+  "c3": "8:00 - 20:00\n9:00 - 18:00\n10:00 - 17:00",
+  "phone": "(686) 516 6466 (686) 415 4060",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_Best-Optical-300x67.png",
+  "name": "Best Optical",
+  "c2": "Dom - Vier",
+  "c3": "10:00 - 18:00",
+  "phone": "(686) 514 3355",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/blue-luna-logo.png",
+  "name": "Blue Luna Café",
+  "c2": "Lun - Sáb\nDomingo",
+  "c3": "6:30 - 22:30\n8:00 - 21:00",
+  "phone": "(686) 104 3271",
+  "zone": "Zona 4"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/bodega-8.png",
+  "name": "Bodega 8",
+  "c2": "Lun - Mar\nMiér - Sáb\nDomingo",
+  "c3": "12:00 - 23:00\n12:00 - 00:00\n12:00 - 22:00",
+  "phone": "(686) 514 3445",
+  "zone": "Zona 7"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/bonaprime.jpg",
+  "name": "Bonaprime",
+  "c2": "Lun - Jue\nVier - Sáb\nDomingo",
+  "c3": "09:00 - 18:00\n09:00 - 19:00\n10:00 - 18:00",
+  "phone": "(686) 564 5069",
+  "zone": "Zona 4"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/buffalo-wild-wings-300x200.jpg",
+  "name": "Buffalo Wild Wings",
+  "c2": "Dom - Miér \nJue - Sáb",
+  "c3": "12:00 - 22:00\n12:00 - 23:00",
+  "phone": "(686) 514 3431",
+  "zone": "Zona 10"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_Cabanna-300x76.png",
+  "name": "Cabanna",
+  "c2": "Lun - Jue\nVier - Sáb\nDomingo",
+  "c3": "11:00 - 22:00\n11:00 - 23:00\n11:00 - 20:00",
+  "phone": "(686) 905 0203\n(686) 905 0318",
+  "zone": "Zona 4"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/choys-moda-infantil-300x192.jpeg",
+  "name": "Choys Moda Infantil",
+  "c2": "Lun - Sáb",
+  "c3": "11:00 - 18:00",
+  "phone": "(686) 188 4528",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/cinemex-premium-300x172.jpg",
+  "name": "Cinemex Premium",
+  "c2": "Lun - Dom",
+  "c3": "13:00 - 20:00",
+  "phone": "(800) 710 8888",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/12/dentyx-clinica-dental-300x300.jpg",
+  "name": "Dentyx Clínica Dental",
+  "c2": "Lun - Vie \nSáb",
+  "c3": "10:00 - 19:00\n9:00 - 14:00",
+  "phone": "(686) 203 3482",
+  "zone": "Zona 6 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2023/01/dermaclub-logo-300x74.png",
+  "name": "Derma Club Farmacia Dermatológica",
+  "c2": "Lun - Vie",
+  "c3": "11:00 - 19:00",
+  "phone": "(686) 517 8275",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/la-gran-via-mapa-devoralia-300x162.png",
+  "name": "Devoralia",
+  "c2": "Lun - Vie \nSáb - Dom",
+  "c3": "11:00 - 22:00\n12:00 - 22:00",
+  "phone": "(686) 565 0281",
+  "zone": "Zona 2"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/dra-claudia-machuca.png",
+  "name": "Dra. Claudia H. Machuca",
+  "c2": "Lun - Vie",
+  "c3": "10:00 - 16:00",
+  "phone": "(686) 116 1268",
+  "zone": "Zona 3"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_Etcetera-300x115.png",
+  "name": "Etcétera Accesorios",
+  "c2": "Lun - Dom",
+  "c3": "10:00 - 21:00",
+  "phone": "(686) 488 7768",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/fairfield-logo-300x150.jpg",
+  "name": "Fairfield Inn & Suites by Marriott",
+  "c2": "Lun - Dom",
+  "c3": "Siempre Abierto",
+  "phone": "(686) 200 0150",
+  "zone": "Zona 8"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/femgraphy-300x300.jpeg",
+  "name": "Femgraphy",
+  "c2": "Lun\nMar - Jue\nVier\nSab\nDom",
+  "c3": "08:00 - 20:00  \n08:00 - 19:00  \n10:00 - 18:00  \n13:00 - 17:00",
+  "phone": "(686) 213 5561",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_FlavorCup-300x79.png",
+  "name": "Flavor Cup",
+  "c2": "Lun - Dom",
+  "c3": "11:00 - 22:30",
+  "phone": "(686) 488 7758",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/Screenshot-2024-02-08-at-1.53.58 p.m-300x300.png",
+  "name": "French Place",
+  "c2": "Lun - Vier  Sábado  Domingo",
+  "c3": "12:00 - 22:00  13:00 - 22:00  14:00 - 20:00",
+  "phone": "(686) 187 1218⁩",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/grace-300x300.jpeg",
+  "name": "Grace Nails & Beauty",
+  "c2": "Lun - Sáb  Domingo",
+  "c3": "11:00 - 20:00  11:00 - 19:00",
+  "phone": "(686) 517 0850",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2025/05/WhatsApp-Image-2025-05-30-at-4.08.52-PM.jpeg",
+  "name": "SYMMETRY GYM Mexicali",
+  "c2": "Lun - Sáb  Domingo",
+  "c3": "05:00 - 23:00 07:00 - 16:00",
+  "phone": "(686) 517 9168",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/Holiday-Inn-Express-logo-300x170.jpg",
+  "name": "Holiday Inn Express",
+  "c2": "Lun - Dom",
+  "c3": "Siempre Abierto",
+  "phone": "(686) 841 8100",
+  "zone": "Zona 8"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/la-gran-via-mapa-holy-cow-300x162.png",
+  "name": "Holy Cow",
+  "c2": "Lun - Dom",
+  "c3": "12:00 - 24:00",
+  "phone": "(686) 104 1411",
+  "zone": "Zona 1"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/ihop_logo_detail-300x167.png",
+  "name": "IHOP",
+  "c2": "Lun - Dom",
+  "c3": "7:00 - 15:00",
+  "phone": "(686) 488 7778",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/ixchel-300x300.jpeg",
+  "name": "Ixchel",
+  "c2": "Lun - Sáb  Domingo",
+  "c3": "9:00 - 22:00  9:00 - 21:00",
+  "phone": "(686) 522 3513",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/12/karen-carrillo-logo-300x300.jpg",
+  "name": "Karen Carrillo",
+  "c2": "Lun - Vier",
+  "c3": "9:00 - 20:00",
+  "phone": "Tel (686) 517 4628\nWA (686) 945 1477",
+  "zone": "Zona 8"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/08/katana-262x300.webp",
+  "name": "Katana Manga Shop",
+  "c2": "Lun - Dom",
+  "c3": "11:00 - 20:00",
+  "phone": "(686) 459 5509",
+  "zone": "Zona 9 Interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/la-gran-via-mapa-kidsquad-300x162.png",
+  "name": "KidSquad",
+  "c2": "Mar - Vie\nSáb - Dom",
+  "c3": "14:00 - 21:00\n12:00 - 21:00",
+  "phone": "6865174628 WA: 6869451477",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/la-gran-via-mapa-koori-300x162.png",
+  "name": "Koori",
+  "c2": "Lun - Jue  Vie - Sab Domingo",
+  "c3": "13:30 - 22:00 13:30 - 23:30 13:30 - 20:30",
+  "phone": "(686) 160 5184",
+  "zone": "Zona 3"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/LGV_Comercio_Logotipos_laGrieguita-300x111.png",
+  "name": "La Grieguita",
+  "c2": "Lun - Vie\nSáb - Dom",
+  "c3": "11:00 - 22:00\n12:00 - 21:00",
+  "phone": "(686) 565 0860",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2017/11/ladybug-logo-transparente-300x126.png",
+  "name": "Lady Bug",
+  "c2": "Lun - Sáb",
+  "c3": "10:00 - 20:00",
+  "phone": "(686) 547 5934\n(686) 514 3393",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_Look-300x150.png",
+  "name": "Look Óptica",
+  "c2": "Lun - Sáb \nDomingo",
+  "c3": "11:00 - 20:00\n13:00 - 20:00",
+  "phone": "(686) 488 7764",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/luuna.png",
+  "name": "Luuna",
+  "c2": "Lun - Dom",
+  "c3": "10:30 - 21:00",
+  "phone": "686 598 5567",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/mae-300x300.jpeg",
+  "name": "Mae Boutique",
+  "c2": "Lun - Sáb",
+  "c3": "10:00 - 20:00",
+  "phone": "686 111 7468",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/la-gran-via-mapa-maraki-300x162.png",
+  "name": "Maraki Poke",
+  "c2": "Lun - Sáb \nDomingo",
+  "c3": "12:00 - 21:00\n13:00 - 21:00",
+  "phone": "(686) 514 3539",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/08/maja.svg",
+  "name": "Maja",
+  "c2": "Lun - Dom",
+  "c3": "10:00 - 20:00",
+  "phone": "(686) 517 2414",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/maktub-300x300.jpeg",
+  "name": "Maktub",
+  "c2": "Lun - Sáb",
+  "c3": "11:00 - 20:00",
+  "phone": "(686) 457 9941",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/masari.jpeg",
+  "name": "Masari Casa de Bolsa",
+  "c2": "Lun - Vier",
+  "c3": "8:00 - 17:00",
+  "phone": "(664) 748 0600",
+  "zone": "Zona 3 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/mi-corazon-hermoso-300x140.jpeg",
+  "name": "Mi Corazón Hermoso",
+  "c2": "Lun- Sáb",
+  "c3": "11:00 - 18:00",
+  "phone": "(686) 576 8634",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2023/01/mint-boutique-logo-300x300.png",
+  "name": "MINT Boutique",
+  "c2": "Lun- Sáb",
+  "c3": "9:30 - 20:30",
+  "phone": "No Disponible",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/12/minue-studio-300x300.jpg",
+  "name": "Minué Studio",
+  "c2": "Lun- Sáb",
+  "c3": "5:00 - 11:30\n15:30 - 21:30",
+  "phone": "(686) 841 1959",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/nice-factory-300x300.jpeg",
+  "name": "Nice Factory of Beauty",
+  "c2": "Lun - Sán",
+  "c3": "8:00 - 19:00",
+  "phone": "(686) 463 4872",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/12/novamoda-boutique-300x300.jpg",
+  "name": "NOVAMODA",
+  "c2": "Lun - Sáb \nDomingo",
+  "c3": "10:00 - 20:00\n10:00 - 18:00",
+  "phone": "(686) 426 1879",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/pagoda-cocina-china.jpg",
+  "name": "Pagoda Cocina China",
+  "c2": "Lunes \nMar-Dom",
+  "c3": "11:00 - 21:00\n11:00 - 22:00",
+  "phone": "(686) 516 3233",
+  "zone": "Zona 8"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/11/la-gran-via-palomas-thumbnail-300x300.jpg",
+  "name": "Paloma's Interiors",
+  "c2": "Lun - Vie\nSáb - Dom",
+  "c3": "10:00 - 19:00\n10:00 - 17:00",
+  "phone": "(686) 565 7507",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/pavi-italy-logo-300x143.jpg",
+  "name": "Pavi Italy",
+  "c2": "Lun - Sáb \nDomingo",
+  "c3": "11:00 - 20:00\n13:00 - 18:00",
+  "phone": "(686) 488 7765",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/perpetua-joyeros-logo.jpg",
+  "name": "Perpetua Joyeros",
+  "c2": "Lun - Vie\nSábado",
+  "c3": "10:00 - 20:00\n11:00 - 16:00",
+  "phone": "(686) 586 4426",
+  "zone": "Zona 2"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/petco-logo-300x200.png",
+  "name": "PETCO",
+  "c2": "Lun - Dom",
+  "c3": "8:00 -21:00",
+  "phone": "(686) 837 9147\n(686) 837 9148",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/08/pily-camacho-300x291.jpg",
+  "name": "Pily Camacho Salón Capilar",
+  "c2": "Lun - Vier  Dom",
+  "c3": "10:00 - 19:00  10:00 - 18:00",
+  "phone": "686 5855556",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/proaktiva-logo-300x84.png",
+  "name": "Proaktiva",
+  "c2": "Lun - Vier",
+  "c3": "08:00 - 18:00",
+  "phone": "(686) 234 6776\n(686) 553 4500",
+  "zone": "Zona 6 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/remax-logo-300x169.jpg",
+  "name": "REMAX SH Deluxe",
+  "c2": "Lun - Sáb \nDomingo",
+  "c3": "9:00 - 18:00\n10:00 - 17:00",
+  "phone": "(686) 488 7788",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/rocio-300x300.jpeg",
+  "name": "Rocio Beauty Treatment",
+  "c2": "Lun - Vie\nSábado",
+  "c3": "9:00 - 20:00  9:00 - 15:00",
+  "phone": "686 235 9955",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_Rose-300x80.png",
+  "name": "Rosé",
+  "c2": "Lun - Sáb \nDomingo",
+  "c3": "11:00 - 20:00\n14:00 - 20:00",
+  "phone": "(686) 488 7763",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/sabrosimo-300x87.jpeg",
+  "name": "Sabrosisimo",
+  "c2": "Lun - Dom",
+  "c3": "10:00 - 20:00",
+  "phone": "(686) 112 1869",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/santander-logo-300x57.png",
+  "name": "Santander",
+  "c2": "Lun - Vier",
+  "c3": "09:00 - 16:00",
+  "phone": "(686) 564 5914",
+  "zone": "Zona 4"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2022/12/shoeblime-icono-300x300.jpg",
+  "name": "Shoeblime",
+  "c2": "Lun - Sab\nDomingo",
+  "c3": "11:00 - 20:00\n11:00 - 19:00",
+  "phone": "(686) 569 4443",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/smilers-300x300.png",
+  "name": "Smilers",
+  "c2": "Lun - Vie\nSábado",
+  "c3": "09:00 - 19:00 09:00 - 18:00",
+  "phone": "(686) 111 8804",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/Subway-logo-300x144.jpg",
+  "name": "Subway",
+  "c2": "Lun - Dom",
+  "c3": "9:00 - 22:00",
+  "phone": "(686) 5145584",
+  "zone": "Zona 9 interior"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/symmetria-300x300.jpeg",
+  "name": "Symmetria Arquitectura",
+  "c2": "Lun - Vier",
+  "c3": "8:30 - 18:30",
+  "phone": "(686) 216 4534",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/LGV_Comercio_Logotipos_Tavola-300x92.png",
+  "name": "Távola Trattoría",
+  "c2": "Lun - Mié\nJue - Sáb\nDomingo",
+  "c3": "08:00 - 23:00\n08:00 - 00:00\n08:00 - 20:00",
+  "phone": "(686) 565 1016",
+  "zone": "Zona 2"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/telcel-logo-300x66.png",
+  "name": "Telcel",
+  "c2": "Lun - Vie\nSábado",
+  "c3": "9:00 - 19:00\n9:00 - 16:00",
+  "phone": "(686) 488 7761",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/the-cakery.jpeg",
+  "name": "The Cakery",
+  "c2": "Lunes  Mar - Sab Domingo",
+  "c3": "12:30 - 20:00  9:00 - 21:00 9:00 - 19:00",
+  "phone": "(686) 576 9553",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2016/06/1_LGV_Comercio_Logotipos_Thrifty-300x137.png",
+  "name": "Thrifty Ice Cream",
+  "c2": "Lun - Dom",
+  "c3": "11:00 - 20:00",
+  "phone": "(686) 488 7769",
+  "zone": "Zona 11"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/timeless-medcenter-300x66.png",
+  "name": "Timeless Medcenter",
+  "c2": "Lun - Vie Sábado",
+  "c3": "9:00 - 19:00\n10:00 - 14:00",
+  "phone": "(686) 248 9184",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/uniformes-cisne-logo-300x75.png",
+  "name": "Uniformes Cisne",
+  "c2": "Lun - Vie Sábado",
+  "c3": "10:00 - 19:00\n10:00 - 16:00",
+  "phone": "(686) 216 4783",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/09/urban-clean-logo.png",
+  "name": "Urban Clean",
+  "c2": "Lunes\nMar-Vier \nSábado",
+  "c3": "7:00 - 19:00\n9:00 - 19:00\n9:00 - 14:00",
+  "phone": "(686) 514 3372",
+  "zone": "Zona 9"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/271905418_4468507003260375_8110563410577824769_n-300x300.jpg",
+  "name": "Victor Rodiles",
+  "c2": "Lun - Vier  Sábado",
+  "c3": "8:00 - 17:00  9:00 - 13:00",
+  "phone": "(686) 329 0957",
+  "zone": "Zona 5"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/vinos-tras-lupita.png",
+  "name": "Vinos Tras Lupita",
+  "c2": "Lun - Mar\nMié - Sáb",
+  "c3": "11:00- 22:00\n11:00 - 22:45",
+  "phone": "(686) 516 2981",
+  "zone": "Zona 10"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/wendlant-300x300.jpeg",
+  "name": "Wendlandt Tasting Room",
+  "c2": "Mar - Mier  Jue - Sáb  Domingo",
+  "c3": "17:00 - 24:00  17:00 - 1:00  14:00 - 22:00",
+  "phone": "(646)1747060",
+  "zone": "Zona 6"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2021/10/wrap-n-roll.jpg",
+  "name": "Wrap & Roll",
+  "c2": "Lun - Vier\nSáb - Dom",
+  "c3": "9:00 - 23:00\n9:00 - 22:00",
+  "phone": "(686) 514 1857",
+  "zone": "Zona 3"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/zero-300x300.jpeg",
+  "name": "Zero Depilación",
+  "c2": "Lun - Vier  Sábado  Domingo",
+  "c3": "8:00 - 21:00  8:00 - 16:00  10:00 - 18:00",
+  "phone": "(686) 524 9956",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/zpinlab-300x300.png",
+  "name": "Zpin Lab",
+  "c2": "\"\"\"LunMarMierJue\nVier\nSab\nDom\"\"\"",
+  "c3": "6:30–9:15 AM, 5:30–9 PM 6:30–9:15 AM, 5:30–8 PM 6:30–9:15 AM, 5:30–9 PM\n6:30–9:15 AM, 5:30–8 PM 8–9:15 AM, 5:30–7 PM 9:30 AM–12 PM 9:30–11 AM",
+  "phone": "(686) 104 8793",
+  "zone": "Zona 9 segundo piso"
+ },
+ {
+  "logo": "https://lagranvia.com.mx/wp-content/uploads/2024/02/260-grados-300x300.jpeg",
+  "name": "260 Grill & Bar",
+  "c2": "\"Lun - Jue\nVier\nSab\nDom\"",
+  "c3": "14:00 - 00:00 13 :00 - 00:00 12:00 - 00:30 12:00 - 00:00",
+  "phone": "(686) 104 1924",
+  "zone": "Zona 10"
+ }
+]
