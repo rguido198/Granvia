@@ -10,6 +10,8 @@ import {
   accentBg,
 } from "@/components/ui";
 
+import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
+
 export const metadata: Metadata = {
   title: "Tenant Hub",
   description:
@@ -89,7 +91,10 @@ export default function TenantHubPage() {
             ))}
           </ul>
 
-          <p className="mt-8 text-center text-[13px] text-ink-400">
+          {/* ---------------- Landlord Asset Management Dashboard ---------------- */}
+          <LandlordDashboard />
+
+          <p className="mt-10 text-center text-[13px] text-ink-400">
             ¿Problemas para entrar? Escribe a{" "}
             <span dangerouslySetInnerHTML={{ __html: "<!--email_off-->" }} />
             <a href={`mailto:${SITE.emails.support}`}>{SITE.emails.support}</a>
