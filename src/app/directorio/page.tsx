@@ -15,6 +15,8 @@ import {
   cn,
 } from "@/components/ui";
 
+export const runtime = "edge";
+
 export const metadata: Metadata = {
   title: "Directorio",
   description: `Los ${TENANTS.length} locales de La Gran Vía: restaurantes, moda, bienestar, cine, hoteles y servicios en un solo lugar.`,
