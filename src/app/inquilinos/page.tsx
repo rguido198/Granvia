@@ -16,21 +16,21 @@ export const metadata: Metadata = {
 export default function TenantHubPage() {
   return (
     <PageFade>
-      <div className="min-h-[calc(100vh-74px)] bg-sand-200 py-10 sm:py-14">
-        <Container className="max-w-[1180px]!">
+      <div className="min-h-[calc(100vh-74px)] bg-sand-200 py-6 sm:py-14">
+        <Container className="max-w-[1180px]! px-3.5 sm:px-6">
           {/* Executive Operational Portal Header */}
-          <div className="mx-auto mb-8 max-w-[700px] text-center">
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-pine/30 bg-sand-100 px-4 py-1.5 font-mono text-[11px] font-semibold tracking-[0.08em] text-pine uppercase">
+          <div className="mx-auto mb-5 sm:mb-8 max-w-[700px] text-center">
+            <p className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-pine/30 bg-sand-100 px-3 py-1 font-mono text-[10px] sm:text-[11px] font-semibold tracking-[0.08em] text-pine uppercase">
               <span
                 aria-hidden="true"
-                className="inline-block h-2 w-2 rounded-full bg-pine animate-pulse"
+                className="inline-block h-1.5 w-1.5 rounded-full bg-pine animate-pulse"
               />
               inquilinos.lagranvia.com.mx
             </p>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl md:text-5xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-4xl md:text-5xl leading-tight">
               Control Operativo & Asset Management
             </h1>
-            <p className="mt-3 text-base text-ink-500">
+            <p className="mt-2 text-xs sm:text-base text-ink-500">
               Plataforma centralizada de administración para La Gran Vía. Monitoreo de indicadores comerciales, cobranza, afluencia y atención a solicitudes.
             </p>
           </div>
