@@ -44,7 +44,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 10",
     phone: "(686) 104 1924",
-    hours: [{"days": "Lun - Jue", "times": "14:00 - 00:00"}, {"days": "Vier", "times": "13:00 - 00:00"}, {"days": "Sab", "times": "12:00 - 00:30"}, {"days": "Dom", "times": "12:00 - 00:00"}],
+    hours: [{"days": "Lun - Jue", "times": "14:00 - 00:00"}, {"days": "Vie", "times": "13:00 - 00:00"}, {"days": "Sáb", "times": "12:00 - 00:30"}, {"days": "Dom", "times": "12:00 - 00:00"}],
   },
   {
     slug: "alma-verde",
@@ -88,7 +88,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 interior",
     phone: "(686) 355 7534",
-    hours: [{"days": "Lun - Vier", "times": "13:00 - 19:00"}, {"days": "Sáb", "times": "11:00 - 17:00"}],
+    hours: [{"days": "Lun - Vie", "times": "13:00 - 19:00"}, {"days": "Sáb", "times": "11:00 - 17:00"}],
   },
   {
     slug: "ashley",
@@ -121,7 +121,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 5",
     phone: "(686) 405 4490 · (686) 117 3951",
-    hours: [{"days": "Lun - Vier", "times": "10:00 - 19:00"}, {"days": "Sab - Dom", "times": "10:00 - 18:00"}],
+    hours: [{"days": "Lun - Vie", "times": "10:00 - 19:00"}, {"days": "Sáb - Dom", "times": "10:00 - 18:00"}],
   },
   {
     slug: "axa",
@@ -132,7 +132,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 6",
     phone: "(686) 557 1010",
-    hours: [{"days": "Lun - Vier", "times": "8:00 - 14:00"}],
+    hours: [{"days": "Lun - Vie", "times": "8:00 - 14:00"}],
   },
   {
     slug: "baja-brunch",
@@ -143,7 +143,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 3",
     phone: "(686) 488 7592",
-    hours: [{"days": "Lun - Vie", "times": "7:30 - 13:00"}, {"days": "Sab", "times": "8:30 - 13:00"}, {"days": "Domingo", "times": "8:30 - 13:30"}],
+    hours: [{"days": "Lun - Vie", "times": "7:30 - 13:00"}, {"days": "Sáb", "times": "8:30 - 13:00"}, {"days": "Domingo", "times": "8:30 - 13:30"}],
   },
   {
     slug: "banorte",
@@ -154,7 +154,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 6",
     phone: "(686) 564 1453",
-    hours: [{"days": "Lun - Vier", "times": "8:30 - 16:00"}],
+    hours: [{"days": "Lun - Vie", "times": "8:30 - 16:00"}],
   },
   {
     slug: "banregio",
@@ -165,7 +165,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 4",
     phone: "(686) 514 3380",
-    hours: [{"days": "Lun - Vier", "times": "9:00 - 16:00"}],
+    hours: [{"days": "Lun - Vie", "times": "9:00 - 16:00"}],
   },
   {
     slug: "be-a-lash-girl",
@@ -176,7 +176,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 segundo piso",
     phone: "(686) 516 6466 (686) 415 4060",
-    hours: [{"days": "Lun - Vier", "times": "8:00 - 20:00"}, {"days": "Sábado", "times": "9:00 - 18:00"}, {"days": "Domingo", "times": "10:00 - 17:00"}],
+    hours: [{"days": "Lun - Vie", "times": "8:00 - 20:00"}, {"days": "Sábado", "times": "9:00 - 18:00"}, {"days": "Domingo", "times": "10:00 - 17:00"}],
   },
   {
     slug: "best-optical",
@@ -187,7 +187,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9",
     phone: "(686) 514 3355",
-    hours: [{"days": "Dom - Vier", "times": "10:00 - 18:00"}],
+    hours: [{"days": "Dom - Vie", "times": "10:00 - 18:00"}],
   },
   {
     slug: "blue-luna-cafe",
@@ -209,7 +209,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 7",
     phone: "(686) 514 3445",
-    hours: [{"days": "Lun - Mar", "times": "12:00 - 23:00"}, {"days": "Miér - Sáb", "times": "12:00 - 00:00"}, {"days": "Domingo", "times": "12:00 - 22:00"}],
+    hours: [{"days": "Lun - Mar", "times": "12:00 - 23:00"}, {"days": "Mié - Sáb", "times": "12:00 - 00:00"}, {"days": "Domingo", "times": "12:00 - 22:00"}],
   },
   {
     slug: "bonaprime",
@@ -220,7 +220,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 4",
     phone: "(686) 564 5069",
-    hours: [{"days": "Lun - Jue", "times": "09:00 - 18:00"}, {"days": "Vier - Sáb", "times": "09:00 - 19:00"}, {"days": "Domingo", "times": "10:00 - 18:00"}],
+    hours: [{"days": "Lun - Jue", "times": "09:00 - 18:00"}, {"days": "Vie - Sáb", "times": "09:00 - 19:00"}, {"days": "Domingo", "times": "10:00 - 18:00"}],
   },
   {
     slug: "buffalo-wild-wings",
@@ -231,7 +231,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 10",
     phone: "(686) 514 3431",
-    hours: [{"days": "Dom - Miér", "times": "12:00 - 22:00"}, {"days": "Jue - Sáb", "times": "12:00 - 23:00"}],
+    hours: [{"days": "Dom - Mié", "times": "12:00 - 22:00"}, {"days": "Jue - Sáb", "times": "12:00 - 23:00"}],
   },
   {
     slug: "cabanna",
@@ -242,7 +242,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 4",
     phone: "(686) 905 0203 · (686) 905 0318",
-    hours: [{"days": "Lun - Jue", "times": "11:00 - 22:00"}, {"days": "Vier - Sáb", "times": "11:00 - 23:00"}, {"days": "Domingo", "times": "11:00 - 20:00"}],
+    hours: [{"days": "Lun - Jue", "times": "11:00 - 22:00"}, {"days": "Vie - Sáb", "times": "11:00 - 23:00"}, {"days": "Domingo", "times": "11:00 - 20:00"}],
   },
   {
     slug: "choys-moda-infantil",
@@ -341,7 +341,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 interior",
     phone: "(686) 213 5561",
-    hours: [{"days": "Lun Mar - Jue Vier Sab Dom", "times": "08:00 - 20:00 08:00 - 19:00 10:00 - 18:00 13:00 - 17:00"}],
+    hours: [{"days": "Lun Mar - Jue Vie Sáb Dom", "times": "08:00 - 20:00 08:00 - 19:00 10:00 - 18:00 13:00 - 17:00"}],
     hoursNeedsReview: true,
   },
   {
@@ -364,7 +364,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9",
     phone: "(686) 187 1218⁩",
-    hours: [{"days": "Lun - Vier", "times": "12:00 - 22:00"}, {"days": "Sáb", "times": "13:00 - 22:00"}, {"days": "Domingo", "times": "14:00 - 20:00"}],
+    hours: [{"days": "Lun - Vie", "times": "12:00 - 22:00"}, {"days": "Sáb", "times": "13:00 - 22:00"}, {"days": "Domingo", "times": "14:00 - 20:00"}],
   },
   {
     slug: "grace-nails-beauty",
@@ -386,7 +386,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 segundo piso",
     phone: "(686) 552 30 02",
-    hours: [{"days": "Lun - Vier", "times": "8:00 - 15:00"}],
+    hours: [{"days": "Lun - Vie", "times": "8:00 - 15:00"}],
   },
   {
     slug: "holiday-inn-express",
@@ -441,7 +441,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 8",
     phone: "Tel (686) 517 4628 · WA (686) 945 1477",
-    hours: [{"days": "Lun - Vier", "times": "9:00 - 20:00"}],
+    hours: [{"days": "Lun - Vie", "times": "9:00 - 20:00"}],
   },
   {
     slug: "katana-manga-shop",
@@ -450,7 +450,7 @@ export const TENANTS: Tenant[] = [
     tag: "Manga & coleccionables",
     logo: "/tenants/katana-manga-shop.webp",
     logoOnDark: false,
-    zone: "Zona 9 Interior",
+    zone: "Zona 9 interior",
     phone: "(686) 459 5509",
     hours: [{"days": "Lun - Dom", "times": "11:00 - 20:00"}],
   },
@@ -474,7 +474,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 3",
     phone: "(686) 160 5184",
-    hours: [{"days": "Lun - Jue", "times": "13:30 - 22:00"}, {"days": "Vie - Sab", "times": "13:30 - 23:30"}, {"days": "Domingo", "times": "13:30 - 20:30"}],
+    hours: [{"days": "Lun - Jue", "times": "13:30 - 22:00"}, {"days": "Vie - Sáb", "times": "13:30 - 23:30"}, {"days": "Domingo", "times": "13:30 - 20:30"}],
   },
   {
     slug: "la-grieguita",
@@ -573,7 +573,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 3 segundo piso",
     phone: "(664) 748 0600",
-    hours: [{"days": "Lun - Vier", "times": "8:00 - 17:00"}],
+    hours: [{"days": "Lun - Vie", "times": "8:00 - 17:00"}],
   },
   {
     slug: "mi-corazon-hermoso",
@@ -618,7 +618,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 segundo piso",
     phone: "(686) 463 4872",
-    hours: [{"days": "Lun - Sán", "times": "8:00 - 19:00"}],
+    hours: [{"days": "Lun - Sáb", "times": "8:00 - 19:00"}],
   },
   {
     slug: "novamoda",
@@ -695,7 +695,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9",
     phone: "686 5855556",
-    hours: [{"days": "Lun - Vier", "times": "10:00 - 19:00"}, {"days": "Dom", "times": "10:00 - 18:00"}],
+    hours: [{"days": "Lun - Vie", "times": "10:00 - 19:00"}, {"days": "Dom", "times": "10:00 - 18:00"}],
   },
   {
     slug: "proaktiva",
@@ -706,7 +706,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 6 segundo piso",
     phone: "(686) 234 6776 · (686) 553 4500",
-    hours: [{"days": "Lun - Vier", "times": "08:00 - 18:00"}],
+    hours: [{"days": "Lun - Vie", "times": "08:00 - 18:00"}],
   },
   {
     slug: "remax-sh-deluxe",
@@ -761,7 +761,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 4",
     phone: "(686) 564 5914",
-    hours: [{"days": "Lun - Vier", "times": "09:00 - 16:00"}],
+    hours: [{"days": "Lun - Vie", "times": "09:00 - 16:00"}],
   },
   {
     slug: "shoeblime",
@@ -772,7 +772,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 interior",
     phone: "(686) 569 4443",
-    hours: [{"days": "Lun - Sab", "times": "11:00 - 20:00"}, {"days": "Domingo", "times": "11:00 - 19:00"}],
+    hours: [{"days": "Lun - Sáb", "times": "11:00 - 20:00"}, {"days": "Domingo", "times": "11:00 - 19:00"}],
   },
   {
     slug: "smilers",
@@ -805,7 +805,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 6",
     phone: "(686) 216 4534",
-    hours: [{"days": "Lun - Vier", "times": "8:30 - 18:30"}],
+    hours: [{"days": "Lun - Vie", "times": "8:30 - 18:30"}],
   },
   {
     slug: "symmetry-gym-mexicali",
@@ -838,7 +838,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9",
     phone: "(686) 576 9553",
-    hours: [{"days": "Lun", "times": "12:30 - 20:00"}, {"days": "Mar - Sab", "times": "9:00 - 21:00"}, {"days": "Domingo", "times": "9:00 - 19:00"}],
+    hours: [{"days": "Lun", "times": "12:30 - 20:00"}, {"days": "Mar - Sáb", "times": "9:00 - 21:00"}, {"days": "Domingo", "times": "9:00 - 19:00"}],
   },
   {
     slug: "thrifty-ice-cream",
@@ -893,7 +893,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9",
     phone: "(686) 514 3372",
-    hours: [{"days": "Lunes", "times": "7:00 - 19:00"}, {"days": "Mar - Vier", "times": "9:00 - 19:00"}, {"days": "Sábado", "times": "9:00 - 14:00"}],
+    hours: [{"days": "Lunes", "times": "7:00 - 19:00"}, {"days": "Mar - Vie", "times": "9:00 - 19:00"}, {"days": "Sábado", "times": "9:00 - 14:00"}],
   },
   {
     slug: "victor-rodiles",
@@ -904,7 +904,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 5",
     phone: "(686) 329 0957",
-    hours: [{"days": "Lun - Vier", "times": "8:00 - 17:00"}, {"days": "Sáb", "times": "9:00 - 13:00"}],
+    hours: [{"days": "Lun - Vie", "times": "8:00 - 17:00"}, {"days": "Sáb", "times": "9:00 - 13:00"}],
   },
   {
     slug: "vinos-tras-lupita",
@@ -926,7 +926,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 6",
     phone: "(646)1747060",
-    hours: [{"days": "Mar - Mier", "times": "17:00 - 24:00"}, {"days": "Jue - Sáb", "times": "17:00 - 1:00"}, {"days": "Domingo", "times": "14:00 - 22:00"}],
+    hours: [{"days": "Mar - Mié", "times": "17:00 - 24:00"}, {"days": "Jue - Sáb", "times": "17:00 - 1:00"}, {"days": "Domingo", "times": "14:00 - 22:00"}],
   },
   {
     slug: "wrap-roll",
@@ -937,7 +937,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 3",
     phone: "(686) 514 1857",
-    hours: [{"days": "Lun - Vier", "times": "9:00 - 23:00"}, {"days": "Sáb - Dom", "times": "9:00 - 22:00"}],
+    hours: [{"days": "Lun - Vie", "times": "9:00 - 23:00"}, {"days": "Sáb - Dom", "times": "9:00 - 22:00"}],
   },
   {
     slug: "zero-depilacion",
@@ -948,7 +948,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 segundo piso",
     phone: "(686) 524 9956",
-    hours: [{"days": "Lun - Vier", "times": "8:00 - 21:00"}, {"days": "Sáb", "times": "8:00 - 16:00"}, {"days": "Domingo", "times": "10:00 - 18:00"}],
+    hours: [{"days": "Lun - Vie", "times": "8:00 - 21:00"}, {"days": "Sáb", "times": "8:00 - 16:00"}, {"days": "Domingo", "times": "10:00 - 18:00"}],
   },
   {
     slug: "zpin-lab",
@@ -959,7 +959,7 @@ export const TENANTS: Tenant[] = [
     logoOnDark: false,
     zone: "Zona 9 segundo piso",
     phone: "(686) 104 8793",
-    hours: [{"days": "Lun, Mar, Mier, Jue Vier Sab Dom", "times": "6:30 - 9:15 AM, 5:30 - 9 PM 6:30 - 9:15 AM, 5:30 - 8 PM 6:30 - 9:15 AM, 5:30 - 9 PM 6:30 - 9:15 AM, 5:30 - 8 PM 8 - 9:15 AM, 5:30 - 7 PM 9:30 AM - 12 PM 9:30 - 11 AM"}],
+    hours: [{"days": "Lun, Mar, Mié, Jue Vie Sáb Dom", "times": "6:30 - 9:15 AM, 5:30 - 9 PM 6:30 - 9:15 AM, 5:30 - 8 PM 6:30 - 9:15 AM, 5:30 - 9 PM 6:30 - 9:15 AM, 5:30 - 8 PM 8 - 9:15 AM, 5:30 - 7 PM 9:30 AM - 12 PM 9:30 - 11 AM"}],
     hoursNeedsReview: true,
   },
 ];

@@ -174,7 +174,7 @@ export function LandlordDashboard() {
             )}
           >
             <p className="font-mono text-[9px] sm:text-[10.5px] tracking-[0.08em] text-ink-400 uppercase">
-              Mesa Ayuda
+              Mesa de Ayuda
             </p>
             <div className="mt-1 sm:mt-2 flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
               <span className="font-display text-xl sm:text-3xl font-bold text-ink">4</span>

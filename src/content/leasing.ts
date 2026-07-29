@@ -31,8 +31,8 @@ export type LeaseOption = {
 
 export const LEASE_OPTIONS: LeaseOption[] = [
   { key: "popup", label: "Pop-Up · 1 a 3 meses", branch: "guide" },
-  { key: "short", label: "Corto · 4 a 6 meses", branch: "call" },
-  { key: "mid", label: "Media · 6 a 12 meses", branch: "call" },
+  { key: "short", label: "Corto plazo · 4 a 6 meses", branch: "call" },
+  { key: "mid", label: "Mediano plazo · 6 a 12 meses", branch: "call" },
   { key: "long", label: "Largo plazo · 12+ meses", branch: "call" },
 ];
 

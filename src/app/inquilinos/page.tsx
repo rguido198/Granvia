@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Control Operativo & Asset Management",
   description:
-    "Console de administración y control operativo para propietarios y arrendatarios de La Gran Vía Mexicali.",
+    "Consola de administración y control operativo para propietarios y arrendatarios de La Gran Vía Mexicali.",
   robots: { index: false, follow: false },
 };
 
