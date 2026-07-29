@@ -144,9 +144,11 @@ export default function EventsPage() {
                   <span className="font-mono text-[10.5px] tracking-[0.08em]">
                     EMAIL · CONFIRMACIÓN DE REGISTRO
                   </span>
+                  <span dangerouslySetInnerHTML={{ __html: "<!--email_off-->" }} />
                   <span className="font-mono text-[10.5px] text-gold">
                     {SITE.emails.race}
                   </span>
+                  <span dangerouslySetInnerHTML={{ __html: "<!--/email_off-->" }} />
                 </div>
                 <div className="p-4.5">
                   <p className="mb-2 font-display text-xl font-semibold">

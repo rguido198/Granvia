@@ -27,12 +27,14 @@ export function SiteFooter() {
               </li>
             ))}
             <li>
+              <span dangerouslySetInnerHTML={{ __html: "<!--email_off-->" }} />
               <a
                 href={`mailto:${SITE.emails.support}`}
                 className="text-dune-300 transition-colors hover:text-sand-100"
               >
                 Soporte
               </a>
+              <span dangerouslySetInnerHTML={{ __html: "<!--/email_off-->" }} />
             </li>
           </ul>
         </nav>

@@ -81,9 +81,11 @@ export function LeasingExperience() {
             </p>
             <p className="mt-3 text-xs text-ink-400">
               ¿No llega en unos minutos? Escríbenos a{" "}
+              <span dangerouslySetInnerHTML={{ __html: "<!--email_off-->" }} />
               <a href={`mailto:${SITE.emails.leasing}`}>
                 {SITE.emails.leasing}
               </a>
+              <span dangerouslySetInnerHTML={{ __html: "<!--/email_off-->" }} />
               .
             </p>
           </div>
