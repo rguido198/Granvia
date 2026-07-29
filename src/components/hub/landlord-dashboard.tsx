@@ -101,7 +101,14 @@ export function LandlordDashboard() {
 
         {/* Executive KPI Bar */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border border-hairline bg-sand-50 p-4.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab("ocupacion")}
+            className={cn(
+              "cursor-pointer text-left rounded-lg border bg-sand-50 p-4.5 transition-all hover:bg-sand-100 hover:shadow-sm",
+              activeTab === "ocupacion" ? "border-terra/40 ring-1 ring-terra/30" : "border-hairline"
+            )}
+          >
             <p className="font-mono text-[10.5px] tracking-[0.1em] text-ink-400 uppercase">
               Tasa de Ocupación
             </p>
@@ -112,9 +119,16 @@ export function LandlordDashboard() {
             <p className="mt-1.5 text-[12px] text-ink-500">
               79 Locales · 3 Pop-Ups · 2 Vacantes
             </p>
-          </div>
+          </button>
 
-          <div className="rounded-lg border border-hairline bg-sand-50 p-4.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab("ocupacion")}
+            className={cn(
+              "cursor-pointer text-left rounded-lg border bg-sand-50 p-4.5 transition-all hover:bg-sand-100 hover:shadow-sm",
+              activeTab === "ocupacion" ? "border-terra/40 ring-1 ring-terra/30" : "border-hairline"
+            )}
+          >
             <p className="font-mono text-[10.5px] tracking-[0.1em] text-ink-400 uppercase">
               Afluencia Mensual
             </p>
@@ -125,9 +139,16 @@ export function LandlordDashboard() {
             <p className="mt-1.5 text-[12px] text-ink-500">
               Pico: Viernes a Domingo 6-11 PM
             </p>
-          </div>
+          </button>
 
-          <div className="rounded-lg border border-hairline bg-sand-50 p-4.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab("financiero")}
+            className={cn(
+              "cursor-pointer text-left rounded-lg border bg-sand-50 p-4.5 transition-all hover:bg-sand-100 hover:shadow-sm",
+              activeTab === "financiero" ? "border-terra/40 ring-1 ring-terra/30" : "border-hairline"
+            )}
+          >
             <p className="font-mono text-[10.5px] tracking-[0.1em] text-ink-400 uppercase">
               Cobranza Renta & CAM
             </p>
@@ -138,9 +159,16 @@ export function LandlordDashboard() {
             <p className="mt-1.5 text-[12px] text-ink-500">
               $2.45M MXN recaudados en fecha
             </p>
-          </div>
+          </button>
 
-          <div className="rounded-lg border border-hairline bg-sand-50 p-4.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab("operaciones")}
+            className={cn(
+              "cursor-pointer text-left rounded-lg border bg-sand-50 p-4.5 transition-all hover:bg-sand-100 hover:shadow-sm",
+              activeTab === "operaciones" ? "border-terra/40 ring-1 ring-terra/30" : "border-hairline"
+            )}
+          >
             <p className="font-mono text-[10.5px] tracking-[0.1em] text-ink-400 uppercase">
               Mesa de Ayuda
             </p>
@@ -151,49 +179,60 @@ export function LandlordDashboard() {
             <p className="mt-1.5 text-[12px] text-ink-500">
               2 HVAC · 1 Limpieza · 1 Estacionamiento
             </p>
-          </div>
+          </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-6 border-b border-hairline">
-          <nav className="flex gap-6 overflow-x-auto" aria-label="Secciones del panel">
+        {/* Tab Navigation (Segmented Control Pill Bar) */}
+        <div className="mb-6 rounded-lg border border-hairline bg-sand-200 p-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5" role="tablist">
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "ocupacion"}
               onClick={() => setActiveTab("ocupacion")}
               className={cn(
-                "cursor-pointer border-b-2 pb-3 text-sm font-semibold whitespace-nowrap transition-colors",
+                "cursor-pointer flex items-center justify-center gap-2 rounded-md py-2.5 px-4 text-xs font-bold transition-all duration-200",
                 activeTab === "ocupacion"
-                  ? "border-terra text-terra"
-                  : "border-transparent text-ink-500 hover:text-ink"
+                  ? "bg-sand-100 text-terra shadow-sm"
+                  : "text-ink-600 hover:text-ink hover:bg-sand-100/50"
               )}
             >
-              📊 Ocupación & Tenant Mix
+              <span className="text-sm">📊</span>
+              <span>Ocupación & Tenant Mix</span>
             </button>
+
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "financiero"}
               onClick={() => setActiveTab("financiero")}
               className={cn(
-                "cursor-pointer border-b-2 pb-3 text-sm font-semibold whitespace-nowrap transition-colors",
+                "cursor-pointer flex items-center justify-center gap-2 rounded-md py-2.5 px-4 text-xs font-bold transition-all duration-200",
                 activeTab === "financiero"
-                  ? "border-terra text-terra"
-                  : "border-transparent text-ink-500 hover:text-ink"
+                  ? "bg-sand-100 text-terra shadow-sm"
+                  : "text-ink-600 hover:text-ink hover:bg-sand-100/50"
               )}
             >
-              💰 Rendimiento Financiero & Ventas
+              <span className="text-sm">💰</span>
+              <span>Rendimiento Financiero & Ventas</span>
             </button>
+
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "operaciones"}
               onClick={() => setActiveTab("operaciones")}
               className={cn(
-                "cursor-pointer border-b-2 pb-3 text-sm font-semibold whitespace-nowrap transition-colors",
+                "cursor-pointer flex items-center justify-center gap-2 rounded-md py-2.5 px-4 text-xs font-bold transition-all duration-200",
                 activeTab === "operaciones"
-                  ? "border-terra text-terra"
-                  : "border-transparent text-ink-500 hover:text-ink"
+                  ? "bg-sand-100 text-terra shadow-sm"
+                  : "text-ink-600 hover:text-ink hover:bg-sand-100/50"
               )}
             >
-              🛠️ Mesa de Ayuda & Mantenimiento
+              <span className="text-sm">🛠️</span>
+              <span>Mesa de Ayuda & Mantenimiento</span>
             </button>
-          </nav>
+          </div>
         </div>
 
         {/* Tab 1: Ocupación & Mix */}
