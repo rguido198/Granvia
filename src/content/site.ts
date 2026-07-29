@@ -13,7 +13,7 @@ export const SITE = {
   url: "https://lagranvia.com.mx",
   tenantHubUrl: "https://inquilinos.lagranvia.com.mx",
   description:
-    "Hoteles, mesa, moda, bienestar y cultura conviven en un mismo lugar. Arma tu plan y descubre por qué Mexicali se reúne en La Gran Vía.",
+    "Hoteles, gastronomía, moda, bienestar y cultura conviven en un mismo lugar. Arma tu plan y descubre por qué Mexicali se reúne en La Gran Vía.",
   /** Conteo real: se deriva de TENANTS.length; ver src/content/tenants.ts. */
   emails: {
     leasing: "leasing@lagranvia.com.mx",

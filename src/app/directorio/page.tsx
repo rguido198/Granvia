@@ -44,8 +44,8 @@ export default async function DirectoryPage({
             Todo lo que vive en la plaza.
           </SectionTitle>
           <p className="max-w-[560px] text-[17px] text-ink-500">
-            Mesa, moda, bienestar, cultura y servicios. Filtra por lo que buscas
-            hoy — o recórrelo completo.
+            Gastronomía, moda, bienestar, cultura y servicios. Filtra por lo
+            que buscas hoy — o recórrelo completo.
           </p>
         </Container>
       </section>

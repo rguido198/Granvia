@@ -118,7 +118,7 @@ export const HERO = {
   kicker: `PLAZA LIFESTYLE · ${TENANTS.length} EXPERIENCIAS`,
   titleLead: "Vive un gran día,",
   titleEm: "cada día.",
-  body: "Hoteles, mesa, moda, bienestar y cultura conviven en un mismo lugar. Arma tu plan y descubre por qué Mexicali se reúne aquí.",
+  body: "Hoteles, gastronomía, moda, bienestar y cultura conviven en un mismo lugar. Arma tu plan y descubre por qué Mexicali se reúne aquí.",
   imageLabel: "La plaza al atardecer, golden hour",
   image: "/photos/hero-gran-via.jpg" as string | null,
 } as const;
