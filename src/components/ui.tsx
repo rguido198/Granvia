@@ -217,7 +217,7 @@ export function Container({
   );
 }
 
-/** Wraps page content so every route gets the comp's fade-up entrance. */
+/** Wraps page content cleanly across routes. */
 export function PageFade({ children }: { children: ReactNode }) {
-  return <div className="animate-fade-up">{children}</div>;
+  return <div className="w-full">{children}</div>;
 }
