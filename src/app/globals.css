@@ -41,9 +41,9 @@
   --color-hairline-strong: rgb(33 31 28 / 0.22);
 
   /* Type */
-  --font-display: "Cormorant Garamond", var(--font-cormorant), ui-serif, Georgia, serif;
-  --font-sans: "Work Sans", var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Work Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
 
   /* The comp's radii are deliberately tight — 2px to 5px, never pill-soft */
   --radius-xs: 2px;
@@ -64,6 +64,18 @@
       transform: translateY(0);
     }
   }
+}
+
+@utility font-display {
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+@utility font-sans {
+  font-family: "Work Sans", system-ui, sans-serif;
+}
+
+@utility font-mono {
+  font-family: "IBM Plex Mono", monospace;
 }
 
 @layer base {
