@@ -6,7 +6,8 @@ import { useState } from "react";
 import { NAV, HUB_NAV, SITE } from "@/content/site";
 import { cn } from "@/components/ui";
 
-function isActive(pathname: string, href: string) {
+function isActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 

@@ -73,34 +73,23 @@ function curated(): InstagramResult {
  * revalidamos cada hora en lugar de cachear indefinidamente.
  */
 export async function getInstagramPosts(): Promise<InstagramResult> {
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-  if (!token) return curated();
-
-  // Sobrescribible para pruebas locales y staging; en producción se omite.
-  const base = process.env.INSTAGRAM_API_BASE ?? "https://graph.instagram.com";
-  const url = new URL("/me/media", base);
-  url.searchParams.set("fields", FIELDS);
-  url.searchParams.set("limit", String(INSTAGRAM.limit));
-  url.searchParams.set("access_token", token);
-
   try {
-    const res = await fetch(url, {
-      next: { revalidate: 3600, tags: ["instagram"] },
-    });
+    const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+    if (!token) return curated();
 
-    if (!res.ok) {
-      // El cuerpo del error trae el token — nunca lo registres completo.
-      console.error(
-        `[instagram] la API respondió ${res.status} ${res.statusText}`,
-      );
-      return curated();
-    }
+    const base = process.env.INSTAGRAM_API_BASE ?? "https://graph.instagram.com";
+    const url = new URL("/me/media", base);
+    url.searchParams.set("fields", FIELDS);
+    url.searchParams.set("limit", String(INSTAGRAM.limit));
+    url.searchParams.set("access_token", token);
+
+    const res = await fetch(url.toString());
+    if (!res.ok) return curated();
 
     const json = (await res.json()) as { data?: GraphMedia[] };
     const posts = (json.data ?? [])
       .map((m): InstagramPost | null => {
         const isVideo = m.media_type === "VIDEO";
-        // Los videos solo tienen thumbnail_url; los álbumes usan la portada.
         const image = isVideo ? m.thumbnail_url : m.media_url;
         if (!image) return null;
         return {
@@ -116,7 +105,7 @@ export async function getInstagramPosts(): Promise<InstagramResult> {
 
     return posts.length > 0 ? { posts, source: "api" } : curated();
   } catch (error) {
-    console.error("[instagram] no se pudo obtener el feed", error);
+    console.error("[instagram] Error fetching feed:", error);
     return curated();
   }
 }
