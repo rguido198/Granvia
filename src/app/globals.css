@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=IBM+Plex+Mono:wght@400;500&family=Work+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
@@ -40,9 +41,9 @@
   --color-hairline-strong: rgb(33 31 28 / 0.22);
 
   /* Type */
-  --font-display: var(--font-cormorant), ui-serif, Georgia, serif;
-  --font-sans: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Cormorant Garamond", var(--font-cormorant), ui-serif, Georgia, serif;
+  --font-sans: "Work Sans", var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
 
   /* The comp's radii are deliberately tight — 2px to 5px, never pill-soft */
   --radius-xs: 2px;
