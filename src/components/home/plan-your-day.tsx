@@ -109,7 +109,7 @@ export function PlanYourDay({ tenants }: { tenants: Tenant[] }) {
           role="tabpanel"
           id={`panel-${activeKey}`}
           aria-labelledby={`tab-${activeKey}`}
-          className="grid animate-fade-up gap-3.5 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3"
         >
           {shown.map((tenant) => (
             <li

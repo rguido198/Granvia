@@ -69,7 +69,7 @@ export function LeasingExperience() {
         {state.status === "success" ? (
           <div
             role="status"
-            className="animate-fade-up rounded-md border border-pine/35 bg-sand-50 p-6"
+            className="rounded-md border border-pine/35 bg-sand-50 p-6"
           >
             <p className="mb-2 font-display text-2xl font-semibold text-pine">
               ¡Solicitud recibida!

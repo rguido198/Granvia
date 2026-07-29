@@ -62,8 +62,8 @@ function FollowCard({ standalone = false }: { standalone?: boolean }) {
   );
 }
 
-export async function InstagramFeed() {
-  const { posts, source } = await getInstagramPosts();
+export function InstagramFeed() {
+  const { posts, source } = getInstagramPosts();
 
   return (
     <section

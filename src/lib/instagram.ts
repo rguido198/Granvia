@@ -72,40 +72,6 @@ function curated(): InstagramResult {
  * Las URLs del CDN de Instagram vienen firmadas y caducan, por eso
  * revalidamos cada hora en lugar de cachear indefinidamente.
  */
-export async function getInstagramPosts(): Promise<InstagramResult> {
-  try {
-    const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-    if (!token) return curated();
-
-    const base = process.env.INSTAGRAM_API_BASE ?? "https://graph.instagram.com";
-    const url = new URL("/me/media", base);
-    url.searchParams.set("fields", FIELDS);
-    url.searchParams.set("limit", String(INSTAGRAM.limit));
-    url.searchParams.set("access_token", token);
-
-    const res = await fetch(url.toString());
-    if (!res.ok) return curated();
-
-    const json = (await res.json()) as { data?: GraphMedia[] };
-    const posts = (json.data ?? [])
-      .map((m): InstagramPost | null => {
-        const isVideo = m.media_type === "VIDEO";
-        const image = isVideo ? m.thumbnail_url : m.media_url;
-        if (!image) return null;
-        return {
-          id: m.id,
-          permalink: m.permalink,
-          image,
-          alt: altFrom(m.caption, isVideo),
-          isVideo,
-          timestamp: m.timestamp,
-        };
-      })
-      .filter((p): p is InstagramPost => p !== null);
-
-    return posts.length > 0 ? { posts, source: "api" } : curated();
-  } catch (error) {
-    console.error("[instagram] Error fetching feed:", error);
-    return curated();
-  }
+export function getInstagramPosts(): InstagramResult {
+  return curated();
 }

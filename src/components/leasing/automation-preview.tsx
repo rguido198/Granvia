@@ -27,7 +27,7 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function GuideBranch() {
   return (
-    <div className="grid animate-fade-up gap-5">
+    <div className="grid gap-5">
       <Card>
         <EmailChrome
           label="EMAIL · AUTOMÁTICO · t+0 min"
@@ -89,7 +89,7 @@ function GuideBranch() {
 
 function CallBranch() {
   return (
-    <div className="grid animate-fade-up gap-5">
+    <div className="grid gap-5">
       <Card>
         <EmailChrome
           label="EMAIL · AUTOMÁTICO · t+0 min"
