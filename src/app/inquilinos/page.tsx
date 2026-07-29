@@ -3,6 +3,9 @@ import { SITE } from "@/content/site";
 import { Container, PageFade } from "@/components/ui";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
 
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Control Operativo & Asset Management",
   description:
