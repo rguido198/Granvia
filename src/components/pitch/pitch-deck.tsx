@@ -375,6 +375,12 @@ function CloseSlide() {
         >
           {PITCH_CLOSE.creditName}
         </a>
+        {" · "}
+        <span dangerouslySetInnerHTML={{ __html: "<!--email_off-->" }} />
+        <a href={`mailto:${PITCH_CLOSE.creditEmail}`} className="text-ink-600 underline hover:text-ink">
+          {PITCH_CLOSE.creditEmail}
+        </a>
+        <span dangerouslySetInnerHTML={{ __html: "<!--/email_off-->" }} />
       </p>
     </div>
   );

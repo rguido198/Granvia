@@ -64,4 +64,5 @@ export const PITCH_CLOSE = {
   creditLabel: "Propuesta preparada por",
   creditName: "Technology Consultants",
   creditUrl: "https://technologyconsultants.ventures",
+  creditEmail: "roberto@technologyconsultants.ventures",
 } as const;
