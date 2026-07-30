@@ -169,3 +169,18 @@
 @utility animate-blink {
   animation: blink-cursor 1s step-start infinite;
 }
+
+/* Used by the /propuesta pitch deck's "+ Equipo de IA" badge. */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(46 93 75 / 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgb(46 93 75 / 0);
+  }
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 2.2s ease-in-out infinite;
+}
