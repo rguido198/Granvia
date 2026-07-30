@@ -84,7 +84,7 @@ export function LandlordDashboard() {
                 Control Operativo & Asset Management
               </span>
               <span className="font-mono text-[10px] sm:text-[11px] text-ink-400">
-                // La Gran Vía
+                {"// La Gran Vía"}
               </span>
             </div>
             <h2 id="landlord-titulo" className="font-display text-xl sm:text-3xl font-bold text-ink leading-tight">
@@ -124,7 +124,7 @@ export function LandlordDashboard() {
             </p>
             <div className="mt-1 sm:mt-2 flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
               <span className="font-display text-xl sm:text-3xl font-bold text-ink">94.1%</span>
-              <span className="font-mono text-[10px] sm:text-xs font-semibold text-pine">+2.4% vs '25</span>
+              <span className="font-mono text-[10px] sm:text-xs font-semibold text-pine">+2.4% vs &apos;25</span>
             </div>
             <p className="mt-1 text-[10.5px] sm:text-[12px] text-ink-500 hidden sm:block">
               79 Locales · 3 Islas Comerciales · 2 Vacantes
@@ -325,7 +325,7 @@ export function LandlordDashboard() {
                   </div>
                   <div>
                     <span className="inline-block rounded bg-pine/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-pine">
-                      Oct '26 · Renovado
+                      Oct &apos;26 · Renovado
                     </span>
                   </div>
                 </li>
@@ -337,7 +337,7 @@ export function LandlordDashboard() {
                   </div>
                   <div>
                     <span className="inline-block rounded bg-pine/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-pine">
-                      Nov '26 · Seguro
+                      Nov &apos;26 · Seguro
                     </span>
                   </div>
                 </li>
@@ -349,7 +349,7 @@ export function LandlordDashboard() {
                   </div>
                   <div>
                     <span className="inline-block rounded bg-gold/20 px-2 py-0.5 font-mono text-[10px] font-semibold text-gold">
-                      Dic '26 · Negociación
+                      Dic &apos;26 · Negociación
                     </span>
                   </div>
                 </li>

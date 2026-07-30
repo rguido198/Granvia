@@ -237,7 +237,7 @@ export function PortalAuthGate() {
                 RENTA AL DÍA (JULIO 2026)
               </span>
               <span className="font-mono text-[10px] text-ink-400">
-                // Local A-04 · Zona Boutique
+                {"// Local A-04 · Zona Boutique"}
               </span>
             </div>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink">
