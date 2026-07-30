@@ -124,9 +124,9 @@ export const EXCLUSIVE_USE_CLAUSES: Partial<Record<BusinessCategory, { tenant: s
 };
 
 export const AI_TERMINAL_STEPS = [
-  "Analizando categoría de negocio contra el mix de 70+ inquilinos activos…",
-  "Consultando cláusulas de uso exclusivo en el Registro de Giros…",
-  "Revisando restricciones de zonificación para el tipo de espacio solicitado…",
+  "Comparando el giro contra los más de 70 negocios que ya están en la plaza…",
+  "Revisando si algún inquilino tiene exclusividad sobre esta categoría…",
+  "Confirmando que el espacio y el giro sean compatibles…",
 ] as const;
 
 export const LEASING_HERO = {

@@ -50,7 +50,11 @@ function TypingBubble({ role }: { role: "ai" | "tenant" }) {
   );
 }
 
-export function AcTicketSimulator() {
+export function AcTicketSimulator({
+  triggerLabel = "Simular Ticket: Falla de Aire Acondicionado →",
+}: {
+  triggerLabel?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
   const [typingRole, setTypingRole] = useState<"ai" | "tenant" | null>(null);
@@ -107,25 +111,29 @@ export function AcTicketSimulator() {
         onClick={() => setOpen(true)}
         className="w-full cursor-pointer rounded bg-terra py-2 text-xs font-bold text-sand-100 transition-colors hover:bg-terra/90"
       >
-        Simular Ticket: Falla de Aire Acondicionado →
+        {triggerLabel}
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
           <div className="flex h-[82vh] w-full flex-col overflow-hidden rounded-t-xl border border-hairline bg-sand-100 shadow-2xl sm:h-[560px] sm:max-w-md sm:rounded-xl">
-            <div className="flex items-center justify-between border-b border-hairline bg-ink px-4 py-3">
-              <div>
-                <p className="font-mono text-[10px] tracking-[0.1em] text-gold uppercase">
-                  Agente IA · Mantenimiento
-                </p>
-                <p className="text-sm font-semibold text-sand-100">
-                  Diagnóstico de Aire Acondicionado
-                </p>
+            <div className="flex items-center justify-between border-b border-hairline bg-sand-200 px-4 py-3">
+              <div className="flex items-center gap-2.5">
+                <span
+                  aria-hidden="true"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-terra text-sm text-sand-100"
+                >
+                  🛠️
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-ink">Diego · Agente de Mantenimiento</p>
+                  <p className="text-[11px] text-ink-400">Diagnóstico de Aire Acondicionado</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="cursor-pointer font-mono text-sm text-dune-200 hover:text-sand-100"
+                className="cursor-pointer text-sm text-ink-400 hover:text-ink"
               >
                 ✕
               </button>

@@ -161,40 +161,64 @@ export function AiScreeningPanel({
   const thinking = visibleSteps < AI_TERMINAL_STEPS.length || !outcome;
 
   return (
-    <div className="mb-7 overflow-hidden rounded-lg border border-hairline-strong shadow-[0_10px_30px_-20px_rgba(33,31,28,0.5)]">
-      <div className="flex items-center justify-between bg-ink px-4.5 py-2.5">
-        <span className="font-mono text-[11px] tracking-[0.1em] text-dune-100">
-          AGENTE DE IA · ARRENDAMIENTO
+    <div className="mb-7 overflow-hidden rounded-lg border border-hairline-strong bg-sand-50 shadow-[0_10px_30px_-20px_rgba(33,31,28,0.35)]">
+      <div className="flex items-center justify-between border-b border-hairline bg-sand-100 px-4.5 py-3">
+        <span className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
+          <span aria-hidden="true" className="text-base">
+            🤖
+          </span>
+          Agente de Arrendamiento
         </span>
-        <span className="flex items-center gap-1.5 font-mono text-[10px] text-gold">
+        <span
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+            thinking ? "bg-gold/15 text-gold" : "bg-pine/15 text-pine",
+          )}
+        >
           <span
             className={cn(
-              "h-1.5 w-1.5 rounded-full bg-gold",
-              thinking && "animate-pulse",
+              "h-1.5 w-1.5 rounded-full",
+              thinking ? "bg-gold animate-pulse" : "bg-pine",
             )}
           />
-          {thinking ? "ANALIZANDO" : "COMPLETADO"}
+          {thinking ? "Pensando…" : "Listo"}
         </span>
       </div>
 
-      <div className="bg-dune-900 px-4.5 py-4 font-mono text-[12.5px] leading-relaxed text-dune-100">
-        {AI_TERMINAL_STEPS.slice(0, visibleSteps).map((step, i) => (
-          <p key={i} className="animate-fadeIn">
-            <span className="text-pine">$</span> {step}
-          </p>
-        ))}
-        {thinking && visibleSteps > 0 && (
-          <span className="inline-block h-3.5 w-1.5 animate-blink bg-dune-100 align-text-bottom" />
-        )}
-        {visibleSteps === 0 && (
-          <p className="text-dune-300">
-            <span className="text-pine">$</span> iniciando análisis…
-          </p>
-        )}
-      </div>
+      <ul className="space-y-3 px-4.5 py-4.5 sm:px-5.5">
+        {AI_TERMINAL_STEPS.map((step, i) => {
+          const done = i < visibleSteps;
+          const active = i === visibleSteps && thinking;
+          return (
+            <li key={i} className="flex items-start gap-3">
+              <span
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold transition-colors duration-300",
+                  done
+                    ? "border-pine bg-pine text-sand-100"
+                    : active
+                      ? "border-gold text-gold animate-pulse"
+                      : "border-hairline-strong text-transparent",
+                )}
+                aria-hidden="true"
+              >
+                {done ? "✓" : "•"}
+              </span>
+              <span
+                className={cn(
+                  "text-[13.5px] leading-snug transition-colors duration-300",
+                  done || active ? "text-ink-700" : "text-ink-300",
+                )}
+              >
+                {step}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
 
       {outcome && (
-        <div className="animate-fadeIn bg-sand-50 p-4.5 sm:p-5.5">
+        <div className="animate-fadeIn border-t border-hairline bg-sand-100 p-4.5 sm:p-5.5">
           {outcome.kind === "conflict" ? (
             <>
               <Kicker accent="terra" className="mb-2 tracking-[0.18em]">

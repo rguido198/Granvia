@@ -41,3 +41,4 @@ export const SOCIAL = {
 } as const;
 
 export const HUB_NAV: NavItem = { href: "/inquilinos", label: "Tenant Hub" };
+export const TEAM_NAV: NavItem = { href: "/equipo-ia", label: "Tu Equipo de IA" };
