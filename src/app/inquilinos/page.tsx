@@ -36,7 +36,7 @@ export default function TenantHubPage() {
             </p>
           </div>
 
-          {/* AI AGENT MODULE SHOWCASE */}
+          {/* AI AGENT MODULE SHOWCASE (INTERACTIVE) */}
           <AiAgentModule />
 
           {/* MAIN COMPONENT: Landlord Control Panel */}
