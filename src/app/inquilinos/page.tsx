@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SITE } from "@/content/site";
 import { Container, PageFade } from "@/components/ui";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
+import { AiAgentModule } from "@/components/hub/ai-agent-module";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -31,9 +32,12 @@ export default function TenantHubPage() {
               Control Operativo & Asset Management
             </h1>
             <p className="mt-2 text-xs sm:text-base text-ink-500">
-              Plataforma centralizada de administración para La Gran Vía. Monitoreo de indicadores comerciales, cobranza, afluencia y atención a solicitudes.
+              Plataforma centralizada de administración para La Gran Vía. Monitoreo de indicadores comerciales, cobranza, afluencia e integración con Agentes de IA.
             </p>
           </div>
+
+          {/* AI AGENT MODULE SHOWCASE */}
+          <AiAgentModule />
 
           {/* MAIN COMPONENT: Landlord Control Panel */}
           <LandlordDashboard />
