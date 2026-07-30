@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import { SITE } from "@/content/site";
 import { Container, PageFade } from "@/components/ui";
-import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
-import { AiAgentModule } from "@/components/hub/ai-agent-module";
+import { PortalAuthGate } from "@/components/hub/portal-auth-gate";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Control Operativo & Asset Management",
+  title: "Portal Privado & Asset Management",
   description:
-    "Consola de administración y control operativo para propietarios y arrendatarios de La Gran Vía Mexicali.",
+    "Acceso restringido para propietarios y arrendatarios de La Gran Vía Mexicali.",
   robots: { index: false, follow: false },
 };
 
@@ -32,15 +31,12 @@ export default function TenantHubPage() {
               Control Operativo & Asset Management
             </h1>
             <p className="mt-2 text-xs sm:text-base text-ink-500">
-              Plataforma centralizada de administración para La Gran Vía. Monitoreo de indicadores comerciales, cobranza, afluencia e integración con Agentes de IA.
+              Plataforma centralizada y privada para propietarios y arrendatarios de La Gran Vía.
             </p>
           </div>
 
-          {/* AI AGENT MODULE SHOWCASE (INTERACTIVE) */}
-          <AiAgentModule />
-
-          {/* MAIN COMPONENT: Landlord Control Panel */}
-          <LandlordDashboard />
+          {/* PRIVACY AUTHENTICATION GATE & DASHBOARD */}
+          <PortalAuthGate />
 
           <p className="mt-10 text-center text-[13px] text-ink-400">
             ¿Problemas de acceso? Contacta a la Administración de Plaza en{" "}
