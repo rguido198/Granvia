@@ -42,7 +42,7 @@ function SubmitButton() {
 }
 
 export function LeasingExperience() {
-  const [leaseType, setLeaseType] = useState<LeaseKey>("popup");
+  const [leaseType, setLeaseType] = useState<LeaseKey>("short");
   const [state, formAction] = useActionState(
     submitLeasingInquiry,
     initialLeasingState,
@@ -58,35 +58,24 @@ export function LeasingExperience() {
   return (
     <div className="grid items-start gap-10 lg:grid-cols-[0.92fr_1.08fr]">
       {/* ------------------------------- Form ------------------------------- */}
-      <div className="rounded-md border border-hairline bg-sand-100 p-6 sm:p-7.5">
-        <h2 className="mb-1.5 font-display text-[28px] font-semibold">
-          Solicita tu espacio
+      <div className="rounded-lg border border-hairline bg-sand-50 p-6 sm:p-8">
+        <h2 className="mb-2 font-display text-2xl font-semibold">
+          Solicitud de Espacio Comercial
         </h2>
-        <MonoNote className="mb-5.5">
-          Selecciona la duración para ver qué recibes
-        </MonoNote>
+        <p className="mb-6 text-sm text-ink-500">
+          Completa tus datos y giro comercial para recibir la Ficha Técnica y disponibilidad.
+        </p>
 
         {state.status === "success" ? (
-          <div
-            role="status"
-            className="rounded-md border border-pine/35 bg-sand-50 p-6"
-          >
-            <p className="mb-2 font-display text-2xl font-semibold text-pine">
+          <div className="rounded-md border border-pine bg-pine/10 p-6">
+            <h3 className="mb-2 font-display text-xl font-semibold text-pine">
               ¡Solicitud recibida!
-            </p>
+            </h3>
             <p className="text-sm text-ink-700">
-              {state.branch === "guide"
-                ? "Revisa tu correo: la Guía de Islas Comerciales y el enlace para reservar tu espacio van en camino."
-                : "Revisa tu correo: te enviamos el enlace para agendar tu llamada y completar el perfil de tu negocio."}
+              Revisa tu correo: te enviamos la Ficha Técnica de Arrendamiento en PDF y el enlace para agendar llamada con nuestro equipo comercial.
             </p>
             <p className="mt-3 text-xs text-ink-400">
-              ¿No llega en unos minutos? Escríbenos a{" "}
-              <span dangerouslySetInnerHTML={{ __html: "<!--email_off-->" }} />
-              <a href={`mailto:${SITE.emails.leasing}`}>
-                {SITE.emails.leasing}
-              </a>
-              <span dangerouslySetInnerHTML={{ __html: "<!--/email_off-->" }} />
-              .
+              Si no lo ves en tu bandeja de entrada en 2 minutos, revisa tu carpeta de spam.
             </p>
           </div>
         ) : (

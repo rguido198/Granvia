@@ -12,101 +12,66 @@
 export type BusinessCategory = string;
 
 export const BUSINESS_CATEGORIES: BusinessCategory[] = [
-  "Restaurante / Bar",
-  "Moda & Retail",
-  "Belleza & Bienestar",
-  "Fitness",
-  "Servicios",
-  "Isla / Kiosco Comercial",
+  "Restaurante / Gastronomía",
+  "Moda & Boutiques",
+  "Salud & Bienestar",
+  "Servicios & Corporativo",
+  "Entretenimiento & Hoteles",
 ];
 
-export type LeaseKey = "popup" | "short" | "mid" | "long";
+export type LeaseKey = "short" | "mid" | "long";
 
 export type LeaseOption = {
   key: LeaseKey;
   label: string;
-  /** Which post-submit automation this duration triggers. */
-  branch: "guide" | "call";
+  /** All commercial retail inquiries trigger a scheduled call & proposal. */
+  branch: "call";
 };
 
 export const LEASE_OPTIONS: LeaseOption[] = [
-  { key: "popup", label: "Isla Comercial · 1 a 3 meses", branch: "guide" },
-  { key: "short", label: "Corto plazo · 4 a 6 meses", branch: "call" },
-  { key: "mid", label: "Mediano plazo · 6 a 12 meses", branch: "call" },
-  { key: "long", label: "Largo plazo · 12+ meses", branch: "call" },
+  { key: "short", label: "Corto plazo · 6 a 12 meses", branch: "call" },
+  { key: "mid", label: "Mediano plazo · 1 a 3 años", branch: "call" },
+  { key: "long", label: "Contrato Ancla · 3 a 5+ años", branch: "call" },
 ];
 
 export const LEASE_KEYS = LEASE_OPTIONS.map((option) => option.key);
 
-export function branchFor(key: LeaseKey): "guide" | "call" {
-  return LEASE_OPTIONS.find((option) => option.key === key)?.branch ?? "call";
+export function branchFor(key: LeaseKey): "call" {
+  return "call";
 }
 
 export type FollowUp = { when: string; text: string };
 
-export const FOLLOW_UPS: Record<"guide" | "call", FollowUp[]> = {
-  guide: [
-    {
-      when: "t+0 min",
-      text: "Correo automático con la Guía de Islas Comerciales PDF y botón de reserva.",
-    },
-    {
-      when: "Día 2",
-      text: 'Recordatorio si no reservó: "¿Aún te interesa la isla comercial en La Gran Vía?"',
-    },
-    {
-      when: "Día 5",
-      text: "Se archiva como lead frío — cero seguimiento manual del equipo.",
-    },
-  ],
+export const FOLLOW_UPS: Record<"call", FollowUp[]> = {
   call: [
     {
       when: "t+0 min",
-      text: "Correo con enlace para agendar llamada y perfil de negocio.",
+      text: "Correo con Ficha Técnica de Arrendamiento en PDF y enlace para agendar llamada.",
     },
     {
       when: "Día 1",
-      text: "Al completar el perfil, se crea la ficha del prospecto para el equipo.",
+      text: "Al completar el perfil comercial, el Agente crea la ficha del prospecto en el ERP.",
     },
     {
       when: "Post-llamada",
-      text: "Contrato base pre-generado según giro y m² — listo para revisar.",
+      text: "Borrador de contrato de arrendamiento pre-generado según giro y m².",
     },
   ],
 };
 
-/** The three pre-approved sections inside the commercial island PDF guide. */
-export const GUIDE_CONTENTS = [
-  {
-    n: "01",
-    title: "Requisitos físicos.",
-    text: "Medidas, energía, límites de fit-out y qué NO se permite instalar.",
-  },
-  {
-    n: "02",
-    title: "Reglas de seguro.",
-    text: "Póliza mínima y cómo enviarla antes de abrir.",
-  },
-  {
-    n: "03",
-    title: "Precios estándar.",
-    text: "Tarifas fijas por m² y depósito — sin negociación caso por caso.",
-  },
-];
-
-/** Fields collected in the long-term tenant profile questionnaire. */
+/** Fields collected in the commercial tenant profile questionnaire. */
 export const PROFILE_FIELDS = [
-  "Años operando",
+  "Años de operación",
   "Ventas anuales est.",
-  "Otras sucursales",
+  "Sucursales actuales",
   "Inversión en fit-out",
   "Concepto / marca",
-  "Referencias",
+  "Referencias comerciales",
 ];
 
 export const GUIDE_PDF = {
-  filename: "Guia_IslasComerciales_LaGranVia.pdf",
-  meta: "Requisitos físicos · Seguro · Precios · 8 págs",
+  filename: "Ficha_Tecnica_Arrendamiento_LaGranVia.pdf",
+  meta: "Planos de planta · Especificaciones técnicas · Requisitos · 12 págs",
 } as const;
 
 export const LEASING_HERO = {

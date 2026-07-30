@@ -1,6 +1,5 @@
 import {
   FOLLOW_UPS,
-  GUIDE_CONTENTS,
   GUIDE_PDF,
   PROFILE_FIELDS,
 } from "@/content/leasing";
@@ -25,67 +24,7 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
-function GuideBranch() {
-  return (
-    <div className="grid gap-5">
-      <Card>
-        <EmailChrome
-          label="EMAIL · AUTOMÁTICO · t+0 min"
-          from={SITE.emails.noReply}
-        />
-        <div className="px-5.5 pt-5.5 pb-5">
-          <p className="mb-1 text-xs text-ink-400">Para: prospecto de isla comercial</p>
-          <p className="mb-3 font-display text-2xl font-semibold">
-            Tu Guía de Islas Comerciales de La Gran Vía 🌵
-          </p>
-          <p className="mb-3.5 text-sm text-ink-700">
-            ¡Gracias por tu interés! Las islas y kioscos comerciales de 1 a 3 meses tienen
-            proceso de aprobación inmediata. Adjuntamos la guía con especificaciones físicas,
-            reglas y tarifas estándar.
-          </p>
 
-          <div className="flex items-center gap-3.5 rounded-md border border-hairline bg-sand-100 p-3.5">
-            <span
-              aria-hidden="true"
-              className="flex h-14 w-11 flex-none items-end justify-center rounded-xs stripe-terra pb-1"
-            >
-              <span className="font-mono text-[8px] text-sand-100">PDF</span>
-            </span>
-            <span>
-              <span className="block text-sm font-semibold">
-                {GUIDE_PDF.filename}
-              </span>
-              <span className="block text-xs text-ink-400">
-                {GUIDE_PDF.meta}
-              </span>
-            </span>
-          </div>
-
-          <p className="mt-4 inline-flex rounded-xs bg-pine px-5 py-2.75 text-[13.5px] font-semibold text-sand-100">
-            Reservar mi isla comercial
-          </p>
-        </div>
-      </Card>
-
-      <div className="rounded-lg border border-hairline bg-sand-50 px-5.5 py-5">
-        <MonoNote className="mb-3.5 tracking-[0.1em] uppercase">
-          PDF package · contenido pre-aprobado
-        </MonoNote>
-        <dl className="grid grid-cols-[36px_1fr] gap-3.5 text-sm text-ink-700">
-          {GUIDE_CONTENTS.map((item) => (
-            <div key={item.n} className="contents">
-              <dt className="font-mono text-terra">{item.n}</dt>
-              <dd>
-                <strong className="font-semibold">{item.title}</strong>{" "}
-                {item.text}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </div>
-  );
-}
 
 function CallBranch() {
   return (
@@ -135,7 +74,8 @@ function CallBranch() {
   );
 }
 
-export function AutomationPreview({ branch }: { branch: "guide" | "call" }) {
+export function AutomationPreview({ branch }: { branch?: "call" }) {
+  const activeBranch = "call";
   return (
     <div>
       <Kicker accent="pine" className="mb-3.5 tracking-[0.2em]">
@@ -145,13 +85,12 @@ export function AutomationPreview({ branch }: { branch: "guide" | "call" }) {
         Lo que sucede después de enviar
       </h2>
       <p className="mb-6 text-sm text-ink-500">
-        El correo se personaliza según el giro y la duración que elegiste — sin
-        que el equipo mueva un dedo.
+        El sistema procesa la solicitud, envía la Ficha Técnica PDF y notifica al ejecutivo comercial.
       </p>
 
-      {/* Screen readers get the branch change announced, not just a silent swap */}
+      {/* Screen readers get the branch change announced */}
       <div aria-live="polite">
-        {branch === "guide" ? <GuideBranch /> : <CallBranch />}
+        <CallBranch />
       </div>
 
       <div className="mt-6 border-t border-hairline pt-5.5">
@@ -159,7 +98,7 @@ export function AutomationPreview({ branch }: { branch: "guide" | "call" }) {
           Secuencia de seguimiento automático
         </MonoNote>
         <ul className="grid gap-3">
-          {FOLLOW_UPS[branch].map((step) => (
+          {FOLLOW_UPS[activeBranch].map((step) => (
             <li key={step.when} className="flex gap-4">
               <span className="w-21 flex-none font-mono text-[11px] text-terra">
                 {step.when}
