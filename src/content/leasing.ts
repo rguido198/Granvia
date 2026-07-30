@@ -74,6 +74,61 @@ export const GUIDE_PDF = {
   meta: "Planos de planta · Especificaciones técnicas · Requisitos · 12 págs",
 } as const;
 
+/**
+ * AI Leasing Agent — demo scenarios & screening rules.
+ *
+ * Pre-fills for the two live-demo buttons on the leasing form, plus the
+ * lightweight rule set the "AI Thinking Terminal" evaluates against. This is
+ * a sales-demo simulation, not a real exclusivity registry.
+ */
+export type LeasingScenario = {
+  key: "rival" | "healthy";
+  label: string;
+  sublabel: string;
+  nombre: string;
+  telefono: string;
+  correo: string;
+  giro: BusinessCategory;
+  metros: number;
+  duracion: LeaseKey;
+};
+
+export const LEASING_SCENARIOS: LeasingScenario[] = [
+  {
+    key: "rival",
+    label: "Boutique de moda rival a MINT",
+    sublabel: "Match bajo · posible conflicto de exclusividad",
+    nombre: "Valeria Ponce",
+    telefono: "686 234 5566",
+    correo: "valeria@modaurbana.mx",
+    giro: "Moda & Boutiques",
+    metros: 75,
+    duracion: "short",
+  },
+  {
+    key: "healthy",
+    label: "Barra de jugos & café orgánico",
+    sublabel: "Match alto · sin conflictos detectados",
+    nombre: "Diego Salcido",
+    telefono: "686 778 9012",
+    correo: "diego@barraverde.mx",
+    giro: "Restaurante / Gastronomía",
+    metros: 120,
+    duracion: "mid",
+  },
+];
+
+/** Giros con cláusula de uso exclusivo activa — motor de reglas del demo. */
+export const EXCLUSIVE_USE_CLAUSES: Partial<Record<BusinessCategory, { tenant: string; local: string }>> = {
+  "Moda & Boutiques": { tenant: "MINT Boutique", local: "Local B-12" },
+};
+
+export const AI_TERMINAL_STEPS = [
+  "Analizando categoría de negocio contra el mix de 70+ inquilinos activos…",
+  "Consultando cláusulas de uso exclusivo en el Registro de Giros…",
+  "Revisando restricciones de zonificación para el tipo de espacio solicitado…",
+] as const;
+
 export const LEASING_HERO = {
   kicker: "CRECE TU NEGOCIO",
   title: "El lugar donde tu marca encuentra a su gente.",

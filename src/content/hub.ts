@@ -55,6 +55,98 @@ export const HUB_ACTIONS: HubAction[] = [
   },
 ];
 
+/** Line items on the tenant's NNN / CAM operating-expense ledger — demo data. */
+export type CamLineItem = {
+  concept: string;
+  provider: string;
+  monthly: number;
+};
+
+export const CAM_LEDGER: CamLineItem[] = [
+  { concept: "Seguridad & Vigilancia", provider: "Grupo Custodia Fronteriza", monthly: 4850 },
+  { concept: "Recolección de Basura", provider: "Servicios Urbanos Mexicali", monthly: 1120 },
+  { concept: "Jardinería & Áreas Comunes", provider: "Verde Paisajismo", monthly: 1680 },
+  { concept: "Iluminación & Electricidad Común", provider: "CFE / Plaza", monthly: 2340 },
+  { concept: "Administración & Limpieza", provider: "Servicios Plaza", monthly: 1510 },
+];
+
+/** Scripted exchange for the AC-malfunction ticket simulator. */
+export type AcTicketMessage = { role: "ai" | "tenant"; text: string };
+
+export const AC_TICKET_SCRIPT: AcTicketMessage[] = [
+  {
+    role: "ai",
+    text: "Veo que reportaste una falla de aire acondicionado. ¿Puedes confirmar si el código de error E4 está parpadeando en tu termostato?",
+  },
+  { role: "tenant", text: "Sí, E4 está parpadeando." },
+  {
+    role: "ai",
+    text: "Entendido. Según el manual de la unidad, eso corresponde a un respaldo de condensación. Ya despaché a tu contratista preaprobado, ‘Climas de Mexicali’, para hoy a las 3:00 PM. Ticket #INC-404 registrado.",
+  },
+];
+
+/** Rotating pool for the Landlord Command Center's live activity feed — demo data. */
+export type ActivityEntry = { agent: string; text: string; accent: "terra" | "pine" | "gold" };
+
+export const AI_ACTIVITY_POOL: ActivityEntry[] = [
+  { agent: "Agente de Arrendamiento", text: "Evaluó una solicitud entrante para Local C-08 — sin conflicto de exclusividad.", accent: "pine" },
+  { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local A-04 (falla de AC, código E4).", accent: "terra" },
+  { agent: "Agente Financiero", text: "Procesó el reporte de ventas de Bodega 8 con OCR y emitió el CFDI correspondiente.", accent: "pine" },
+  { agent: "Agente de Asset Management", text: "Detectó una caída de 6% en afluencia hacia MINT Boutique — añadida al radar de riesgo.", accent: "gold" },
+  { agent: "Agente de Arrendamiento", text: "Generó lineamientos de Islas Comerciales para un giro con cláusula de exclusividad activa.", accent: "terra" },
+  { agent: "Agente Financiero", text: "Envió recordatorio automático de reporte de ventas a 3 locales pendientes.", accent: "pine" },
+  { agent: "Agente de Mantenimiento", text: "Cerró el ticket #INC-401 (trampa de grasa) — confirmado por Alma Verde.", accent: "pine" },
+  { agent: "Agente de Asset Management", text: "Actualizó el prorrateo de CAM de julio para los 79 locales activos.", accent: "gold" },
+];
+
+/** CAM allocation demo — one plaza invoice divided proportionally by tenant m². */
+export type CamAllocationRow = { tenant: string; sqm: number; share: number; amount: number };
+
+export const CAM_ALLOCATION = {
+  invoiceLabel: "Recibo CFE + Seguridad + Mantenimiento — Julio 2026",
+  invoiceTotal: 268500,
+  rows: [
+    { tenant: "Ashley Furniture", sqm: 1450, share: 0.19, amount: 51015 },
+    { tenant: "Cinépolis VIP", sqm: 1180, share: 0.15, amount: 40275 },
+    { tenant: "MINT Boutique", sqm: 145, share: 0.02, amount: 5370 },
+    { tenant: "Derma Club", sqm: 95, share: 0.012, amount: 3222 },
+    { tenant: "Resto de la plaza (75 locales)", sqm: 4680, share: 0.618, amount: 165618 },
+  ] as CamAllocationRow[],
+} as const;
+
+/** Proactive churn radar — demo lease-health snapshot for key anchor/marquee tenants. */
+export type ChurnRow = {
+  tenant: string;
+  leaseEnds: string;
+  portalActivity: string;
+  risk: "green" | "yellow" | "red";
+  note: string;
+};
+
+export const CHURN_RADAR: ChurnRow[] = [
+  {
+    tenant: "Ashley Furniture",
+    leaseEnds: "Mar 2027",
+    portalActivity: "Alta · 92%",
+    risk: "green",
+    note: "Ventas +11% YoY, sin incidencias abiertas.",
+  },
+  {
+    tenant: "Derma Club",
+    leaseEnds: "Ene 2027",
+    portalActivity: "Media · 61%",
+    risk: "yellow",
+    note: "Reportes de ventas 2 de los últimos 3 meses con retraso.",
+  },
+  {
+    tenant: "MINT Boutique",
+    leaseEnds: "Dic 2026",
+    portalActivity: "Baja · 34%",
+    risk: "red",
+    note: "Afluencia -6%, sin respuesta a la propuesta de renovación.",
+  },
+];
+
 export const HUB_INTRO = {
   title: "Tu operación, en orden.",
   lead: "Bienvenido al Tenant Hub. Aquí resuelves todo con la administración en un solo lugar — nada de mensajes perdidos ni cadenas de WhatsApp. Elige una acción para empezar.",

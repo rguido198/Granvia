@@ -4,6 +4,9 @@ import { useState } from "react";
 import { cn } from "@/components/ui";
 import { HUB_ACTIONS } from "@/content/hub";
 import { SITE } from "@/content/site";
+import { ActivityFeed } from "@/components/hub/activity-feed";
+import { CamAllocation } from "@/components/hub/cam-allocation";
+import { ChurnRadar } from "@/components/hub/churn-radar";
 
 type DashboardTab = "ocupacion" | "financiero" | "operaciones";
 
@@ -62,6 +65,9 @@ export function LandlordDashboard() {
           </button>
         ))}
       </div>
+
+      {/* ---------------- 1b. Real-Time AI Activity Feed ---------------- */}
+      <ActivityFeed />
 
       {/* ---------------- 2. MAIN COMPONENT: Landlord Control Panel ---------------- */}
       <section
@@ -361,6 +367,10 @@ export function LandlordDashboard() {
                 </li>
               </ul>
             </div>
+
+            <div className="lg:col-span-2">
+              <ChurnRadar />
+            </div>
           </div>
         )}
 
@@ -436,6 +446,10 @@ export function LandlordDashboard() {
                   <span className="text-xs font-semibold text-terra shrink-0 pl-2">Subir →</span>
                 </button>
               </div>
+            </div>
+
+            <div className="lg:col-span-2">
+              <CamAllocation />
             </div>
           </div>
         )}

@@ -5,21 +5,33 @@ import { cn } from "@/components/ui";
 /**
  * Phone mockup holding the digital passport wallet.
  * Decorative chrome is hidden from assistive tech; the offer list is real
- * content and stays readable.
+ * content and stays readable. `holder`/`distance` let the registration form
+ * swap in the live runner's data; both default to the sample passport.
  */
-export function PassportPhone() {
+export function PassportPhone({
+  holderId,
+  holderName,
+  distance,
+  justGenerated,
+}: {
+  holderId?: string;
+  holderName?: string;
+  distance?: string;
+  justGenerated?: boolean;
+}) {
   return (
-    <div className="flex justify-center">
+    <div className={cn("flex justify-center", justGenerated && "animate-fadeIn")}>
       <div className="w-70 rounded-[34px] bg-ink p-3 shadow-[0_30px_60px_-30px_rgba(33,31,28,0.7)]">
         <div className="overflow-hidden rounded-3xl bg-sand-100">
           {/* Wallet header */}
           <div className="bg-terra px-5 pt-5 pb-4 text-center text-sand-100">
             <p className="font-mono text-[9px] tracking-[0.24em] opacity-80">
               PASAPORTE · {RACE.year}
+              {distance ? ` · ${distance}` : ""}
             </p>
             <p className="mt-1 font-display text-2xl font-bold">{SITE.name}</p>
             <p className="mt-0.5 text-xs opacity-85">
-              Corredor {PASSPORT.holder.id} · {PASSPORT.holder.name}
+              Corredor {holderId ?? PASSPORT.holder.id} · {holderName ?? PASSPORT.holder.name}
             </p>
           </div>
 

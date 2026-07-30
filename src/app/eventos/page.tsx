@@ -6,7 +6,7 @@ import {
   RACE,
 } from "@/content/events";
 import { SITE } from "@/content/site";
-import { PassportPhone } from "@/components/events/passport-phone";
+import { RaceRegistration } from "@/components/events/race-registration";
 import {
   Container,
   ImagePlaceholder,
@@ -106,8 +106,8 @@ export default function EventsPage() {
             <p className="text-[17px] text-ink-500">{PASSPORT.lead}</p>
           </div>
 
-          <div className="grid items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
-            <PassportPhone />
+          <div className="grid items-start gap-12 lg:grid-cols-[0.85fr_1.15fr]">
+            <RaceRegistration />
 
             <div>
               <Kicker accent="pine" className="mb-4.5 tracking-[0.2em]">

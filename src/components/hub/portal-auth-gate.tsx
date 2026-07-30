@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
 import { AiAgentModule } from "@/components/hub/ai-agent-module";
+import { AcTicketSimulator } from "@/components/hub/ac-ticket-chat";
+import { CamLedger } from "@/components/hub/cam-ledger";
 
 export function PortalAuthGate() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,7 +13,6 @@ export function PortalAuthGate() {
   const [password, setPassword] = useState("••••••••••••");
   const [isLoading, setIsLoading] = useState(false);
   const [salesSubmitted, setSalesSubmitted] = useState(false);
-  const [ticketSubmitted, setTicketSubmitted] = useState(false);
 
   const handleRoleChange = (newRole: "propietario" | "inquilino") => {
     setRole(newRole);
@@ -291,19 +292,7 @@ export function PortalAuthGate() {
               El Agente de IA atiende 24/7 vía WhatsApp y asigna al técnico de plaza en minutos.
             </p>
 
-            {ticketSubmitted ? (
-              <div className="rounded bg-emerald-100 p-2 text-center text-xs font-semibold text-emerald-800">
-                ✓ Ticket #INC-402 en Atención por Carlos R.
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setTicketSubmitted(true)}
-                className="w-full cursor-pointer rounded bg-terra py-2 text-xs font-bold text-sand-100 hover:bg-terra/90 transition-colors"
-              >
-                Abrir Ticket por WhatsApp / Web →
-              </button>
-            )}
+            <AcTicketSimulator />
           </div>
 
           {/* Action 3: Download Rules & Hours */}
@@ -344,6 +333,11 @@ export function PortalAuthGate() {
               Diagnóstico: El Agente de IA detectó falla en el compresor secundario. El técnico llegará a las 11:30 AM con el repuesto.
             </p>
           </div>
+        </div>
+
+        {/* NNN / CAM Ledger */}
+        <div className="pt-4 border-t border-hairline">
+          <CamLedger />
         </div>
       </section>
     </div>

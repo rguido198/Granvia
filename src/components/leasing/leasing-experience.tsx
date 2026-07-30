@@ -5,13 +5,16 @@ import { useFormStatus } from "react-dom";
 import {
   BUSINESS_CATEGORIES,
   LEASE_OPTIONS,
+  LEASING_SCENARIOS,
   branchFor,
+  type BusinessCategory,
   type LeaseKey,
 } from "@/content/leasing";
 import { SITE } from "@/content/site";
 import { submitLeasingInquiry } from "@/app/crece-tu-negocio/actions";
 import { initialLeasingState } from "@/lib/leasing-form";
 import { AutomationPreview } from "@/components/leasing/automation-preview";
+import { AiScreeningPanel } from "@/components/leasing/ai-screening";
 import { MonoNote, cn } from "@/components/ui";
 import type { FieldErrors } from "@/lib/leads";
 
@@ -43,6 +46,12 @@ function SubmitButton() {
 
 export function LeasingExperience() {
   const [leaseType, setLeaseType] = useState<LeaseKey>("short");
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [giro, setGiro] = useState<BusinessCategory>(BUSINESS_CATEGORIES[0]);
+  const [metros, setMetros] = useState("");
+  const [analysisTrigger, setAnalysisTrigger] = useState(0);
   const [state, formAction] = useActionState(
     submitLeasingInquiry,
     initialLeasingState,
@@ -55,6 +64,15 @@ export function LeasingExperience() {
   const describedBy = (name: keyof FieldErrors) =>
     errors[name] ? errId(name) : undefined;
 
+  const applyScenario = (scenario: (typeof LEASING_SCENARIOS)[number]) => {
+    setNombre(scenario.nombre);
+    setTelefono(scenario.telefono);
+    setCorreo(scenario.correo);
+    setGiro(scenario.giro);
+    setMetros(String(scenario.metros));
+    setLeaseType(scenario.duracion);
+  };
+
   return (
     <div className="grid items-start gap-10 lg:grid-cols-[0.92fr_1.08fr]">
       {/* ------------------------------- Form ------------------------------- */}
@@ -62,9 +80,33 @@ export function LeasingExperience() {
         <h2 className="mb-2 font-display text-2xl font-semibold">
           Solicitud de Espacio Comercial
         </h2>
-        <p className="mb-6 text-sm text-ink-500">
+        <p className="mb-4 text-sm text-ink-500">
           Completa tus datos y giro comercial para recibir la Ficha Técnica y disponibilidad.
         </p>
+
+        {/* Live-demo shortcuts: instantly fill the form with a scripted scenario */}
+        <div className="mb-6 rounded-md border border-dashed border-hairline-strong bg-sand-100 p-3.5">
+          <MonoNote className="mb-2.5 tracking-[0.1em] uppercase">
+            Demo · escenarios de prueba para el Agente de IA
+          </MonoNote>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {LEASING_SCENARIOS.map((scenario) => (
+              <button
+                key={scenario.key}
+                type="button"
+                onClick={() => applyScenario(scenario)}
+                className="flex-1 cursor-pointer rounded-xs border border-hairline-strong bg-sand-50 px-3 py-2.5 text-left transition-colors hover:border-terra"
+              >
+                <span className="block text-[12.5px] font-semibold text-ink">
+                  {scenario.label}
+                </span>
+                <span className="mt-0.5 block text-[11px] text-ink-400">
+                  {scenario.sublabel}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {state.status === "success" ? (
           <div className="rounded-md border border-pine bg-pine/10 p-6">
@@ -79,7 +121,11 @@ export function LeasingExperience() {
             </p>
           </div>
         ) : (
-          <form action={formAction} noValidate>
+          <form
+            action={formAction}
+            noValidate
+            onSubmit={() => setAnalysisTrigger((n) => n + 1)}
+          >
             {state.status === "error" && state.message && (
               <p
                 role="alert"
@@ -99,6 +145,8 @@ export function LeasingExperience() {
                   name="nombre"
                   autoComplete="name"
                   placeholder="Tu nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
                   aria-invalid={!!errors.nombre}
                   aria-describedby={describedBy("nombre")}
                   className={FIELD}
@@ -115,6 +163,8 @@ export function LeasingExperience() {
                   type="tel"
                   autoComplete="tel"
                   placeholder="686 000 0000"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
                   aria-invalid={!!errors.telefono}
                   aria-describedby={describedBy("telefono")}
                   className={FIELD}
@@ -133,6 +183,8 @@ export function LeasingExperience() {
                 type="email"
                 autoComplete="email"
                 placeholder="tu@correo.com"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
                 aria-invalid={!!errors.correo}
                 aria-describedby={describedBy("correo")}
                 className={FIELD}
@@ -148,7 +200,8 @@ export function LeasingExperience() {
                 <select
                   id={field("giro")}
                   name="giro"
-                  defaultValue={BUSINESS_CATEGORIES[0]}
+                  value={giro}
+                  onChange={(e) => setGiro(e.target.value as BusinessCategory)}
                   aria-invalid={!!errors.giro}
                   aria-describedby={describedBy("giro")}
                   className={FIELD}
@@ -172,6 +225,8 @@ export function LeasingExperience() {
                   inputMode="numeric"
                   min={1}
                   placeholder="ej. 60"
+                  value={metros}
+                  onChange={(e) => setMetros(e.target.value)}
                   aria-invalid={!!errors.metros}
                   aria-describedby={describedBy("metros")}
                   className={FIELD}
@@ -228,7 +283,15 @@ export function LeasingExperience() {
       </div>
 
       {/* --------------------------- Live preview --------------------------- */}
-      <AutomationPreview branch={branchFor(leaseType)} />
+      <div>
+        <AiScreeningPanel
+          giro={giro}
+          metros={Number(metros) || 0}
+          duracion={leaseType}
+          trigger={analysisTrigger}
+        />
+        <AutomationPreview branch={branchFor(leaseType)} />
+      </div>
     </div>
   );
 }
