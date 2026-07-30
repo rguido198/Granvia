@@ -34,14 +34,14 @@ function GuideBranch() {
           from={SITE.emails.noReply}
         />
         <div className="px-5.5 pt-5.5 pb-5">
-          <p className="mb-1 text-xs text-ink-400">Para: prospecto pop-up</p>
+          <p className="mb-1 text-xs text-ink-400">Para: prospecto de isla comercial</p>
           <p className="mb-3 font-display text-2xl font-semibold">
-            Tu Guía Pop-Up de La Gran Vía 🌵
+            Tu Guía de Islas Comerciales de La Gran Vía 🌵
           </p>
           <p className="mb-3.5 text-sm text-ink-700">
-            ¡Gracias por tu interés! Los espacios pop-up de 1 a 3 meses tienen
-            todo pre-aprobado para que abras rápido. Aquí está tu guía con
-            requisitos, reglas y precios estándar — sin necesidad de reunión.
+            ¡Gracias por tu interés! Las islas y kioscos comerciales de 1 a 3 meses tienen
+            proceso de aprobación inmediata. Adjuntamos la guía con especificaciones físicas,
+            reglas y tarifas estándar.
           </p>
 
           <div className="flex items-center gap-3.5 rounded-md border border-hairline bg-sand-100 p-3.5">
@@ -62,7 +62,7 @@ function GuideBranch() {
           </div>
 
           <p className="mt-4 inline-flex rounded-xs bg-pine px-5 py-2.75 text-[13.5px] font-semibold text-sand-100">
-            Reservar mi espacio pop-up
+            Reservar mi isla comercial
           </p>
         </div>
       </Card>

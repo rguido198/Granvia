@@ -17,7 +17,7 @@ export const BUSINESS_CATEGORIES: BusinessCategory[] = [
   "Belleza & Bienestar",
   "Fitness",
   "Servicios",
-  "Pop-Up / Temporal",
+  "Isla / Kiosco Comercial",
 ];
 
 export type LeaseKey = "popup" | "short" | "mid" | "long";
@@ -30,7 +30,7 @@ export type LeaseOption = {
 };
 
 export const LEASE_OPTIONS: LeaseOption[] = [
-  { key: "popup", label: "Pop-Up · 1 a 3 meses", branch: "guide" },
+  { key: "popup", label: "Isla Comercial · 1 a 3 meses", branch: "guide" },
   { key: "short", label: "Corto plazo · 4 a 6 meses", branch: "call" },
   { key: "mid", label: "Mediano plazo · 6 a 12 meses", branch: "call" },
   { key: "long", label: "Largo plazo · 12+ meses", branch: "call" },
@@ -48,11 +48,11 @@ export const FOLLOW_UPS: Record<"guide" | "call", FollowUp[]> = {
   guide: [
     {
       when: "t+0 min",
-      text: "Correo automático con la Guía Pop-Up PDF y botón de reserva.",
+      text: "Correo automático con la Guía de Islas Comerciales PDF y botón de reserva.",
     },
     {
       when: "Día 2",
-      text: 'Recordatorio si no reservó: "¿Aún te interesa el espacio pop-up?"',
+      text: 'Recordatorio si no reservó: "¿Aún te interesa la isla comercial en La Gran Vía?"',
     },
     {
       when: "Día 5",
@@ -75,7 +75,7 @@ export const FOLLOW_UPS: Record<"guide" | "call", FollowUp[]> = {
   ],
 };
 
-/** The three pre-approved sections inside the pop-up PDF. */
+/** The three pre-approved sections inside the commercial island PDF guide. */
 export const GUIDE_CONTENTS = [
   {
     n: "01",
@@ -105,7 +105,7 @@ export const PROFILE_FIELDS = [
 ];
 
 export const GUIDE_PDF = {
-  filename: "Guía_PopUp_LaGranVia.pdf",
+  filename: "Guia_IslasComerciales_LaGranVia.pdf",
   meta: "Requisitos físicos · Seguro · Precios · 8 págs",
 } as const;
 

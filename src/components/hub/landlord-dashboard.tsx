@@ -121,7 +121,7 @@ export function LandlordDashboard() {
               <span className="font-mono text-[10px] sm:text-xs font-semibold text-pine">+2.4% vs '25</span>
             </div>
             <p className="mt-1 text-[10.5px] sm:text-[12px] text-ink-500 hidden sm:block">
-              79 Locales · 3 Pop-Ups · 2 Vacantes
+              79 Locales · 3 Islas Comerciales · 2 Vacantes
             </p>
           </button>
 
@@ -293,7 +293,7 @@ export function LandlordDashboard() {
 
                 <div>
                   <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span className="text-ink-700">Espacios Pop-Up Flexibles</span>
+                    <span className="text-ink-700">Islas & Kioscos Comerciales</span>
                     <span className="text-pine">6% (5)</span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-sand-200">

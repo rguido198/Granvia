@@ -76,7 +76,7 @@ export function LeasingExperience() {
             </p>
             <p className="text-sm text-ink-700">
               {state.branch === "guide"
-                ? "Revisa tu correo: la Guía Pop-Up y el enlace para reservar tu espacio van en camino."
+                ? "Revisa tu correo: la Guía de Islas Comerciales y el enlace para reservar tu espacio van en camino."
                 : "Revisa tu correo: te enviamos el enlace para agendar tu llamada y completar el perfil de tu negocio."}
             </p>
             <p className="mt-3 text-xs text-ink-400">
