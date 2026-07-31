@@ -11,12 +11,29 @@ function pdfEscape(text: string): string {
   return text.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 
+/**
+ * Typographic punctuation Spanish prose actually uses (em/en dash, curly
+ * quotes, ellipsis) sits outside Latin-1's 0–255 range as Unicode code
+ * points, even though WinAnsiEncoding — which the font dict declares —
+ * assigns them real single-byte slots. Map the common ones explicitly so
+ * they render instead of silently becoming "?".
+ */
+const WIN_ANSI_OVERRIDES: Record<number, number> = {
+  0x2013: 0x96, // –
+  0x2014: 0x97, // —
+  0x2018: 0x91, // '
+  0x2019: 0x92, // '
+  0x201c: 0x93, // "
+  0x201d: 0x94, // "
+  0x2026: 0x85, // …
+};
+
 /** PDF string literals are raw bytes; this maps the JS string 1:1 onto Latin-1/WinAnsi. */
 function latin1Bytes(str: string): Uint8Array {
   const bytes = new Uint8Array(str.length);
   for (let i = 0; i < str.length; i++) {
     const code = str.charCodeAt(i);
-    bytes[i] = code <= 0xff ? code : 0x3f;
+    bytes[i] = code <= 0xff ? code : (WIN_ANSI_OVERRIDES[code] ?? 0x3f);
   }
   return bytes;
 }
