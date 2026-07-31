@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   AI_TERMINAL_STEPS,
   EXCLUSIVE_USE_CLAUSES,
+  SCORING_RULES,
   type BusinessCategory,
   type LeaseKey,
 } from "@/content/leasing";
@@ -24,12 +25,12 @@ function evaluate(giro: BusinessCategory, metros: number, duracion: LeaseKey): O
   const clause = EXCLUSIVE_USE_CLAUSES[giro];
   if (clause) return { kind: "conflict", tenant: clause.tenant, local: clause.local };
 
-  let score = 70;
-  if (giro === "Restaurante / Gastronomía") score += 14;
-  if (giro === "Salud & Bienestar") score += 10;
-  if (metros >= 80 && metros <= 180) score += 8;
-  if (duracion !== "short") score += 6;
-  return { kind: "match", score: Math.min(score, 96) };
+  const { base, categoryBonus, metrosBonus, nonShortDurationBonus, cap } = SCORING_RULES;
+  let score = base;
+  score += categoryBonus[giro] ?? 0;
+  if (metros >= metrosBonus.min && metros <= metrosBonus.max) score += metrosBonus.amount;
+  if (duracion !== "short") score += nonShortDurationBonus;
+  return { kind: "match", score: Math.min(score, cap) };
 }
 
 function downloadGuidelines(giro: BusinessCategory, tenant: string, local: string) {

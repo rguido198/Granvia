@@ -129,6 +129,25 @@ export const AI_TERMINAL_STEPS = [
   "Confirmando que el espacio y el giro sean compatibles…",
 ] as const;
 
+/**
+ * Match-score rules for giros sin conflicto de exclusividad.
+ *
+ * Keyed off `BUSINESS_CATEGORIES`, not string-literal `if`s in the
+ * component — a giro missing from `categoryBonus` just gets no bonus
+ * (correct, boring default) instead of the component silently failing to
+ * recognize a category it was never told about.
+ */
+export const SCORING_RULES = {
+  base: 70,
+  categoryBonus: {
+    "Restaurante / Gastronomía": 14,
+    "Salud & Bienestar": 10,
+  } as Partial<Record<BusinessCategory, number>>,
+  metrosBonus: { min: 80, max: 180, amount: 8 },
+  nonShortDurationBonus: 6,
+  cap: 96,
+} as const;
+
 export const LEASING_HERO = {
   kicker: "CRECE TU NEGOCIO",
   title: "El lugar donde tu marca encuentra a su gente.",
