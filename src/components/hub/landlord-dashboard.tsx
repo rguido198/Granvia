@@ -321,7 +321,7 @@ export function LandlordDashboard() {
                 <li className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <div>
                     <span className="font-semibold text-ink block text-sm">Bodega 8</span>
-                    <span className="text-ink-400">Restaurante & Bar · Local A-04</span>
+                    <span className="text-ink-400">Restaurante &amp; Bar</span>
                   </div>
                   <div>
                     <span className="inline-block rounded bg-pine/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-pine">

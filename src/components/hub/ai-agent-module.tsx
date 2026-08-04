@@ -182,7 +182,7 @@ export function AiAgentModule() {
                   📱 <strong>Inquilino (WhatsApp):</strong> &ldquo;Hola, el aire acondicionado del Local A-04 no enfría.&rdquo;
                 </div>
                 <div className="text-pine bg-pine/10 p-2 rounded">
-                  🤖 <strong>Agente IA:</strong> &ldquo;Entendido, Local A-04 (Bodega 8). Verifiqué disponibilidad en ERP y asigné a Carlos R. (Climas). Llegada estimada: 25 min. Ticket #INC-402 registrado.&rdquo;
+                  🤖 <strong>Agente IA:</strong> &ldquo;Entendido, Local A-04 (MINT Boutique). Verifiqué disponibilidad en ERP y asigné a Carlos R. (Climas). Llegada estimada: 25 min. Ticket #INC-402 registrado.&rdquo;
                 </div>
               </div>
             )}
@@ -257,7 +257,7 @@ export function AiAgentModule() {
             {activeDemo === "renewal" && (
               <div className="mt-3 rounded-md bg-sand-200 p-3 text-[11px] space-y-2 border border-hairline font-mono">
                 <div className="text-ink-700 bg-sand-50 p-2 rounded">
-                  🔍 <strong>Análisis de Local A-04 (Bodega 8):</strong> Vence en Oct 2026. Ventas +14% YoY. Effort Rate: 7.9% (Muy Saludable).
+                  🔍 <strong>Análisis de Bodega 8 (Restaurante &amp; Bar):</strong> Vence en Oct 2026. Ventas +14% YoY. Effort Rate: 7.9% (Muy Saludable).
                 </div>
                 <div className="text-amber-800 bg-gold/15 p-2 rounded">
                   🤖 <strong>Recomendación IA:</strong> &ldquo;Ofrecer renovación a 3 años con +5.5% en renta base. Borrador de contrato generado para revisión del propietario.&rdquo;

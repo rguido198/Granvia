@@ -55,19 +55,32 @@ export const HUB_ACTIONS: HubAction[] = [
   },
 ];
 
-/** Line items on the tenant's NNN / CAM operating-expense ledger — demo data. */
+/**
+ * Line items on the tenant's NNN / CAM operating-expense ledger — demo data.
+ *
+ * `plazaMonthly` is what the plaza pays that provider; `tenantShare` is Local
+ * A-04's slice of it, at its 145 / 7,550 m² pro-rata share.
+ */
 export type CamLineItem = {
   concept: string;
   provider: string;
-  monthly: number;
+  plazaMonthly: number;
+  tenantShare: number;
 };
 
+/**
+ * Reconciles to CAM_ALLOCATION: plazaMonthly sums to its invoiceTotal
+ * (268,500), and tenantShare sums to MINT Boutique's allocated 5,157 — the
+ * ledger itemizes exactly what that one number is made of. The 1-peso
+ * rounding residual sits on the largest line. Keep both totals tied if these
+ * figures are ever edited.
+ */
 export const CAM_LEDGER: CamLineItem[] = [
-  { concept: "Seguridad & Vigilancia", provider: "Grupo Custodia Fronteriza", monthly: 4850 },
-  { concept: "Recolección de Basura", provider: "Servicios Urbanos Mexicali", monthly: 1120 },
-  { concept: "Jardinería & Áreas Comunes", provider: "Verde Paisajismo", monthly: 1680 },
-  { concept: "Iluminación & Electricidad Común", provider: "CFE / Plaza", monthly: 2340 },
-  { concept: "Administración & Limpieza", provider: "Servicios Plaza", monthly: 1510 },
+  { concept: "Seguridad & Vigilancia", provider: "Grupo Custodia Fronteriza", plazaMonthly: 113237, tenantShare: 2176 },
+  { concept: "Recolección de Basura", provider: "Servicios Urbanos Mexicali", plazaMonthly: 26150, tenantShare: 502 },
+  { concept: "Jardinería & Áreas Comunes", provider: "Verde Paisajismo", plazaMonthly: 39224, tenantShare: 753 },
+  { concept: "Iluminación & Electricidad Común", provider: "CFE / Plaza", plazaMonthly: 54634, tenantShare: 1049 },
+  { concept: "Administración & Limpieza", provider: "Servicios Plaza", plazaMonthly: 35255, tenantShare: 677 },
 ];
 
 /** Scripted exchange for the AC-malfunction ticket simulator. */
