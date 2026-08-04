@@ -105,12 +105,16 @@ export type CamAllocationRow = { tenant: string; sqm: number; share: number; amo
 export const CAM_ALLOCATION = {
   invoiceLabel: "Recibo CFE + Seguridad + Mantenimiento — Julio 2026",
   invoiceTotal: 268500,
+  // Shares and amounts are derived from sqm / 7,550 m² total, at full precision.
+  // Invariants: shares sum to exactly 1.000 and amounts sum to exactly
+  // invoiceTotal. The 1-peso rounding residual is assigned to the largest-GLA
+  // row. Keep both invariants intact if these figures are ever edited.
   rows: [
-    { tenant: "Ashley Furniture", sqm: 1450, share: 0.19, amount: 51015 },
-    { tenant: "Cinépolis VIP", sqm: 1180, share: 0.15, amount: 40275 },
-    { tenant: "MINT Boutique", sqm: 145, share: 0.02, amount: 5370 },
-    { tenant: "Derma Club", sqm: 95, share: 0.012, amount: 3222 },
-    { tenant: "Resto de la plaza (75 locales)", sqm: 4680, share: 0.618, amount: 165618 },
+    { tenant: "Ashley Furniture", sqm: 1450, share: 0.192, amount: 51566 },
+    { tenant: "Cinépolis VIP", sqm: 1180, share: 0.156, amount: 41964 },
+    { tenant: "MINT Boutique", sqm: 145, share: 0.019, amount: 5157 },
+    { tenant: "Derma Club", sqm: 95, share: 0.013, amount: 3378 },
+    { tenant: "Resto de la plaza (75 locales)", sqm: 4680, share: 0.620, amount: 166435 },
   ] as CamAllocationRow[],
 } as const;
 
