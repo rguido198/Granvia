@@ -345,7 +345,7 @@ export function LandlordDashboard() {
             </button>
             <button
               onClick={() => setActiveTab("saari")}
-              className="px-3.5 py-2 bg-terra hover:bg-terra-dark text-sand-100 font-semibold text-xs rounded-sm shadow-xs cursor-pointer transition-all"
+              className="px-3.5 py-2 bg-dune-900 hover:bg-dune-800 text-sand-100 font-semibold text-xs rounded-sm shadow-xs cursor-pointer transition-all border border-dune-800"
             >
               Sincronizar SAARI →
             </button>
@@ -424,9 +424,9 @@ export function LandlordDashboard() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => alert("Simulación: en producción esto sincronizaría el estado de pagos con SAARI ERP para los 85 locales. Datos de esta demo son ilustrativos.")}
-                    className="px-3.5 py-1.5 bg-terra hover:bg-terra-dark text-sand-100 font-bold text-xs rounded-sm shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
+                    className="px-3.5 py-1.5 bg-dune-900 hover:bg-dune-800 text-sand-100 font-bold text-xs rounded-sm shadow-xs cursor-pointer flex items-center gap-1.5 transition-all border border-dune-800"
                   >
-                    <span>Sincronizar Pagos desde SAARI ERP</span>
+                    <span>🔄 Sincronizar Pagos desde SAARI ERP</span>
                   </button>
                 </div>
               </div>
@@ -958,7 +958,7 @@ export function LandlordDashboard() {
                     </button>
                     <button
                       onClick={() => setAttorneySent(true)}
-                      className="px-3.5 py-1.5 bg-dune-900 hover:bg-dune-800 text-sand-100 font-semibold text-xs rounded-xs transition-all cursor-pointer shadow-xs"
+                      className="px-3.5 py-1.5 bg-dune-900 hover:bg-dune-800 text-sand-100 font-semibold text-xs rounded-xs transition-all cursor-pointer shadow-xs border border-dune-800"
                     >
                       Escalar a Lic. Ramírez (Abogado)
                     </button>
@@ -1425,9 +1425,9 @@ export function LandlordDashboard() {
                     </button>
                     <button
                       onClick={() => setDiegoNotificationSent(true)}
-                      className="px-3.5 py-1.5 bg-terra hover:bg-terra-dark text-sand-100 font-bold text-xs rounded-xs transition-all cursor-pointer shadow-xs"
+                      className="px-3.5 py-1.5 bg-dune-900 hover:bg-dune-800 text-sand-100 font-bold text-xs rounded-xs transition-all cursor-pointer shadow-xs border border-dune-800"
                     >
-                      Notificar Resolución Técnica
+                      ✉️ Notificar Resolución Técnica
                     </button>
                   </div>
                 </div>
@@ -1845,7 +1845,7 @@ export function LandlordDashboard() {
                       <span>✓ Complemento de Pago Timbrado con Éxito ante el SAT (PAC ID #9982)</span>
                       <span className="text-[10px] font-normal text-ink-400 font-sans">UUID: 4A8B9C20-8842-491A-8821</span>
                     </div>
-                    <pre className="bg-sand-100 border border-hairline p-3.5 rounded-xs text-[10px] text-ink-700 font-mono overflow-x-auto">
+                    <pre className="bg-sand-100 border border-hairline p-3.5 rounded-xs text-ink-700 font-mono text-[10px] overflow-x-auto">
 {`<cfdi:Comprobante Version="4.0" TipoDeComprobante="P" Moneda="XXX">
   <cfdi:Receptor Rfc="MBO180412HV9" Nombre="MINT BOUTIQUE S.A. DE C.V." RegimenFiscalReceptor="601"/>
   <pago20:Pagos Version="2.0">
@@ -2115,11 +2115,11 @@ export function LandlordDashboard() {
                   }}
                   className={`px-4 py-2 rounded-xs font-bold text-xs transition-all cursor-pointer font-sans ${
                     saariDirection === "inbound"
-                      ? "bg-terra text-sand-100 shadow-xs"
+                      ? "bg-dune-900 text-sand-100 shadow-xs border border-dune-800"
                       : "bg-sand-200/70 text-ink-700 hover:bg-sand-200"
                   }`}
                 >
-                  ENTRADAS (Ingestión de Auxiliares de SAARI)
+                  📥 ENTRADAS (Ingestión de Auxiliares de SAARI)
                 </button>
                 <button
                   onClick={() => {
@@ -2173,7 +2173,7 @@ export function LandlordDashboard() {
                 <div className="pt-2 flex justify-end">
                   <button
                     onClick={() => setSaariProcessed(true)}
-                    className="px-4 py-2 bg-terra hover:bg-terra-dark text-sand-100 font-bold text-xs rounded-xs transition-all cursor-pointer shadow-xs font-sans"
+                    className="px-4 py-2 bg-dune-900 hover:bg-dune-800 text-sand-100 font-bold text-xs rounded-xs transition-all cursor-pointer shadow-xs font-sans border border-dune-800"
                   >
                     {saariDirection === "inbound" ? "Procesar Lectura Entradas SAARI →" : "Descargar Archivo Lote Salidas SAARI →"}
                   </button>
