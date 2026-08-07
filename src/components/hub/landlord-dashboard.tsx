@@ -197,15 +197,15 @@ export function LandlordDashboard() {
                 className="h-12 w-auto object-contain"
               />
             </Link>
-            <div className="mt-2.5 pt-2 border-t border-hairline flex items-center justify-between font-mono text-[10px] text-ink-400">
+            <div className="mt-2.5 pt-2 border-t border-hairline flex items-center justify-between font-sans text-[10px] text-ink-400">
               <span>TORRE DE CONTROL AI</span>
-              <span className="font-semibold text-terra font-mono">7,550 m² GLA</span>
+              <span className="font-semibold text-terra font-sans">7,550 m² GLA</span>
             </div>
           </div>
 
           {/* Menú de Navegación Principal */}
           <nav className="space-y-1.5">
-            <span className="px-2 font-mono text-[10px] font-bold text-ink-400 uppercase tracking-widest block mb-2">
+            <span className="px-2 font-sans text-[10px] font-bold text-ink-400 uppercase tracking-widest block mb-2">
               Consola Operativa
             </span>
 
@@ -237,7 +237,7 @@ export function LandlordDashboard() {
                 </svg>
                 <span className="truncate">Arrendamiento (Mariana)</span>
               </div>
-              <span className="px-1.5 py-0.5 rounded-xs bg-pine/15 text-pine font-mono text-[9.5px] font-bold shrink-0">
+              <span className="px-1.5 py-0.5 rounded-xs bg-pine/15 text-pine font-sans text-[9.5px] font-bold shrink-0">
                 RAG
               </span>
             </button>
@@ -256,7 +256,7 @@ export function LandlordDashboard() {
                 </svg>
                 <span className="truncate">CapEx & Gastos (Diego)</span>
               </div>
-              <span className="px-1.5 py-0.5 rounded-xs bg-gold/15 text-gold font-mono text-[9.5px] font-bold shrink-0">
+              <span className="px-1.5 py-0.5 rounded-xs bg-gold/15 text-gold font-sans text-[9.5px] font-bold shrink-0">
                 CapEx
               </span>
             </button>
@@ -275,7 +275,7 @@ export function LandlordDashboard() {
                 </svg>
                 <span className="truncate">CAM & Fiscal SAT (Renata)</span>
               </div>
-              <span className="px-1.5 py-0.5 rounded-xs bg-terra/15 text-terra font-mono text-[9.5px] font-bold shrink-0">
+              <span className="px-1.5 py-0.5 rounded-xs bg-terra/15 text-terra font-sans text-[9.5px] font-bold shrink-0">
                 SAT
               </span>
             </button>
@@ -294,7 +294,7 @@ export function LandlordDashboard() {
                 </svg>
                 <span className="truncate">SAARI ERP (Conector)</span>
               </div>
-              <span className="px-1.5 py-0.5 rounded-xs bg-pine/15 text-pine font-mono text-[9.5px] font-bold shrink-0">
+              <span className="px-1.5 py-0.5 rounded-xs bg-pine/15 text-pine font-sans text-[9.5px] font-bold shrink-0">
                 ERP
               </span>
             </button>
@@ -306,7 +306,7 @@ export function LandlordDashboard() {
           <div className="flex items-center justify-between px-1">
             <div>
               <span className="block font-semibold text-xs text-ink font-display">Sr. Martín</span>
-              <span className="block text-[10px] text-ink-400 font-mono">Director de Operaciones</span>
+              <span className="block text-[10px] text-ink-400 font-sans">Director de Operaciones</span>
             </div>
             <span className="h-2 w-2 rounded-full bg-pine animate-pulse" />
           </div>
@@ -318,11 +318,14 @@ export function LandlordDashboard() {
         {/* Encabezado Superior Elegante */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-hairline-strong pb-5">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-xs bg-pine/10 text-pine border border-pine/30 font-mono text-[10px] font-bold uppercase tracking-wider">
-                🟢 OPERACIÓN AL DÍA
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2 py-0.5 rounded-xs bg-pine/10 text-pine border border-pine/30 font-sans text-[10px] font-bold uppercase tracking-wider">
+                OPERACIÓN AL DÍA
               </span>
-              <span className="text-xs text-ink-400 font-mono">| La Gran Vía Mexicali</span>
+              <span className="px-2 py-0.5 rounded-xs bg-gold/15 text-gold border border-gold/40 font-sans text-[10px] font-bold uppercase tracking-wider">
+                PROTOTIPO — DATOS ILUSTRATIVOS PARA DEMOSTRACIÓN
+              </span>
+              <span className="text-xs text-ink-400 font-sans">| La Gran Vía Mexicali</span>
             </div>
             <h1 className="text-2xl font-bold font-display text-ink mt-1 tracking-tight">
               {activeTab === "overview" && `Resumen Consolidado del Rent Roll (${TENANTS.length} Locales Activos)`}
@@ -355,49 +358,49 @@ export function LandlordDashboard() {
             {/* Banner de Tarjetas KPI Estilo La Gran Vía */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-sand-50 border border-hairline rounded-sm p-4.5 shadow-2xs">
-                <span className="text-[10px] font-mono font-bold text-ink-400 uppercase tracking-widest block">
+                <span className="text-[10px] font-sans font-bold text-ink-400 uppercase tracking-widest block">
                   Cobranza Mensual Renta
                 </span>
                 <span className="text-2xl font-bold font-display text-ink mt-1 block">
                   $3,145,000 MXN
                 </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-mono">
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-sans">
                   ✓ 98.2% Al Día (Julio 2026)
                 </span>
               </div>
 
               <div className="bg-sand-50 border border-hairline rounded-sm p-4.5 shadow-2xs">
-                <span className="text-[10px] font-mono font-bold text-ink-400 uppercase tracking-widest block">
+                <span className="text-[10px] font-sans font-bold text-ink-400 uppercase tracking-widest block">
                   Superficie Rentable (GLA)
                 </span>
                 <span className="text-2xl font-bold font-display text-ink mt-1 block">
                   94.1% Ocupado
                 </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-mono">
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-sans">
                   {totalOccupiedSqm.toLocaleString()} m² Rentados ({vacancySqm} m² Vacantes)
                 </span>
               </div>
 
               <div className="bg-sand-50 border border-hairline rounded-sm p-4.5 shadow-2xs">
-                <span className="text-[10px] font-mono font-bold text-ink-400 uppercase tracking-widest block">
+                <span className="text-[10px] font-sans font-bold text-ink-400 uppercase tracking-widest block">
                   Invariante Prorrateo CAM
                 </span>
                 <span className="text-2xl font-bold font-display text-terra mt-1 block">
                   1.0000 Balance
                 </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-terra/10 text-terra text-[11px] font-medium font-mono">
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-terra/10 text-terra text-[11px] font-medium font-sans">
                   Sumatoria Exacta NNN
                 </span>
               </div>
 
               <div className="bg-sand-50 border border-hairline rounded-sm p-4.5 shadow-2xs">
-                <span className="text-[10px] font-mono font-bold text-ink-400 uppercase tracking-widest block">
+                <span className="text-[10px] font-sans font-bold text-ink-400 uppercase tracking-widest block">
                   Gasto Dudoso Rechazado
                 </span>
                 <span className="text-2xl font-bold font-display text-pine mt-1 block">
                   $78,000 MXN
                 </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-mono">
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-sans">
                   Ahorro Directo Propietario
                 </span>
               </div>
@@ -409,21 +412,21 @@ export function LandlordDashboard() {
                 <div>
                   <h3 className="font-bold text-sm font-display text-ink flex items-center gap-2">
                     <span>Rent Roll Matriz Consolidada ({TENANTS.length} Locales Activos + Vacancia)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-mono text-[10px] font-bold">
-                      🔄 SAARI SYNC ACTIVO
+                    <span className="px-2 py-0.5 rounded-xs bg-gold/20 text-gold font-sans text-[10px] font-bold">
+                      SIMULACIÓN SAARI (PROTOTIPO)
                     </span>
                   </h3>
                   <p className="text-xs text-ink-500 font-sans">
-                    Sincronización en tiempo real: los auxiliares de cobranza de SAARI ERP actualizan automáticamente los estatus de pago de la plaza.
+                    Vista de prototipo: en producción, los auxiliares de cobranza de SAARI ERP actualizarían automáticamente los estatus de pago de la plaza. Los valores mostrados aquí son ilustrativos.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => alert("Sincronizando estado de pagos en vivo con SAARI ERP... 85 locales actualizados.")}
+                    onClick={() => alert("Simulación: en producción esto sincronizaría el estado de pagos con SAARI ERP para los 85 locales. Datos de esta demo son ilustrativos.")}
                     className="px-3.5 py-1.5 bg-terra hover:bg-terra-dark text-sand-100 font-bold text-xs rounded-sm shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
                   >
-                    <span>🔄 Sincronizar Pagos desde SAARI ERP</span>
+                    <span>Sincronizar Pagos desde SAARI ERP</span>
                   </button>
                 </div>
               </div>
@@ -431,7 +434,7 @@ export function LandlordDashboard() {
               <div className="overflow-x-auto border border-hairline rounded-xs">
                 <table className="w-full text-left text-xs border-collapse relative">
                   <thead>
-                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-mono">
+                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-sans">
                       <th className="p-3 font-bold">#</th>
                       <th className="p-3 font-semibold">Local / Inquilino</th>
                       <th className="p-3 font-semibold">Zona</th>
@@ -455,20 +458,20 @@ export function LandlordDashboard() {
 
                       return (
                         <tr key={t.slug} className="hover:bg-sand-200/40 transition-colors">
-                          <td className="p-3 font-mono text-ink-400 text-[11px]">{idx + 1}</td>
+                          <td className="p-3 font-sans text-ink-400 text-[11px]">{idx + 1}</td>
                           <td className="p-3 font-bold text-ink font-sans">{t.name}</td>
-                          <td className="p-3 text-ink-500 font-mono text-[11px]">{t.zone}</td>
+                          <td className="p-3 text-ink-500 font-sans text-[11px]">{t.zone}</td>
                           <td className="p-3 text-ink-700">{t.tag}</td>
-                          <td className="p-3 text-right font-mono font-bold text-ink">{sqm} m²</td>
-                          <td className="p-3 text-right font-mono font-bold text-terra">{sharePct}%</td>
-                          <td className="p-3 text-right font-mono font-bold text-ink">${estRent.toLocaleString()}</td>
+                          <td className="p-3 text-right font-sans font-bold text-ink">{sqm} m²</td>
+                          <td className="p-3 text-right font-sans font-bold text-terra">{sharePct}%</td>
+                          <td className="p-3 text-right font-sans font-bold text-ink">${estRent.toLocaleString()}</td>
                           <td className="p-3">
                             {isSatError ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-red-100 text-red-900 text-[10px] font-bold font-mono">
-                                ⚠️ Error Fiscal SAT (Pago sin PPD)
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-red-100 text-red-900 text-[10px] font-bold font-sans">
+                                Error Fiscal SAT (Pago sin PPD)
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                                 ✓ Al Día (CFDI Emitido)
                               </span>
                             )}
@@ -478,7 +481,7 @@ export function LandlordDashboard() {
                             {isCapexRejection && <span className="text-gold font-bold text-[11px]">CapEx $78k Rechazado ($0)</span>}
                             {isExclusivityHold && <span className="text-pine font-bold text-[11px]">Cláusula Exclusividad Activa</span>}
                             {!isSatError && !isCapexRejection && !isExclusivityHold && (
-                              <span className="text-ink-400 font-mono text-[11px]">Protección Agente IA</span>
+                              <span className="text-ink-400 font-sans text-[11px]">Protección Agente IA</span>
                             )}
                           </td>
                         </tr>
@@ -486,71 +489,148 @@ export function LandlordDashboard() {
                     })}
 
                     <tr className="bg-sand-200/80 font-semibold border-t-2 border-hairline-strong">
-                      <td className="p-3 font-mono text-ink-400">-</td>
+                      <td className="p-3 font-sans text-ink-400">-</td>
                       <td className="p-3 font-bold text-ink font-display">Absorbente Vacancia Plaza (2 Locales)</td>
-                      <td className="p-3 text-ink-500 font-mono">Zona 4 / Zona 9</td>
+                      <td className="p-3 text-ink-500 font-sans">Zona 4 / Zona 9</td>
                       <td className="p-3 text-ink-500">Locales Vacantes (A-04 & B-09)</td>
-                      <td className="p-3 text-right font-mono font-bold text-ink">{vacancySqm} m²</td>
-                      <td className="p-3 text-right font-mono font-bold text-ink">
+                      <td className="p-3 text-right font-sans font-bold text-ink">{vacancySqm} m²</td>
+                      <td className="p-3 text-right font-sans font-bold text-ink">
                         {((vacancySqm / plazaTotalGla) * 100).toFixed(2)}%
                       </td>
-                      <td className="p-3 text-right font-mono text-ink-400">$0</td>
+                      <td className="p-3 text-right font-sans text-ink-400">$0</td>
                       <td className="p-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-sand-300 text-ink text-[10px] font-mono">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-sand-300 text-ink text-[10px] font-sans">
                           Absorbido por Propietario
                         </span>
                       </td>
-                      <td className="p-3 text-ink-500 font-mono text-[11px]">Cuadra Balance Invariante a 1.0000</td>
+                      <td className="p-3 text-ink-500 font-sans text-[11px]">Cuadra Balance Invariante a 1.0000</td>
                     </tr>
                   </tbody>
                   <tfoot className="bg-dune-900 text-sand-100 font-bold text-xs shadow-md">
                     <tr>
-                      <td className="p-3 font-mono">TOTAL</td>
-                      <td className="p-3 font-mono text-dune-200 font-bold" colSpan={3}>
+                      <td className="p-3 font-sans">TOTAL</td>
+                      <td className="p-3 font-sans text-dune-200 font-bold" colSpan={3}>
                         PLAZA LA GRAN VÍA ({TENANTS.length} LOCALES ACTIVOS + VACANTES)
                       </td>
-                      <td className="p-3 text-right font-mono text-gold font-bold">{plazaTotalGla.toLocaleString()} m²</td>
-                      <td className="p-3 text-right font-mono text-terra font-bold">1.0000 (100.00%)</td>
-                      <td className="p-3 text-right font-mono text-gold font-bold">$3,145,000 MXN</td>
-                      <td className="p-3 text-dune-300 font-mono" colSpan={2}>94.1% Ocupación Activa · Balance Cuadrado</td>
+                      <td className="p-3 text-right font-sans text-gold font-bold">{plazaTotalGla.toLocaleString()} m²</td>
+                      <td className="p-3 text-right font-sans text-terra font-bold">1.0000 (100.00%)</td>
+                      <td className="p-3 text-right font-sans text-gold font-bold">$3,145,000 MXN</td>
+                      <td className="p-3 text-dune-300 font-sans" colSpan={2}>94.1% Ocupación Activa · Balance Cuadrado</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
 
-              {/* PANEL RESUMEN EJECUTIVO ESTILO DUNE LA GRAN VÍA */}
-              <div className="bg-dune-900 text-sand-100 rounded-sm p-5 space-y-4 font-mono text-xs shadow-md border border-dune-800">
-                <div className="flex items-center justify-between border-b border-dune-800 pb-3">
-                  <span className="text-gold font-bold flex items-center gap-2 font-display text-sm tracking-wide">
-                    <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
-                    RESUMEN EJECUTIVO DE COBERTURA OPERATIVA & AUDITORÍA CONTÍNUA
+              {/* PANEL RESUMEN EJECUTIVO ESTILO LA GRAN VÍA */}
+              <div className="bg-sand-50 rounded-sm p-5 space-y-4 text-xs shadow-2xs border border-hairline">
+                <div className="flex items-center justify-between border-b border-hairline pb-3">
+                  <span className="text-ink font-bold flex items-center gap-2 font-display text-sm tracking-wide">
+                    <span className="h-2 w-2 rounded-full bg-gold" />
+                    Resumen Ejecutivo de Cobertura Operativa & Auditoría Contínua
                   </span>
-                  <span className="text-[10px] text-dune-300">LA GRAN VÍA MEXICALI</span>
+                  <span className="text-[10px] text-ink-400 font-sans uppercase tracking-wider">La Gran Vía Mexicali</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-[11px]">
-                  <div className="bg-dune-800 p-3.5 rounded-xs border border-dune-800">
-                    <span className="text-dune-300 block text-[10px] mb-1">CUMPLIMIENTO FISCAL SAT:</span>
-                    <span className="text-sand-100 font-bold block text-sm font-display">84 / 85 VALIDADOS</span>
-                    <span className="text-dune-300 text-[10px] mt-1 block">1 Alerta CFDI PPD/PUE emitida</span>
+                  <div className="bg-sand-100 p-3.5 rounded-xs border border-hairline">
+                    <span className="text-ink-400 block text-[10px] mb-1 font-sans">Cumplimiento Fiscal SAT</span>
+                    <span className="text-ink font-bold block text-sm font-display">84 / 85 Validados</span>
+                    <span className="text-ink-400 text-[10px] mt-1 block font-sans">1 alerta CFDI PPD/PUE emitida</span>
                   </div>
 
-                  <div className="bg-dune-800 p-3.5 rounded-xs border border-dune-800">
-                    <span className="text-dune-300 block text-[10px] mb-1">PROTECCIÓN EXCLUSIVIDADES:</span>
-                    <span className="text-terra font-bold block text-sm font-display">14 CLÁUSULAS ACTIVAS</span>
-                    <span className="text-dune-300 text-[10px] mt-1 block">0 Demandas por incumplimiento</span>
+                  <div className="bg-sand-100 p-3.5 rounded-xs border border-hairline">
+                    <span className="text-ink-400 block text-[10px] mb-1 font-sans">Protección Exclusividades</span>
+                    <span className="text-terra font-bold block text-sm font-display">14 Cláusulas Activas</span>
+                    <span className="text-ink-400 text-[10px] mt-1 block font-sans">0 demandas por incumplimiento</span>
                   </div>
 
-                  <div className="bg-dune-800 p-3.5 rounded-xs border border-dune-800">
-                    <span className="text-dune-300 block text-[10px] mb-1">RECLAMO DE GARANTÍAS ($0):</span>
-                    <span className="text-gold font-bold block text-sm font-display">$145,000 MXN RECUPERADOS</span>
-                    <span className="text-dune-300 text-[10px] mt-1 block">Carrier HVAC garantía activa</span>
+                  <div className="bg-sand-100 p-3.5 rounded-xs border border-hairline">
+                    <span className="text-ink-400 block text-[10px] mb-1 font-sans">Reclamo de Garantías ($0)</span>
+                    <span className="text-gold font-bold block text-sm font-display">$145,000 MXN Recuperados</span>
+                    <span className="text-ink-400 text-[10px] mt-1 block font-sans">Carrier HVAC garantía activa</span>
                   </div>
 
-                  <div className="bg-dune-800 p-3.5 rounded-xs border border-dune-800">
-                    <span className="text-dune-300 block text-[10px] mb-1">INTEGRACIÓN ERP SAARI:</span>
-                    <span className="text-sand-100 font-bold block text-sm font-display">100% SINCRONIZADO</span>
-                    <span className="text-dune-300 text-[10px] mt-1 block">Lote Batch listo para exportar</span>
+                  <div className="bg-sand-100 p-3.5 rounded-xs border border-hairline">
+                    <span className="text-ink-400 block text-[10px] mb-1 font-sans">Integración ERP SAARI</span>
+                    <span className="text-pine font-bold block text-sm font-display">100% Simulado</span>
+                    <span className="text-ink-400 text-[10px] mt-1 block font-sans">Lote batch listo para exportar (prototipo)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* PANEL DE ACCIONES RECOMENDADAS — INMEDIATO / CORTO PLAZO / MEDIANO PLAZO */}
+              <div className="bg-sand-50 border border-hairline rounded-sm p-5 shadow-2xs space-y-4">
+                <div className="border-b border-hairline pb-3">
+                  <h4 className="font-bold text-xs font-display text-ink uppercase tracking-wider">
+                    Acciones Recomendadas
+                  </h4>
+                  <p className="text-xs text-ink-500 font-sans">
+                    Síntesis de los casos abiertos en Mariana, Diego y Renata — organizadas por urgencia, con responsable asignado.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
+                    <div className="flex items-center justify-between border-b border-hairline pb-2">
+                      <span className="font-bold text-xs font-display text-ink">Inmediato</span>
+                      <span className="px-2 py-0.5 rounded-xs bg-red-100 text-red-900 text-[10px] font-bold font-sans">
+                        &lt; 5 DÍAS
+                      </span>
+                    </div>
+                    <ul className="space-y-2.5 text-[11px] text-ink-700 font-sans">
+                      <li>
+                        <span className="font-bold text-ink block">Timbrar Complemento de Pago SAT — MINT Boutique (B-12)</span>
+                        Discrepancia PPD/PUE detectada; previene multa de $12,500 MXN antes del cierre de mes.
+                        <span className="block text-terra font-sans text-[10px] mt-0.5">Responsable: Administración (Renata)</span>
+                      </li>
+                      <li>
+                        <span className="font-bold text-ink block">Enviar dictamen formal a Starbucks Reserve y Krispy Kreme</span>
+                        Tras validación del Lic. Ramírez, notificar el rechazo por conflicto de exclusividad (Cláusulas #14 y #08).
+                        <span className="block text-terra font-sans text-[10px] mt-0.5">Responsable: Legal / Arrendamiento (Mariana)</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
+                    <div className="flex items-center justify-between border-b border-hairline pb-2">
+                      <span className="font-bold text-xs font-display text-ink">Corto Plazo</span>
+                      <span className="px-2 py-0.5 rounded-xs bg-gold/20 text-gold text-[10px] font-bold font-sans">
+                        2–6 SEMANAS
+                      </span>
+                    </div>
+                    <ul className="space-y-2.5 text-[11px] text-ink-700 font-sans">
+                      <li>
+                        <span className="font-bold text-ink block">Cerrar contrato condicionado — La Vicenta Tacos &amp; Parrilla</span>
+                        Confirmar por escrito la restricción de menú (sin ensaladas bowls como plato fuerte) antes de firmar; $1,150,000 MXN de renta nueva en juego.
+                        <span className="block text-terra font-sans text-[10px] mt-0.5">Responsable: Arrendamiento (Mariana)</span>
+                      </li>
+                      <li>
+                        <span className="font-bold text-ink block">Notificar rechazo de reembolso — Derma Club ($78,000 MXN)</span>
+                        Iluminación estética interior es responsabilidad del inquilino (Sección 12); comunicar la resolución técnica.
+                        <span className="block text-terra font-sans text-[10px] mt-0.5">Responsable: Mantenimiento (Diego)</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
+                    <div className="flex items-center justify-between border-b border-hairline pb-2">
+                      <span className="font-bold text-xs font-display text-ink">Mediano Plazo</span>
+                      <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
+                        1–2 TRIMESTRES
+                      </span>
+                    </div>
+                    <ul className="space-y-2.5 text-[11px] text-ink-700 font-sans">
+                      <li>
+                        <span className="font-bold text-ink block">Arrendar vacancia remanente (445 m² / 5.89% del GLA)</span>
+                        Locales A-04 y B-09 vacantes; cada trimestre sin arrendar es renta absorbida por el propietario.
+                        <span className="block text-terra font-sans text-[10px] mt-0.5">Responsable: Arrendamiento (Mariana)</span>
+                      </li>
+                      <li>
+                        <span className="font-bold text-ink block">Revisar vigencia de pólizas de garantía de equipo crítico</span>
+                        Confirmar cobertura Carrier (vence Nov 2028), Schneider y Caterpillar antes de su vencimiento para mantener reclamos a $0 costo propietario.
+                        <span className="block text-terra font-sans text-[10px] mt-0.5">Responsable: Mantenimiento (Diego)</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
@@ -567,7 +647,7 @@ export function LandlordDashboard() {
                 <div>
                   <h3 className="font-bold text-sm font-display text-ink flex items-center gap-2">
                     <span>Módulo de Arrendamiento & Inteligencia Legal (Mariana)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine font-sans text-[10px] font-bold">
                       SOP §2A & GENERAL COUNSEL AI
                     </span>
                   </h3>
@@ -577,14 +657,14 @@ export function LandlordDashboard() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-mono text-[11px] font-bold">
+                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-sans text-[11px] font-bold">
                     85 CONTRATOS EN BÓVEDA RAG
                   </span>
                 </div>
               </div>
 
               {/* KPI Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-sans text-xs">
                 <div className="bg-sand-100 p-3 rounded-xs border border-hairline">
                   <span className="text-ink-400 text-[10px] uppercase font-semibold block">Solicitudes Evaluadas</span>
                   <span className="text-ink font-bold text-base mt-0.5 block font-display">3 Prospectos Auditados</span>
@@ -609,14 +689,14 @@ export function LandlordDashboard() {
                   </div>
                   <div>
                     <h4 className="font-bold text-xs font-display text-ink uppercase tracking-wider">
-                      💬 Asistente Legal RAG: Consulta Directa a Mariana
+                      Asistente Legal RAG: Consulta Directa a Mariana
                     </h4>
                     <p className="text-[11px] text-ink-500">
                       Haz cualquier pregunta sobre los 85 contratos, leyes de Baja California o políticas de la plaza.
                     </p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                   ● BÓVEDA INDEXADA RAG
                 </span>
               </div>
@@ -638,7 +718,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  ☕ ¿Por qué bloqueamos a Starbucks?
+                  ¿Por qué bloqueamos a Starbucks?
                 </button>
                 <button
                   onClick={() => {
@@ -655,7 +735,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  ⚖️ ¿Cómo aplica la Ley Antimonopolio (LFCE §3)?
+                  ¿Cómo aplica la Ley Antimonopolio (LFCE §3)?
                 </button>
                 <button
                   onClick={() => {
@@ -672,7 +752,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  📜 Reglas de Subarrendamiento
+                  Reglas de Subarrendamiento
                 </button>
               </div>
 
@@ -682,15 +762,15 @@ export function LandlordDashboard() {
                   <div key={i} className="bg-sand-100 p-4 rounded-xs border border-hairline space-y-2 text-xs">
                     <div className="flex items-center justify-between text-ink-500 font-medium">
                       <span>Pregunta: <strong className="text-ink font-sans">{item.query}</strong></span>
-                      <span className="text-[10px] font-mono text-pine">✓ Respuesta RAG Verificada</span>
+                      <span className="text-[10px] font-sans text-pine">✓ Respuesta RAG Verificada</span>
                     </div>
                     <p className="text-ink-700 leading-relaxed font-sans text-xs bg-sand-50 p-3 rounded-xs border border-hairline">
                       {item.answer}
                     </p>
                     {item.refPdf && (
-                      <div className="flex items-center justify-between text-[11px] text-ink-500 pt-1 font-mono">
+                      <div className="flex items-center justify-between text-[11px] text-ink-500 pt-1 font-sans">
                         <span className="flex items-center gap-1.5 text-pine font-semibold">
-                          📄 Documento Fuente: {item.refPdf} ({item.refClause})
+                          Documento Fuente: {item.refPdf} ({item.refClause})
                         </span>
                         <button
                           onClick={() => alert(`Descargando documento de referencia: ${item.refPdf}...`)}
@@ -764,10 +844,10 @@ export function LandlordDashboard() {
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-bold text-xs text-ink font-display">{app.brand}</span>
-                      <span className={`px-2 py-0.5 rounded-xs text-[10px] font-bold font-mono ${
+                      <span className={`px-2 py-0.5 rounded-xs text-[10px] font-bold font-sans ${
                         app.status === "RECHAZADO" ? "bg-red-100 text-red-900" : "bg-gold/20 text-gold"
                       }`}>
-                        {app.status === "RECHAZADO" ? "🚫 Rechazado" : "⚠️ Condicionado"}
+                        {app.status === "RECHAZADO" ? "Rechazado" : "Condicionado"}
                       </span>
                     </div>
                     <span className="text-xs text-ink-500 block truncate">{app.category}</span>
@@ -781,9 +861,9 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-5 space-y-4">
                   <div className="flex items-center justify-between border-b border-hairline pb-3">
                     <h4 className="font-bold text-xs font-display text-ink uppercase tracking-wider">
-                      📋 Solicitante Evaluado
+                      Solicitante Evaluado
                     </h4>
-                    <span className="px-2 py-0.5 rounded-xs bg-sand-200 text-ink-700 font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-xs bg-sand-200 text-ink-700 font-sans text-[10px] font-bold">
                       Expediente: {selectedLeasingApp.id}
                     </span>
                   </div>
@@ -799,13 +879,13 @@ export function LandlordDashboard() {
                     </div>
                     <div>
                       <span className="text-ink-400 block text-[11px] font-medium">Menú / Productos Solicitados:</span>
-                      <span className="font-mono text-ink bg-sand-50 p-3 rounded-xs border border-hairline block mt-1 leading-relaxed text-[11px]">
+                      <span className="font-sans text-ink bg-sand-50 p-3 rounded-xs border border-hairline block mt-1 leading-relaxed text-[11px]">
                         {selectedLeasingApp.menu}
                       </span>
                     </div>
                     <div className="flex justify-between border-t border-hairline pt-3 text-xs">
                       <span className="text-ink-400 font-medium">Superficie Solicitada:</span>
-                      <span className="font-mono font-bold text-ink">{selectedLeasingApp.sqm} m²</span>
+                      <span className="font-sans font-bold text-ink">{selectedLeasingApp.sqm} m²</span>
                     </div>
                   </div>
                 </div>
@@ -818,10 +898,10 @@ export function LandlordDashboard() {
                         <span className="h-2 w-2 rounded-full bg-pine" />
                         DICTAMEN LEGAL MARIANA AI
                       </span>
-                      <span className={`px-2.5 py-0.5 rounded-xs text-xs font-bold font-mono ${
+                      <span className={`px-2.5 py-0.5 rounded-xs text-xs font-bold font-sans ${
                         selectedLeasingApp.status === "RECHAZADO" ? "bg-red-100 text-red-900" : "bg-gold/20 text-gold"
                       }`}>
-                        {selectedLeasingApp.status === "RECHAZADO" ? "🚫 Bloqueado por Exclusividad" : "⚠️ Aprobación Condicionada"}
+                        {selectedLeasingApp.status === "RECHAZADO" ? "Bloqueado por Exclusividad" : "Aprobación Condicionada"}
                       </span>
                     </div>
 
@@ -836,7 +916,7 @@ export function LandlordDashboard() {
                     </div>
 
                     <div className="bg-sand-100 p-3 rounded-xs border border-hairline">
-                      <span className="text-ink-400 block text-[10px] font-semibold uppercase tracking-wider font-mono">
+                      <span className="text-ink-400 block text-[10px] font-semibold uppercase tracking-wider font-sans">
                         Análisis Cognitivo Mariana:
                       </span>
                       <p className="text-ink-700 text-xs leading-relaxed mt-1 font-sans">
@@ -856,14 +936,14 @@ export function LandlordDashboard() {
               <div className="bg-sand-50 border border-hairline rounded-sm p-5 space-y-4 shadow-2xs">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xs bg-terra/10 text-terra border border-terra/30 flex items-center justify-center font-bold text-xs font-mono">
+                    <div className="h-10 w-10 rounded-xs bg-terra/10 text-terra border border-terra/30 flex items-center justify-center font-bold text-xs font-sans">
                       PDF
                     </div>
                     <div>
                       <span className="font-bold text-xs text-ink block font-sans">
                         {selectedLeasingApp.contractPdfName}
                       </span>
-                      <span className="text-[11px] text-ink-400 font-mono">
+                      <span className="text-[11px] text-ink-400 font-sans">
                         Referencia Legal Extraída · {selectedLeasingApp.contractPdfPage}
                       </span>
                     </div>
@@ -874,13 +954,13 @@ export function LandlordDashboard() {
                       onClick={() => alert(`Descargando copia del contrato PDF: ${selectedLeasingApp.contractPdfName}...`)}
                       className="px-3 py-1.5 bg-sand-100 border border-hairline hover:bg-sand-200 text-ink font-semibold text-xs rounded-xs transition-all cursor-pointer"
                     >
-                      📄 Descargar PDF
+                      Descargar PDF
                     </button>
                     <button
                       onClick={() => setAttorneySent(true)}
                       className="px-3.5 py-1.5 bg-dune-900 hover:bg-dune-800 text-sand-100 font-semibold text-xs rounded-xs transition-all cursor-pointer shadow-xs"
                     >
-                      ✉️ Escalar a Lic. Ramírez (Abogado)
+                      Escalar a Lic. Ramírez (Abogado)
                     </button>
                   </div>
                 </div>
@@ -889,9 +969,9 @@ export function LandlordDashboard() {
                 <div className="bg-sand-200/80 p-4 rounded-sm border border-hairline space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-ink font-bold text-xs flex items-center gap-1.5 font-display">
-                      🔍 Fragmento Textual Extraído del Contrato Firmado (Bóveda RAG)
+                      Fragmento Textual Extraído del Contrato Firmado (Bóveda RAG)
                     </span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-sans text-[10px] font-bold">
                       {selectedLeasingApp.overlapScore}
                     </span>
                   </div>
@@ -912,7 +992,7 @@ export function LandlordDashboard() {
                         <span className="h-2 w-2 rounded-full bg-pine animate-pulse" />
                         ✓ Expediente Enviado con Éxito al Lic. Ramírez (Abogado Corporativo)
                       </span>
-                      <span className="text-[10px] font-mono text-pine">
+                      <span className="text-[10px] font-sans text-pine">
                         lic.ramirez@bufete-granvia.com
                       </span>
                     </div>
@@ -935,7 +1015,7 @@ export function LandlordDashboard() {
                     Inspección directa de exclusividades activas, vigencias y contratos indexados.
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-mono text-[11px] font-bold">
+                <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-sans text-[11px] font-bold">
                   {TENANTS.length} CONTRATOS INDEXADOS RAG
                 </span>
               </div>
@@ -943,7 +1023,7 @@ export function LandlordDashboard() {
               <div className="overflow-x-auto border border-hairline rounded-xs">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-mono">
+                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-sans">
                       <th className="p-3 font-bold">Inquilino / Local</th>
                       <th className="p-3 font-semibold">Giro Comercial</th>
                       <th className="p-3 font-semibold">Vigencia Contrato</th>
@@ -962,11 +1042,11 @@ export function LandlordDashboard() {
                         <tr key={t.slug} className="hover:bg-sand-200/40 transition-colors">
                           <td className="p-3">
                             <span className="font-bold text-ink block font-sans">{t.name}</span>
-                            <span className="text-[10px] text-ink-400 font-mono">{t.zone}</span>
+                            <span className="text-[10px] text-ink-400 font-sans">{t.zone}</span>
                           </td>
                           <td className="p-3 text-ink-700">{t.tag}</td>
-                          <td className="p-3 font-mono text-ink-500">2023 - 2028 (5 Años)</td>
-                          <td className="p-3 font-mono text-[11px]">
+                          <td className="p-3 font-sans text-ink-500">2023 - 2028 (5 Años)</td>
+                          <td className="p-3 font-sans text-[11px]">
                             {isCoffee && <span className="text-terra font-bold">Cláusula #14: Exclusividad Espresso</span>}
                             {isBakery && <span className="text-terra font-bold">Cláusula #08: Exclusividad Repostería</span>}
                             {isSalad && <span className="text-terra font-bold">Cláusula #22: Exclusividad Ensaladas</span>}
@@ -974,22 +1054,22 @@ export function LandlordDashboard() {
                           </td>
                           <td className="p-3">
                             {isCoffee && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                                 ✓ Bloqueó Starbucks Reserve (#14)
                               </span>
                             )}
                             {isBakery && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                                 ✓ Bloqueó Krispy Kreme (#08)
                               </span>
                             )}
                             {isSalad && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-gold/20 text-gold text-[10px] font-bold font-mono">
-                                ⚠️ Condicionado LFCE §3 (La Vicenta)
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-gold/20 text-gold text-[10px] font-bold font-sans">
+                                Condicionado LFCE §3 (La Vicenta)
                               </span>
                             )}
                             {!isCoffee && !isBakery && !isSalad && (
-                              <span className="text-ink-400 font-mono text-[11px]">Sin Conflictos Registrados</span>
+                              <span className="text-ink-400 font-sans text-[11px]">Sin Conflictos Registrados</span>
                             )}
                           </td>
                           <td className="p-3 text-right">
@@ -997,7 +1077,7 @@ export function LandlordDashboard() {
                               onClick={() => alert(`Descargando contrato certificado de ${t.name}...`)}
                               className="px-2.5 py-1 bg-sand-100 border border-hairline hover:bg-sand-200 text-ink font-bold text-[10px] rounded-xs cursor-pointer"
                             >
-                              📄 PDF ({t.slug}.pdf)
+                              PDF ({t.slug}.pdf)
                             </button>
                           </td>
                         </tr>
@@ -1023,14 +1103,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">1. Jurisdicción Civil Estatal</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                       ACTIVO
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Código Civil & Mercantil del Estado de Baja California para contratos de arrendamiento comercial.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Plazo máximo arrendamiento: 20 Años<br />
                     • Notificación aviso rescisión: 30 Días
                   </div>
@@ -1039,14 +1119,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">2. Filtro Antimonopolio (LFCE)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-sans">
                       FEDERAL
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Ley Federal de Competencia Económica (Art. 3 & 53). Prohíbe exclusividades comerciales desproporcionadas en la plaza.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Restricción máxima por zona: 200 metros<br />
                     • Prohibido bloqueo en acompañamientos
                   </div>
@@ -1055,14 +1135,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">3. Guardrails del Propietario</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-dune-900 text-sand-100 text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-dune-900 text-sand-100 text-[10px] font-bold font-sans">
                       REGLAS PLAZA
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Políticas operativas obligatorias aprobadas por el Sr. Martín para la administración del activo.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Límite: Máx 1 Exclusividad / Zona<br />
                     • Subarrendamiento: Prohibido sin aval<br />
                     • Trazabilidad 100% en SAARI ERP
@@ -1082,7 +1162,7 @@ export function LandlordDashboard() {
                 <div>
                   <h3 className="font-bold text-sm font-display text-ink flex items-center gap-2">
                     <span>Auditoría de Gastos CapEx & Garantías de Equipos (Diego)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-gold/20 text-gold font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-xs bg-gold/20 text-gold font-sans text-[10px] font-bold">
                       SOP §2B & CAPEX GUARDIAN AI
                     </span>
                   </h3>
@@ -1092,14 +1172,14 @@ export function LandlordDashboard() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-mono text-[11px] font-bold">
+                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-sans text-[11px] font-bold">
                     6 EQUIPOS CRÍTICOS MONITOREADOS
                   </span>
                 </div>
               </div>
 
               {/* KPI Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-sans text-xs">
                 <div className="bg-sand-100 p-3 rounded-xs border border-hairline">
                   <span className="text-ink-400 text-[10px] uppercase font-semibold block">Reclamos Auditados</span>
                   <span className="text-ink font-bold text-base mt-0.5 block font-display">3 Casos Auditados</span>
@@ -1124,14 +1204,14 @@ export function LandlordDashboard() {
                   </div>
                   <div>
                     <h4 className="font-bold text-xs font-display text-ink uppercase tracking-wider">
-                      💬 Asistente Operativo AI: Consulta Directa a Diego
+                      Asistente Operativo AI: Consulta Directa a Diego
                     </h4>
                     <p className="text-[11px] text-ink-500">
                       Haz preguntas sobre pólizas Carrier, números de serie, deslinde CapEx/OPEX o contratos de mantenimiento.
                     </p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded-xs bg-gold/20 text-gold text-[10px] font-bold font-mono">
+                <span className="px-2 py-0.5 rounded-xs bg-gold/20 text-gold text-[10px] font-bold font-sans">
                   ● AUDITORÍA TÉCNICA ACTIVA
                 </span>
               </div>
@@ -1153,7 +1233,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  ❄️ Póliza Carrier HVAC Ashley (#CR-884920)
+                  Póliza Carrier HVAC Ashley (#CR-884920)
                 </button>
                 <button
                   onClick={() => {
@@ -1170,7 +1250,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  💡 Iluminación Estética Derma Club ($78k)
+                  Iluminación Estética Derma Club ($78k)
                 </button>
                 <button
                   onClick={() => {
@@ -1187,7 +1267,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  ⚡ Mantenimiento Planta Emergencia Cinemex
+                  Mantenimiento Planta Emergencia Cinemex
                 </button>
               </div>
 
@@ -1197,15 +1277,15 @@ export function LandlordDashboard() {
                   <div key={i} className="bg-sand-100 p-4 rounded-xs border border-hairline space-y-2 text-xs">
                     <div className="flex items-center justify-between text-ink-500 font-medium">
                       <span>Consulta: <strong className="text-ink font-sans">{item.query}</strong></span>
-                      <span className="text-[10px] font-mono text-gold">✓ Verificado en Bitácora de Equipos</span>
+                      <span className="text-[10px] font-sans text-gold">✓ Verificado en Bitácora de Equipos</span>
                     </div>
                     <p className="text-ink-700 leading-relaxed font-sans text-xs bg-sand-50 p-3 rounded-xs border border-hairline">
                       {item.answer}
                     </p>
                     {item.refCert && (
-                      <div className="flex items-center justify-between text-[11px] text-ink-500 pt-1 font-mono">
+                      <div className="flex items-center justify-between text-[11px] text-ink-500 pt-1 font-sans">
                         <span className="flex items-center gap-1.5 text-terra font-semibold">
-                          📄 Certificado de Garantía / Contrato: {item.refCert} ({item.refClause})
+                          Certificado de Garantía / Contrato: {item.refCert} ({item.refClause})
                         </span>
                         <button
                           onClick={() => alert(`Descargando documento de soporte técnico: ${item.refCert}...`)}
@@ -1279,7 +1359,7 @@ export function LandlordDashboard() {
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-bold text-xs text-ink font-display">{item.tenant}</span>
-                      <span className="font-mono font-bold text-xs text-terra">
+                      <span className="font-sans font-bold text-xs text-terra">
                         ${item.amount.toLocaleString()} MXN
                       </span>
                     </div>
@@ -1289,75 +1369,75 @@ export function LandlordDashboard() {
               </div>
 
               {/* Tarjeta de Dictamen Técnico de Diego */}
-              <div className="bg-dune-900 text-sand-100 p-6 rounded-sm space-y-5 font-mono text-xs shadow-md border border-dune-800">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dune-800 pb-3">
-                  <span className="text-gold font-bold text-sm flex items-center gap-2 font-display">
-                    <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
-                    DICTAMEN TÉCNICO & CONTRACTUAL DIEGO AI ({selectedCapex.id})
+              <div className="bg-sand-50 p-6 rounded-sm space-y-5 text-xs shadow-2xs border border-hairline">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-hairline pb-3">
+                  <span className="text-ink font-bold text-sm flex items-center gap-2 font-display">
+                    <span className="h-2 w-2 rounded-full bg-gold" />
+                    Dictamen Técnico & Contractual Diego AI ({selectedCapex.id})
                   </span>
-                  <span className={`px-2.5 py-0.5 rounded-xs text-xs font-bold font-mono ${
+                  <span className={`px-2.5 py-0.5 rounded-xs text-xs font-bold font-sans ${
                     selectedCapex.verdict === "RECHAZADO_RESPONSABILIDAD_INQUILINO"
-                      ? "bg-red-900/80 text-red-300 border border-red-700"
+                      ? "bg-red-100 text-red-900 border border-red-200"
                       : selectedCapex.verdict === "APROBADO_GARANTIA_COSTO_CERO"
-                      ? "bg-pine/30 text-emerald-300 border border-pine"
-                      : "bg-terra/30 text-sand-100 border border-terra"
+                      ? "bg-pine/15 text-pine border border-pine/30"
+                      : "bg-terra/15 text-terra border border-terra/30"
                   }`}>
-                    {selectedCapex.verdict === "RECHAZADO_RESPONSABILIDAD_INQUILINO" && "🚫 RECHAZADO (RESPONSABILIDAD INQUILINO)"}
-                    {selectedCapex.verdict === "APROBADO_GARANTIA_COSTO_CERO" && "✓ GARANTÍA APLICADA ($0 COSTO PROPIETARIO)"}
-                    {selectedCapex.verdict === "APROBADO_PRORRATEO_CAM" && "✓ APROBADO CAM (PRORRATEABLE NNN)"}
+                    {selectedCapex.verdict === "RECHAZADO_RESPONSABILIDAD_INQUILINO" && "Rechazado (Responsabilidad Inquilino)"}
+                    {selectedCapex.verdict === "APROBADO_GARANTIA_COSTO_CERO" && "✓ Garantía Aplicada ($0 Costo Propietario)"}
+                    {selectedCapex.verdict === "APROBADO_PRORRATEO_CAM" && "✓ Aprobado CAM (Prorrateable NNN)"}
                   </span>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-4 text-[11px]">
-                  <div className="bg-dune-800 p-3.5 rounded-xs border border-dune-800">
-                    <span className="text-dune-300 block text-[10px] mb-1">INQUILINO SOLICITANTE:</span>
-                    <span className="text-sand-100 font-bold block text-xs font-sans">{selectedCapex.tenant}</span>
+                  <div className="bg-sand-100 p-3.5 rounded-xs border border-hairline">
+                    <span className="text-ink-400 block text-[10px] mb-1 font-sans">Inquilino Solicitante</span>
+                    <span className="text-ink font-bold block text-xs font-sans">{selectedCapex.tenant}</span>
                   </div>
 
-                  <div className="bg-dune-800 p-3.5 rounded-xs border border-dune-800">
-                    <span className="text-dune-300 block text-[10px] mb-1">MONTO MONITOREADO:</span>
-                    <span className="text-gold font-bold block text-xs">${selectedCapex.amount.toLocaleString()} MXN</span>
+                  <div className="bg-sand-100 p-3.5 rounded-xs border border-hairline">
+                    <span className="text-ink-400 block text-[10px] mb-1 font-sans">Monto Monitoreado</span>
+                    <span className="text-terra font-bold block text-xs">${selectedCapex.amount.toLocaleString()} MXN</span>
                   </div>
 
-                  <div className="bg-dune-800 p-3.5 rounded-xs border border-dune-800">
-                    <span className="text-dune-300 block text-[10px] mb-1">IMPACTO AL PROPIETARIO:</span>
-                    <span className="text-sand-100 font-bold block text-xs">
+                  <div className="bg-sand-100 p-3.5 rounded-xs border border-hairline">
+                    <span className="text-ink-400 block text-[10px] mb-1 font-sans">Impacto al Propietario</span>
+                    <span className="text-ink font-bold block text-xs">
                       {selectedCapex.verdict === "APROBADO_PRORRATEO_CAM" ? "Prorrateado NNN" : "$0 MXN (Absorbido)"}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-dune-800 p-4 rounded-xs border border-dune-800 space-y-2">
-                  <span className="text-gold font-bold block text-[10px]">ANÁLISIS COGNITIVO DIEGO:</span>
-                  <p className="text-dune-100 text-xs leading-relaxed font-sans">{selectedCapex.details}</p>
+                <div className="bg-sand-100 p-4 rounded-xs border border-hairline space-y-2">
+                  <span className="text-ink-400 font-bold block text-[10px] font-sans uppercase tracking-wider">Análisis Cognitivo Diego</span>
+                  <p className="text-ink-700 text-xs leading-relaxed font-sans">{selectedCapex.details}</p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                  <span className="text-[10px] text-dune-300 font-mono">
+                  <span className="text-[10px] text-ink-400 font-sans">
                     ✓ Auditado automáticamente contra pólizas Carrier & Sección 12 del contrato marco.
                   </span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => alert(`Descargando dictamen técnico oficial para ${selectedCapex.tenant}...`)}
-                      className="px-3 py-1.5 bg-dune-800 hover:bg-dune-700 text-sand-100 font-bold text-xs rounded-xs transition-all cursor-pointer border border-dune-500/30"
+                      className="px-3 py-1.5 bg-sand-100 border border-hairline hover:bg-sand-200 text-ink font-bold text-xs rounded-xs transition-all cursor-pointer"
                     >
-                      📄 Dictamen PDF
+                      Dictamen PDF
                     </button>
                     <button
                       onClick={() => setDiegoNotificationSent(true)}
                       className="px-3.5 py-1.5 bg-terra hover:bg-terra-dark text-sand-100 font-bold text-xs rounded-xs transition-all cursor-pointer shadow-xs"
                     >
-                      ✉️ Notificar Resolución Técnica
+                      Notificar Resolución Técnica
                     </button>
                   </div>
                 </div>
 
                 {diegoNotificationSent && (
-                  <div className="bg-pine/20 border border-pine p-3.5 rounded-xs text-sand-100 text-[11px] font-mono space-y-1">
-                    <div className="font-bold flex items-center gap-1.5 text-emerald-300 font-display">
-                      ✓ NOTIFICACIÓN TÉCNICA ENVIADA A {selectedCapex.tenant.toUpperCase()}
+                  <div className="bg-pine/10 border border-pine/30 p-3.5 rounded-xs text-[11px] font-sans space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-pine font-display">
+                      ✓ Notificación Técnica Enviada a {selectedCapex.tenant.toUpperCase()}
                     </div>
-                    <p className="text-dune-200 text-[10px] font-sans">
+                    <p className="text-ink-700 text-[10px] font-sans">
                       Se ha transmitido la resolución oficial de Diego con los números de póliza y la referencia de contrato correspondiente para su archivo.
                     </p>
                   </div>
@@ -1376,7 +1456,7 @@ export function LandlordDashboard() {
                     Registro de infraestructura instalada, números de serie y vigencia de pólizas de fabricante ($0 costo).
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-mono text-[11px] font-bold">
+                <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-sans text-[11px] font-bold">
                   6 EQUIPOS REGISTRADOS
                 </span>
               </div>
@@ -1384,7 +1464,7 @@ export function LandlordDashboard() {
               <div className="overflow-x-auto border border-hairline rounded-xs">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-mono">
+                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-sans">
                       <th className="p-3 font-bold">Equipo / Ubicación</th>
                       <th className="p-3 font-semibold">Marca & Modelo</th>
                       <th className="p-3 font-semibold">Número de Serie</th>
@@ -1397,10 +1477,10 @@ export function LandlordDashboard() {
                     <tr className="hover:bg-sand-200/40 transition-colors">
                       <td className="p-3 font-bold text-ink font-sans">Carrier HVAC 15 Toneladas (Ashley)</td>
                       <td className="p-3 text-ink-700">Carrier Commercial WeatherMaster</td>
-                      <td className="p-3 font-mono text-ink font-bold">#CR-884920</td>
-                      <td className="p-3 font-mono text-ink-500">2023 - 2028 (5 Años)</td>
+                      <td className="p-3 font-sans text-ink font-bold">#CR-884920</td>
+                      <td className="p-3 font-sans text-ink-500">2023 - 2028 (5 Años)</td>
                       <td className="p-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                           ✓ Garantía 100% Activa ($0 MXN)
                         </span>
                       </td>
@@ -1409,7 +1489,7 @@ export function LandlordDashboard() {
                           onClick={() => alert("Descargando Póliza de Garantía Carrier #CR-884920...")}
                           className="px-2.5 py-1 bg-sand-100 border border-hairline hover:bg-sand-200 text-ink font-bold text-[10px] rounded-xs cursor-pointer"
                         >
-                          📄 Carrier_Poliza.pdf
+                          Carrier_Poliza.pdf
                         </button>
                       </td>
                     </tr>
@@ -1417,10 +1497,10 @@ export function LandlordDashboard() {
                     <tr className="hover:bg-sand-200/40 transition-colors">
                       <td className="p-3 font-bold text-ink font-sans">Planta de Emergencia Diésel 500kW (Cinemex)</td>
                       <td className="p-3 text-ink-700">Caterpillar C15 ACERT</td>
-                      <td className="p-3 font-mono text-ink font-bold">#CAT-500-9942</td>
-                      <td className="p-3 font-mono text-ink-500">Contrato Anual Preventivo</td>
+                      <td className="p-3 font-sans text-ink font-bold">#CAT-500-9942</td>
+                      <td className="p-3 font-sans text-ink-500">Contrato Anual Preventivo</td>
                       <td className="p-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-mono">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-sans">
                           ✓ Cobertura CAM Prorrateable
                         </span>
                       </td>
@@ -1429,7 +1509,7 @@ export function LandlordDashboard() {
                           onClick={() => alert("Descargando Contrato Caterpillar...")}
                           className="px-2.5 py-1 bg-sand-100 border border-hairline hover:bg-sand-200 text-ink font-bold text-[10px] rounded-xs cursor-pointer"
                         >
-                          📄 Cat_Maint_2026.pdf
+                          Cat_Maint_2026.pdf
                         </button>
                       </td>
                     </tr>
@@ -1437,10 +1517,10 @@ export function LandlordDashboard() {
                     <tr className="hover:bg-sand-200/40 transition-colors">
                       <td className="p-3 font-bold text-ink font-sans">Subestación Eléctrica Principal 13.8kV</td>
                       <td className="p-3 text-ink-700">Schneider Electric Trihal 1500kVA</td>
-                      <td className="p-3 font-mono text-ink font-bold">#SCH-SE-44210</td>
-                      <td className="p-3 font-mono text-ink-500">Garantía Infraestructura Propietario</td>
+                      <td className="p-3 font-sans text-ink font-bold">#SCH-SE-44210</td>
+                      <td className="p-3 font-sans text-ink-500">Garantía Infraestructura Propietario</td>
                       <td className="p-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-gold/20 text-gold text-[10px] font-bold font-mono">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-gold/20 text-gold text-[10px] font-bold font-sans">
                           ✓ Mantenimiento Bianual Al Día
                         </span>
                       </td>
@@ -1449,7 +1529,7 @@ export function LandlordDashboard() {
                           onClick={() => alert("Descargando Certificado Schneider...")}
                           className="px-2.5 py-1 bg-sand-100 border border-hairline hover:bg-sand-200 text-ink font-bold text-[10px] rounded-xs cursor-pointer"
                         >
-                          📄 Schneider_13.8kV.pdf
+                          Schneider_13.8kV.pdf
                         </button>
                       </td>
                     </tr>
@@ -1473,14 +1553,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">1. Carga del Propietario</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                       CAPEX PROPIETARIO
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Infraestructura estructural primaria y activos mayores de la plaza.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Cimentación & muros de carga<br />
                     • Impermeabilización general de losas<br />
                     • Red principal hidrosanitaria
@@ -1490,14 +1570,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">2. Carga del Inquilino</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-red-100 text-red-900 text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-red-100 text-red-900 text-[10px] font-bold font-sans">
                       RESPONSABILIDAD LOCAL
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Equipamiento interior, acabados arquitectónicos y mantenimiento preventivo exclusivo del giro.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Luminarias estéticas e interiores<br />
                     • Trampas de grasa y filtros de cocina<br />
                     • Cortinas metálicas y cristales
@@ -1507,14 +1587,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">3. Prorrateo CAM NNN</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-sans">
                       GASTO COMÚN
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Gastos operativos de conservación y servicios compartidos entre los 85 locales.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Vigilancia 24/7 y circuito cerrado<br />
                     • Alumbrado de estacionamiento<br />
                     • Planta de emergencia diésel común
@@ -1534,24 +1614,24 @@ export function LandlordDashboard() {
                 <div>
                   <h3 className="font-bold text-sm font-display text-ink flex items-center gap-2">
                     <span>Prorrateo NNN & Auditoría Fiscal SAT CFDI 4.0 (Renata)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-sans text-[10px] font-bold">
                       SOP §2C & FISCAL GUARDIAN AI
                     </span>
                   </h3>
                   <p className="text-xs text-ink-500 font-sans">
-                    Auditoría en tiempo real de timbrado CFDI 4.0, complementos de pago PPD/PUE y balance matemático invariante del prorrateo CAM.
+                    Vista de prototipo: auditoría automatizada de timbrado CFDI 4.0, complementos de pago PPD/PUE y balance matemático invariante del prorrateo CAM. Casos mostrados con datos ilustrativos.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-mono text-[11px] font-bold">
+                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-sans text-[11px] font-bold">
                     85 LOCALES BALANCED 1.0000
                   </span>
                 </div>
               </div>
 
               {/* KPI Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-sans text-xs">
                 <div className="bg-sand-100 p-3 rounded-xs border border-hairline">
                   <span className="text-ink-400 text-[10px] uppercase font-semibold block">Validación Fiscal SAT</span>
                   <span className="text-ink font-bold text-base mt-0.5 block font-display">84 / 85 CFDIs Validados</span>
@@ -1576,14 +1656,14 @@ export function LandlordDashboard() {
                   </div>
                   <div>
                     <h4 className="font-bold text-xs font-display text-ink uppercase tracking-wider">
-                      💬 Asistente Fiscal AI: Consulta Directa a Renata
+                      Asistente Fiscal AI: Consulta Directa a Renata
                     </h4>
                     <p className="text-[11px] text-ink-500">
                       Haz preguntas sobre timbrado SAT CFDI 4.0, complementos de pago PPD vs PUE o la fórmula de prorrateo NNN.
                     </p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-mono">
+                <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-sans">
                   ● VALIDADOR SAT CFDI 4.0 ACTIVO
                 </span>
               </div>
@@ -1605,7 +1685,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  ⚠️ Alerta MINT Boutique (PPD vs PUE)
+                  Alerta MINT Boutique (PPD vs PUE)
                 </button>
                 <button
                   onClick={() => {
@@ -1622,7 +1702,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  📐 Invariante Mathemática Prorrateo CAM 1.0000
+                  Invariante Mathemática Prorrateo CAM 1.0000
                 </button>
                 <button
                   onClick={() => {
@@ -1639,7 +1719,7 @@ export function LandlordDashboard() {
                   }}
                   className="px-3 py-1.5 bg-sand-200/70 hover:bg-sand-200 text-ink-700 font-medium rounded-xs text-[11px] transition-all cursor-pointer border border-hairline"
                 >
-                  📜 Requisitos CFDI 4.0 para Deducción NNN
+                  Requisitos CFDI 4.0 para Deducción NNN
                 </button>
               </div>
 
@@ -1649,15 +1729,15 @@ export function LandlordDashboard() {
                   <div key={i} className="bg-sand-100 p-4 rounded-xs border border-hairline space-y-2 text-xs">
                     <div className="flex items-center justify-between text-ink-500 font-medium">
                       <span>Consulta Fiscal: <strong className="text-ink font-sans">{item.query}</strong></span>
-                      <span className="text-[10px] font-mono text-terra">✓ Validación SAT Anexo 20</span>
+                      <span className="text-[10px] font-sans text-terra">✓ Validación SAT Anexo 20</span>
                     </div>
                     <p className="text-ink-700 leading-relaxed font-sans text-xs bg-sand-50 p-3 rounded-xs border border-hairline">
                       {item.answer}
                     </p>
                     {item.refSat && (
-                      <div className="flex items-center justify-between text-[11px] text-ink-500 pt-1 font-mono">
+                      <div className="flex items-center justify-between text-[11px] text-ink-500 pt-1 font-sans">
                         <span className="flex items-center gap-1.5 text-terra font-semibold">
-                          📄 Esquema XML / Póliza SAT: {item.refSat} ({item.refClause})
+                          Esquema XML / Póliza SAT: {item.refSat} ({item.refClause})
                         </span>
                         <button
                           onClick={() => alert(`Descargando esquema XML SAT: ${item.refSat}...`)}
@@ -1720,10 +1800,10 @@ export function LandlordDashboard() {
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-red-600 animate-pulse" />
                     <span className="font-bold text-xs text-red-900 uppercase tracking-wider font-display">
-                      ⚠️ ALERTA FISCAL SAT CFDI 4.0: MINT BOUTIQUE (LOCAL B-12)
+                      ALERTA FISCAL SAT CFDI 4.0: MINT BOUTIQUE (LOCAL B-12)
                     </span>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-xs bg-red-200/80 text-red-900 font-mono text-[10px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded-xs bg-red-200/80 text-red-900 font-sans text-[10px] font-bold">
                     RIESGO MULTA: $12,500 MXN PREVENIDO
                   </span>
                 </div>
@@ -1731,15 +1811,15 @@ export function LandlordDashboard() {
                 <div className="grid md:grid-cols-3 gap-3 text-xs">
                   <div className="bg-sand-50 p-3 rounded-xs border border-red-200/60">
                     <span className="text-ink-400 block text-[10px] font-medium">Factura Original Emitida:</span>
-                    <span className="font-bold text-ink font-mono">Folio #CFDI-8842 (Método PPD)</span>
+                    <span className="font-bold text-ink font-sans">Folio #CFDI-8842 (Método PPD)</span>
                   </div>
                   <div className="bg-sand-50 p-3 rounded-xs border border-red-200/60">
                     <span className="text-ink-400 block text-[10px] font-medium">Pago Recibido en Banco:</span>
-                    <span className="font-bold text-pine font-mono">$32,000 MXN (Registrado PUE)</span>
+                    <span className="font-bold text-pine font-sans">$32,000 MXN (Registrado PUE)</span>
                   </div>
                   <div className="bg-sand-50 p-3 rounded-xs border border-red-200/60">
                     <span className="text-ink-400 block text-[10px] font-medium">Discrepancia SAT:</span>
-                    <span className="font-bold text-red-700 font-mono">Falta Complemento de Pago</span>
+                    <span className="font-bold text-red-700 font-sans">Falta Complemento de Pago</span>
                   </div>
                 </div>
 
@@ -1748,24 +1828,24 @@ export function LandlordDashboard() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                  <span className="text-[11px] text-red-700 font-mono font-medium">
+                  <span className="text-[11px] text-red-700 font-sans font-medium">
                     Estado: Esperando confirmación para timbrado directo ante el PAC SAT
                   </span>
                   <button
                     onClick={() => setRenataCfdiIssued(true)}
                     className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white font-bold text-xs rounded-xs transition-all shadow-xs cursor-pointer font-sans"
                   >
-                    ⚡ Auto-Emitir Complemento SAT CFDI 4.0
+                    Auto-Emitir Complemento SAT CFDI 4.0
                   </button>
                 </div>
 
                 {renataCfdiIssued && (
-                  <div className="bg-dune-900 text-sand-100 p-4 rounded-xs border border-dune-800 space-y-2 font-mono text-xs shadow-md">
-                    <div className="flex items-center justify-between font-bold text-gold font-display">
-                      <span>✓ COMPLEMENTO DE PAGO TIMBRADO CON ÉXITO ANTE EL SAT (PAC ID #9982)</span>
-                      <span className="text-[10px] font-normal text-dune-300">UUID: 4A8B9C20-8842-491A-8821</span>
+                  <div className="bg-pine/10 border border-pine/30 p-4 rounded-xs space-y-2 text-xs">
+                    <div className="flex items-center justify-between font-bold text-pine font-display">
+                      <span>✓ Complemento de Pago Timbrado con Éxito ante el SAT (PAC ID #9982)</span>
+                      <span className="text-[10px] font-normal text-ink-400 font-sans">UUID: 4A8B9C20-8842-491A-8821</span>
                     </div>
-                    <pre className="bg-dune-800 p-3.5 rounded-xs text-[10px] text-emerald-300 overflow-x-auto">
+                    <pre className="bg-sand-100 border border-hairline p-3.5 rounded-xs text-[10px] text-ink-700 font-mono overflow-x-auto">
 {`<cfdi:Comprobante Version="4.0" TipoDeComprobante="P" Moneda="XXX">
   <cfdi:Receptor Rfc="MBO180412HV9" Nombre="MINT BOUTIQUE S.A. DE C.V." RegimenFiscalReceptor="601"/>
   <pago20:Pagos Version="2.0">
@@ -1789,7 +1869,7 @@ export function LandlordDashboard() {
                     Cálculo automatizado de participación pro-rata, cuota base, honorarios de administración e IVA.
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-mono text-[11px] font-bold">
+                <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-sans text-[11px] font-bold">
                   INVARIANTE 1.0000 CUADRADA
                 </span>
               </div>
@@ -1797,7 +1877,7 @@ export function LandlordDashboard() {
               <div className="overflow-x-auto border border-hairline rounded-xs">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-mono">
+                    <tr className="border-b border-hairline text-ink-500 uppercase text-[10px] bg-sand-200/80 font-sans">
                       <th className="p-3 font-bold">Inquilino / Local</th>
                       <th className="p-3 font-semibold text-right">Superficie m²</th>
                       <th className="p-3 font-semibold text-right">% Pro-Rata NNN</th>
@@ -1820,14 +1900,14 @@ export function LandlordDashboard() {
                       return (
                         <tr key={t.slug} className="hover:bg-sand-200/40 transition-colors">
                           <td className="p-3 font-bold text-ink font-sans">{t.name}</td>
-                          <td className="p-3 text-right font-mono font-bold text-ink">{sqm} m²</td>
-                          <td className="p-3 text-right font-mono font-bold text-terra">{sharePct}%</td>
-                          <td className="p-3 text-right font-mono">${baseCam.toLocaleString()}</td>
-                          <td className="p-3 text-right font-mono">${adminFee.toLocaleString()}</td>
-                          <td className="p-3 text-right font-mono">${iva.toLocaleString()}</td>
-                          <td className="p-3 text-right font-mono font-bold text-ink">${totalCfdi.toLocaleString()}</td>
+                          <td className="p-3 text-right font-sans font-bold text-ink">{sqm} m²</td>
+                          <td className="p-3 text-right font-sans font-bold text-terra">{sharePct}%</td>
+                          <td className="p-3 text-right font-sans">${baseCam.toLocaleString()}</td>
+                          <td className="p-3 text-right font-sans">${adminFee.toLocaleString()}</td>
+                          <td className="p-3 text-right font-sans">${iva.toLocaleString()}</td>
+                          <td className="p-3 text-right font-sans font-bold text-ink">${totalCfdi.toLocaleString()}</td>
                           <td className="p-3 text-right">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                               ✓ Timbrado SAT CFDI 4.0
                             </span>
                           </td>
@@ -1854,14 +1934,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">1. Régimen PPD / PUE SAT</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra text-[10px] font-bold font-sans">
                       SAT 4.0
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Obligatoriedad de timbrado del Complemento de Pago dentro de los primeros 5 días hábiles del mes posterior.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Límite emisión complemento: Día 5<br />
                     • Validación RFC receptor contra CIF<br />
                     • Trazabilidad bancaria SPEI
@@ -1871,14 +1951,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">2. Invariante NNN (1.0000)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
                       MATEMÁTICA NNN
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Distribución proporcional exacta del 100% de la superficie rentable de la plaza.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Superficie GLA: 7,550 m²<br />
                     • Absorción vacancia propietario: 5.89%<br />
                     • Error de redondeo tolerado: 0.0000
@@ -1888,14 +1968,14 @@ export function LandlordDashboard() {
                 <div className="bg-sand-100 border border-hairline rounded-sm p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-hairline pb-2">
                     <span className="font-bold text-xs font-display text-ink">3. Honorario Administración</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-dune-900 text-sand-100 text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-xs bg-dune-900 text-sand-100 text-[10px] font-bold font-sans">
                       FEE 15% NNN
                     </span>
                   </div>
                   <p className="text-xs text-ink-700 leading-relaxed font-sans">
                     Cálculo del 15% sobre gastos de mantenimiento común para la administración del activo.
                   </p>
-                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-mono text-ink-700">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[11px] font-sans text-ink-700">
                     • Aplicable a: Mantenimientos comunes<br />
                     • Excluido de: Renta base pura<br />
                     • Facturación transparente mensual
@@ -1915,7 +1995,7 @@ export function LandlordDashboard() {
                 <div>
                   <h3 className="font-bold text-sm font-display text-ink flex items-center gap-2">
                     <span>Adaptador SAARI ERP: Conector Bidireccional de Ingestión & Salidas</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-sans text-[10px] font-bold">
                       PUENTE ERP CONTABLE & RAG AI
                     </span>
                   </h3>
@@ -1925,21 +2005,21 @@ export function LandlordDashboard() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-mono text-[11px] font-bold">
+                  <span className="px-2.5 py-1 rounded-xs bg-dune-900 text-sand-100 font-sans text-[11px] font-bold">
                     SAARI BATCH READY v4.2
                   </span>
                 </div>
               </div>
 
               {/* KPI Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-sans text-xs">
                 <div className="bg-sand-100 p-3 rounded-xs border border-hairline">
                   <span className="text-ink-400 text-[10px] uppercase font-semibold block">Lectura Auxiliares</span>
                   <span className="text-ink font-bold text-base mt-0.5 block font-display">85 Locales Ingestados</span>
                 </div>
                 <div className="bg-sand-100 p-3 rounded-xs border border-hairline">
                   <span className="text-ink-400 text-[10px] uppercase font-semibold block">Lote Batch CAM NNN</span>
-                  <span className="text-terra font-bold text-base mt-0.5 block font-mono">100% Estructurado</span>
+                  <span className="text-terra font-bold text-base mt-0.5 block font-sans">100% Estructurado</span>
                 </div>
                 <div className="bg-sand-100 p-3 rounded-xs border border-hairline">
                   <span className="text-ink-400 text-[10px] uppercase font-semibold block">Discrepancias Fiscales</span>
@@ -1952,14 +2032,14 @@ export function LandlordDashboard() {
             <div className="bg-sand-50 border border-terra/30 rounded-sm p-5 shadow-2xs space-y-4 ring-1 ring-terra/10">
               <div className="border-b border-hairline pb-3">
                 <h4 className="font-bold text-xs font-display text-ink uppercase tracking-wider">
-                  📐 Diagrama de Flujo de Datos: ¿Cómo se Conecta SAARI ERP con los Agentes IA?
+                  Diagrama de Flujo de Datos: ¿Cómo se Conecta SAARI ERP con los Agentes IA?
                 </h4>
                 <p className="text-xs text-ink-500 font-sans">
                   SAARI ERP es el sistema de registro contable oficial. Los agentes IA consumen sus datos para validar y retornan lotes limpios.
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-4 font-mono text-xs">
+              <div className="grid md:grid-cols-3 gap-4 font-sans text-xs">
                 {/* Paso 1: SAARI ERP Ingestión */}
                 <div className="bg-sand-100 p-4 rounded-xs border border-hairline space-y-2">
                   <div className="flex items-center justify-between text-terra font-bold">
@@ -1977,15 +2057,15 @@ export function LandlordDashboard() {
                 </div>
 
                 {/* Paso 2: Motor Agentes IA */}
-                <div className="bg-dune-900 text-sand-100 p-4 rounded-xs border border-dune-800 space-y-2">
+                <div className="bg-sand-100 p-4 rounded-xs border border-gold/40 space-y-2">
                   <div className="flex items-center justify-between text-gold font-bold">
                     <span>2. Capa Agentes IA (Control)</span>
-                    <span className="text-[10px] bg-dune-800 text-gold px-2 py-0.5 rounded-xs">AUDITORÍA</span>
+                    <span className="text-[10px] bg-gold/15 text-gold px-2 py-0.5 rounded-xs">AUDITORÍA</span>
                   </div>
-                  <p className="text-[11px] text-dune-200 leading-relaxed font-sans">
+                  <p className="text-[11px] text-ink-700 leading-relaxed font-sans">
                     <strong>Mariana</strong> audita exclusividades RAG. <strong>Diego</strong> rechaza cargos no cubiertos. <strong>Renata</strong> detecta errores SAT CFDI PPD.
                   </p>
-                  <div className="bg-dune-800 p-2.5 rounded-xs border border-dune-800 text-[10px] text-emerald-300">
+                  <div className="bg-sand-50 p-2.5 rounded-xs border border-hairline text-[10px] text-ink-700">
                     • Mariana: Bóveda RAG PDF<br />
                     • Diego: Pólizas Carrier/Cat<br />
                     • Renata: SAT CFDI 4.0 PPD
@@ -2021,7 +2101,7 @@ export function LandlordDashboard() {
                     Prueba la lectura de auxiliares o la generación del lote batch para importador automático de SAARI.
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-xs bg-terra/15 text-terra font-mono text-[11px] font-bold">
+                <span className="px-2.5 py-1 rounded-xs bg-terra/15 text-terra font-sans text-[11px] font-bold">
                   ADAPTADOR ACTIVO
                 </span>
               </div>
@@ -2039,7 +2119,7 @@ export function LandlordDashboard() {
                       : "bg-sand-200/70 text-ink-700 hover:bg-sand-200"
                   }`}
                 >
-                  📥 ENTRADAS (Ingestión de Auxiliares de SAARI)
+                  ENTRADAS (Ingestión de Auxiliares de SAARI)
                 </button>
                 <button
                   onClick={() => {
@@ -2052,25 +2132,25 @@ export function LandlordDashboard() {
                       : "bg-sand-200/70 text-ink-700 hover:bg-sand-200"
                   }`}
                 >
-                  📤 SALIDAS (Exportación Lote Batch a SAARI)
+                  SALIDAS (Exportación Lote Batch a SAARI)
                 </button>
               </div>
 
               {/* Consola de Datos SAARI */}
-              <div className="bg-dune-900 text-sand-100 p-5 rounded-sm space-y-4 font-mono text-xs shadow-md border border-dune-800">
-                <div className="flex justify-between border-b border-dune-800 pb-2">
-                  <span className="text-gold font-bold">
-                    {saariDirection === "inbound" ? "// LECTOR DE ENTRADAS SAARI ERP" : "// EXPORTADOR BATCH DE SALIDAS SAARI ERP"}
+              <div className="bg-sand-50 p-5 rounded-sm space-y-4 text-xs shadow-2xs border border-hairline">
+                <div className="flex justify-between border-b border-hairline pb-2">
+                  <span className="text-terra font-bold font-mono">
+                    {saariDirection === "inbound" ? "// Lector de entradas SAARI ERP" : "// Exportador batch de salidas SAARI ERP"}
                   </span>
-                  <span className="text-dune-300 text-[10px]">FORMATO: JSON / CSV NATIVO SAARI</span>
+                  <span className="text-ink-400 text-[10px] font-sans uppercase tracking-wider">Formato: JSON / CSV nativo SAARI</span>
                 </div>
 
                 {saariDirection === "inbound" ? (
                   <div className="space-y-3 text-[11px]">
-                    <p className="text-dune-200 font-sans">
-                      Lectura en tiempo real del reporte de auxiliares de cobranza emitido por SAARI (`SAARI_EXP_JULIO_2026.CSV`):
+                    <p className="text-ink-700 font-sans">
+                      Simulación de lectura del reporte de auxiliares de cobranza que emitiría SAARI (`SAARI_EXP_JULIO_2026.CSV`) — archivo y montos ilustrativos:
                     </p>
-                    <pre className="bg-dune-800 p-3.5 rounded-xs text-emerald-400 text-[10px] overflow-x-auto">
+                    <pre className="bg-sand-100 border border-hairline p-3.5 rounded-xs text-ink-700 font-mono text-[10px] overflow-x-auto">
 {`[INBOUND LECTURA SAARI OPERATIVA]
 - Local A-01 (Ashley Furniture): $248,500.00 MXN -> APLICADO AL RENT ROLL
 - Local B-02 (Blue Luna Café): $65,000.00 MXN -> APLICADO AL RENT ROLL
@@ -2079,10 +2159,10 @@ export function LandlordDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3 text-[11px]">
-                    <p className="text-dune-200 font-sans">
+                    <p className="text-ink-700 font-sans">
                       Generación de lote de facturación masiva para importador automático de SAARI ERP:
                     </p>
-                    <pre className="bg-dune-800 p-3.5 rounded-xs text-gold text-[10px] overflow-x-auto">
+                    <pre className="bg-sand-100 border border-hairline p-3.5 rounded-xs text-ink-700 font-mono text-[10px] overflow-x-auto">
 {`No_Contrato,ID_Local,Razon_Social,CAM_Base_MXN,Admin_15_MXN,IVA_16_MXN,Total_CFDI
 "CTR-701","LOC-A01","ASHLEY FURNITURE MEXICO S.A.",51566.00,7734.90,9488.14,68789.04
 "CTR-702","LOC-D01","CINEMEX PREMIUM MEXICALI S.A.",41964.00,6294.60,7721.38,55979.98`}
@@ -2100,12 +2180,12 @@ export function LandlordDashboard() {
                 </div>
 
                 {saariProcessed && (
-                  <div className="bg-pine/20 text-emerald-300 p-3.5 rounded-xs border border-pine/40 text-[11px] space-y-1">
+                  <div className="bg-pine/10 text-pine p-3.5 rounded-xs border border-pine/30 text-[11px] space-y-1">
                     <div className="font-bold flex items-center gap-1 font-display">
-                      ✓ OPERACIÓN CON SAARI ERP COMPLETADA CON ÉXITO
+                      ✓ Operación con SAARI ERP Completada (Simulación)
                     </div>
-                    <p className="text-dune-200 text-[10px] font-sans">
-                      La información ha sido procesada de manera limpia y sincronizada con la base de datos de Plaza La Gran Vía.
+                    <p className="text-ink-700 text-[10px] font-sans">
+                      En producción, esta información se procesaría y sincronizaría con la base de datos de Plaza La Gran Vía.
                     </p>
                   </div>
                 )}

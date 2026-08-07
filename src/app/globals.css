@@ -28,12 +28,13 @@
   --color-dune-800: #2c2a26;
   --color-dune-900: #242220;
 
-  /* Accents */
-  --color-terra: #b4552d;
-  --color-terra-deep: #a34c28;
-  --color-terra-dark: #8f3f1f;
-  --color-pine: #2e5d4b;
-  --color-gold: #c99a3b;
+  /* Accents — exact values sampled from la-gran-via-logo.png */
+  --color-terra: #ea2c28;
+  --color-terra-deep: #d4221e;
+  --color-terra-dark: #b81916;
+  --color-pine: #1b5e48;
+  --color-gold: #ffd03b;
+  --color-gold-dark: #e5b62b;
 
   /* Hairlines */
   --color-hairline: rgb(33 31 28 / 0.1);
