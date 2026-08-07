@@ -139,6 +139,9 @@ export function LandlordDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | "ok" | "sat" | "excl">("all");
 
+  const [selectedLeasingApp, setSelectedLeasingApp] = useState<ApplicantCase>(LEASING_APPLICANTS[0]);
+  const [selectedCapex, setSelectedCapex] = useState<CapexCase>(CAPEX_CASES[0]);
+
   // Mariana AI RAG Assistant State
   const [marianaQuery, setMarianaQuery] = useState("");
   const [marianaChatHistory, setMarianaChatHistory] = useState<{ query: string; answer: string; refPdf?: string; refClause?: string }[]>([
