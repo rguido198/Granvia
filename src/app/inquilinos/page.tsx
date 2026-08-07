@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { PageFade } from "@/components/ui";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
