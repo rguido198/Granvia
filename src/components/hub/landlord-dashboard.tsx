@@ -139,10 +139,6 @@ export function LandlordDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | "ok" | "sat" | "excl">("all");
 
-  const [selectedLeasingApp, setSelectedLeasingApp] = useState<ApplicantCase>(LEASING_APPLICANTS[0]);
-  const [selectedCapex, setSelectedCapex] = useState<CapexCase>(CAPEX_CASES[0]);
-  const [attorneySent, setAttorneySent] = useState(false);
-
   // Mariana AI RAG Assistant State
   const [marianaQuery, setMarianaQuery] = useState("");
   const [marianaChatHistory, setMarianaChatHistory] = useState<{ query: string; answer: string; refPdf?: string; refClause?: string }[]>([
@@ -153,34 +149,6 @@ export function LandlordDashboard() {
       refClause: "Página 12, Cláusula 14",
     },
   ]);
-
-  // Diego AI CapEx & Operations Assistant State
-  const [diegoQuery, setDiegoQuery] = useState("");
-  const [diegoNotificationSent, setDiegoNotificationSent] = useState(false);
-  const [diegoChatHistory, setDiegoChatHistory] = useState<{ query: string; answer: string; refCert?: string; refClause?: string }[]>([
-    {
-      query: "¿Por qué el reemplazo de compresor HVAC de Ashley Furniture no le cuesta al propietario?",
-      answer: "Diego verificó el número de serie Carrier #CR-884920. La póliza de garantía del fabricante Carrier cubre fallas mecánicas de compresores de 15 toneladas durante 5 años (vigente hasta Noviembre 2028). Se tramitó la sustitución sin costo para el propietario ($0 MXN).",
-      refCert: "Poliza_Garantia_Carrier_Ashley_HVAC.pdf",
-      refClause: "Serie #CR-884920 (Cobertura 100% Fábrica)",
-    },
-  ]);
-
-  // Renata AI Fiscal SAT & CAM Assistant State
-  const [renataQuery, setRenataQuery] = useState("");
-  const [renataCfdiIssued, setRenataCfdiIssued] = useState(false);
-  const [renataChatHistory, setRenataChatHistory] = useState<{ query: string; answer: string; refSat?: string; refClause?: string }[]>([
-    {
-      query: "¿Por qué MINT Boutique registró una alerta fiscal SAT CFDI 4.0?",
-      answer: "MINT Boutique pagó $32,000 MXN mediante transferencia registrando el método PUE (Pago en una sola exhibición), pero la factura original se emitió bajo el régimen PPD (Pago en parcialidades). Renata detectó la discrepancia antes de la declaración mensual del SAT para auto-emitir el Complemento de Recepción de Pagos sin sanción.",
-      refSat: "CFDI_4.0_Complemento_Pago_SAT_MINT.xml",
-      refClause: "Anexo 20 RMF SAT §2.7.1.35",
-    },
-  ]);
-
-  // SAARI ERP State
-  const [saariDirection, setSaariDirection] = useState<"inbound" | "outbound">("inbound");
-  const [saariProcessed, setSaariProcessed] = useState(false);
 
   // Compute exact total GLA and occupied metrics
   const totalOccupiedSqm = TENANTS.reduce((sum, t, idx) => sum + getTenantSqm(t.name, idx), 0);
