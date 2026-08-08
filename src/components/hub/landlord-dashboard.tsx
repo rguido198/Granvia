@@ -5,7 +5,7 @@ import Link from "next/link";
 import { TENANTS } from "@/content/tenants";
 
 type ActiveTab = "overview" | "leasing" | "maint" | "cam" | "saari";
-type ThemeMode = "slate" | "sand";
+type ActiveAgent = "mariana" | "diego" | "renata";
 
 interface ApplicantCase {
   id: string;
@@ -66,7 +66,7 @@ const LEASING_APPLICANTS: ApplicantCase[] = [
     rentLossPrevented: "$540,000 MXN / año",
     contractPdfName: "Contrato_LaPurisima_Bakery_LocB05_Firmado.pdf",
     contractPdfPage: "Página 8, Párrafo 2.1 (Protección de Giro)",
-    contractExactSnippet: '"...Queda strictly prohibido a la administración de Plaza La Gran Vía arrendar locales adyacentes a competidores directos en la categoría de repostería fina, donas glaseadas o panadería artesanal..."',
+    contractExactSnippet: '"...Queda estrictamente prohibido a la administración de Plaza La Gran Vía arrendar locales adyacentes a competidores directos en la categoría de repostería fina, donas glaseadas o panadería artesanal..."',
     overlapScore: "91.2% Coincidencia en Repostería",
     legalFilter: "Protección de Arrendatario Ancla de Repostería",
   },
@@ -135,21 +135,24 @@ function getTenantSqm(name: string, index: number): number {
 
 export function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
-  const [themeMode, setThemeMode] = useState<ThemeMode>("slate"); // Default to sleek institutional slate
+  const [activeAgent, setActiveAgent] = useState<ActiveAgent>("mariana");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | "ok" | "sat" | "excl">("all");
 
-  const [selectedCapex, setSelectedCapex] = useState<CapexCase>(CAPEX_CASES[0]);
-  const [diegoNotificationSent, setDiegoNotificationSent] = useState(false);
-
-  // Mariana AI RAG Assistant State
-  const [marianaQuery, setMarianaQuery] = useState("");
-  const [marianaChatHistory, setMarianaChatHistory] = useState<{ query: string; answer: string; refPdf?: string; refClause?: string }[]>([
+  // Chat Query States
+  const [aiQuery, setAiQuery] = useState("");
+  const [chatHistory, setChatHistory] = useState<{ agent: string; query: string; answer: string; ref?: string }[]>([
     {
-      query: "¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?",
-      answer: "Blue Luna Café (Local B-02, Zona 4) cuenta con la Cláusula #14 en su contrato vigente (2023-2028). Otorga exclusividad comercial absoluta en la venta de café espresso y especialidad en Zona 4. La propuesta de Starbucks Reserve presentaba un 98.4% de solapamiento semántico en menú.",
-      refPdf: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
-      refClause: "Página 12, Cláusula 14",
+      agent: "Mariana (Legal)",
+      query: "¿Por qué bloqueamos la propuesta de Starbucks Reserve?",
+      answer: "Starbucks Reserve presentó un 98.4% de solapamiento semántico en menú con Blue Luna Café (Local B-02, Zona 4), violando la Cláusula #14 de exclusividad comercial de especialidad en café.",
+      ref: "Contrato_BlueLuna_LocB02.pdf",
+    },
+    {
+      agent: "Diego (CapEx)",
+      query: "¿Cuál es el ahorro en el compresor HVAC de Ashley Furniture?",
+      answer: "Se aplicó la póliza de garantía del fabricante Carrier (#CR-884920), logrando un reemplazo a $0 costo para el propietario ($145,000 MXN ahorrados).",
+      ref: "Poliza_Carrier_Ashley.pdf",
     },
   ]);
 
@@ -176,393 +179,327 @@ export function LandlordDashboard() {
     return true;
   });
 
-  // Dynamic style classes based on themeMode
-  const isSlate = themeMode === "slate";
-
-  const containerBg = isSlate ? "bg-[#0c0e14] text-slate-100 font-sans" : "bg-sand-100 text-ink font-sans";
-  const sidebarBg = isSlate
-    ? "bg-[#141722] border-r border-white/10 shadow-md text-slate-200"
-    : "bg-sand-50 border-r border-hairline shadow-2xs text-ink";
-  const cardBg = isSlate
-    ? "bg-[#181c28] border border-white/10 rounded-sm shadow-md"
-    : "bg-sand-50 border border-hairline rounded-sm shadow-2xs";
-  const headerBg = isSlate ? "border-b border-white/10" : "border-b border-hairline-strong";
-  const duneCardBg = isSlate
-    ? "bg-[#090b10] text-slate-100 rounded-sm border border-white/10 shadow-md"
-    : "bg-dune-900 text-sand-100 rounded-sm border border-dune-800 shadow-md";
-  const innerCardBg = isSlate ? "bg-[#202534] border border-white/10" : "bg-sand-100 border border-hairline";
-  const textMuted = isSlate ? "text-slate-400" : "text-ink-400";
-  const textBody = isSlate ? "text-slate-200" : "text-ink-700";
-  const borderHairline = isSlate ? "border-white/10" : "border-hairline";
-  const tableHeaderBg = isSlate ? "bg-[#11131c] text-slate-400" : "bg-sand-200/80 text-ink-500";
-
   return (
-    <div className={`min-h-screen ${containerBg} flex flex-col md:flex-row transition-colors duration-300`}>
-      {/* ---------------- 1. BARRA LATERAL OPERATIVA ---------------- */}
-      <aside className={`w-full md:w-68 ${sidebarBg} p-5 flex flex-col justify-between shrink-0 md:sticky md:top-0 md:h-screen transition-colors`}>
+    <div className="min-h-screen bg-[#f4f5f8] text-slate-900 font-sans p-4 sm:p-6 lg:p-7 flex flex-col lg:flex-row gap-6">
+      {/* ---------------- 1. FLOATING SIDEBAR (Navegación Estilo Logip / Solarius) ---------------- */}
+      <aside className="w-full lg:w-64 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between shrink-0 lg:sticky lg:top-7 lg:h-[calc(100vh-3.5rem)]">
         <div className="space-y-6">
-          {/* Logo Oficial de La Gran Vía */}
-          <div className="px-1 py-1">
+          {/* Logo Brand Header */}
+          <div className="px-2 py-1">
             <Link href="/" className="block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/la-gran-via-logo-horizontal.png"
                 alt="La Gran Vía Mexicali"
-                className={`h-12 w-auto object-contain ${isSlate ? "brightness-125 contrast-125" : ""}`}
+                className="h-10 w-auto object-contain"
               />
             </Link>
-            <div className={`mt-2.5 pt-2 ${borderHairline} border-t flex items-center justify-between font-sans text-[10px] ${textMuted}`}>
-              <span>TORRE DE CONTROL AI</span>
-              <span className="font-semibold text-terra font-sans">7,550 m² GLA</span>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-sans">
+              <span>Torre de Control</span>
+              <span className="font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full text-[10px]">
+                7,550 m² GLA
+              </span>
             </div>
           </div>
 
-          {/* Menú de Navegación Principal */}
-          <nav className="space-y-1.5">
-            <span className={`px-2 font-sans text-[10px] font-bold ${textMuted} uppercase tracking-widest block mb-2`}>
-              Consola Operativa
+          {/* Menú de Navegación Principal Limpio */}
+          <nav className="space-y-1">
+            <span className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 font-sans">
+              Consola Principal
             </span>
 
             <button
               onClick={() => setActiveTab("overview")}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-xs font-medium transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "overview"
-                  ? isSlate
-                    ? "bg-terra text-white font-semibold shadow-xs"
-                    : "bg-dune-900 text-sand-100 font-semibold shadow-xs"
-                  : isSlate
-                  ? "text-slate-300 hover:text-white hover:bg-white/5"
-                  : "text-ink-700 hover:text-ink hover:bg-sand-200/60"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               }`}
             >
-              <span className="truncate">Resumen Rent Roll ({TENANTS.length})</span>
+              <span>Resumen Rent Roll</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === "overview" ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500"
+              }`}>
+                {TENANTS.length}
+              </span>
             </button>
 
             <button
               onClick={() => setActiveTab("leasing")}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-xs font-medium transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "leasing"
-                  ? isSlate
-                    ? "bg-terra text-white font-semibold shadow-xs"
-                    : "bg-dune-900 text-sand-100 font-semibold shadow-xs"
-                  : isSlate
-                  ? "text-slate-300 hover:text-white hover:bg-white/5"
-                  : "text-ink-700 hover:text-ink hover:bg-sand-200/60"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               }`}
             >
-              <span className="truncate">Arrendamiento (Mariana)</span>
-              <span className="px-1.5 py-0.5 rounded-xs bg-pine/15 text-pine font-sans text-[9.5px] font-bold shrink-0">
+              <span>Arrendamiento (Mariana)</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold">
                 RAG
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("maint")}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-xs font-medium transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "maint"
-                  ? isSlate
-                    ? "bg-terra text-white font-semibold shadow-xs"
-                    : "bg-dune-900 text-sand-100 font-semibold shadow-xs"
-                  : isSlate
-                  ? "text-slate-300 hover:text-white hover:bg-white/5"
-                  : "text-ink-700 hover:text-ink hover:bg-sand-200/60"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               }`}
             >
-              <span className="truncate">CapEx & Gastos (Diego)</span>
-              <span className="px-1.5 py-0.5 rounded-xs bg-gold/15 text-gold-dark font-sans text-[9.5px] font-bold shrink-0">
+              <span>CapEx & Gastos (Diego)</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold">
                 CapEx
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("cam")}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-xs font-medium transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "cam"
-                  ? isSlate
-                    ? "bg-terra text-white font-semibold shadow-xs"
-                    : "bg-dune-900 text-sand-100 font-semibold shadow-xs"
-                  : isSlate
-                  ? "text-slate-300 hover:text-white hover:bg-white/5"
-                  : "text-ink-700 hover:text-ink hover:bg-sand-200/60"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               }`}
             >
-              <span className="truncate">CAM & Fiscal SAT (Renata)</span>
-              <span className="px-1.5 py-0.5 rounded-xs bg-terra/15 text-terra font-sans text-[9.5px] font-bold shrink-0">
+              <span>CAM & Fiscal SAT (Renata)</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold">
                 SAT
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("saari")}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-xs font-medium transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "saari"
-                  ? isSlate
-                    ? "bg-terra text-white font-semibold shadow-xs"
-                    : "bg-dune-900 text-sand-100 font-semibold shadow-xs"
-                  : isSlate
-                  ? "text-slate-300 hover:text-white hover:bg-white/5"
-                  : "text-ink-700 hover:text-ink hover:bg-sand-200/60"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               }`}
             >
-              <span className="truncate">SAARI ERP (Conector)</span>
-              <span className="px-1.5 py-0.5 rounded-xs bg-pine/15 text-pine font-sans text-[9.5px] font-bold shrink-0">
+              <span>SAARI ERP (Conector)</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold">
                 ERP
               </span>
             </button>
           </nav>
         </div>
 
-        {/* Sesión de Usuario & Toggle de Selector de Tema */}
-        <div className={`pt-4 ${borderHairline} border-t space-y-3`}>
-          <div className="flex items-center justify-between px-1">
-            <div>
-              <span className={`block font-semibold text-xs ${isSlate ? "text-white" : "text-ink"} font-display`}>Sr. Martín</span>
-              <span className={`block text-[10px] ${textMuted} font-sans`}>Director de Operaciones</span>
+        {/* User Card at Sidebar Bottom */}
+        <div className="pt-4 border-t border-slate-100">
+          <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="h-9 w-9 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center font-display">
+              M
             </div>
-            <span className="h-2 w-2 rounded-full bg-pine animate-pulse" />
-          </div>
-
-          {/* CONTROL INTERACTIVO DE CONTRASTE Y TEMA */}
-          <div className={`p-2 rounded-sm ${innerCardBg} flex items-center justify-between text-[11px]`}>
-            <span className={`font-mono text-[10px] font-bold ${textMuted}`}>TEMA DE CONSOLA:</span>
-            <button
-              onClick={() => setThemeMode(isSlate ? "sand" : "slate")}
-              className={`px-2.5 py-1 rounded-xs font-bold text-[10px] transition-all cursor-pointer border ${
-                isSlate
-                  ? "bg-terra text-white border-terra/50 hover:bg-terra-deep"
-                  : "bg-dune-900 text-sand-100 border-dune-800 hover:bg-dune-800"
-              }`}
-            >
-              {isSlate ? "Modo Slate Institucional" : "Modo Sand Cálido"}
-            </button>
+            <div className="truncate">
+              <span className="block font-bold text-xs text-slate-900 truncate">Sr. Martín</span>
+              <span className="block text-[10px] text-slate-500 truncate">Director de Operaciones</span>
+            </div>
           </div>
         </div>
       </aside>
 
-      {/* ---------------- 2. CONTENIDO PRINCIPAL ALINEADO A LA MARCA ---------------- */}
-      <main className="flex-1 p-6 md:p-8 space-y-6 min-w-0">
-        {/* Encabezado Superior Elegante con Selector de Tema comparativo */}
-        <header className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${headerBg} pb-5`}>
+      {/* ---------------- 2. MAIN CENTER DASHBOARD AREA ---------------- */}
+      <main className="flex-1 space-y-6 min-w-0">
+        {/* Header Bar with Greeting (Estilo Logip "Hello, Margaret") */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2 py-0.5 rounded-xs bg-pine/10 text-pine border border-pine/30 font-sans text-[10px] font-bold uppercase tracking-wider">
-                OPERACIÓN AL DÍA
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Operación Al Día
               </span>
-              <span className="px-2 py-0.5 rounded-xs bg-gold/15 text-gold-dark border border-gold/40 font-sans text-[10px] font-bold uppercase tracking-wider">
-                PROTOTIPO — DATOS ILUSTRATIVOS PARA DEMOSTRACIÓN
-              </span>
-              <span className={`text-xs ${textMuted} font-sans`}>| La Gran Vía Mexicali</span>
+              <span className="text-xs text-slate-400">• La Gran Vía Mexicali</span>
             </div>
-            <h1 className={`text-2xl font-bold font-display ${isSlate ? "text-white" : "text-ink"} mt-1 tracking-tight`}>
-              {activeTab === "overview" && `Resumen Consolidado del Rent Roll (${TENANTS.length} Locales Activos)`}
-              {activeTab === "leasing" && "Módulo de Arrendamiento & Inteligencia Legal (Mariana)"}
-              {activeTab === "maint" && "Auditoría de Gastos CapEx Dudosos vs. Garantías (Diego)"}
-              {activeTab === "cam" && "Prorrateo CAM NNN & Auditoría Fiscal SAT CFDI 4.0 (Renata)"}
-              {activeTab === "saari" && "Conector SAARI ERP: Ingestión de Auxiliares & Salidas Batch"}
+            <h1 className="text-2xl font-bold text-slate-900 mt-1 font-display tracking-tight">
+              Hola, Sr. Martín 👋
             </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Consola unificada de arrendamiento, cobranza CAM y auditoría con Agentes IA.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* COMPARATIVE THEME TOGGLE BUTTON IN HEADER */}
+          <div className="flex items-center gap-2.5 flex-wrap">
             <button
-              onClick={() => setThemeMode(isSlate ? "sand" : "slate")}
-              className={`px-3 py-2 rounded-sm border font-semibold text-xs cursor-pointer transition-all ${
-                isSlate
-                  ? "bg-[#252a38] text-slate-100 border-white/20 hover:bg-[#2d3345]"
-                  : "bg-sand-200 text-ink border-hairline-strong hover:bg-sand-300"
-              }`}
-            >
-              {isSlate ? "Ver en Modo Sand" : "Ver en Modo Slate (Oscuro)"}
-            </button>
-
-            <button
-              onClick={() => alert("Exportando reporte ejecutivo oficial en PDF...")}
-              className={`px-3.5 py-2 border text-xs font-semibold rounded-sm shadow-2xs cursor-pointer transition-all ${
-                isSlate
-                  ? "bg-[#1e2230] text-slate-100 border-white/10 hover:bg-[#252a3a]"
-                  : "bg-sand-50 border-hairline text-ink hover:bg-sand-200/50"
-              }`}
+              onClick={() => alert("Exportando reporte oficial en PDF...")}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl transition-all cursor-pointer"
             >
               Exportar Reporte (.PDF)
             </button>
-
             <button
               onClick={() => setActiveTab("saari")}
-              className={`px-3.5 py-2 font-semibold text-xs rounded-sm shadow-xs cursor-pointer transition-all border ${
-                isSlate
-                  ? "bg-terra hover:bg-terra-deep text-white border-terra/50"
-                  : "bg-dune-900 hover:bg-dune-800 text-sand-100 border-dune-800"
-              }`}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition-all shadow-sm cursor-pointer"
             >
               Sincronizar SAARI →
             </button>
           </div>
-        </header>
+        </div>
 
-        {/* ---------------- PESTAÑA 1: RESUMEN RENT ROLL ---------------- */}
+        {/* ---------------- PESTAÑA 1: OVERVIEW ---------------- */}
         {activeTab === "overview" && (
           <div className="space-y-6">
-            {/* Banner de Tarjetas KPI */}
+            {/* KPI Cards Strip (4 Clean Floating White Cards) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className={cardBg + " p-4.5"}>
-                <span className={`text-[10px] font-sans font-bold ${textMuted} uppercase tracking-widest block`}>
-                  Cobranza Mensual Renta
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-2">
+                <div className="flex items-center justify-between text-slate-400 text-xs">
+                  <span className="font-semibold uppercase text-[10px] tracking-wider">Cobranza Mensual</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                    +2.4% MoM
+                  </span>
+                </div>
+                <span className="text-2xl font-bold text-slate-900 font-display block">
+                  $3,145,000 <span className="text-xs font-normal text-slate-400">MXN</span>
                 </span>
-                <span className={`text-2xl font-bold font-display ${isSlate ? "text-white" : "text-ink"} mt-1 block`}>
-                  $3,145,000 MXN
-                </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-sans">
-                  98.2% Al Día (Julio 2026)
-                </span>
-              </div>
-
-              <div className={cardBg + " p-4.5"}>
-                <span className={`text-[10px] font-sans font-bold ${textMuted} uppercase tracking-widest block`}>
-                  Superficie Rentable (GLA)
-                </span>
-                <span className={`text-2xl font-bold font-display ${isSlate ? "text-white" : "text-ink"} mt-1 block`}>
-                  94.1% Ocupado
-                </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-sans">
-                  {totalOccupiedSqm.toLocaleString()} m² Rentados ({vacancySqm} m² Vacantes)
+                <span className="text-[11px] text-slate-500 block">
+                  98.2% Cobrado (Julio 2026)
                 </span>
               </div>
 
-              <div className={cardBg + " p-4.5"}>
-                <span className={`text-[10px] font-sans font-bold ${textMuted} uppercase tracking-widest block`}>
-                  Invariante Prorrateo CAM
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-2">
+                <div className="flex items-center justify-between text-slate-400 text-xs">
+                  <span className="font-semibold uppercase text-[10px] tracking-wider">Ocupación GLA</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                    94.1% Ocupado
+                  </span>
+                </div>
+                <span className="text-2xl font-bold text-slate-900 font-display block">
+                  7,105 m² <span className="text-xs font-normal text-slate-400">Rentados</span>
                 </span>
-                <span className="text-2xl font-bold font-display text-terra mt-1 block">
-                  1.0000 Balance
-                </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-terra/10 text-terra text-[11px] font-medium font-sans">
-                  Sumatoria Exacta NNN
+                <span className="text-[11px] text-slate-500 block">
+                  445 m² Vacantes (2 Locales)
                 </span>
               </div>
 
-              <div className={cardBg + " p-4.5"}>
-                <span className={`text-[10px] font-sans font-bold ${textMuted} uppercase tracking-widest block`}>
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-2">
+                <div className="flex items-center justify-between text-slate-400 text-xs">
+                  <span className="font-semibold uppercase text-[10px] tracking-wider">Invariante CAM</span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                    NNN Balance
+                  </span>
+                </div>
+                <span className="text-2xl font-bold text-slate-900 font-display block">
+                  1.0000 <span className="text-xs font-normal text-slate-400">Exacto</span>
+                </span>
+                <span className="text-[11px] text-slate-500 block">
+                  85 Locales Cuadrados
+                </span>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-2">
+                <div className="flex items-center justify-between text-slate-400 text-xs">
+                  <span className="font-semibold uppercase text-[10px] tracking-wider">Ahorro CapEx AI</span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold">
+                    Propietario
+                  </span>
+                </div>
+                <span className="text-2xl font-bold text-emerald-600 font-display block">
+                  $78,000 <span className="text-xs font-normal text-slate-400">MXN</span>
+                </span>
+                <span className="text-[11px] text-slate-500 block">
                   Gasto Dudoso Rechazado
                 </span>
-                <span className="text-2xl font-bold font-display text-pine mt-1 block">
-                  $78,000 MXN
-                </span>
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-xs bg-pine/10 text-pine text-[11px] font-medium font-sans">
-                  Ahorro Directo Propietario
-                </span>
               </div>
             </div>
 
-            {/* BARRA VISUAL DE DISTRIBUCIÓN DE GLA POR CATEGORÍA COMERCIAL */}
-            <div className={cardBg + " p-5 space-y-3"}>
-              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5 ${borderHairline}`}>
+            {/* Visual GLA Commercial Mix Bar Card */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
-                  <h4 className={`font-bold text-xs font-display ${isSlate ? "text-white" : "text-ink"} uppercase tracking-wider`}>
-                    Distribución de GLA y Mezcla Comercial de Plaza La Gran Vía (7,550 m²)
-                  </h4>
-                  <p className={`text-[11px] ${textMuted}`}>
-                    Asignación porcentual de área rentable por categoría de negocio.
+                  <h3 className="font-bold text-sm text-slate-900 font-display">
+                    Distribución de Mezcla Comercial (7,550 m² GLA Total)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Porcentaje de ocupación por categoría de negocio en Plaza La Gran Vía.
                   </p>
                 </div>
-                <span className="text-[11px] font-bold text-terra">94.1% Ocupación Total</span>
+                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+                  94.1% Ocupación Activa
+                </span>
               </div>
 
-              {/* Progress Segment Bar */}
-              <div className="h-3 w-full rounded-xs bg-black/20 overflow-hidden flex">
-                <div style={{ width: "35.2%" }} className="bg-terra h-full" title="Gastronomía & Rest. (35.2%)" />
-                <div style={{ width: "28.6%" }} className="bg-gold h-full" title="Retail & Moda (28.6%)" />
-                <div style={{ width: "18.4%" }} className="bg-pine h-full" title="Servicios & Bancos (18.4%)" />
-                <div style={{ width: "11.9%" }} className="bg-sky-600 h-full" title="Entretenimiento (11.9%)" />
-                <div style={{ width: "5.9%" }} className="bg-slate-500 h-full" title="Vacancia (5.9%)" />
+              {/* Visual Progress Bar */}
+              <div className="h-3.5 w-full rounded-full bg-slate-100 overflow-hidden flex p-0.5">
+                <div style={{ width: "35.2%" }} className="bg-rose-500 h-full rounded-l-full" title="Gastronomía (35.2%)" />
+                <div style={{ width: "28.6%" }} className="bg-amber-400 h-full" title="Retail (28.6%)" />
+                <div style={{ width: "18.4%" }} className="bg-emerald-500 h-full" title="Servicios (18.4%)" />
+                <div style={{ width: "11.9%" }} className="bg-blue-500 h-full" title="Entretenimiento (11.9%)" />
+                <div style={{ width: "5.9%" }} className="bg-slate-300 h-full rounded-r-full" title="Vacancia (5.9%)" />
               </div>
 
-              {/* Legend Strip */}
-              <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] pt-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-xs bg-terra" />
-                  <span className={textBody}>Gastronomía & Rest. (35.2%)</span>
+              {/* Legend */}
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                  <span className="text-slate-700 font-medium">Gastronomía & Rest. (35.2%)</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-xs bg-gold" />
-                  <span className={textBody}>Retail & Moda (28.6%)</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                  <span className="text-slate-700 font-medium">Retail & Moda (28.6%)</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-xs bg-pine" />
-                  <span className={textBody}>Servicios & Bancos (18.4%)</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  <span className="text-slate-700 font-medium">Servicios & Bancos (18.4%)</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-xs bg-sky-600" />
-                  <span className={textBody}>Entretenimiento (11.9%)</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                  <span className="text-slate-700 font-medium">Entretenimiento (11.9%)</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-xs bg-slate-500" />
-                  <span className={textMuted}>Vacancia Absorbida (5.9%)</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                  <span className="text-slate-500">Vacancia Absorbida (5.9%)</span>
                 </div>
               </div>
             </div>
 
-            {/* TABLA COMPLETA RENT ROLL CON BARRA DE BÚSQUEDA Y FILTROS */}
-            <div className={cardBg + " p-5 space-y-4"}>
-              <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 ${borderHairline}`}>
+            {/* Rent Roll Table Card with Search & Filters */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
-                  <h3 className={`font-bold text-sm font-display ${isSlate ? "text-white" : "text-ink"} flex items-center gap-2`}>
+                  <h3 className="font-bold text-sm text-slate-900 font-display flex items-center gap-2">
                     <span>Rent Roll Matriz Consolidada ({filteredTenants.length} Locales)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-terra/15 text-terra font-sans text-[10px] font-bold">
-                      SAARI SYNC ACTIVO
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                      SAARI Sync Live
                     </span>
                   </h3>
-                  <p className={`text-xs ${textMuted} font-sans`}>
-                    Los auxiliares de cobranza de SAARI ERP actualizan automáticamente los estatus de pago de la plaza.
+                  <p className="text-xs text-slate-500">
+                    Sincronización continua de depósitos bancarios y estado de cobranza.
                   </p>
                 </div>
 
-                {/* CONTROLES DE BÚSQUEDA Y FILTRADO RÁPIDO */}
-                <div className="flex flex-col sm:flex-row items-center gap-2">
+                {/* Filter Controls */}
+                <div className="flex flex-col sm:flex-row items-center gap-2.5">
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Buscar por inquilino, local, giro..."
-                    className={`px-3 py-1.5 rounded-xs text-xs border ${
-                      isSlate
-                        ? "bg-[#0d0f15] border-white/20 text-white placeholder-slate-500 focus:ring-1 focus:ring-terra"
-                        : "bg-sand-100 border-hairline text-ink focus:ring-1 focus:ring-terra"
-                    } focus:outline-none`}
+                    placeholder="Buscar inquilino, local, giro..."
+                    className="px-3.5 py-2 rounded-xl text-xs border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition-all"
                   />
 
-                  <div className="flex items-center gap-1 text-[11px]">
+                  <div className="flex items-center gap-1 text-xs">
                     <button
                       onClick={() => setFilterCategory("all")}
-                      className={`px-2.5 py-1 rounded-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
                         filterCategory === "all"
-                          ? "bg-terra text-white"
-                          : isSlate
-                          ? "bg-[#222736] text-slate-300 hover:text-white"
-                          : "bg-sand-200 text-ink-700"
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
                       Todos ({TENANTS.length})
                     </button>
                     <button
                       onClick={() => setFilterCategory("ok")}
-                      className={`px-2.5 py-1 rounded-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
                         filterCategory === "ok"
-                          ? "bg-pine text-white"
-                          : isSlate
-                          ? "bg-[#222736] text-slate-300 hover:text-white"
-                          : "bg-sand-200 text-ink-700"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
                       Al Día
                     </button>
                     <button
                       onClick={() => setFilterCategory("sat")}
-                      className={`px-2.5 py-1 rounded-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
                         filterCategory === "sat"
-                          ? "bg-red-700 text-white"
-                          : isSlate
-                          ? "bg-[#222736] text-slate-300 hover:text-white"
-                          : "bg-sand-200 text-ink-700"
+                          ? "bg-rose-600 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
                       Alerta SAT
@@ -571,23 +508,23 @@ export function LandlordDashboard() {
                 </div>
               </div>
 
-              {/* TABLA DE LOCALES */}
-              <div className={`overflow-x-auto border ${borderHairline} rounded-xs`}>
-                <table className="w-full text-left text-xs border-collapse relative">
+              {/* Clean Modern Table */}
+              <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className={`border-b ${borderHairline} uppercase text-[10px] ${tableHeaderBg} font-mono`}>
-                      <th className="p-3 font-bold">#</th>
-                      <th className="p-3 font-semibold">Local / Inquilino</th>
-                      <th className="p-3 font-semibold">Zona</th>
-                      <th className="p-3 font-semibold">Giro / Categoría</th>
-                      <th className="p-3 font-semibold text-right">Superficie m²</th>
-                      <th className="p-3 font-semibold text-right">Participación Pro-Rata</th>
-                      <th className="p-3 font-semibold text-right">Renta Est. MXN</th>
-                      <th className="p-3 font-semibold">Estatus Cobranza & Fiscal</th>
-                      <th className="p-3 font-semibold">Protección Agente IA</th>
+                    <tr className="border-b border-slate-100 text-slate-400 uppercase text-[10px] bg-slate-50/70 font-sans tracking-wider">
+                      <th className="p-3.5 font-bold">#</th>
+                      <th className="p-3.5 font-semibold">Local / Inquilino</th>
+                      <th className="p-3.5 font-semibold">Zona</th>
+                      <th className="p-3.5 font-semibold">Giro / Categoría</th>
+                      <th className="p-3.5 font-semibold text-right">Superficie</th>
+                      <th className="p-3.5 font-semibold text-right">Pro-Rata</th>
+                      <th className="p-3.5 font-semibold text-right">Renta MXN</th>
+                      <th className="p-3.5 font-semibold">Estatus Cobranza</th>
+                      <th className="p-3.5 font-semibold">Protección AI</th>
                     </tr>
                   </thead>
-                  <tbody className={`divide-y ${borderHairline} font-medium ${isSlate ? "text-slate-200" : "text-ink"}`}>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                     {filteredTenants.map((t, idx) => {
                       const sqm = getTenantSqm(t.name, idx);
                       const sharePct = ((sqm / plazaTotalGla) * 100).toFixed(2);
@@ -598,320 +535,228 @@ export function LandlordDashboard() {
                       const isExclusivityHold = t.name.includes("Alma Verde") || t.name.includes("Blue Luna");
 
                       return (
-                        <tr key={t.slug} className={isSlate ? "hover:bg-white/5 transition-colors" : "hover:bg-sand-200/40 transition-colors"}>
-                          <td className={`p-3 font-mono text-[11px] ${textMuted}`}>{idx + 1}</td>
-                          <td className={`p-3 font-bold font-sans ${isSlate ? "text-white" : "text-ink"}`}>{t.name}</td>
-                          <td className={`p-3 font-mono text-[11px] ${textMuted}`}>{t.zone}</td>
-                          <td className="p-3">{t.tag}</td>
-                          <td className={`p-3 text-right font-mono font-bold ${isSlate ? "text-white" : "text-ink"}`}>{sqm} m²</td>
-                          <td className="p-3 text-right font-mono font-bold text-terra">{sharePct}%</td>
-                          <td className={`p-3 text-right font-mono font-bold ${isSlate ? "text-white" : "text-ink"}`}>${estRent.toLocaleString()}</td>
-                          <td className="p-3">
+                        <tr key={t.slug} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3.5 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
+                          <td className="p-3.5 font-bold text-slate-900 font-sans">{t.name}</td>
+                          <td className="p-3.5 text-slate-500 text-[11px]">{t.zone}</td>
+                          <td className="p-3.5 text-slate-600">{t.tag}</td>
+                          <td className="p-3.5 text-right font-semibold text-slate-900">{sqm} m²</td>
+                          <td className="p-3.5 text-right font-semibold text-rose-600">{sharePct}%</td>
+                          <td className="p-3.5 text-right font-bold text-slate-900">${estRent.toLocaleString()}</td>
+                          <td className="p-3.5">
                             {isSatError ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-xs bg-red-900/30 text-red-400 border border-red-800 text-[10px] font-bold">
-                                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold">
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
                                 Alerta Fiscal SAT (PPD)
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-xs bg-pine/15 text-pine border border-pine/30 text-[10px] font-bold">
-                                <span className="h-1.5 w-1.5 rounded-full bg-pine" />
-                                Al Día (CFDI Emitido)
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                Al Día (CFDI)
                               </span>
                             )}
                           </td>
-                          <td className="p-3">
-                            {isSatError && <span className="text-red-400 font-bold text-[11px]">Alerta CFDI 4.0 Generada</span>}
-                            {isCapexRejection && <span className="text-gold-dark font-bold text-[11px]">CapEx $78k Rechazado ($0)</span>}
-                            {isExclusivityHold && <span className="text-pine font-bold text-[11px]">Cláusula Exclusividad Activa</span>}
+                          <td className="p-3.5 text-[11px]">
+                            {isSatError && <span className="text-rose-600 font-bold">Alerta CFDI 4.0</span>}
+                            {isCapexRejection && <span className="text-amber-600 font-bold">CapEx $78k Rechazado</span>}
+                            {isExclusivityHold && <span className="text-emerald-600 font-bold">Exclusividad Activa</span>}
                             {!isSatError && !isCapexRejection && !isExclusivityHold && (
-                              <span className={`font-mono text-[11px] ${textMuted}`}>Protección Agente IA</span>
+                              <span className="text-slate-400">Protección AI</span>
                             )}
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
-                  <tfoot className={duneCardBg + " font-bold text-xs shadow-md"}>
+                  <tfoot className="bg-slate-900 text-white font-semibold text-xs rounded-b-xl">
                     <tr>
-                      <td className="p-3 font-mono">TOTAL</td>
-                      <td className="p-3 font-mono font-bold" colSpan={3}>
-                        PLAZA LA GRAN VÍA ({TENANTS.length} LOCALES ACTIVOS + VACANTES)
+                      <td className="p-3.5">TOTAL</td>
+                      <td className="p-3.5 font-bold" colSpan={3}>
+                        PLAZA LA GRAN VÍA ({TENANTS.length} LOCALES + VACANTES)
                       </td>
-                      <td className="p-3 text-right font-mono text-gold font-bold">{plazaTotalGla.toLocaleString()} m²</td>
-                      <td className="p-3 text-right font-mono text-terra font-bold">1.0000 (100.00%)</td>
-                      <td className="p-3 text-right font-mono text-gold font-bold">$3,145,000 MXN</td>
-                      <td className="p-3 font-mono" colSpan={2}>94.1% Ocupación Activa · Balance Cuadrado</td>
+                      <td className="p-3.5 text-right text-amber-300 font-bold">{plazaTotalGla.toLocaleString()} m²</td>
+                      <td className="p-3.5 text-right text-rose-300 font-bold">1.0000 (100%)</td>
+                      <td className="p-3.5 text-right text-amber-300 font-bold">$3,145,000 MXN</td>
+                      <td className="p-3.5 text-slate-300" colSpan={2}>94.1% Ocupación Activa</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
-
-              {/* PANEL RESUMEN EJECUTIVO INSTITUCIONAL */}
-              <div className={duneCardBg + " p-5 space-y-4 font-sans text-xs"}>
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <span className="text-gold font-bold flex items-center gap-2 font-display text-sm tracking-wide">
-                    <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
-                    RESUMEN EJECUTIVO DE AUDITORÍA OPERATIVA & NOI PROYECTADO
-                  </span>
-                  <span className={`text-[10px] ${textMuted}`}>LA GRAN VÍA MEXICALI</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-[11px]">
-                  <div className={`p-3.5 rounded-xs ${innerCardBg}`}>
-                    <span className={`block text-[10px] ${textMuted} mb-1`}>CUMPLIMIENTO FISCAL SAT:</span>
-                    <span className={`font-bold block text-sm font-display ${isSlate ? "text-white" : "text-ink"}`}>84 / 85 VALIDADOS</span>
-                    <span className={`text-[10px] ${textMuted} mt-1 block`}>1 Alerta CFDI PPD/PUE emitida</span>
-                  </div>
-
-                  <div className={`p-3.5 rounded-xs ${innerCardBg}`}>
-                    <span className={`block text-[10px] ${textMuted} mb-1`}>PROTECCIÓN EXCLUSIVIDADES:</span>
-                    <span className="text-terra font-bold block text-sm font-display">14 CLÁUSULAS ACTIVAS</span>
-                    <span className={`text-[10px] ${textMuted} mt-1 block`}>0 Demandas por incumplimiento</span>
-                  </div>
-
-                  <div className={`p-3.5 rounded-xs ${innerCardBg}`}>
-                    <span className={`block text-[10px] ${textMuted} mb-1`}>RECLAMO DE GARANTÍAS ($0):</span>
-                    <span className="text-gold-dark font-bold block text-sm font-display">$145,000 MXN RECUPERADOS</span>
-                    <span className={`text-[10px] ${textMuted} mt-1 block`}>Carrier HVAC garantía activa</span>
-                  </div>
-
-                  <div className={`p-3.5 rounded-xs ${innerCardBg}`}>
-                    <span className={`block text-[10px] ${textMuted} mb-1`}>INTEGRACIÓN ERP SAARI:</span>
-                    <span className={`font-bold block text-sm font-display ${isSlate ? "text-white" : "text-ink"}`}>100% SINCRONIZADO</span>
-                    <span className={`text-[10px] ${textMuted} mt-1 block`}>Lote Batch listo para exportar</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
 
-        {/* ---------------- PESTAÑA 2: ARRENDAMIENTO & MARIANA ---------------- */}
+        {/* ---------------- PESTAÑAS SECUNDARIAS (Mariana, Diego, Renata, SAARI) ---------------- */}
         {activeTab === "leasing" && (
-          <div className="space-y-6">
-            <div className={cardBg + " p-5 space-y-4"}>
-              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-3 ${borderHairline}`}>
-                <div>
-                  <h3 className={`font-bold text-sm font-display ${isSlate ? "text-white" : "text-ink"} flex items-center gap-2`}>
-                    <span>Módulo de Arrendamiento & Inteligencia Legal (Mariana)</span>
-                    <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine font-sans text-[10px] font-bold">
-                      SOP §2A & GENERAL COUNSEL AI
-                    </span>
-                  </h3>
-                  <p className={`text-xs ${textMuted}`}>
-                    Monitoreo en vivo de solicitudes prospecto, consulta RAG de contratos, exclusividades y guardrails de la plaza.
-                  </p>
-                </div>
-                <span className={`px-2.5 py-1 rounded-xs ${duneCardBg} font-mono text-[11px] font-bold`}>
-                  85 CONTRATOS EN BÓVEDA RAG
-                </span>
-              </div>
-
-              {/* KPI Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className={innerCardBg + " p-3 rounded-xs"}>
-                  <span className={`text-[10px] uppercase font-semibold block ${textMuted}`}>Solicitudes Evaluadas</span>
-                  <span className={`font-bold text-base mt-0.5 block font-display ${isSlate ? "text-white" : "text-ink"}`}>3 Prospectos Auditados</span>
-                </div>
-                <div className={innerCardBg + " p-3 rounded-xs"}>
-                  <span className={`text-[10px] uppercase font-semibold block ${textMuted}`}>Exclusividades Activas</span>
-                  <span className="text-terra font-bold text-base mt-0.5 block font-display">14 Cláusulas Protegidas</span>
-                </div>
-                <div className={innerCardBg + " p-3 rounded-xs"}>
-                  <span className={`text-[10px] uppercase font-semibold block ${textMuted}`}>Riesgo Legal Prevenido</span>
-                  <span className="text-pine font-bold text-base mt-0.5 block font-display">$780,000 MXN / año</span>
-                </div>
-              </div>
-            </div>
-
-            {/* CHATBOX MARIANA AI */}
-            <div className={cardBg + " p-5 space-y-4"}>
-              <div className={`flex items-center justify-between border-b pb-3 ${borderHairline}`}>
-                <div>
-                  <h4 className={`font-bold text-xs font-display uppercase tracking-wider ${isSlate ? "text-white" : "text-ink"}`}>
-                    Consulta Directa a Mariana AI (Bóveda RAG Legal)
-                  </h4>
-                  <p className={`text-[11px] ${textMuted}`}>
-                    Pregunta sobre los 85 contratos, exclusividades comerciales o el Código Civil de Baja California.
-                  </p>
-                </div>
-                <span className="px-2 py-0.5 rounded-xs bg-pine/15 text-pine text-[10px] font-bold font-sans">
-                  BÓVEDA INDEXADA RAG
-                </span>
-              </div>
-
-              {/* Quick Query Preset Pills */}
-              <div className="flex flex-wrap gap-2 text-xs">
-                <button
-                  onClick={() => {
-                    setMarianaQuery("¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?");
-                    setMarianaChatHistory([
-                      ...marianaChatHistory,
-                      {
-                        query: "¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?",
-                        answer: "Blue Luna Café (Local B-02, Zona 4) cuenta con la Cláusula #14 en su contrato vigente (2023-2028). Otorga exclusividad comercial absoluta en la venta de café espresso y especialidad en Zona 4. La propuesta de Starbucks Reserve presentaba un 98.4% de solapamiento semántico en menú.",
-                        refPdf: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
-                        refClause: "Página 12, Cláusula 14",
-                      },
-                    ]);
-                  }}
-                  className={`px-3 py-1.5 ${innerCardBg} hover:border-terra ${textBody} font-medium rounded-xs text-[11px] transition-all cursor-pointer`}
-                >
-                  ¿Por qué bloqueamos a Starbucks?
-                </button>
-                <button
-                  onClick={() => {
-                    setMarianaQuery("¿Qué dice la Ley Antimonopolio (LFCE §3) sobre la exclusividad de Alma Verde?");
-                    setMarianaChatHistory([
-                      ...marianaChatHistory,
-                      {
-                        query: "¿Qué dice la Ley Antimonopolio (LFCE §3) sobre la exclusividad de Alma Verde?",
-                        answer: "Alma Verde reclamaba exclusividad genérica sobre 'comida saludable y ensaladas'. Conforme al Art. 3 de la LFCE, las cláusulas de no-competencia desproporcionadas en centros comerciales son nulas. Mariana dictaminó aprobación condicionada para La Vicenta (tacos/carnes), restringiendo únicamente la venta de ensaladas bowls como plato fuerte.",
-                        refPdf: "Contrato_AlmaVerde_LocB10_Firmado.pdf",
-                        refClause: "Página 15, Cláusula 22 (Filtro LFCE §3)",
-                      },
-                    ]);
-                  }}
-                  className={`px-3 py-1.5 ${innerCardBg} hover:border-terra ${textBody} font-medium rounded-xs text-[11px] transition-all cursor-pointer`}
-                >
-                  ¿Cómo aplica la Ley Antimonopolio (LFCE §3)?
-                </button>
-              </div>
-
-              {/* Chat History */}
-              <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-                {marianaChatHistory.map((item, i) => (
-                  <div key={i} className={`p-4 rounded-xs border ${borderHairline} space-y-2 text-xs ${innerCardBg}`}>
-                    <div className="flex items-center justify-between">
-                      <span className={textMuted}>Pregunta: <strong className={isSlate ? "text-white" : "text-ink"}>{item.query}</strong></span>
-                      <span className="text-[10px] font-sans text-pine font-bold">Respuesta RAG Verificada</span>
-                    </div>
-                    <p className={`p-3 rounded-xs border ${borderHairline} ${isSlate ? "bg-[#11131c] text-slate-200" : "bg-sand-50 text-ink-700"}`}>
-                      {item.answer}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Input */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!marianaQuery.trim()) return;
-                  setMarianaChatHistory([
-                    ...marianaChatHistory,
-                    {
-                      query: marianaQuery,
-                      answer: `Mariana analizó la bóveda RAG para "${marianaQuery}": Todos los contratos vigentes cumplen con la normativa de arrendamiento de Baja California.`,
-                      refPdf: "Matriz_Consolidada_Contratos.pdf",
-                    },
-                  ]);
-                  setMarianaQuery("");
-                }}
-                className="flex items-center gap-2 pt-2"
-              >
-                <input
-                  type="text"
-                  value={marianaQuery}
-                  onChange={(e) => setMarianaQuery(e.target.value)}
-                  placeholder="Pregunta a Mariana sobre contratos o legislación..."
-                  className={`flex-1 px-3.5 py-2.5 border rounded-xs text-xs ${
-                    isSlate ? "bg-[#10121a] border-white/20 text-white" : "bg-sand-100 border-hairline text-ink"
-                  } focus:outline-none`}
-                />
-                <button
-                  type="submit"
-                  className={`px-4 py-2.5 font-bold text-xs rounded-xs cursor-pointer ${
-                    isSlate ? "bg-terra text-white hover:bg-terra-deep" : "bg-dune-900 text-sand-100 hover:bg-dune-800"
-                  }`}
-                >
-                  Consultar AI →
-                </button>
-              </form>
-            </div>
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+            <h3 className="font-bold text-base text-slate-900 font-display">Módulo de Arrendamiento & Inteligencia Legal (Mariana)</h3>
+            <p className="text-xs text-slate-500">Evaluación cognitiva de solicitudes prospecto y bóveda RAG de 85 contratos en Baja California.</p>
           </div>
         )}
 
-        {/* ---------------- PESTAÑA 3: CAPEX & DIEGO ---------------- */}
         {activeTab === "maint" && (
-          <div className="space-y-6">
-            <div className={cardBg + " p-5 space-y-4"}>
-              <div className={`flex items-center justify-between border-b pb-3 ${borderHairline}`}>
-                <div>
-                  <h3 className={`font-bold text-sm font-display uppercase tracking-wider ${isSlate ? "text-white" : "text-ink"}`}>
-                    Auditoría de Gastos CapEx & Garantías de Equipos (Diego)
-                  </h3>
-                  <p className={`text-xs ${textMuted}`}>
-                    Verificación técnica de reclamos de mantenimiento y reclamo de garantías de fabricante ($0 costo).
-                  </p>
-                </div>
-              </div>
-
-              {/* Selector de Casos */}
-              <div className="grid md:grid-cols-3 gap-3">
-                {CAPEX_CASES.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setSelectedCapex(item);
-                      setDiegoNotificationSent(false);
-                    }}
-                    className={`p-4 rounded-xs border text-left transition-all cursor-pointer ${
-                      selectedCapex.id === item.id
-                        ? isSlate
-                          ? "bg-terra/20 border-terra text-white"
-                          : "bg-sand-200/90 border-gold"
-                        : innerCardBg
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className={`font-bold text-xs font-display ${isSlate ? "text-white" : "text-ink"}`}>{item.tenant}</span>
-                      <span className="font-mono font-bold text-xs text-terra">${item.amount.toLocaleString()} MXN</span>
-                    </div>
-                    <span className={`text-xs block truncate ${textMuted}`}>{item.expenseType}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+            <h3 className="font-bold text-base text-slate-900 font-display">Auditoría de Gastos CapEx & Garantías de Equipos (Diego)</h3>
+            <p className="text-xs text-slate-500">Verificación técnica de reclamos de mantenimiento y pólizas Carrier / Caterpillar ($0 costo).</p>
           </div>
         )}
 
-        {/* ---------------- PESTAÑA 4: CAM & RENATA ---------------- */}
         {activeTab === "cam" && (
-          <div className="space-y-6">
-            <div className={cardBg + " p-5 space-y-4"}>
-              <div className={`flex items-center justify-between border-b pb-3 ${borderHairline}`}>
-                <div>
-                  <h3 className={`font-bold text-sm font-display uppercase tracking-wider ${isSlate ? "text-white" : "text-ink"}`}>
-                    Prorrateo CAM NNN & Auditoría Fiscal SAT CFDI 4.0 (Renata)
-                  </h3>
-                  <p className={`text-xs ${textMuted}`}>
-                    Auditoría en tiempo real de timbrado CFDI 4.0, complementos de pago PPD vs PUE y balance NNN.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+            <h3 className="font-bold text-base text-slate-900 font-display">Prorrateo CAM NNN & Auditoría Fiscal SAT CFDI 4.0 (Renata)</h3>
+            <p className="text-xs text-slate-500">Timbrado CFDI 4.0, complementos de pago PPD vs PUE y balance NNN exacto.</p>
           </div>
         )}
 
-        {/* ---------------- PESTAÑA 5: SAARI ERP ---------------- */}
         {activeTab === "saari" && (
-          <div className="space-y-6">
-            <div className={cardBg + " p-5 space-y-4"}>
-              <div className={`flex items-center justify-between border-b pb-3 ${borderHairline}`}>
-                <div>
-                  <h3 className={`font-bold text-sm font-display uppercase tracking-wider ${isSlate ? "text-white" : "text-ink"}`}>
-                    Conector Bidireccional SAARI ERP
-                  </h3>
-                  <p className={`text-xs ${textMuted}`}>
-                    Sincronización en tiempo real de auxiliares de cobranza y exportación de lotes batch.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+            <h3 className="font-bold text-base text-slate-900 font-display">Conector SAARI ERP</h3>
+            <p className="text-xs text-slate-500">Ingestión de auxiliares de cobranza y exportación de lotes batch para SAARI ERP.</p>
           </div>
         )}
       </main>
+
+      {/* ---------------- 3. FLOATING RIGHT PANEL (Asistente AI Interactivo - Mariana/Diego/Renata) ---------------- */}
+      <aside className="w-full lg:w-80 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between shrink-0 lg:sticky lg:top-7 lg:h-[calc(100vh-3.5rem)] space-y-4">
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+          {/* Agent Switcher Header */}
+          <div className="border-b border-slate-100 pb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              Asistente AI Asignado
+            </span>
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+              <button
+                onClick={() => setActiveAgent("mariana")}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeAgent === "mariana" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Mariana
+              </button>
+              <button
+                onClick={() => setActiveAgent("diego")}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeAgent === "diego" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Diego
+              </button>
+              <button
+                onClick={() => setActiveAgent("renata")}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeAgent === "renata" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Renata
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Query Pills */}
+          <div className="space-y-1.5 text-xs">
+            <span className="text-[10px] text-slate-400 font-semibold block">Preguntas Rápidas:</span>
+            {activeAgent === "mariana" && (
+              <button
+                onClick={() => {
+                  setAiQuery("¿Por qué bloqueamos a Starbucks Reserve?");
+                  setChatHistory([
+                    ...chatHistory,
+                    {
+                      agent: "Mariana",
+                      query: "¿Por qué bloqueamos a Starbucks Reserve?",
+                      answer: "Starbucks presentó 98.4% de conflicto de menú con Blue Luna Café (Cláusula #14 de exclusividad).",
+                    },
+                  ]);
+                }}
+                className="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-700 text-[11px] transition-all cursor-pointer"
+              >
+                ☕ Exclusividad Blue Luna vs Starbucks
+              </button>
+            )}
+            {activeAgent === "diego" && (
+              <button
+                onClick={() => {
+                  setAiQuery("¿Cuál es la garantía del compresor Carrier?");
+                  setChatHistory([
+                    ...chatHistory,
+                    {
+                      agent: "Diego",
+                      query: "¿Cuál es la garantía del compresor Carrier?",
+                      answer: "Póliza Carrier #CR-884920 cubre el 100% de la falla de compresor de Ashley Furniture ($0 costo).",
+                    },
+                  ]);
+                }}
+                className="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-700 text-[11px] transition-all cursor-pointer"
+              >
+                ❄️ Póliza Carrier HVAC Ashley
+              </button>
+            )}
+            {activeAgent === "renata" && (
+              <button
+                onClick={() => {
+                  setAiQuery("¿Por qué MINT Boutique tiene alerta SAT?");
+                  setChatHistory([
+                    ...chatHistory,
+                    {
+                      agent: "Renata",
+                      query: "¿Por qué MINT Boutique tiene alerta SAT?",
+                      answer: "Pago registrado como PUE pero factura emitida en PPD. Se requiere Complemento SAT CFDI 4.0.",
+                    },
+                  ]);
+                }}
+                className="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-700 text-[11px] transition-all cursor-pointer"
+              >
+                📄 Alerta SAT CFDI MINT Boutique
+              </button>
+            )}
+          </div>
+
+          {/* Feed de Conversaciones */}
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+            {chatHistory.map((item, i) => (
+              <div key={i} className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-400 block">{item.agent}</span>
+                <p className="font-semibold text-slate-900">{item.query}</p>
+                <p className="text-slate-600 leading-relaxed text-[11px]">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Input Bar at Bottom (Estilo Steep AI Chat) */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!aiQuery.trim()) return;
+            setChatHistory([
+              ...chatHistory,
+              {
+                agent: activeAgent === "mariana" ? "Mariana" : activeAgent === "diego" ? "Diego" : "Renata",
+                query: aiQuery,
+                answer: `Respuesta verificada para "${aiQuery}": Expediente en regla conforme a la normativa de Plaza La Gran Vía.`,
+              },
+            ]);
+            setAiQuery("");
+          }}
+          className="pt-2 border-t border-slate-100"
+        >
+          <div className="relative">
+            <input
+              type="text"
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              placeholder={`Pregunta a ${activeAgent === "mariana" ? "Mariana" : activeAgent === "diego" ? "Diego" : "Renata"}...`}
+              className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition-all"
+            />
+            <button
+              type="submit"
+              className="absolute right-1.5 top-1.5 h-7 w-7 rounded-lg bg-slate-900 text-white font-bold text-xs flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-all"
+            >
+              ↑
+            </button>
+          </div>
+        </form>
+      </aside>
     </div>
   );
 }
