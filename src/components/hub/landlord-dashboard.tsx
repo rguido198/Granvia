@@ -140,10 +140,33 @@ function getTenantSqm(name: string, index: number): number {
   return Math.max(45, 80 - (index % 15) * 2);
 }
 
+function getTenantRent(sqm: number, name: string): number {
+  if (name.includes("Ashley")) return 348000;
+  if (name.includes("Cinemex")) return 283200;
+  if (name.includes("Buffalo")) return 156000;
+  if (name.includes("260 Grill")) return 76800;
+  if (name.includes("Alma Verde")) return 52800;
+  if (name.includes("AmoreMe")) return 18240;
+  if (name.includes("ARA Transportes")) return 17760;
+  if (name.includes("Ary Casa")) return 17280;
+  if (name.includes("Asian Wok")) return 16320;
+  if (name.includes("AT&T")) return 15840;
+  if (name.includes("AXA")) return 15360;
+  if (name.includes("Baja Brunch")) return 14880;
+  if (name.includes("Banorte")) return 50400;
+  if (name.includes("Banregio")) return 50400;
+  if (name.includes("Be a Lash")) return 13440;
+  if (name.includes("Best Optical")) return 12960;
+  if (name.includes("Blue Luna")) return 43200;
+  if (name.includes("Bodega 8")) return 76800;
+  if (name.includes("Bonaprime")) return 18720;
+  if (name.includes("Cabanna")) return 76800;
+  return Math.round(sqm * 240);
+}
+
 export function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState<"all" | "ok" | "sat" | "excl">("all");
 
   const [selectedLeasingApp, setSelectedLeasingApp] = useState<ApplicantCase>(LEASING_APPLICANTS[0]);
   const [selectedCapex, setSelectedCapex] = useState<CapexCase>(CAPEX_CASES[0]);
@@ -156,7 +179,7 @@ export function LandlordDashboard() {
   const [saariProcessed, setSaariProcessed] = useState(false);
 
   // Mariana Chat Query State
-  const [marianaChatResponse, setMarianaChatResponse] = useState({
+  const [marianaChatResponse] = useState({
     query: "¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?",
     answer: "Blue Luna Café (Local B-02, Zona 4) cuenta con la Cláusula #14 en su contrato vigente (2023-2028). Otorga exclusividad comercial absoluta en la venta de café espresso y especialidad en Zona 4. La propuesta de Starbucks Reserve presentaba un 98.4% de solapamiento semántico en menú.",
     pdfName: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
@@ -164,7 +187,7 @@ export function LandlordDashboard() {
   });
 
   // Diego Chat Query State
-  const [diegoChatResponse, setDiegoChatResponse] = useState({
+  const [diegoChatResponse] = useState({
     query: "¿Por qué el reemplazo de compresor HVAC de Ashley Furniture no le cuesta al propietario?",
     answer: "Diego verificó el número de serie Carrier #CR-884920. La póliza de garantía del fabricante Carrier cubre fallas mecánicas de compresores de 15 toneladas durante 5 años (vigente hasta Noviembre 2028). Se tramitó la sustitución sin costo para el propietario ($0 MXN).",
     pdfName: "Poliza_Garantia_Carrier_Ashley_HVAC.pdf",
@@ -172,7 +195,7 @@ export function LandlordDashboard() {
   });
 
   // Renata Chat Query State
-  const [renataChatResponse, setRenataChatResponse] = useState({
+  const [renataChatResponse] = useState({
     query: "¿Por qué MINT Boutique registró una alerta fiscal SAT CFDI 4.0?",
     answer: "MINT Boutique pagó $32,000 MXN mediante transferencia registrando el método PUE (Pago en una sola exhibición), pero la factura original se emitió bajo el régimen PPD (Pago en parcialidades). Renata detectó la discrepancia antes de la declaración mensual del SAT para auto-emitir el Complemento de Recepción de Pagos sin sanción.",
     xmlName: "CFDI_4.0_Complemento_Pago_SAT_MINT.xml",
@@ -181,23 +204,14 @@ export function LandlordDashboard() {
 
   const totalOccupiedSqm = TENANTS.reduce((sum, t, idx) => sum + getTenantSqm(t.name, idx), 0);
   const vacancySqm = 445;
-  const plazaTotalGla = totalOccupiedSqm + vacancySqm;
+  const plazaTotalGla = 12745;
 
   const filteredTenants = TENANTS.filter((t) => {
-    const matchesSearch =
+    return (
       t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.zone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.tag.toLowerCase().includes(searchTerm.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    const isSatError = t.name.includes("MINT");
-    const isExclusivityHold = t.name.includes("Alma Verde") || t.name.includes("Blue Luna") || t.name.includes("La Purísima");
-
-    if (filterCategory === "ok") return !isSatError;
-    if (filterCategory === "sat") return isSatError;
-    if (filterCategory === "excl") return isExclusivityHold;
-    return true;
+      t.tag.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
   return (
@@ -221,7 +235,7 @@ export function LandlordDashboard() {
               activeTab === "overview" ? "bg-[#202020] text-white" : "text-[#202020] hover:text-[#ff682c]"
             }`}
           >
-            Rent Roll ({TENANTS.length})
+            Resumen Rent Roll ({TENANTS.length})
           </button>
 
           <button
@@ -279,96 +293,206 @@ export function LandlordDashboard() {
         </div>
       </header>
 
-      {/* ---------------- PESTAÑA 1: OVERVIEW (RENT ROLL & METRICS) ---------------- */}
+      {/* ---------------- PESTAÑA 1: RESUMEN RENT ROLL (84 LOCALES ACTIVOS - SCREENSHOT MATCH) ---------------- */}
       {activeTab === "overview" && (
-        <div className="space-y-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            <div className="lg:col-span-7 space-y-6">
-              <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
-                Asset Management Observatory · 7,550 m² GLA Mexicali
+        <div className="space-y-10">
+          {/* Header Title Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
+            <div>
+              <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
+                🟢 OPERACIÓN AL DÍA | La Gran Vía Mexicali
               </span>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-normal tracking-[-0.02em] text-[#202020] font-sans leading-[0.95]">
-                Accelerating Growth Through Precision Analytics.
+              <h1 className="text-3xl sm:text-4xl font-normal text-[#202020] tracking-[-0.02em] mt-2">
+                Resumen Consolidado del Rent Roll (84 Locales Activos)
               </h1>
-              <p className="text-base text-[#4d4d4d] leading-relaxed max-w-xl font-normal">
-                Consola privada de control operativo para el Sr. Martín. Monitoreo continuo del Rent Roll, prevención de conflictos de exclusividad legal y balance CAM NNN en Plaza La Gran Vía.
-              </p>
             </div>
-
-            <div className="lg:col-span-5 space-y-4">
-              <div className="bg-white rounded-[20px] p-6 border border-[#e8e8e8] space-y-3">
-                <div className="flex items-center justify-between text-xs text-[#828282]">
-                  <span className="font-normal uppercase tracking-wider text-[10px]">Cobranza Mensual</span>
-                  <span className="text-[#ff682c] font-normal text-xs">● 98.2% Al Día</span>
-                </div>
-                <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">
-                  $3 145 000 <span className="text-xs text-[#828282]">MXN</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-[20px] p-6 border border-[#e8e8e8] space-y-2">
-                  <span className="text-[10px] uppercase text-[#828282] block font-mono">Ocupación GLA</span>
-                  <div className="text-2xl font-normal text-[#202020]">94.1%</div>
-                </div>
-                <div className="bg-white rounded-[20px] p-6 border border-[#e8e8e8] space-y-2">
-                  <span className="text-[10px] uppercase text-[#828282] block font-mono">Ahorro CapEx</span>
-                  <div className="text-2xl font-normal text-[#ff682c]">$78 000</div>
-                </div>
-              </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => alert("Exportando informe oficial en PDF...")}
+                className="px-4 py-2 bg-white border border-[#202020] text-[#202020] text-xs font-normal cursor-pointer hover:bg-[#f5f5f5]"
+              >
+                Exportar Reporte (.PDF)
+              </button>
+              <button
+                onClick={() => setActiveTab("saari")}
+                className="px-4 py-2 bg-[#ff682c] text-white text-xs font-normal cursor-pointer hover:bg-[#e0561e]"
+              >
+                Sincronizar SAARI →
+              </button>
             </div>
           </div>
 
-          <div id="rentroll" className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-12 space-y-6">
+          {/* 4 Metric Cards Strip (Screenshot 1 Match) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
+              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">COBRANZA MENSUAL RENTA</span>
+              <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">$3,145,000 MXN</div>
+              <span className="inline-block px-2.5 py-1 bg-[#eaf2ec] text-[#2b593a] text-[11px] font-mono">✓ 98.2% Al Día (Julio 2026)</span>
+            </div>
+
+            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
+              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">SUPERFICIE RENTABLE (GLA)</span>
+              <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">94.1% Ocupado</div>
+              <span className="inline-block px-2.5 py-1 bg-[#eaf2ec] text-[#2b593a] text-[11px] font-mono">12,300 m² Rentados (445 m² Vacantes)</span>
+            </div>
+
+            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
+              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">INVARIANTE PRORRATEO CAM</span>
+              <div className="text-3xl font-normal text-[#816729] tracking-[-0.02em]">1.0000 Balance</div>
+              <span className="inline-block px-2.5 py-1 bg-[#f4efe6] text-[#816729] text-[11px] font-mono">Sumatoria Exacta NNN</span>
+            </div>
+
+            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
+              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">GASTO DUDOSO RECHAZADO</span>
+              <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">$78,000 MXN</div>
+              <span className="inline-block px-2.5 py-1 bg-[#eaf2ec] text-[#2b593a] text-[11px] font-mono">Ahorro Directo Propietario</span>
+            </div>
+          </div>
+
+          {/* Rent Roll Matriz Consolidada Table (84 Locales Activos + Vacancia) */}
+          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
-              <h2 className="text-2xl sm:text-3xl font-normal text-[#202020] tracking-[-0.02em]">
-                Rent Roll Plaza La Gran Vía ({filteredTenants.length} Locales)
-              </h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl sm:text-2xl font-normal text-[#202020]">
+                    Rent Roll Matriz Consolidada (84 Locales Activos + Vacancia)
+                  </h2>
+                  <span className="px-2.5 py-1 bg-[#202020] text-white font-mono text-[10px]">🔄 SAARI SYNC ACTIVO</span>
+                </div>
+                <p className="text-xs text-[#4d4d4d] mt-1">
+                  Sincronización en tiempo real: los auxiliares de cobranza de SAARI ERP actualizan automáticamente los estatus de pago de la plaza.
+                </p>
+              </div>
+
               <div className="flex items-center gap-3">
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por inquilino..."
+                  placeholder="Buscar inquilino o local..."
                   className="px-4 py-2 bg-white border border-[#e8e8e8] text-xs text-[#202020] focus:outline-none"
                 />
+                <button
+                  onClick={() => alert("Sincronizando auxilares desde SAARI ERP...")}
+                  className="px-4 py-2 bg-[#ff682c] text-white text-xs font-normal cursor-pointer hover:bg-[#e0561e]"
+                >
+                  🔄 Sincronizar Pagos desde SAARI ERP
+                </button>
               </div>
             </div>
+
+            {/* Table Container */}
             <div className="overflow-x-auto bg-white border border-[#e8e8e8] rounded-[8px]">
               <table className="w-full text-left text-xs border-collapse font-sans">
                 <thead>
                   <tr className="border-b border-[#e8e8e8] text-[#828282] uppercase text-[10px] bg-[#f5f5f5] font-mono">
-                    <th className="p-3.5">#</th>
-                    <th className="p-3.5">Inquilino / Local</th>
-                    <th className="p-3.5">Zona</th>
-                    <th className="p-3.5">Giro Comercial</th>
-                    <th className="p-3.5 text-right">Superficie</th>
-                    <th className="p-3.5 text-right">Pro-Rata NNN</th>
-                    <th className="p-3.5 text-right">Renta MXN</th>
-                    <th className="p-3.5">Estatus CFDI</th>
+                    <th className="p-3.5 font-normal">#</th>
+                    <th className="p-3.5 font-normal">LOCAL / INQUILINO</th>
+                    <th className="p-3.5 font-normal">ZONA</th>
+                    <th className="p-3.5 font-normal">GIRO / CATEGORÍA</th>
+                    <th className="p-3.5 font-normal text-right">SUPERFICIE M²</th>
+                    <th className="p-3.5 font-normal text-right">PARTICIPACIÓN PRO-RATA</th>
+                    <th className="p-3.5 font-normal text-right">RENTA EST. MXN</th>
+                    <th className="p-3.5 font-normal">ESTATUS COBRANZA & FISCAL</th>
+                    <th className="p-3.5 font-normal">ACCIÓN / PROTECCIÓN IA</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#e8e8e8] font-normal text-[#202020]">
-                  {filteredTenants.map((t, idx) => (
-                    <tr key={t.slug} className="hover:bg-[#f5f5f5]">
-                      <td className="p-3.5 text-[#828282] font-mono">{idx + 1}</td>
-                      <td className="p-3.5 font-normal">{t.name}</td>
-                      <td className="p-3.5 text-[#4d4d4d]">{t.zone}</td>
-                      <td className="p-3.5 text-[#4d4d4d]">{t.tag}</td>
-                      <td className="p-3.5 text-right font-mono">{getTenantSqm(t.name, idx)} m²</td>
-                      <td className="p-3.5 text-right font-mono">{((getTenantSqm(t.name, idx) / plazaTotalGla) * 100).toFixed(2)}%</td>
-                      <td className="p-3.5 text-right font-mono">${Math.round(getTenantSqm(t.name, idx) * 240).toLocaleString()}</td>
-                      <td className="p-3.5">
-                        {t.name.includes("MINT") ? (
-                          <span className="text-[#ff682c] border-b border-[#ff682c]">Alerta SAT PPD</span>
-                        ) : (
-                          <span className="text-[#4d4d4d]">Al Día CFDI 4.0</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredTenants.map((t, idx) => {
+                    const sqm = getTenantSqm(t.name, idx);
+                    const proRata = ((sqm / plazaTotalGla) * 100).toFixed(2);
+                    const rent = getTenantRent(sqm, t.name);
+                    const isExclusivityActive = t.name.includes("Alma Verde") || t.name.includes("Blue Luna");
+                    const isSatError = t.name.includes("MINT");
+
+                    return (
+                      <tr key={t.slug} className="hover:bg-[#f5f5f5] transition-colors">
+                        <td className="p-3.5 text-[#828282] font-mono text-[11px]">{idx + 1}</td>
+                        <td className="p-3.5 font-bold text-[#202020]">{t.name}</td>
+                        <td className="p-3.5 text-[#4d4d4d] text-[11px]">{t.zone}</td>
+                        <td className="p-3.5 text-[#4d4d4d]">{t.tag}</td>
+                        <td className="p-3.5 text-right font-mono font-bold text-[#202020]">{sqm} m²</td>
+                        <td className="p-3.5 text-right font-mono font-bold text-[#ff682c]">{proRata}%</td>
+                        <td className="p-3.5 text-right font-mono font-bold text-[#202020]">${rent.toLocaleString()}</td>
+                        <td className="p-3.5">
+                          {isSatError ? (
+                            <span className="bg-[#f5e9e8] text-[#7a2e2b] px-2.5 py-1 text-[11px] font-mono">Alerta SAT PPD</span>
+                          ) : (
+                            <span className="bg-[#eaf2ec] text-[#2b593a] px-2.5 py-1 text-[11px] font-mono">✓ Al Día (CFDI Emitido)</span>
+                          )}
+                        </td>
+                        <td className="p-3.5">
+                          {isExclusivityActive ? (
+                            <span className="text-[#2b593a] font-bold text-xs">Cláusula Exclusividad Activa</span>
+                          ) : (
+                            <span className="text-[#828282] text-xs font-mono">Protección Agente IA</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* Vacancy Row (Screenshot 2 Match) */}
+                  <tr className="bg-[#f5f5f5] font-mono">
+                    <td className="p-3.5 text-[#828282]">-</td>
+                    <td className="p-3.5 font-bold text-[#202020] font-sans">Absorbente Vacancia Plaza (2 Locales)</td>
+                    <td className="p-3.5 text-[#4d4d4d]">Zona 4 / Zona 9</td>
+                    <td className="p-3.5 text-[#4d4d4d]">Locales Vacantes (A-04 & B-09)</td>
+                    <td className="p-3.5 text-right font-bold text-[#202020]">445 m²</td>
+                    <td className="p-3.5 text-right font-bold text-[#ff682c]">3.49%</td>
+                    <td className="p-3.5 text-right font-bold text-[#202020]">$0</td>
+                    <td className="p-3.5"><span className="bg-[#ebe6dd] text-[#816729] px-2.5 py-1 text-[11px]">Absorbido por Propietario</span></td>
+                    <td className="p-3.5 text-[#4d4d4d]">Cuadra Balance Invariante a 1.0000</td>
+                  </tr>
                 </tbody>
               </table>
+
+              {/* Total Dark Footer Bar (Screenshot 2 Match) */}
+              <div className="bg-[#202020] text-white p-5 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs">
+                <span className="font-bold tracking-wider uppercase text-[#828282]">
+                  TOTAL PLAZA LA GRAN VÍA (84 LOCALES ACTIVOS + VACANTES)
+                </span>
+                <div className="flex flex-wrap items-center gap-6">
+                  <span>12,745 m²</span>
+                  <span className="text-[#ff682c] font-bold">1.0000 (100.00%)</span>
+                  <span className="text-[#ff682c] font-bold text-sm">$3,145,000 MXN</span>
+                  <span className="text-[#4ade80]">94.1% Ocupación Activa · Balance Cuadrado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RESUMEN EJECUTIVO DE COBERTURA OPERATIVA & AUDITORÍA CONTÍNUA (Screenshot 2 Match) */}
+          <div className="bg-[#202020] text-white p-8 space-y-6">
+            <div className="flex items-center justify-between border-b border-[#4d4d4d] pb-4 font-mono text-xs">
+              <span className="text-[#ff682c]">● RESUMEN EJECUTIVO DE COBERTURA OPERATIVA & AUDITORÍA CONTÍNUA</span>
+              <span className="text-[#828282]">LA GRAN VIA MEXICALI</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
+              <div className="bg-[#2d2a26] p-5 border border-[#4d4d4d] space-y-2">
+                <span className="text-[#828282] block text-[10px] uppercase">CUMPLIMIENTO FISCAL SAT:</span>
+                <div className="text-xl font-bold text-white">84 / 85 VALIDADOS</div>
+                <span className="text-[#828282] block text-[11px]">1 Alerta CFDI PPD/PUE emitida</span>
+              </div>
+
+              <div className="bg-[#2d2a26] p-5 border border-[#4d4d4d] space-y-2">
+                <span className="text-[#828282] block text-[10px] uppercase">PROTECCIÓN EXCLUSIVIDADES:</span>
+                <div className="text-xl font-bold text-[#ff682c]">14 CLÁUSULAS ACTIVAS</div>
+                <span className="text-[#828282] block text-[11px]">0 Demandas por incumplimiento</span>
+              </div>
+
+              <div className="bg-[#2d2a26] p-5 border border-[#4d4d4d] space-y-2">
+                <span className="text-[#828282] block text-[10px] uppercase">RECLAMO DE GARANTÍAS ($0):</span>
+                <div className="text-xl font-bold text-[#ff682c]">$145,000 MXN RECUPERADOS</div>
+                <span className="text-[#828282] block text-[11px]">Carrier HVAC garantía activa</span>
+              </div>
+
+              <div className="bg-[#2d2a26] p-5 border border-[#4d4d4d] space-y-2">
+                <span className="text-[#828282] block text-[10px] uppercase">INTEGRACIÓN ERP SAARI:</span>
+                <div className="text-xl font-bold text-white">100% SINCRONIZADO</div>
+                <span className="text-[#828282] block text-[11px]">Lote Batch listo para exportar</span>
+              </div>
             </div>
           </div>
         </div>
@@ -377,7 +501,7 @@ export function LandlordDashboard() {
       {/* ---------------- PESTAÑA 2: MARIANA AI (FULL 5 SECTIONS) ---------------- */}
       {activeTab === "leasing" && (
         <div className="space-y-10">
-          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-10 space-y-6">
+          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
             <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-6">
               <div>
                 <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
@@ -469,7 +593,7 @@ export function LandlordDashboard() {
       {/* ---------------- PESTAÑA 3: DIEGO AI (CAPEX) ---------------- */}
       {activeTab === "maint" && (
         <div className="space-y-10">
-          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-10 space-y-6">
+          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
             <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-6">
               <div>
                 <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
@@ -554,7 +678,7 @@ export function LandlordDashboard() {
       {/* ---------------- PESTAÑA 4: RENATA AI (CAM & FISCAL SAT) ---------------- */}
       {activeTab === "cam" && (
         <div className="space-y-10">
-          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-10 space-y-6">
+          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
             <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-6">
               <div>
                 <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
@@ -616,7 +740,7 @@ export function LandlordDashboard() {
       {/* ---------------- PESTAÑA 5: CONECTOR SAARI ERP (SCREENSHOT MATCH) ---------------- */}
       {activeTab === "saari" && (
         <div className="space-y-10">
-          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-10 space-y-6">
+          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
               <div>
                 <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
@@ -669,11 +793,6 @@ export function LandlordDashboard() {
                 <p className="text-xs text-[#4d4d4d] leading-relaxed">
                   SAARI genera los auxiliares de cobranza, transferencias bancarias SPEI recibidas y expedientes de contratos comerciales firmados.
                 </p>
-                <div className="bg-[#f5f5f5] p-3 border border-[#e8e8e8] text-xs font-mono text-[#202020] space-y-1">
-                  <p>• Ingestión diaria &apos;.CSV / API&apos;</p>
-                  <p>• Depósitos bancarios del mes</p>
-                  <p>• Expedientes de inquilinos</p>
-                </div>
               </div>
 
               <div className="bg-[#202020] text-white p-6 space-y-3">
@@ -684,11 +803,6 @@ export function LandlordDashboard() {
                 <p className="text-xs text-[#828282] leading-relaxed">
                   <strong className="text-white">Mariana</strong> audita exclusividades RAG. <strong className="text-white">Diego</strong> rechaza cargos no cubiertos. <strong className="text-white">Renata</strong> detecta errores SAT CFDI PPD.
                 </p>
-                <div className="bg-[#2d2a26] p-3 border border-[#4d4d4d] text-xs font-mono text-[#ff682c] space-y-1">
-                  <p>• Mariana: Bóveda RAG PDF</p>
-                  <p>• Diego: Pólizas Carrier/Cat</p>
-                  <p>• Renata: SAT CFDI 4.0 PPD</p>
-                </div>
               </div>
 
               <div className="bg-white p-6 border border-[#e8e8e8] space-y-3">
@@ -699,28 +813,14 @@ export function LandlordDashboard() {
                 <p className="text-xs text-[#4d4d4d] leading-relaxed">
                   Se devuelven a SAARI los complementos de pago SAT timbrados y el archivo batch listo para facturación NNN masiva.
                 </p>
-                <div className="bg-[#f5f5f5] p-3 border border-[#e8e8e8] text-xs font-mono text-[#202020] space-y-1">
-                  <p>• Lote Batch de Facturación</p>
-                  <p>• XML Complementos SAT</p>
-                  <p>• Rent Roll Actualizado al Día</p>
-                </div>
               </div>
             </div>
           </div>
 
           <div className="bg-white p-8 border border-[#e8e8e8] space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e8e8] pb-4">
-              <div>
-                <h3 className="text-base font-normal text-[#202020]">
-                  CONSOLA INTERACTIVA DEL CONECTOR SAARI ERP
-                </h3>
-                <p className="text-xs text-[#828282]">
-                  Prueba la lectura de auxiliares o la generación del lote batch para importador automático de SAARI.
-                </p>
-              </div>
-              <span className="px-3 py-1 bg-[#efefef] text-[#202020] text-xs font-mono">
-                ADAPTADOR ACTIVO
-              </span>
+            <div className="flex justify-between items-center border-b border-[#e8e8e8] pb-4">
+              <h3 className="text-base font-normal text-[#202020]">CONSOLA INTERACTIVA DEL CONECTOR SAARI ERP</h3>
+              <span className="px-3 py-1 bg-[#efefef] text-[#202020] text-xs font-mono">ADAPTADOR ACTIVO</span>
             </div>
 
             <div className="flex items-center gap-3">
@@ -750,12 +850,6 @@ export function LandlordDashboard() {
                 <span className="text-[#828282] text-[10px]">FORMATO: JSON / CSV NATIVO SAARI</span>
               </div>
 
-              <p className="text-[#828282]">
-                {saariMode === "inbound"
-                  ? "Lectura en tiempo real del reporte de auxiliares de cobranza emitido por SAARI (&apos;SAARI_EXP_JULIO_2026.CSV&apos;):"
-                  : "Generando estructura de archivo batch para importación masiva en SAARI ERP:"}
-              </p>
-
               <div className="bg-[#121212] p-5 border border-[#4d4d4d] text-xs leading-relaxed font-mono">
                 {saariMode === "inbound" ? (
                   <div className="space-y-1 text-[#4ade80]">
@@ -768,7 +862,6 @@ export function LandlordDashboard() {
                   <div className="space-y-1 text-[#38bdf8]">
                     <p>[OUTBOUND BATCH SAARI ERP v4.2]</p>
                     <p>&#123; &quot;batch_id&quot;: &quot;SAARI-EXP-202607-001&quot;, &quot;total_tenants&quot;: 85, &quot;nnn_balance&quot;: &quot;1.0000&quot;, &quot;cfdi_xml_attached&quot;: 85 &#125;</p>
-                    <p>- Archivo &apos;SAARI_BATCH_JULIO_2026.TXT&apos; listo para importar en SAARI ERP.</p>
                   </div>
                 )}
               </div>
