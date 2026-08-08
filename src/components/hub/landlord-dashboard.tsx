@@ -179,7 +179,8 @@ export function LandlordDashboard() {
   const [saariProcessed, setSaariProcessed] = useState(false);
 
   // Mariana Chat Query State
-  const [marianaChatResponse] = useState({
+  const [marianaQuery, setMarianaQuery] = useState("");
+  const [marianaChatResponse, setMarianaChatResponse] = useState({
     query: "¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?",
     answer: "Blue Luna Café (Local B-02, Zona 4) cuenta con la Cláusula #14 en su contrato vigente (2023-2028). Otorga exclusividad comercial absoluta en la venta de café espresso y especialidad en Zona 4. La propuesta de Starbucks Reserve presentaba un 98.4% de solapamiento semántico en menú.",
     pdfName: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
@@ -202,8 +203,6 @@ export function LandlordDashboard() {
     xmlClause: "Anexo 20 RMF SAT §2.7.1.35",
   });
 
-  const totalOccupiedSqm = TENANTS.reduce((sum, t, idx) => sum + getTenantSqm(t.name, idx), 0);
-  const vacancySqm = 445;
   const plazaTotalGla = 12745;
 
   const filteredTenants = TENANTS.filter((t) => {
@@ -293,10 +292,9 @@ export function LandlordDashboard() {
         </div>
       </header>
 
-      {/* ---------------- PESTAÑA 1: RESUMEN RENT ROLL (84 LOCALES ACTIVOS - SCREENSHOT MATCH) ---------------- */}
+      {/* ---------------- PESTAÑA 1: RESUMEN RENT ROLL (84 LOCALES ACTIVOS) ---------------- */}
       {activeTab === "overview" && (
         <div className="space-y-10">
-          {/* Header Title Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
             <div>
               <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
@@ -322,7 +320,6 @@ export function LandlordDashboard() {
             </div>
           </div>
 
-          {/* 4 Metric Cards Strip (Screenshot 1 Match) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
               <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">COBRANZA MENSUAL RENTA</span>
@@ -349,7 +346,6 @@ export function LandlordDashboard() {
             </div>
           </div>
 
-          {/* Rent Roll Matriz Consolidada Table (84 Locales Activos + Vacancia) */}
           <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
               <div>
@@ -381,7 +377,6 @@ export function LandlordDashboard() {
               </div>
             </div>
 
-            {/* Table Container */}
             <div className="overflow-x-auto bg-white border border-[#e8e8e8] rounded-[8px]">
               <table className="w-full text-left text-xs border-collapse font-sans">
                 <thead>
@@ -432,7 +427,6 @@ export function LandlordDashboard() {
                     );
                   })}
 
-                  {/* Vacancy Row (Screenshot 2 Match) */}
                   <tr className="bg-[#f5f5f5] font-mono">
                     <td className="p-3.5 text-[#828282]">-</td>
                     <td className="p-3.5 font-bold text-[#202020] font-sans">Absorbente Vacancia Plaza (2 Locales)</td>
@@ -447,7 +441,6 @@ export function LandlordDashboard() {
                 </tbody>
               </table>
 
-              {/* Total Dark Footer Bar (Screenshot 2 Match) */}
               <div className="bg-[#202020] text-white p-5 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs">
                 <span className="font-bold tracking-wider uppercase text-[#828282]">
                   TOTAL PLAZA LA GRAN VÍA (84 LOCALES ACTIVOS + VACANTES)
@@ -462,7 +455,6 @@ export function LandlordDashboard() {
             </div>
           </div>
 
-          {/* RESUMEN EJECUTIVO DE COBERTURA OPERATIVA & AUDITORÍA CONTÍNUA (Screenshot 2 Match) */}
           <div className="bg-[#202020] text-white p-8 space-y-6">
             <div className="flex items-center justify-between border-b border-[#4d4d4d] pb-4 font-mono text-xs">
               <span className="text-[#ff682c]">● RESUMEN EJECUTIVO DE COBERTURA OPERATIVA & AUDITORÍA CONTÍNUA</span>
@@ -498,49 +490,135 @@ export function LandlordDashboard() {
         </div>
       )}
 
-      {/* ---------------- PESTAÑA 2: MARIANA AI (FULL 5 SECTIONS) ---------------- */}
+      {/* ---------------- PESTAÑA 2: MARIANA AI (SCREENSHOTS 1, 2 & 3 MATCH) ---------------- */}
       {activeTab === "leasing" && (
         <div className="space-y-10">
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
+            <div>
+              <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
+                🟢 OPERACIÓN AL DÍA | La Gran Vía Mexicali
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-normal text-[#202020] tracking-[-0.02em] mt-2">
+                Módulo de Arrendamiento & Inteligencia Legal (Mariana)
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => alert("Exportando informe oficial en PDF...")}
+                className="px-4 py-2 bg-white border border-[#202020] text-[#202020] text-xs font-normal cursor-pointer hover:bg-[#f5f5f5]"
+              >
+                Exportar Reporte (.PDF)
+              </button>
+              <button
+                onClick={() => setActiveTab("saari")}
+                className="px-4 py-2 bg-[#ff682c] text-white text-xs font-normal cursor-pointer hover:bg-[#e0561e]"
+              >
+                Sincronizar SAARI →
+              </button>
+            </div>
+          </div>
+
+          {/* 3 Metric Cards Strip */}
           <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
               <div>
                 <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
-                  SOP §2A & General Counsel AI · Bóveda 85 Contratos RAG
+                  Módulo de Arrendamiento & Inteligencia Legal (Mariana) <span className="bg-[#ebe6dd] px-2 py-0.5 text-[#816729]">SOP §2A & GENERAL COUNSEL AI</span>
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-normal text-[#202020] tracking-[-0.02em] mt-1">
-                  Módulo de Arrendamiento & Inteligencia Legal (Mariana)
-                </h2>
+                <p className="text-xs text-[#4d4d4d] mt-1">
+                  Monitoreo en vivo de solicitudes prospecto, consulta RAG de contratos, exclusividades y guardrails de la plaza.
+                </p>
               </div>
               <span className="px-4 py-2 bg-[#202020] text-white font-mono text-xs">85 CONTRATOS EN BÓVEDA RAG</span>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-6 border border-[#e8e8e8]">
+              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
                 <span className="text-[10px] font-mono text-[#828282] block uppercase">SOLICITUDES EVALUADAS</span>
                 <div className="text-2xl font-normal text-[#202020]">3 Prospectos Auditados</div>
               </div>
-              <div className="bg-white p-6 border border-[#e8e8e8]">
+              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
                 <span className="text-[10px] font-mono text-[#828282] block uppercase">EXCLUSIVIDADES ACTIVAS</span>
                 <div className="text-2xl font-normal text-[#ff682c]">14 Cláusulas Protegidas</div>
               </div>
-              <div className="bg-white p-6 border border-[#e8e8e8]">
+              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
                 <span className="text-[10px] font-mono text-[#828282] block uppercase">RIESGO LEGAL PREVENIDO</span>
-                <div className="text-2xl font-normal text-[#202020]">$780,000 MXN / año</div>
+                <div className="text-2xl font-normal text-[#2b593a]">$780,000 MXN / año</div>
               </div>
             </div>
           </div>
 
+          {/* Interactive RAG AI Chat Assistant Console (Screenshot 1 Match) */}
           <div className="bg-white p-8 border border-[#e8e8e8] rounded-[20px] space-y-6">
             <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-4">
-              <h3 className="text-sm font-normal text-[#202020] uppercase font-mono tracking-wider">
-                ASISTENTE LEGAL RAG: CONSULTA DIRECTA A MARIANA
-              </h3>
-              <span className="text-xs font-mono text-[#816729]">● BÓVEDA INDEXADA RAG</span>
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 bg-[#202020] text-white flex items-center justify-center text-xs font-mono font-bold">M</div>
+                <div>
+                  <h3 className="text-sm font-normal text-[#202020] uppercase font-mono tracking-wider">
+                    ASISTENTE LEGAL RAG: CONSULTA DIRECTA A MARIANA
+                  </h3>
+                  <p className="text-xs text-[#828282]">
+                    Haz cualquier pregunta sobre los 85 contratos, leyes de Baja California o políticas de la plaza.
+                  </p>
+                </div>
+              </div>
+              <span className="px-3 py-1 bg-[#efefef] text-[#816729] text-xs font-mono">● BÓVEDA INDEXADA RAG</span>
             </div>
 
+            {/* 3 Preset Query Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  setMarianaQuery("¿Por qué bloqueamos a Starbucks?");
+                  setMarianaChatResponse({
+                    query: "¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?",
+                    answer: "Blue Luna Café (Local B-02, Zona 4) cuenta con la Cláusula #14 en su contrato vigente (2023-2028). Otorga exclusividad comercial absoluta en la venta de café espresso y especialidad en Zona 4. La propuesta de Starbucks Reserve presentaba un 98.4% de solapamiento semántico en menú.",
+                    pdfName: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
+                    pdfClause: "Página 12, Cláusula 14",
+                  });
+                }}
+                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
+              >
+                ☕ ¿Por qué bloqueamos a Starbucks?
+              </button>
+
+              <button
+                onClick={() => {
+                  setMarianaQuery("¿Cómo aplica la Ley Antimonopolio (LFCE §3)?");
+                  setMarianaChatResponse({
+                    query: "¿Cómo aplica la Ley Antimonopolio (LFCE §3) al caso de La Vicenta y Alma Verde?",
+                    answer: "La Ley Federal de Competencia Económica (Art 3 & 53) prohíbe restricciones de giro desproporcionadas. La exclusividad genérica de Alma Verde sobre 'ensaladas' fue acotada a no bloquear acompañamientos en restaurantes de especialidad de carne como La Vicenta.",
+                    pdfName: "Contrato_AlmaVerde_LocB10_Firmado.pdf",
+                    pdfClause: "Página 15, Párrafo 5.2",
+                  });
+                }}
+                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
+              >
+                ⚖️ ¿Cómo aplica la Ley Antimonopolio (LFCE §3)?
+              </button>
+
+              <button
+                onClick={() => {
+                  setMarianaQuery("Reglas de Subarrendamiento");
+                  setMarianaChatResponse({
+                    query: "¿Cuáles son las reglas de subarrendamiento vigentes en Plaza La Gran Vía?",
+                    answer: "Conforme a las políticas corporativas del propietario y Código Civil de Baja California, el subarrendamiento está estrictamente prohibido salvo autorización por escrito del Sr. Martín y firma de aval solidario.",
+                    pdfName: "Guardrails_Propietario_2026.pdf",
+                    pdfClause: "Sección 4.1 (Subarrendamiento)",
+                  });
+                }}
+                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
+              >
+                📜 Reglas de Subarrendamiento
+              </button>
+            </div>
+
+            {/* Answer Display Card */}
             <div className="bg-[#f5f5f5] p-6 border border-[#e8e8e8] space-y-3">
               <div className="flex items-center justify-between text-xs text-[#828282]">
-                <span className="font-mono text-[#202020]">Pregunta: {marianaChatResponse.query}</span>
-                <span className="text-[#ff682c] font-mono">✓ Respuesta RAG Verificada</span>
+                <span className="font-mono text-[#202020] font-bold">Pregunta: {marianaChatResponse.query}</span>
+                <span className="text-[#2b593a] font-mono">✓ Respuesta RAG Verificada</span>
               </div>
               <p className="text-sm text-[#202020] leading-relaxed">{marianaChatResponse.answer}</p>
               <div className="pt-2 flex items-center justify-between text-xs border-t border-[#e8e8e8]">
@@ -550,40 +628,291 @@ export function LandlordDashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Input Bar */}
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={marianaQuery}
+                onChange={(e) => setMarianaQuery(e.target.value)}
+                placeholder="Pregunta a Mariana sobre cualquier contrato, ley estatal o política de la plaza..."
+                className="flex-1 px-4 py-3 bg-[#f5f5f5] border border-[#e8e8e8] text-xs text-[#202020] focus:outline-none"
+              />
+              <button
+                onClick={() => alert("Consultando Bóveda RAG Mariana...")}
+                className="px-6 py-3 bg-[#202020] text-white text-xs font-normal cursor-pointer hover:bg-[#333333]"
+              >
+                Consultar AI →
+              </button>
+            </div>
           </div>
 
+          {/* Section 1: EVALUADOR DE SOLICITUDES PROSPECTO VS. CONTRATOS EXISTENTES (Screenshot 1 & 2 Match) */}
           <div className="space-y-6">
-            <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
-              1. EVALUADOR DE SOLICITUDES PROSPECTO VS. CONTRATOS EXISTENTES
-            </h3>
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
+              <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
+                1. EVALUADOR DE SOLICITUDES PROSPECTO VS. CONTRATOS EXISTENTES
+              </h3>
+              <span className="text-xs text-[#828282] font-mono">SELECCIONA UNA SOLICITUD PARA INSPECCIONAR</span>
+            </div>
+
+            {/* 3 Case Selector Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {LEASING_APPLICANTS.map((app) => (
                 <button
                   key={app.id}
-                  onClick={() => setSelectedLeasingApp(app)}
-                  className={`p-6 bg-white border text-left cursor-pointer ${
-                    selectedLeasingApp.id === app.id ? "border-[#202020]" : "border-[#e8e8e8]"
+                  onClick={() => {
+                    setSelectedLeasingApp(app);
+                    setAttorneySent(false);
+                  }}
+                  className={`p-6 bg-white border text-left cursor-pointer transition-colors space-y-3 ${
+                    selectedLeasingApp.id === app.id ? "border-[#202020]" : "border-[#e8e8e8] hover:border-[#828282]"
                   }`}
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-normal text-[#202020]">{app.brand}</span>
-                    <span className="text-xs font-mono text-[#ff682c]">{app.status}</span>
+                    <span className="font-normal text-base text-[#202020]">{app.brand}</span>
+                    {app.status === "RECHAZADO" ? (
+                      <span className="bg-[#f5e9e8] text-[#7a2e2b] px-2.5 py-1 text-[11px] font-mono">🚫 Rechazado</span>
+                    ) : (
+                      <span className="bg-[#f4efe6] text-[#816729] px-2.5 py-1 text-[11px] font-mono">⚠️ Condicionado</span>
+                    )}
                   </div>
-                  <p className="text-xs text-[#828282] mt-1">{app.category}</p>
+                  <p className="text-xs text-[#4d4d4d]">{app.category}</p>
                 </button>
               ))}
             </div>
 
-            <div className="bg-[#202020] text-white p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#4d4d4d] pb-4 font-mono text-xs">
-                <span>● DICTAMEN LEGAL MARIANA AI ({selectedLeasingApp.id})</span>
-                <span className="text-[#ff682c]">{selectedLeasingApp.overlapScore}</span>
+            {/* Side-by-Side Split View Box (Screenshot 1 Match) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column: SOLICITANTE EVALUADO */}
+              <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-6">
+                <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3 text-xs font-mono">
+                  <span className="text-[#202020] font-bold">📋 SOLICITANTE EVALUADO</span>
+                  <span className="bg-[#ebe6dd] px-2.5 py-1 text-[#816729]">Expediente: {selectedLeasingApp.id}</span>
+                </div>
+
+                <div className="space-y-4 text-xs font-sans">
+                  <div>
+                    <span className="text-[#828282] block text-[10px] font-mono uppercase">Marca Solicitante:</span>
+                    <span className="text-base font-bold text-[#202020]">{selectedLeasingApp.brand}</span>
+                  </div>
+
+                  <div>
+                    <span className="text-[#828282] block text-[10px] font-mono uppercase">Giro & Categoría Comercial:</span>
+                    <span className="text-xs font-bold text-[#202020]">{selectedLeasingApp.category}</span>
+                  </div>
+
+                  <div>
+                    <span className="text-[#828282] block text-[10px] font-mono uppercase">Menú / Productos Solicitados:</span>
+                    <div className="bg-white p-4 border border-[#e8e8e8] text-xs font-mono text-[#202020] mt-1">
+                      {selectedLeasingApp.menu}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-between items-center border-t border-[#e8e8e8]">
+                    <span className="text-[#828282] font-mono">Superficie Solicitada:</span>
+                    <span className="text-base font-bold text-[#202020] font-mono">{selectedLeasingApp.sqm} m²</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs leading-relaxed">{selectedLeasingApp.reasoning}</p>
-              <div className="pt-2 flex justify-end gap-3 text-xs font-mono">
-                <button onClick={() => setAttorneySent(true)} className="px-4 py-2 bg-[#ff682c] text-white cursor-pointer">
-                  {attorneySent ? "✓ Notificación Enviada" : "✉️ Notificar a Abogado Patronal"}
-                </button>
+
+              {/* Right Column: DICTAMEN LEGAL MARIANA AI */}
+              <div className="bg-white p-6 border border-[#e8e8e8] space-y-6">
+                <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3 text-xs font-mono">
+                  <span className="text-[#202020] font-bold">● DICTAMEN LEGAL MARIANA AI</span>
+                  <span className="bg-[#f5e9e8] text-[#7a2e2b] px-3 py-1 font-bold">
+                    🚫 Bloqueado por Exclusividad
+                  </span>
+                </div>
+
+                <div className="space-y-4 text-xs font-sans">
+                  <div>
+                    <span className="text-[#828282] block text-[10px] font-mono uppercase">Inquilino Afectado en Plaza:</span>
+                    <span className="text-sm font-bold text-[#202020]">{selectedLeasingApp.conflictingTenant}</span>
+                  </div>
+
+                  <div>
+                    <span className="text-[#828282] block text-[10px] font-mono uppercase">Cláusula Contractual Violada:</span>
+                    <span className="text-xs font-bold text-[#202020]">{selectedLeasingApp.conflictingClause}</span>
+                  </div>
+
+                  <div className="bg-[#f5f5f5] p-5 border border-[#e8e8e8] space-y-2">
+                    <span className="text-[10px] font-mono text-[#816729] uppercase font-bold block">ANÁLISIS COGNITIVO MARIANA:</span>
+                    <p className="text-xs text-[#202020] leading-relaxed">{selectedLeasingApp.reasoning}</p>
+                  </div>
+
+                  <div className="pt-2 flex justify-between items-center border-t border-[#e8e8e8] font-mono">
+                    <span className="text-[#828282]">Riesgo Financiero Prevenido:</span>
+                    <span className="text-base font-bold text-[#2b593a]">{selectedLeasingApp.rentLossPrevented}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Extracted Document Snippet Box (Screenshot 2 Match) */}
+            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="px-2.5 py-1 bg-[#f5e9e8] text-[#7a2e2b] text-xs font-mono font-bold">PDF</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[#202020]">{selectedLeasingApp.contractPdfName}</h4>
+                    <p className="text-xs text-[#828282]">Referencia Legal Extraída · {selectedLeasingApp.contractPdfPage}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button onClick={() => alert(`Descargando ${selectedLeasingApp.contractPdfName}...`)} className="px-4 py-2 bg-white border border-[#e8e8e8] text-[#202020] text-xs cursor-pointer hover:bg-[#f5f5f5]">
+                    📄 Descargar PDF
+                  </button>
+                  <button onClick={() => setAttorneySent(true)} className="px-4 py-2 bg-[#202020] text-white text-xs cursor-pointer hover:bg-[#333333]">
+                    💼 {attorneySent ? "✓ Escalado a Lic. Ramírez" : "Escalar a Lic. Ramírez (Abogado)"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Text Snippet */}
+              <div className="bg-white p-6 border border-[#e8e8e8] space-y-3 font-mono text-xs">
+                <div className="flex items-center justify-between text-[#816729]">
+                  <span>🔍 Fragmento Textual Extraído del Contrato Firmado (Bóveda RAG)</span>
+                  <span className="bg-[#f4efe6] px-2 py-0.5 text-[#ff682c] font-bold">{selectedLeasingApp.overlapScore}</span>
+                </div>
+                <p className="text-xs text-[#202020] leading-relaxed italic bg-[#f5f5f5] p-4 border-l-2 border-[#ff682c]">
+                  {selectedLeasingApp.contractExactSnippet}
+                </p>
+                <div className="flex justify-between items-center text-[11px] text-[#828282] pt-1">
+                  <span>Criterio Legal: {selectedLeasingApp.legalFilter}</span>
+                  <span className="text-[#2b593a]">✓ Verificado contra 85 contratos en la base RAG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: BÓVEDA HISTÓRICA DE CONTRATOS VIGENTES & CALLOUTS LEGALES (Screenshot 2 & 3 Match) */}
+          <div className="space-y-6 pt-4">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
+              <div>
+                <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
+                  2. BÓVEDA HISTÓRICA DE CONTRATOS VIGENTES & CALLOUTS LEGALES
+                </h3>
+                <p className="text-xs text-[#4d4d4d] mt-0.5">Inspección directa de exclusividades activas, vigencias y contratos indexados.</p>
+              </div>
+              <span className="px-3 py-1 bg-[#202020] text-white text-xs font-mono">
+                84 CONTRATOS INDEXADOS RAG
+              </span>
+            </div>
+
+            <div className="overflow-x-auto bg-white border border-[#e8e8e8] rounded-[8px]">
+              <table className="w-full text-left text-xs border-collapse font-sans">
+                <thead>
+                  <tr className="border-b border-[#e8e8e8] text-[#828282] uppercase text-[10px] bg-[#f5f5f5] font-mono">
+                    <th className="p-3.5 font-normal">INQUILINO / LOCAL</th>
+                    <th className="p-3.5 font-normal">GIRO COMERCIAL</th>
+                    <th className="p-3.5 font-normal">VIGENCIA CONTRATO</th>
+                    <th className="p-3.5 font-normal">EXCLUSIVIDAD REGISTRADA</th>
+                    <th className="p-3.5 font-normal">CALLOUT / ALERTA MARIANA</th>
+                    <th className="p-3.5 font-normal text-right">CONTRATO PDF</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e8e8e8] font-normal text-[#202020]">
+                  {TENANTS.slice(0, 10).map((t) => {
+                    const isAlmaVerde = t.name.includes("Alma Verde");
+                    const isBlueLuna = t.name.includes("Blue Luna");
+
+                    return (
+                      <tr key={t.slug} className="hover:bg-[#f5f5f5] transition-colors">
+                        <td className="p-3.5 font-bold">
+                          {t.name}
+                          <span className="block text-[10px] font-mono text-[#828282] font-normal">{t.zone}</span>
+                        </td>
+                        <td className="p-3.5 text-[#4d4d4d]">{t.tag}</td>
+                        <td className="p-3.5 font-mono text-[#4d4d4d]">2023 - 2028 (5 Años)</td>
+                        <td className="p-3.5 font-mono">
+                          {isAlmaVerde ? (
+                            <span className="text-[#ff682c] font-bold">Cláusula #22: Exclusividad Ensaladas</span>
+                          ) : isBlueLuna ? (
+                            <span className="text-[#ff682c] font-bold">Cláusula #14: Exclusividad Café Espresso</span>
+                          ) : (
+                            <span className="text-[#828282]">Sin Exclusividad Especial</span>
+                          )}
+                        </td>
+                        <td className="p-3.5 font-mono">
+                          {isAlmaVerde ? (
+                            <span className="bg-[#f4efe6] text-[#816729] px-2.5 py-1 text-[11px]">⚠️ Condicionado LFCE §3 (La Vicenta)</span>
+                          ) : isBlueLuna ? (
+                            <span className="bg-[#f5e9e8] text-[#7a2e2b] px-2.5 py-1 text-[11px]">🚫 Bloqueó Solicitud Starbucks</span>
+                          ) : (
+                            <span className="text-[#828282]">Sin Conflictos Registrados</span>
+                          )}
+                        </td>
+                        <td className="p-3.5 text-right font-mono">
+                          <button onClick={() => alert(`Abriendo PDF de ${t.name}...`)} className="px-3 py-1 bg-[#efefef] text-[#202020] text-[11px] cursor-pointer hover:bg-[#ebe6dd]">
+                            📄 PDF ({t.slug}.pdf)
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 3: MOTOR DE GOBERNANZA LEGAL & GUARDRAILS DEL PROPIETARIO (Screenshot 3 Match) */}
+          <div className="space-y-6 pt-4">
+            <div className="border-b border-[#e8e8e8] pb-3">
+              <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
+                3. MOTOR DE GOBERNANZA LEGAL & GUARDRAILS DEL PROPIETARIO
+              </h3>
+              <p className="text-xs text-[#4d4d4d] mt-0.5">
+                Configuración de la jurisdicción legal aplicable, legislación antimonopolio y políticas corporativas de Plaza La Gran Vía.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1 */}
+              <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-[#202020] font-bold">1. Jurisdicción Civil Estatal</span>
+                  <span className="px-2 py-0.5 bg-[#eaf2ec] text-[#2b593a] text-[10px]">ACTIVO</span>
+                </div>
+                <p className="text-xs text-[#4d4d4d] leading-relaxed">
+                  Código Civil & Mercantil del Estado de Baja California para contratos de arrendamiento comercial.
+                </p>
+                <div className="bg-white p-4 border border-[#e8e8e8] text-xs font-mono text-[#202020] space-y-1">
+                  <p>• Plazo máximo arrendamiento: 20 Años</p>
+                  <p>• Notificación aviso rescisión: 30 Días</p>
+                </div>
+              </div>
+
+              {/* Card 2 */}
+              <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-[#202020] font-bold">2. Filtro Antimonopolio (LFCE)</span>
+                  <span className="px-2 py-0.5 bg-[#f4efe6] text-[#816729] text-[10px]">FEDERAL</span>
+                </div>
+                <p className="text-xs text-[#4d4d4d] leading-relaxed">
+                  Ley Federal de Competencia Económica (Art. 3 & 53). Prohíbe exclusividades comerciales desproporcionadas en la plaza.
+                </p>
+                <div className="bg-white p-4 border border-[#e8e8e8] text-xs font-mono text-[#202020] space-y-1">
+                  <p>• Restricción máxima por zona: 200 metros</p>
+                  <p>• Prohibido bloqueo en acompañamientos</p>
+                </div>
+              </div>
+
+              {/* Card 3 */}
+              <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-[#202020] font-bold">3. Guardrails del Propietario</span>
+                  <span className="px-2 py-0.5 bg-[#202020] text-white text-[10px]">REGLAS PLAZA</span>
+                </div>
+                <p className="text-xs text-[#4d4d4d] leading-relaxed">
+                  Políticas operativas obligatorias aprobadas por el Sr. Martín para la administración del activo.
+                </p>
+                <div className="bg-white p-4 border border-[#e8e8e8] text-xs font-mono text-[#202020] space-y-1">
+                  <p>• Límite: Máx 1 Exclusividad / Zona</p>
+                  <p>• Subarrendamiento: Prohibido sin aval</p>
+                  <p>• Trazabilidad 100% en SAARI ERP</p>
+                </div>
               </div>
             </div>
           </div>
