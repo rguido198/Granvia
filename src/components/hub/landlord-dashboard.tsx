@@ -143,7 +143,6 @@ function getTenantSqm(name: string, index: number): number {
 
 export function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
-  const [activeAgent, setActiveAgent] = useState<ActiveAgent>("mariana");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | "ok" | "sat" | "excl">("all");
 
@@ -152,22 +151,6 @@ export function LandlordDashboard() {
   const [attorneySent, setAttorneySent] = useState(false);
   const [diegoNotificationSent, setDiegoNotificationSent] = useState(false);
   const [renataCfdiIssued, setRenataCfdiIssued] = useState(false);
-
-  const [aiQuery, setAiQuery] = useState("");
-  const [chatHistory, setChatHistory] = useState<{ agent: string; query: string; answer: string; ref?: string }[]>([
-    {
-      agent: "Mariana (Legal)",
-      query: "¿Por qué se rechazó a Starbucks Reserve?",
-      answer: "Presentó 98.4% de conflicto de menú con Blue Luna Café (Local B-02), violando la Cláusula #14 de exclusividad comercial.",
-      ref: "Contrato_BlueLuna_LocB02.pdf",
-    },
-    {
-      agent: "Diego (CapEx)",
-      query: "¿Cuál fue la resolución del compresor HVAC de Ashley?",
-      answer: "Se hizo efectiva la garantía Carrier #CR-884920. Reemplazo a $0 costo para el propietario ($145,000 MXN ahorrados).",
-      ref: "Poliza_Carrier_Ashley.pdf",
-    },
-  ]);
 
   const totalOccupiedSqm = TENANTS.reduce((sum, t, idx) => sum + getTenantSqm(t.name, idx), 0);
   const vacancySqm = 445;
@@ -191,265 +174,195 @@ export function LandlordDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f9f8f5] text-[#1c1a17] font-sans p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1550px] mx-auto">
-      {/* ---------------- 1. MATURE EXECUTIVE TOP HEADER (Estilo Ventriloc) ---------------- */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#e8e4dc]">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="block shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/la-gran-via-logo-horizontal.png"
-              alt="La Gran Vía Mexicali"
-              className="h-9 w-auto object-contain"
-            />
-          </Link>
+    <div className="min-h-screen bg-[#ffffff] text-[#202020] font-sans p-4 sm:p-8 space-y-12 max-w-[1200px] mx-auto">
+      {/* ---------------- 1. VENTRILOC FLOATING PILL HEADER ---------------- */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[#e8e8e8]">
+        {/* Brand Wordmark Left-Aligned */}
+        <Link href="/" className="block shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/la-gran-via-logo-horizontal.png"
+            alt="La Gran Vía Mexicali"
+            className="h-8 w-auto object-contain"
+          />
+        </Link>
 
-          {/* Clean Pill Dropdowns/Tabs Header (Ventriloc Top Pill Navigation) */}
-          <nav className="hidden sm:flex items-center gap-1.5 bg-[#f0ede6] p-1 rounded-full border border-[#e2ddd4]">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                activeTab === "overview"
-                  ? "bg-[#1c1a17] text-white shadow-xs"
-                  : "text-[#6e685e] hover:text-[#1c1a17]"
-              }`}
-            >
-              Rent Roll ({TENANTS.length})
-            </button>
-
-            <button
-              onClick={() => setActiveTab("leasing")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                activeTab === "leasing"
-                  ? "bg-[#1c1a17] text-white shadow-xs"
-                  : "text-[#6e685e] hover:text-[#1c1a17]"
-              }`}
-            >
-              Arrendamiento (Mariana)
-            </button>
-
-            <button
-              onClick={() => setActiveTab("maint")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                activeTab === "maint"
-                  ? "bg-[#1c1a17] text-white shadow-xs"
-                  : "text-[#6e685e] hover:text-[#1c1a17]"
-              }`}
-            >
-              CapEx & Gastos (Diego)
-            </button>
-
-            <button
-              onClick={() => setActiveTab("cam")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                activeTab === "cam"
-                  ? "bg-[#1c1a17] text-white shadow-xs"
-                  : "text-[#6e685e] hover:text-[#1c1a17]"
-              }`}
-            >
-              CAM & Fiscal SAT (Renata)
-            </button>
-          </nav>
-        </div>
-
-        {/* Right Header Pill Actions */}
-        <div className="flex items-center gap-3">
-          <span className="hidden lg:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f0ede6] text-[#5e584e] text-xs font-medium border border-[#e2ddd4]">
-            <span className="h-2 w-2 rounded-full bg-[#3d7a52]" />
-            7,550 m² GLA Mexicali
-          </span>
+        {/* Ventriloc Navigation Pill Container (Ash #efefef background, 200px radius, 8px/18px padding) */}
+        <nav className="hidden sm:flex items-center gap-2 bg-[#efefef] px-4 py-2 rounded-[200px]">
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`px-4 py-1.5 rounded-[200px] text-sm font-normal transition-colors cursor-pointer ${
+              activeTab === "overview"
+                ? "bg-[#202020] text-white"
+                : "text-[#202020] hover:text-[#ff682c]"
+            }`}
+          >
+            Rent Roll ({TENANTS.length})
+          </button>
 
           <button
-            onClick={() => alert("Generando reporte PDF ejecutivo...")}
-            className="px-4 py-2 border border-[#d8d2c6] text-[#1c1a17] bg-white hover:bg-[#f0ede6] text-xs font-medium rounded-full transition-all cursor-pointer"
+            onClick={() => setActiveTab("leasing")}
+            className={`px-4 py-1.5 rounded-[200px] text-sm font-normal transition-colors cursor-pointer ${
+              activeTab === "leasing"
+                ? "bg-[#202020] text-white"
+                : "text-[#202020] hover:text-[#ff682c]"
+            }`}
           >
-            Exportar Reporte
+            Mariana (Legal)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("maint")}
+            className={`px-4 py-1.5 rounded-[200px] text-sm font-normal transition-colors cursor-pointer ${
+              activeTab === "maint"
+                ? "bg-[#202020] text-white"
+                : "text-[#202020] hover:text-[#ff682c]"
+            }`}
+          >
+            Diego (CapEx)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("cam")}
+            className={`px-4 py-1.5 rounded-[200px] text-sm font-normal transition-colors cursor-pointer ${
+              activeTab === "cam"
+                ? "bg-[#202020] text-white"
+                : "text-[#202020] hover:text-[#ff682c]"
+            }`}
+          >
+            Renata (SAT)
+          </button>
+        </nav>
+
+        {/* Dual Button Stack: Primary CTA (Graphite #202020, 0px radius) + Ghost Outlined Button (0px radius) */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => alert("Generando informe ejecutivo oficial...")}
+            className="px-5 py-2.5 bg-transparent border border-[#202020] text-[#202020] rounded-none text-xs font-normal hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+          >
+            Exportar PDF
           </button>
 
           <button
             onClick={() => setActiveTab("saari")}
-            className="px-5 py-2 bg-[#1c1a17] text-white hover:bg-[#2d2a26] text-xs font-medium rounded-full transition-all cursor-pointer shadow-xs"
+            className="px-5 py-2.5 bg-[#202020] text-white rounded-none text-xs font-normal hover:bg-[#333333] transition-colors cursor-pointer"
           >
-            Conectar SAARI
+            Sincronizar SAARI
           </button>
         </div>
       </header>
 
-      {/* ---------------- PESTAÑA 1: OVERVIEW (RENT ROLL & SUMMARY) ---------------- */}
+      {/* ---------------- 2. HERO HEADLINE BLOCK (66px Whisper Weight + Inter Body) ---------------- */}
       {activeTab === "overview" && (
-        <div className="space-y-8">
-          {/* Hero Statement Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
-            <div className="lg:col-span-6 space-y-4">
-              <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
-                Consola de Control Operativo · La Gran Vía Mexicali
+        <div className="space-y-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            <div className="lg:col-span-7 space-y-6">
+              <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
+                Asset Management Observatory · 7,550 m² GLA Mexicali
               </span>
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#1c1a17] font-display leading-tight">
-                Gestión Integral de Activo Inmobiliario
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-normal tracking-[-0.02em] text-[#202020] font-sans leading-[0.95]">
+                Accelerating Growth Through Precision Analytics.
               </h1>
-              <p className="text-sm text-[#666055] leading-relaxed max-w-xl">
-                Supervisión centralizada del Rent Roll, prorrateo NNN de mantenimiento y auditoría cognitiva de contratos para prevenir conflictos de exclusividad en Plaza La Gran Vía.
+              <p className="text-base text-[#4d4d4d] leading-relaxed max-w-xl font-normal">
+                Consola privada de control operativo para el Sr. Martín. Monitoreo continuo del Rent Roll, prevención de conflictos de exclusividad legal y balance CAM NNN en Plaza La Gran Vía.
               </p>
-              <div className="pt-2 flex items-center gap-3">
-                <span className="text-xs font-semibold text-[#1c1a17]">Titular: Sr. Martín</span>
-                <span className="text-[#a0988a]">•</span>
-                <span className="text-xs text-[#706a5f]">Director de Operaciones & Asset Management</span>
+              <div className="pt-2">
+                <a
+                  href="#rentroll"
+                  className="inline-block text-sm text-[#202020] font-normal border-b border-[#ff682c] pb-0.5 hover:text-[#ff682c] transition-colors"
+                >
+                  Explorar Matriz de Inquilinos →
+                </a>
               </div>
             </div>
 
-            {/* KPI Cards Grid */}
-            <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
-                <div className="flex items-center justify-between text-xs text-[#827a6e]">
-                  <span className="font-semibold uppercase tracking-wider text-[10px]">Cobranza Mensual</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#eaf2ec] text-[#2b593a] text-[10px] font-semibold">
-                    98.2% Al Día
-                  </span>
+            {/* Data Dashboard Cards Cluster (Floating 20px Radius White Cards on Canvas) */}
+            <div className="lg:col-span-5 space-y-4">
+              {/* Card 1: Revenues */}
+              <div className="bg-white rounded-[20px] p-6 border border-[#e8e8e8] space-y-3">
+                <div className="flex items-center justify-between text-xs text-[#828282]">
+                  <span className="font-normal uppercase tracking-wider text-[10px]">Cobranza Mensual</span>
+                  <span className="text-[#ff682c] font-normal text-xs">● 98.2% Al Día</span>
                 </div>
-                <div className="text-2xl font-bold text-[#1c1a17] font-display">
-                  $3,145,000 <span className="text-xs font-normal text-[#8c8477]">MXN</span>
+                <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">
+                  $3 145 000 <span className="text-xs text-[#828282]">MXN</span>
                 </div>
-                <p className="text-xs text-[#736c60]">Total facturado periodo Julio 2026</p>
+                <p className="text-xs text-[#4d4d4d]">vs $3 080 000 mes anterior (+2.1% MoM)</p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
-                <div className="flex items-center justify-between text-xs text-[#827a6e]">
-                  <span className="font-semibold uppercase tracking-wider text-[10px]">Ocupación GLA</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#eaf2ec] text-[#2b593a] text-[10px] font-semibold">
-                    94.1% Ocupado
-                  </span>
+              {/* Card 2: Occupancy & CapEx Savings */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white rounded-[20px] p-6 border border-[#e8e8e8] space-y-2">
+                  <span className="text-[10px] uppercase text-[#828282] block">Ocupación GLA</span>
+                  <div className="text-2xl font-normal text-[#202020]">94.1%</div>
+                  <span className="text-[11px] text-[#4d4d4d]">7,105 m² rentados</span>
                 </div>
-                <div className="text-2xl font-bold text-[#1c1a17] font-display">
-                  7,105 m² <span className="text-xs font-normal text-[#8c8477]">Arrendados</span>
+                <div className="bg-white rounded-[20px] p-6 border border-[#e8e8e8] space-y-2">
+                  <span className="text-[10px] uppercase text-[#828282] block">Ahorro CapEx</span>
+                  <div className="text-2xl font-normal text-[#ff682c]">$78 000</div>
+                  <span className="text-[11px] text-[#4d4d4d]">Garantía Carrier</span>
                 </div>
-                <p className="text-xs text-[#736c60]">445 m² vacantes (2 locales)</p>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
-                <div className="flex items-center justify-between text-xs text-[#827a6e]">
-                  <span className="font-semibold uppercase tracking-wider text-[10px]">Invariante CAM</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#f0ede6] text-[#1c1a17] text-[10px] font-semibold">
-                    Balance NNN
-                  </span>
-                </div>
-                <div className="text-2xl font-bold text-[#1c1a17] font-display">
-                  1.0000 <span className="text-xs font-normal text-[#8c8477]">Exacto</span>
-                </div>
-                <p className="text-xs text-[#736c60]">85 locales cuadrados al 100%</p>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
-                <div className="flex items-center justify-between text-xs text-[#827a6e]">
-                  <span className="font-semibold uppercase tracking-wider text-[10px]">Ahorro CapEx AI</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#f4efe6] text-[#6b5838] text-[10px] font-semibold">
-                    Garantía Carrier
-                  </span>
-                </div>
-                <div className="text-2xl font-bold text-[#2b593a] font-display">
-                  $78,000 <span className="text-xs font-normal text-[#8c8477]">MXN</span>
-                </div>
-                <p className="text-xs text-[#736c60]">Gasto improcedente rechazado</p>
               </div>
             </div>
           </div>
 
-          {/* GLA Commercial Mix Bar */}
-          <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
-              <div>
-                <h3 className="font-bold text-sm text-[#1c1a17] font-display">
-                  Distribución de Mezcla Comercial (7,550 m² GLA Total)
-                </h3>
-                <p className="text-xs text-[#736c60]">
-                  Proporción de área arrendable por sector comercial en la plaza.
-                </p>
-              </div>
-              <span className="text-xs font-medium text-[#2b593a] bg-[#eaf2ec] px-3 py-1 rounded-full border border-[#d2e3d6]">
-                94.1% Área Activa Generando Renta
-              </span>
-            </div>
-
-            <div className="h-3 w-full rounded-full bg-[#f0ede6] overflow-hidden flex">
-              <div style={{ width: "35.2%" }} className="bg-[#4a443c] h-full" title="Gastronomía (35.2%)" />
-              <div style={{ width: "28.6%" }} className="bg-[#8c8273] h-full" title="Retail (28.6%)" />
-              <div style={{ width: "18.4%" }} className="bg-[#b8ae9e] h-full" title="Servicios (18.4%)" />
-              <div style={{ width: "11.9%" }} className="bg-[#d4cdbf] h-full" title="Entretenimiento (11.9%)" />
-              <div style={{ width: "5.9%" }} className="bg-[#e8e4dc] h-full" title="Vacancia (5.9%)" />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1 text-[#5e584e]">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#4a443c]" />
-                <span>Gastronomía & Rest. (35.2%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#8c8273]" />
-                <span>Retail & Moda (28.6%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#b8ae9e]" />
-                <span>Servicios & Bancos (18.4%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#d4cdbf]" />
-                <span>Entretenimiento (11.9%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#e8e4dc]" />
-                <span className="text-[#8c8477]">Vacancia Absorbida (5.9%)</span>
-              </div>
+          {/* Partner Logo Strip Style Caption & Section Divider */}
+          <div className="pt-8 border-t border-[#e8e8e8] flex flex-wrap items-center justify-between gap-6 text-xs text-[#816729]">
+            <span>Trusted by 85 ancla & boutique commercial partners</span>
+            <div className="flex items-center gap-8 font-mono text-[#202020] opacity-80">
+              <span>ASHLEY</span>
+              <span>CINEMEX</span>
+              <span>BANORTE</span>
+              <span>PETCO</span>
+              <span>BUFFALO WILD WINGS</span>
             </div>
           </div>
 
-          {/* Rent Roll Table & AI Drawer Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-5">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+          {/* ---------------- 3. ASYMMETRIC RADIUS CARD & RENT ROLL TABLE ---------------- */}
+          <div id="rentroll" className="space-y-6 pt-4">
+            {/* Ventriloc Signature Asymmetric Radius Card (6px 0px 0px 0px radius, Ash #efefef surface) */}
+            <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-12 space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
                 <div>
-                  <h3 className="font-bold text-sm text-[#1c1a17] font-display">
-                    Matriz Consolidada de Rent Roll ({filteredTenants.length} Locales)
-                  </h3>
-                  <p className="text-xs text-[#736c60]">
-                    Estado de cobranza y validación fiscal CFDI 4.0 en tiempo real.
-                  </p>
+                  <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
+                    Matriz Principal de Arrendamiento
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-normal text-[#202020] tracking-[-0.02em] mt-1">
+                    Rent Roll Plaza La Gran Vía ({filteredTenants.length} Locales)
+                  </h2>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-2.5">
+                {/* Search & Neutral Filter Pills */}
+                <div className="flex flex-col sm:flex-row items-center gap-3">
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Buscar por inquilino, local, giro..."
-                    className="px-3.5 py-1.5 rounded-full text-xs border border-[#e2ddd4] bg-[#f9f8f5] text-[#1c1a17] placeholder-[#a0988a] focus:outline-none focus:ring-1 focus:ring-[#1c1a17] focus:bg-white transition-all w-full sm:w-56"
+                    placeholder="Buscar por inquilino..."
+                    className="px-4 py-2 bg-white border border-[#e8e8e8] text-xs text-[#202020] placeholder-[#828282] focus:outline-none focus:border-[#202020] transition-colors w-full sm:w-56"
                   />
 
-                  <div className="flex items-center gap-1 text-xs">
+                  <div className="flex items-center gap-1.5 bg-[#ebe6dd] p-1 rounded-[200px]">
                     <button
                       onClick={() => setFilterCategory("all")}
-                      className={`px-3 py-1 rounded-full font-medium transition-all cursor-pointer ${
-                        filterCategory === "all"
-                          ? "bg-[#1c1a17] text-white"
-                          : "bg-[#f0ede6] text-[#5e584e] hover:bg-[#e4dfd5]"
+                      className={`px-3 py-1 rounded-[200px] text-xs font-normal cursor-pointer ${
+                        filterCategory === "all" ? "bg-[#202020] text-white" : "text-[#202020]"
                       }`}
                     >
                       Todos
                     </button>
                     <button
                       onClick={() => setFilterCategory("ok")}
-                      className={`px-3 py-1 rounded-full font-medium transition-all cursor-pointer ${
-                        filterCategory === "ok"
-                          ? "bg-[#2b593a] text-white"
-                          : "bg-[#f0ede6] text-[#5e584e] hover:bg-[#e4dfd5]"
+                      className={`px-3 py-1 rounded-[200px] text-xs font-normal cursor-pointer ${
+                        filterCategory === "ok" ? "bg-[#202020] text-white" : "text-[#202020]"
                       }`}
                     >
                       Al Día
                     </button>
                     <button
                       onClick={() => setFilterCategory("sat")}
-                      className={`px-3 py-1 rounded-full font-medium transition-all cursor-pointer ${
-                        filterCategory === "sat"
-                          ? "bg-[#7a2e2b] text-white"
-                          : "bg-[#f0ede6] text-[#5e584e] hover:bg-[#e4dfd5]"
+                      className={`px-3 py-1 rounded-[200px] text-xs font-normal cursor-pointer ${
+                        filterCategory === "sat" ? "bg-[#202020] text-white" : "text-[#202020]"
                       }`}
                     >
                       Alerta SAT
@@ -458,21 +371,22 @@ export function LandlordDashboard() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto border border-[#f0ede6] rounded-xl">
-                <table className="w-full text-left text-xs border-collapse">
+              {/* Clean Monospaced Data Table */}
+              <div className="overflow-x-auto bg-white border border-[#e8e8e8] rounded-[8px]">
+                <table className="w-full text-left text-xs border-collapse font-sans">
                   <thead>
-                    <tr className="border-b border-[#f0ede6] text-[#8c8477] uppercase text-[10px] bg-[#f9f8f5] tracking-wider">
-                      <th className="p-3 font-semibold">#</th>
-                      <th className="p-3 font-semibold">Inquilino / Local</th>
-                      <th className="p-3 font-semibold">Zona</th>
-                      <th className="p-3 font-semibold">Giro</th>
-                      <th className="p-3 font-semibold text-right">Superficie</th>
-                      <th className="p-3 font-semibold text-right">Pro-Rata</th>
-                      <th className="p-3 font-semibold text-right">Renta MXN</th>
-                      <th className="p-3 font-semibold">Estado Cobranza</th>
+                    <tr className="border-b border-[#e8e8e8] text-[#828282] uppercase text-[10px] bg-[#f5f5f5] tracking-wider font-mono">
+                      <th className="p-3.5 font-normal">#</th>
+                      <th className="p-3.5 font-normal">Inquilino / Local</th>
+                      <th className="p-3.5 font-normal">Zona</th>
+                      <th className="p-3.5 font-normal">Giro Commercial</th>
+                      <th className="p-3.5 font-normal text-right">Superficie</th>
+                      <th className="p-3.5 font-normal text-right">Pro-Rata NNN</th>
+                      <th className="p-3.5 font-normal text-right">Renta MXN</th>
+                      <th className="p-3.5 font-normal">Estatus CFDI</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#f5f2eb] font-normal text-[#2d2a26]">
+                  <tbody className="divide-y divide-[#e8e8e8] font-normal text-[#202020]">
                     {filteredTenants.map((t, idx) => {
                       const sqm = getTenantSqm(t.name, idx);
                       const sharePct = ((sqm / plazaTotalGla) * 100).toFixed(2);
@@ -480,22 +394,22 @@ export function LandlordDashboard() {
                       const isSatError = t.name.includes("MINT");
 
                       return (
-                        <tr key={t.slug} className="hover:bg-[#fcfbf9] transition-colors">
-                          <td className="p-3 text-[#a0988a] font-mono text-[11px]">{idx + 1}</td>
-                          <td className="p-3 font-semibold text-[#1c1a17]">{t.name}</td>
-                          <td className="p-3 text-[#736c60] text-[11px]">{t.zone}</td>
-                          <td className="p-3 text-[#5e584e]">{t.tag}</td>
-                          <td className="p-3 text-right font-medium text-[#1c1a17]">{sqm} m²</td>
-                          <td className="p-3 text-right font-medium text-[#5e584e]">{sharePct}%</td>
-                          <td className="p-3 text-right font-semibold text-[#1c1a17]">${estRent.toLocaleString()}</td>
-                          <td className="p-3">
+                        <tr key={t.slug} className="hover:bg-[#f5f5f5] transition-colors">
+                          <td className="p-3.5 text-[#828282] font-mono text-[11px]">{idx + 1}</td>
+                          <td className="p-3.5 font-normal text-[#202020]">{t.name}</td>
+                          <td className="p-3.5 text-[#4d4d4d] text-[11px]">{t.zone}</td>
+                          <td className="p-3.5 text-[#4d4d4d]">{t.tag}</td>
+                          <td className="p-3.5 text-right font-mono text-[#202020]">{sqm} m²</td>
+                          <td className="p-3.5 text-right font-mono text-[#4d4d4d]">{sharePct}%</td>
+                          <td className="p-3.5 text-right font-mono text-[#202020]">${estRent.toLocaleString()}</td>
+                          <td className="p-3.5">
                             {isSatError ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f5e9e8] text-[#7a2e2b] text-[10px] font-semibold border border-[#e8d2d1]">
-                                Alerta Fiscal SAT (PPD)
+                              <span className="text-[#ff682c] font-normal text-xs border-b border-[#ff682c] pb-0.5">
+                                Alerta SAT PPD
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#eaf2ec] text-[#2b593a] text-[10px] font-semibold border border-[#d2e3d6]">
-                                Al Día (CFDI 4.0)
+                              <span className="text-[#4d4d4d] text-xs">
+                                Al Día CFDI 4.0
                               </span>
                             )}
                           </td>
@@ -503,100 +417,20 @@ export function LandlordDashboard() {
                       );
                     })}
                   </tbody>
-                  <tfoot className="bg-[#1c1a17] text-white text-xs">
+                  <tfoot className="bg-[#202020] text-white text-xs font-mono">
                     <tr>
-                      <td className="p-3 font-bold">TOTAL</td>
-                      <td className="p-3 font-semibold" colSpan={3}>
-                        PLAZA LA GRAN VÍA ({TENANTS.length} LOCALES)
+                      <td className="p-3.5">TOTAL</td>
+                      <td className="p-3.5 font-normal" colSpan={3}>
+                        PLAZA LA GRAN VÍA (85 LOCALES)
                       </td>
-                      <td className="p-3 text-right font-semibold">{plazaTotalGla.toLocaleString()} m²</td>
-                      <td className="p-3 text-right font-semibold">1.0000</td>
-                      <td className="p-3 text-right font-bold text-[#e6dfd5]">$3,145,000 MXN</td>
-                      <td className="p-3 text-[#c4b8aa]">94.1% Ocupación</td>
+                      <td className="p-3.5 text-right">{plazaTotalGla.toLocaleString()} m²</td>
+                      <td className="p-3.5 text-right">1.0000</td>
+                      <td className="p-3.5 text-right text-[#ff682c]">$3 145 000 MXN</td>
+                      <td className="p-3.5 text-[#828282]">94.1% Ocupación</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
-            </div>
-
-            {/* Floating AI Drawer */}
-            <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4 flex flex-col justify-between h-full">
-              <div className="space-y-4">
-                <div className="border-b border-[#f0ede6] pb-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8c8477] block mb-1">
-                    Consulta a Agentes IA (Mariana / Diego / Renata)
-                  </span>
-                  <div className="flex items-center gap-1 bg-[#f0ede6] p-1 rounded-full border border-[#e2ddd4]">
-                    <button
-                      onClick={() => setActiveAgent("mariana")}
-                      className={`flex-1 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                        activeAgent === "mariana" ? "bg-[#1c1a17] text-white shadow-xs" : "text-[#6e685e]"
-                      }`}
-                    >
-                      Mariana
-                    </button>
-                    <button
-                      onClick={() => setActiveAgent("diego")}
-                      className={`flex-1 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                        activeAgent === "diego" ? "bg-[#1c1a17] text-white shadow-xs" : "text-[#6e685e]"
-                      }`}
-                    >
-                      Diego
-                    </button>
-                    <button
-                      onClick={() => setActiveAgent("renata")}
-                      className={`flex-1 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                        activeAgent === "renata" ? "bg-[#1c1a17] text-white shadow-xs" : "text-[#6e685e]"
-                      }`}
-                    >
-                      Renata
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {chatHistory.map((item, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-[#f9f8f5] border border-[#e8e4dc] text-xs space-y-1">
-                      <span className="text-[10px] font-semibold text-[#8c8477] block">{item.agent}</span>
-                      <p className="font-semibold text-[#1c1a17]">{item.query}</p>
-                      <p className="text-[#5e584e] leading-relaxed">{item.answer}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!aiQuery.trim()) return;
-                  setChatHistory([
-                    ...chatHistory,
-                    {
-                      agent: activeAgent === "mariana" ? "Mariana" : activeAgent === "diego" ? "Diego" : "Renata",
-                      query: aiQuery,
-                      answer: `Respuesta para "${aiQuery}": Expediente conciliado en base de datos.`,
-                    },
-                  ]);
-                  setAiQuery("");
-                }}
-                className="pt-2 border-t border-[#f0ede6]"
-              >
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={aiQuery}
-                    onChange={(e) => setAiQuery(e.target.value)}
-                    placeholder={`Escribe a ${activeAgent === "mariana" ? "Mariana" : activeAgent === "diego" ? "Diego" : "Renata"}...`}
-                    className="w-full px-4 py-2.5 pr-10 rounded-full bg-[#f9f8f5] border border-[#e2ddd4] text-xs text-[#1c1a17] placeholder-[#a0988a] focus:outline-none focus:ring-1 focus:ring-[#1c1a17] focus:bg-white transition-all"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-1.5 top-1.5 h-7 w-7 rounded-full bg-[#1c1a17] text-white text-xs font-bold flex items-center justify-center cursor-pointer hover:bg-[#2d2a26] transition-all"
-                  >
-                    ↑
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         </div>
@@ -604,24 +438,24 @@ export function LandlordDashboard() {
 
       {/* ---------------- PESTAÑA 2: MARIANA AI (DETALLES LEGALES RAG & PROSPECTOS) ---------------- */}
       {activeTab === "leasing" && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+        <div className="space-y-8">
+          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-12 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
               <div>
-                <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
+                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
                   Inteligencia Legal RAG & Protección de Exclusividades
                 </span>
-                <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
-                  Agente Mariana · Auditoría de Solicitudes de Arrendamiento
+                <h2 className="text-2xl sm:text-3xl font-normal text-[#202020] tracking-[-0.02em] mt-1">
+                  Agente Mariana · Dictamen Cognitivo de Contratos
                 </h2>
               </div>
-              <span className="px-3 py-1 rounded-full bg-[#eaf2ec] text-[#2b593a] text-xs font-semibold border border-[#d2e3d6]">
+              <span className="px-4 py-1.5 bg-[#202020] text-white text-xs font-normal">
                 85 Contratos RAG Indexados
               </span>
             </div>
 
             {/* Applicant Selector Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {LEASING_APPLICANTS.map((app) => (
                 <button
                   key={app.id}
@@ -629,76 +463,66 @@ export function LandlordDashboard() {
                     setSelectedLeasingApp(app);
                     setAttorneySent(false);
                   }}
-                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer space-y-2 ${
+                  className={`p-6 bg-white border text-left transition-colors cursor-pointer space-y-3 ${
                     selectedLeasingApp.id === app.id
-                      ? "border-[#1c1a17] bg-[#f9f8f5] shadow-xs"
-                      : "border-[#e8e4dc] bg-white hover:bg-[#f9f8f5]"
+                      ? "border-[#202020]"
+                      : "border-[#e8e8e8] hover:border-[#828282]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-[#1c1a17]">{app.brand}</span>
-                    <span
-                      className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${
-                        app.status === "RECHAZADO"
-                          ? "bg-[#f5e9e8] text-[#7a2e2b] border border-[#e8d2d1]"
-                          : "bg-[#f4efe6] text-[#6b5838] border border-[#e2ddd4]"
-                      }`}
-                    >
+                    <span className="font-normal text-base text-[#202020]">{app.brand}</span>
+                    <span className="text-xs text-[#ff682c] border-b border-[#ff682c]">
                       {app.status}
                     </span>
                   </div>
-                  <p className="text-xs text-[#736c60] line-clamp-1">{app.category}</p>
-                  <p className="text-[11px] text-[#2b593a] font-medium pt-1">
-                    Prevención de Daño: {app.rentLossPrevented}
+                  <p className="text-xs text-[#4d4d4d]">{app.category}</p>
+                  <p className="text-xs font-mono text-[#816729]">
+                    Prevención: {app.rentLossPrevented}
                   </p>
                 </button>
               ))}
             </div>
 
             {/* Deep RAG Contract Viewer Box */}
-            <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e4dc] pb-3">
+            <div className="bg-white p-8 border border-[#e8e8e8] space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e8e8] pb-4">
                 <div>
-                  <span className="text-[10px] font-semibold text-[#8c8477] uppercase tracking-wider block">
-                    Dictamen Cognitivo Automático
+                  <span className="text-[10px] font-normal text-[#816729] uppercase tracking-wider block font-mono">
+                    Dictamen Cognitivo RAG
                   </span>
-                  <h3 className="font-bold text-base text-[#1c1a17] font-display">
+                  <h3 className="text-xl font-normal text-[#202020]">
                     Expediente: {selectedLeasingApp.brand} ({selectedLeasingApp.category})
                   </h3>
                 </div>
-                <span className="text-xs font-semibold text-[#7a2e2b] bg-[#f5e9e8] px-3 py-1 rounded-full border border-[#e8d2d1]">
+                <span className="text-xs text-[#ff682c] border-b border-[#ff682c] font-mono">
                   {selectedLeasingApp.overlapScore}
                 </span>
               </div>
 
-              <div className="space-y-3 text-xs leading-relaxed text-[#2d2a26]">
-                <p><strong>Fundamento Jurídico:</strong> {selectedLeasingApp.reasoning}</p>
-                <p><strong>Arrendatario Afectado:</strong> {selectedLeasingApp.conflictingTenant}</p>
-                <p><strong>Cláusula Legal Invocada:</strong> {selectedLeasingApp.conflictingClause}</p>
+              <div className="space-y-4 text-xs leading-relaxed text-[#4d4d4d]">
+                <p><strong className="text-[#202020]">Fundamento Jurídico:</strong> {selectedLeasingApp.reasoning}</p>
+                <p><strong className="text-[#202020]">Arrendatario Afectado:</strong> {selectedLeasingApp.conflictingTenant}</p>
+                <p><strong className="text-[#202020]">Cláusula Invocada:</strong> {selectedLeasingApp.conflictingClause}</p>
               </div>
 
               {/* Exact Contract Snippet Box */}
-              <div className="bg-white p-4 rounded-xl border border-[#e8e4dc] space-y-2">
-                <div className="flex items-center justify-between text-[11px] text-[#8c8477] font-mono">
+              <div className="bg-[#f5f5f5] p-6 border border-[#e8e8e8] space-y-3">
+                <div className="flex items-center justify-between text-xs text-[#828282] font-mono">
                   <span>📄 {selectedLeasingApp.contractPdfName}</span>
                   <span>{selectedLeasingApp.contractPdfPage}</span>
                 </div>
-                <p className="text-xs text-[#1c1a17] italic font-serif leading-relaxed bg-[#f9f8f5] p-3 rounded-lg border border-[#f0ede6]">
+                <p className="text-sm text-[#202020] font-normal leading-relaxed">
                   {selectedLeasingApp.contractExactSnippet}
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
+              {/* Action Buttons (0px radius CTA) */}
+              <div className="pt-2">
                 <button
                   onClick={() => setAttorneySent(true)}
-                  className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                    attorneySent
-                      ? "bg-[#2b593a] text-white"
-                      : "bg-[#1c1a17] text-white hover:bg-[#2d2a26]"
-                  }`}
+                  className="px-6 py-3 bg-[#202020] text-white rounded-none text-xs font-normal hover:bg-[#333333] transition-colors cursor-pointer"
                 >
-                  {attorneySent ? "✓ Notificación Enviada a Despacho Legal" : "Enviar Instrucción a Despacho Legal"}
+                  {attorneySent ? "✓ Instrucción Enviada a Despacho Legal" : "Enviar Instrucción a Despacho Legal"}
                 </button>
               </div>
             </div>
@@ -708,24 +532,23 @@ export function LandlordDashboard() {
 
       {/* ---------------- PESTAÑA 3: DIEGO AI (CAPEX & MANTENIMIENTO) ---------------- */}
       {activeTab === "maint" && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+        <div className="space-y-8">
+          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-12 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
               <div>
-                <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
-                  Auditoría Técnica de Mantenimiento & Garantías de Equipos
+                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
+                  Auditoría Técnica & Pólizas de Fábrica
                 </span>
-                <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
-                  Agente Diego · Verificación CapEx & Pólizas de Fábrica
+                <h2 className="text-2xl sm:text-3xl font-normal text-[#202020] tracking-[-0.02em] mt-1">
+                  Agente Diego · Verificación CapEx
                 </h2>
               </div>
-              <span className="px-3 py-1 rounded-full bg-[#f4efe6] text-[#6b5838] text-xs font-semibold border border-[#e2ddd4]">
+              <span className="px-4 py-1.5 bg-[#202020] text-white text-xs font-normal">
                 $145,000 MXN en Pólizas Activas
               </span>
             </div>
 
-            {/* CapEx Cases List */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {CAPEX_CASES.map((item) => (
                 <button
                   key={item.id}
@@ -733,54 +556,36 @@ export function LandlordDashboard() {
                     setSelectedCapex(item);
                     setDiegoNotificationSent(false);
                   }}
-                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer space-y-2 ${
-                    selectedCapex.id === item.id
-                      ? "border-[#1c1a17] bg-[#f9f8f5] shadow-xs"
-                      : "border-[#e8e4dc] bg-white hover:bg-[#f9f8f5]"
+                  className={`p-6 bg-white border text-left transition-colors cursor-pointer space-y-3 ${
+                    selectedCapex.id === item.id ? "border-[#202020]" : "border-[#e8e8e8] hover:border-[#828282]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-[#1c1a17]">{item.tenant}</span>
-                    <span className="font-mono text-xs font-bold text-[#1c1a17]">
+                    <span className="font-normal text-base text-[#202020]">{item.tenant}</span>
+                    <span className="font-mono text-xs text-[#202020]">
                       ${item.amount.toLocaleString()} MXN
                     </span>
                   </div>
-                  <p className="text-xs text-[#736c60] line-clamp-1">{item.expenseType}</p>
+                  <p className="text-xs text-[#4d4d4d]">{item.expenseType}</p>
                 </button>
               ))}
             </div>
 
-            {/* CapEx Details Box */}
-            <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e4dc] pb-3">
-                <div>
-                  <span className="text-[10px] font-semibold text-[#8c8477] uppercase tracking-wider block">
-                    Verificación de Póliza & Número de Serie
-                  </span>
-                  <h3 className="font-bold text-base text-[#1c1a17] font-display">
-                    {selectedCapex.tenant} — {selectedCapex.expenseType}
-                  </h3>
-                </div>
-                <span className="text-xs font-semibold text-[#2b593a] bg-[#eaf2ec] px-3 py-1 rounded-full border border-[#d2e3d6]">
-                  Modelo: {selectedCapex.equipmentModel}
-                </span>
-              </div>
-
-              <div className="space-y-3 text-xs leading-relaxed text-[#2d2a26]">
-                <p><strong>Número de Serie Registrado:</strong> <code className="bg-white px-2 py-0.5 rounded border border-[#e2ddd4] font-mono">{selectedCapex.serialNumber}</code></p>
-                <p><strong>Resolución de Diego AI:</strong> {selectedCapex.details}</p>
+            <div className="bg-white p-8 border border-[#e8e8e8] space-y-6">
+              <h3 className="text-xl font-normal text-[#202020]">
+                {selectedCapex.tenant} — {selectedCapex.expenseType}
+              </h3>
+              <div className="space-y-3 text-xs text-[#4d4d4d] leading-relaxed">
+                <p><strong className="text-[#202020]">Número de Serie:</strong> <code className="bg-[#f5f5f5] px-2 py-1 font-mono text-[#202020]">{selectedCapex.serialNumber}</code></p>
+                <p><strong className="text-[#202020]">Resolución de Diego AI:</strong> {selectedCapex.details}</p>
               </div>
 
               <div className="pt-2">
                 <button
                   onClick={() => setDiegoNotificationSent(true)}
-                  className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                    diegoNotificationSent
-                      ? "bg-[#2b593a] text-white"
-                      : "bg-[#1c1a17] text-white hover:bg-[#2d2a26]"
-                  }`}
+                  className="px-6 py-3 bg-[#202020] text-white rounded-none text-xs font-normal hover:bg-[#333333] transition-colors cursor-pointer"
                 >
-                  {diegoNotificationSent ? "✓ Póliza Reclamada con Proveedor" : "Reclamar Garantía con Proveedor Carrier"}
+                  {diegoNotificationSent ? "✓ Póliza Reclamada con Carrier" : "Reclamar Garantía con Carrier"}
                 </button>
               </div>
             </div>
@@ -790,41 +595,36 @@ export function LandlordDashboard() {
 
       {/* ---------------- PESTAÑA 4: RENATA AI (CAM NNN & FISCAL SAT) ---------------- */}
       {activeTab === "cam" && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+        <div className="space-y-8">
+          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-12 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
               <div>
-                <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
-                  Auditoría Fiscal SAT CFDI 4.0 & Prorrateo NNN Exacto
+                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
+                  Auditoría Fiscal SAT CFDI 4.0
                 </span>
-                <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
-                  Agente Renata · Conciliación Bancaria & Complementos PPD / PUE
+                <h2 className="text-2xl sm:text-3xl font-normal text-[#202020] tracking-[-0.02em] mt-1">
+                  Agente Renata · Conciliación Bancaria PPD / PUE
                 </h2>
               </div>
-              <span className="px-3 py-1 rounded-full bg-[#f5e9e8] text-[#7a2e2b] text-xs font-semibold border border-[#e8d2d1]">
-                1 Alerta de Inconsistencia PPD
+              <span className="px-4 py-1.5 bg-[#202020] text-white text-xs font-normal">
+                1 Alerta PPD
               </span>
             </div>
 
-            {/* Table of SAT Inconsistencies */}
-            <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-4">
-              <h3 className="font-bold text-sm text-[#1c1a17] font-display">
+            <div className="bg-white p-8 border border-[#e8e8e8] space-y-6">
+              <h3 className="text-xl font-normal text-[#202020]">
                 Detalle de Alerta Fiscal: MINT Boutique (Local B-14)
               </h3>
-              <p className="text-xs text-[#5e584e] leading-relaxed">
-                El depósito bancario se registró bajo clave PUE (Pago en Una Sola Exhibición), pero el sistema fiscal emitió la factura bajo el régimen PPD (Pago en Parcialidades o Diferido). Se requiere emitir el Complemento de Pago CFDI 4.0 para evitar multa del SAT.
+              <p className="text-xs text-[#4d4d4d] leading-relaxed">
+                El depósito bancario se registró como PUE, pero la factura se emitió bajo PPD. Se requiere Complemento de Pago CFDI 4.0 para conciliar libros contables.
               </p>
 
               <div className="pt-2">
                 <button
                   onClick={() => setRenataCfdiIssued(true)}
-                  className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                    renataCfdiIssued
-                      ? "bg-[#2b593a] text-white"
-                      : "bg-[#1c1a17] text-white hover:bg-[#2d2a26]"
-                  }`}
+                  className="px-6 py-3 bg-[#202020] text-white rounded-none text-xs font-normal hover:bg-[#333333] transition-colors cursor-pointer"
                 >
-                  {renataCfdiIssued ? "✓ Complemento CFDI 4.0 Emitido Ante el SAT" : "Emitir Complemento de Pago CFDI 4.0 Automático"}
+                  {renataCfdiIssued ? "✓ Complemento CFDI 4.0 Emitido" : "Emitir Complemento CFDI 4.0 Automático"}
                 </button>
               </div>
             </div>
@@ -834,30 +634,32 @@ export function LandlordDashboard() {
 
       {/* ---------------- PESTAÑA 5: CONECTOR SAARI ERP ---------------- */}
       {activeTab === "saari" && (
-        <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
-            <div>
-              <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
-                Integración de Datos de Inmuebles
+        <div className="space-y-8">
+          <div className="bg-[#efefef] rounded-tl-[6px] rounded-tr-none rounded-br-none rounded-bl-none p-8 sm:p-12 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
+              <div>
+                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
+                  Integración de Inmuebles
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-normal text-[#202020] tracking-[-0.02em] mt-1">
+                  Conector Directo SAARI ERP
+                </h2>
+              </div>
+              <span className="px-4 py-1.5 bg-[#202020] text-white text-xs font-normal">
+                Estado: Sincronizado
               </span>
-              <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
-                Conector Directo SAARI ERP
-              </h2>
             </div>
-            <span className="px-3 py-1 rounded-full bg-[#eaf2ec] text-[#2b593a] text-xs font-semibold border border-[#d2e3d6]">
-              Estado: Sincronizado
-            </span>
-          </div>
 
-          <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-3 text-xs text-[#2d2a26]">
-            <p><strong>Última Sincronización:</strong> Hace 12 minutos (Lote Batch #SAARI-8849)</p>
-            <p><strong>Auxiliares de Cobranza Procesados:</strong> 85 contratos de arrendamiento en Mexicali.</p>
-            <button
-              onClick={() => alert("Sincronizando base de datos SAARI ERP...")}
-              className="mt-2 px-4 py-2 bg-[#1c1a17] text-white rounded-full font-medium hover:bg-[#2d2a26] transition-all cursor-pointer"
-            >
-              Forzar Resincronización SAARI
-            </button>
+            <div className="bg-white p-8 border border-[#e8e8e8] space-y-4 text-xs text-[#4d4d4d]">
+              <p><strong className="text-[#202020]">Última Sincronización:</strong> Hace 12 minutos (Lote Batch #SAARI-8849)</p>
+              <p><strong className="text-[#202020]">Auxiliares de Cobranza Procesados:</strong> 85 contratos de arrendamiento en Mexicali.</p>
+              <button
+                onClick={() => alert("Sincronizando base de datos SAARI ERP...")}
+                className="mt-2 px-6 py-3 bg-[#202020] text-white rounded-none text-xs font-normal hover:bg-[#333333] transition-colors cursor-pointer"
+              >
+                Forzar Resincronización SAARI
+              </button>
+            </div>
           </div>
         </div>
       )}

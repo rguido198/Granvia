@@ -6,6 +6,18 @@
    --------------------------------------------------------------------------- */
 
 @theme {
+  /* Ventriloc Tokens — 95% Achromatic Editorial System */
+  --color-graphite: #202020;
+  --color-canvas-white: #ffffff;
+  --color-ash: #efefef;
+  --color-fog: #f5f5f5;
+  --color-ivory: #ebe6dd;
+  --color-steel: #4d4d4d;
+  --color-slate-ventriloc: #828282;
+  --color-mist: #e8e8e8;
+  --color-ember: #ff682c;
+  --color-brass: #816729;
+
   /* Surfaces — warm sand, lightest to deepest */
   --color-sand-50: #fbf7ef;
   --color-sand-100: #f5efe4;
@@ -45,11 +57,13 @@
   --font-sans: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
 
-  /* The comp's radii are deliberately tight — 2px to 5px, never pill-soft */
+  /* Radii */
   --radius-xs: 2px;
   --radius-sm: 3px;
   --radius-md: 4px;
-  --radius-lg: 5px;
+  --radius-lg: 8px;
+  --radius-2xl: 20px;
+  --radius-full: 200px;
 }
 
 @utility font-display {
