@@ -33,6 +33,8 @@ interface CapexCase {
   isQuestionable: boolean;
   verdict: "RECHAZADO_RESPONSABILIDAD_INQUILINO" | "APROBADO_GARANTIA_COSTO_CERO" | "APROBADO_PRORRATEO_CAM";
   details: string;
+  equipmentModel: string;
+  serialNumber: string;
 }
 
 const LEASING_APPLICANTS: ApplicantCase[] = [
@@ -50,8 +52,8 @@ const LEASING_APPLICANTS: ApplicantCase[] = [
     contractPdfName: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
     contractPdfPage: "Página 12, Párrafo 3.4 (Sección de Exclusividades)",
     contractExactSnippet: '"...EL ARRENDADOR otorga al ARRENDATARIO exclusividad comercial absoluta dentro de la Zona 4 de Plaza La Gran Vía, prohibiendo expresamente la instalación de cualquier negocio o franquicia cuyo giro principal o secundario sea la venta de café espresso preparado, bebidas a base de café o bar de especialidad durante los 60 meses de vigencia del contrato..."',
-    overlapScore: "98.4% Coincidencia Semántica",
-    legalFilter: "Cumplimiento Estricto de Contrato",
+    overlapScore: "98.4% Coincidencia Semántica de Menú",
+    legalFilter: "Cumplimiento Estricto de Contrato Vigente",
   },
   {
     id: "SOL-02",
@@ -66,9 +68,26 @@ const LEASING_APPLICANTS: ApplicantCase[] = [
     rentLossPrevented: "$540,000 MXN / año",
     contractPdfName: "Contrato_LaPurisima_Bakery_LocB05_Firmado.pdf",
     contractPdfPage: "Página 8, Párrafo 2.1 (Protección de Giro)",
-    contractExactSnippet: '"...Queda strictly prohibido a la administración de Plaza La Gran Vía arrendar locales adyacentes a competidores directos en la categoría de repostería fina, donas glaseadas o panadería artesanal..."',
+    contractExactSnippet: '"...Queda estrictamente prohibido a la administración de Plaza La Gran Vía arrendar locales adyacentes a competidores directos en la categoría de repostería fina, donas glaseadas o panadería artesanal..."',
     overlapScore: "91.2% Coincidencia en Repostería",
     legalFilter: "Protección de Arrendatario Ancla",
+  },
+  {
+    id: "SOL-03",
+    brand: "La Vicenta Tacos & Parrilla",
+    category: "Restaurante Mexicano & Cortes de Carne",
+    menu: "Tacos de arrachera, ensaladas verdes, margaritas",
+    sqm: 240,
+    conflictingTenant: "Alma Verde (Local B-10 / Zona 7)",
+    conflictingClause: "Cláusula #22: Exclusividad genérica en 'comida saludable y ensaladas'.",
+    status: "CONDICIONADO",
+    reasoning: "Conflicto parcial en ensaladas. Sin embargo, tras aplicar el filtro de Ley Antimonopolio (LFCE §3), la exclusividad genérica de Alma Verde es legalmente excesiva. Se aprueba condicionando el menú a no vender ensaladas bowls como plato fuerte.",
+    rentLossPrevented: "Aprobación Viable ($1,150,000 MXN Renta Nueva)",
+    contractPdfName: "Contrato_AlmaVerde_LocB10_Firmado.pdf",
+    contractPdfPage: "Página 15, Párrafo 5.2 (Filtro Antimonopolio LFCE)",
+    contractExactSnippet: '"...Las partes acuerdan que la restricción de giro sobre ensaladas aplica únicamente a conceptos dedicados 100% a bowls saludables, no limitando la venta de acompañamientos en restaurantes de especialidad de carne..."',
+    overlapScore: "24.5% Coincidencia Menor (Ajustable)",
+    legalFilter: "Ley Federal de Competencia Económica (LFCE §3)",
   },
 ];
 
@@ -80,7 +99,9 @@ const CAPEX_CASES: CapexCase[] = [
     amount: 78000,
     isQuestionable: true,
     verdict: "RECHAZADO_RESPONSABILIDAD_INQUILINO",
-    details: "RECHAZADO: Solicitud improcedente. El contrato de arrendamiento (Sección 12) establece que la iluminación estética interior es responsabilidad 100% del arrendatario.",
+    details: "RECHAZADO POR DIEGO AI: Solicitud improcedente. El contrato de arrendamiento (Sección 12) establece que la iluminación estética interior es responsabilidad 100% del arrendatario.",
+    equipmentModel: "Luminaria LED Estética 240V",
+    serialNumber: "DL-99482-DECO",
   },
   {
     id: "CAP-02",
@@ -90,6 +111,19 @@ const CAPEX_CASES: CapexCase[] = [
     isQuestionable: false,
     verdict: "APROBADO_GARANTIA_COSTO_CERO",
     details: "GARANTÍA APLICADA ($0 COSTO PROPIETARIO): Diego verificó número de serie Carrier #CR-884920. El reemplazo está cubierto al 100% por póliza de fábrica de Carrier.",
+    equipmentModel: "Carrier WeatherExpert 15-Ton HVAC",
+    serialNumber: "CR-884920-MEX",
+  },
+  {
+    id: "CAP-03",
+    tenant: "Cinemex Premium",
+    expenseType: "Mantenimiento Preventivo de Planta de Emergencia Común",
+    amount: 52000,
+    isQuestionable: false,
+    verdict: "APROBADO_PRORRATEO_CAM",
+    details: "APROBADO PARA CAM NNN: Gasto de infraestructura común prorrateable entre todos los locales en la liquidación mensual.",
+    equipmentModel: "Planta Diésel Caterpillar 500kW",
+    serialNumber: "CAT-99201-PLAZA",
   },
 ];
 
@@ -112,6 +146,12 @@ export function LandlordDashboard() {
   const [activeAgent, setActiveAgent] = useState<ActiveAgent>("mariana");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | "ok" | "sat" | "excl">("all");
+
+  const [selectedLeasingApp, setSelectedLeasingApp] = useState<ApplicantCase>(LEASING_APPLICANTS[0]);
+  const [selectedCapex, setSelectedCapex] = useState<CapexCase>(CAPEX_CASES[0]);
+  const [attorneySent, setAttorneySent] = useState(false);
+  const [diegoNotificationSent, setDiegoNotificationSent] = useState(false);
+  const [renataCfdiIssued, setRenataCfdiIssued] = useState(false);
 
   const [aiQuery, setAiQuery] = useState("");
   const [chatHistory, setChatHistory] = useState<{ agent: string; query: string; answer: string; ref?: string }[]>([
@@ -235,46 +275,10 @@ export function LandlordDashboard() {
         </div>
       </header>
 
-      {/* Mobile Tab Switcher */}
-      <div className="flex sm:hidden overflow-x-auto gap-1 bg-[#f0ede6] p-1 rounded-full border border-[#e2ddd4] text-xs">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`px-3 py-1.5 rounded-full whitespace-nowrap font-medium ${
-            activeTab === "overview" ? "bg-[#1c1a17] text-white" : "text-[#6e685e]"
-          }`}
-        >
-          Rent Roll
-        </button>
-        <button
-          onClick={() => setActiveTab("leasing")}
-          className={`px-3 py-1.5 rounded-full whitespace-nowrap font-medium ${
-            activeTab === "leasing" ? "bg-[#1c1a17] text-white" : "text-[#6e685e]"
-          }`}
-        >
-          Arrendamiento
-        </button>
-        <button
-          onClick={() => setActiveTab("maint")}
-          className={`px-3 py-1.5 rounded-full whitespace-nowrap font-medium ${
-            activeTab === "maint" ? "bg-[#1c1a17] text-white" : "text-[#6e685e]"
-          }`}
-        >
-          CapEx
-        </button>
-        <button
-          onClick={() => setActiveTab("cam")}
-          className={`px-3 py-1.5 rounded-full whitespace-nowrap font-medium ${
-            activeTab === "cam" ? "bg-[#1c1a17] text-white" : "text-[#6e685e]"
-          }`}
-        >
-          CAM SAT
-        </button>
-      </div>
-
-      {/* ---------------- 2. MAIN LAYOUT GRID (Estilo Ventriloc: Editorial + Clean Data) ---------------- */}
+      {/* ---------------- PESTAÑA 1: OVERVIEW (RENT ROLL & SUMMARY) ---------------- */}
       {activeTab === "overview" && (
         <div className="space-y-8">
-          {/* Hero Statement Section (Estilo Ventriloc "Accelerating Growth Through Analytics") */}
+          {/* Hero Statement Section */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
             <div className="lg:col-span-6 space-y-4">
               <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
@@ -293,9 +297,8 @@ export function LandlordDashboard() {
               </div>
             </div>
 
-            {/* KPI Cards Grid (Estilo Ventriloc Floating Neutral Cards) */}
+            {/* KPI Cards Grid */}
             <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Card 1: Cobranza */}
               <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
                 <div className="flex items-center justify-between text-xs text-[#827a6e]">
                   <span className="font-semibold uppercase tracking-wider text-[10px]">Cobranza Mensual</span>
@@ -309,7 +312,6 @@ export function LandlordDashboard() {
                 <p className="text-xs text-[#736c60]">Total facturado periodo Julio 2026</p>
               </div>
 
-              {/* Card 2: Ocupación */}
               <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
                 <div className="flex items-center justify-between text-xs text-[#827a6e]">
                   <span className="font-semibold uppercase tracking-wider text-[10px]">Ocupación GLA</span>
@@ -323,7 +325,6 @@ export function LandlordDashboard() {
                 <p className="text-xs text-[#736c60]">445 m² vacantes (2 locales)</p>
               </div>
 
-              {/* Card 3: Invariante CAM */}
               <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
                 <div className="flex items-center justify-between text-xs text-[#827a6e]">
                   <span className="font-semibold uppercase tracking-wider text-[10px]">Invariante CAM</span>
@@ -337,7 +338,6 @@ export function LandlordDashboard() {
                 <p className="text-xs text-[#736c60]">85 locales cuadrados al 100%</p>
               </div>
 
-              {/* Card 4: Ahorro CapEx */}
               <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-2">
                 <div className="flex items-center justify-between text-xs text-[#827a6e]">
                   <span className="font-semibold uppercase tracking-wider text-[10px]">Ahorro CapEx AI</span>
@@ -353,7 +353,7 @@ export function LandlordDashboard() {
             </div>
           </div>
 
-          {/* GLA Commercial Mix Neutral Segment Bar */}
+          {/* GLA Commercial Mix Bar */}
           <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
               <div>
@@ -369,7 +369,6 @@ export function LandlordDashboard() {
               </span>
             </div>
 
-            {/* Subtle Neutral Segmented Bar */}
             <div className="h-3 w-full rounded-full bg-[#f0ede6] overflow-hidden flex">
               <div style={{ width: "35.2%" }} className="bg-[#4a443c] h-full" title="Gastronomía (35.2%)" />
               <div style={{ width: "28.6%" }} className="bg-[#8c8273] h-full" title="Retail (28.6%)" />
@@ -378,7 +377,6 @@ export function LandlordDashboard() {
               <div style={{ width: "5.9%" }} className="bg-[#e8e4dc] h-full" title="Vacancia (5.9%)" />
             </div>
 
-            {/* Neutral Legend */}
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1 text-[#5e584e]">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#4a443c]" />
@@ -403,9 +401,8 @@ export function LandlordDashboard() {
             </div>
           </div>
 
-          {/* ---------------- 3. RENT ROLL TABLE & FLOATING AI DRAWER GRID ---------------- */}
+          {/* Rent Roll Table & AI Drawer Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Rent Roll Table Card (8 Columns) */}
             <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-5">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
                 <div>
@@ -417,7 +414,6 @@ export function LandlordDashboard() {
                   </p>
                 </div>
 
-                {/* Search & Filter Bar */}
                 <div className="flex flex-col sm:flex-row items-center gap-2.5">
                   <input
                     type="text"
@@ -462,7 +458,6 @@ export function LandlordDashboard() {
                 </div>
               </div>
 
-              {/* Table Component */}
               <div className="overflow-x-auto border border-[#f0ede6] rounded-xl">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
@@ -524,7 +519,7 @@ export function LandlordDashboard() {
               </div>
             </div>
 
-            {/* Interactive Right AI Agent Drawer (4 Columns) */}
+            {/* Floating AI Drawer */}
             <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4 flex flex-col justify-between h-full">
               <div className="space-y-4">
                 <div className="border-b border-[#f0ede6] pb-3">
@@ -538,7 +533,7 @@ export function LandlordDashboard() {
                         activeAgent === "mariana" ? "bg-[#1c1a17] text-white shadow-xs" : "text-[#6e685e]"
                       }`}
                     >
-                      Mariana (Legal)
+                      Mariana
                     </button>
                     <button
                       onClick={() => setActiveAgent("diego")}
@@ -546,7 +541,7 @@ export function LandlordDashboard() {
                         activeAgent === "diego" ? "bg-[#1c1a17] text-white shadow-xs" : "text-[#6e685e]"
                       }`}
                     >
-                      Diego (CapEx)
+                      Diego
                     </button>
                     <button
                       onClick={() => setActiveAgent("renata")}
@@ -554,69 +549,12 @@ export function LandlordDashboard() {
                         activeAgent === "renata" ? "bg-[#1c1a17] text-white shadow-xs" : "text-[#6e685e]"
                       }`}
                     >
-                      Renata (SAT)
+                      Renata
                     </button>
                   </div>
                 </div>
 
-                {/* Preset Prompt Pills */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-semibold text-[#8c8477] block">Consultas Frecuentes:</span>
-                  {activeAgent === "mariana" && (
-                    <button
-                      onClick={() => {
-                        setChatHistory([
-                          ...chatHistory,
-                          {
-                            agent: "Mariana",
-                            query: "¿Por qué se bloqueó a Starbucks Reserve?",
-                            answer: "Starbucks presentó 98.4% de coincidencia en menú con Blue Luna Café, violando la Cláusula #14 de exclusividad comercial.",
-                          },
-                        ]);
-                      }}
-                      className="w-full text-left p-2.5 rounded-xl bg-[#f9f8f5] hover:bg-[#f0ede6] border border-[#e8e4dc] text-[#2d2a26] text-xs transition-all cursor-pointer"
-                    >
-                      Exclusividad Blue Luna vs Starbucks
-                    </button>
-                  )}
-                  {activeAgent === "diego" && (
-                    <button
-                      onClick={() => {
-                        setChatHistory([
-                          ...chatHistory,
-                          {
-                            agent: "Diego",
-                            query: "¿Cuál es el estatus del compresor HVAC?",
-                            answer: "Póliza de garantía Carrier #CR-884920 cubre 100% del reemplazo en Ashley Furniture ($0 costo propietario).",
-                          },
-                        ]);
-                      }}
-                      className="w-full text-left p-2.5 rounded-xl bg-[#f9f8f5] hover:bg-[#f0ede6] border border-[#e8e4dc] text-[#2d2a26] text-xs transition-all cursor-pointer"
-                    >
-                      Garantía Carrier HVAC Ashley
-                    </button>
-                  )}
-                  {activeAgent === "renata" && (
-                    <button
-                      onClick={() => {
-                        setChatHistory([
-                          ...chatHistory,
-                          {
-                            agent: "Renata",
-                            query: "¿Por qué MINT Boutique tiene alerta SAT?",
-                            answer: "Factura emitida en PPD requiere Complemento de Pago CFDI 4.0 para conciliar depósito bancario.",
-                          },
-                        ]);
-                      }}
-                      className="w-full text-left p-2.5 rounded-xl bg-[#f9f8f5] hover:bg-[#f0ede6] border border-[#e8e4dc] text-[#2d2a26] text-xs transition-all cursor-pointer"
-                    >
-                      Alerta CFDI 4.0 MINT Boutique
-                    </button>
-                  )}
-                </div>
-
-                {/* Conversation History */}
-                <div className="space-y-3 pt-2 max-h-60 overflow-y-auto">
+                <div className="space-y-3 max-h-64 overflow-y-auto">
                   {chatHistory.map((item, i) => (
                     <div key={i} className="p-3 rounded-xl bg-[#f9f8f5] border border-[#e8e4dc] text-xs space-y-1">
                       <span className="text-[10px] font-semibold text-[#8c8477] block">{item.agent}</span>
@@ -627,7 +565,6 @@ export function LandlordDashboard() {
                 </div>
               </div>
 
-              {/* Chat Input Bar */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -637,7 +574,7 @@ export function LandlordDashboard() {
                     {
                       agent: activeAgent === "mariana" ? "Mariana" : activeAgent === "diego" ? "Diego" : "Renata",
                       query: aiQuery,
-                      answer: `Respuesta para "${aiQuery}": Verificado y conciliado conforme a expediente oficial.`,
+                      answer: `Respuesta para "${aiQuery}": Expediente conciliado en base de datos.`,
                     },
                   ]);
                   setAiQuery("");
@@ -665,32 +602,263 @@ export function LandlordDashboard() {
         </div>
       )}
 
-      {/* Secondary Modules */}
+      {/* ---------------- PESTAÑA 2: MARIANA AI (DETALLES LEGALES RAG & PROSPECTOS) ---------------- */}
       {activeTab === "leasing" && (
-        <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-          <h3 className="font-bold text-base text-[#1c1a17] font-display">Módulo de Arrendamiento & Inteligencia Legal (Mariana)</h3>
-          <p className="text-xs text-[#736c60]">Evaluación de solicitudes prospecto y bóveda RAG de 85 contratos en Mexicali.</p>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+              <div>
+                <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
+                  Inteligencia Legal RAG & Protección de Exclusividades
+                </span>
+                <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
+                  Agente Mariana · Auditoría de Solicitudes de Arrendamiento
+                </h2>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-[#eaf2ec] text-[#2b593a] text-xs font-semibold border border-[#d2e3d6]">
+                85 Contratos RAG Indexados
+              </span>
+            </div>
+
+            {/* Applicant Selector Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {LEASING_APPLICANTS.map((app) => (
+                <button
+                  key={app.id}
+                  onClick={() => {
+                    setSelectedLeasingApp(app);
+                    setAttorneySent(false);
+                  }}
+                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer space-y-2 ${
+                    selectedLeasingApp.id === app.id
+                      ? "border-[#1c1a17] bg-[#f9f8f5] shadow-xs"
+                      : "border-[#e8e4dc] bg-white hover:bg-[#f9f8f5]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-[#1c1a17]">{app.brand}</span>
+                    <span
+                      className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${
+                        app.status === "RECHAZADO"
+                          ? "bg-[#f5e9e8] text-[#7a2e2b] border border-[#e8d2d1]"
+                          : "bg-[#f4efe6] text-[#6b5838] border border-[#e2ddd4]"
+                      }`}
+                    >
+                      {app.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#736c60] line-clamp-1">{app.category}</p>
+                  <p className="text-[11px] text-[#2b593a] font-medium pt-1">
+                    Prevención de Daño: {app.rentLossPrevented}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            {/* Deep RAG Contract Viewer Box */}
+            <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e4dc] pb-3">
+                <div>
+                  <span className="text-[10px] font-semibold text-[#8c8477] uppercase tracking-wider block">
+                    Dictamen Cognitivo Automático
+                  </span>
+                  <h3 className="font-bold text-base text-[#1c1a17] font-display">
+                    Expediente: {selectedLeasingApp.brand} ({selectedLeasingApp.category})
+                  </h3>
+                </div>
+                <span className="text-xs font-semibold text-[#7a2e2b] bg-[#f5e9e8] px-3 py-1 rounded-full border border-[#e8d2d1]">
+                  {selectedLeasingApp.overlapScore}
+                </span>
+              </div>
+
+              <div className="space-y-3 text-xs leading-relaxed text-[#2d2a26]">
+                <p><strong>Fundamento Jurídico:</strong> {selectedLeasingApp.reasoning}</p>
+                <p><strong>Arrendatario Afectado:</strong> {selectedLeasingApp.conflictingTenant}</p>
+                <p><strong>Cláusula Legal Invocada:</strong> {selectedLeasingApp.conflictingClause}</p>
+              </div>
+
+              {/* Exact Contract Snippet Box */}
+              <div className="bg-white p-4 rounded-xl border border-[#e8e4dc] space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-[#8c8477] font-mono">
+                  <span>📄 {selectedLeasingApp.contractPdfName}</span>
+                  <span>{selectedLeasingApp.contractPdfPage}</span>
+                </div>
+                <p className="text-xs text-[#1c1a17] italic font-serif leading-relaxed bg-[#f9f8f5] p-3 rounded-lg border border-[#f0ede6]">
+                  {selectedLeasingApp.contractExactSnippet}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  onClick={() => setAttorneySent(true)}
+                  className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    attorneySent
+                      ? "bg-[#2b593a] text-white"
+                      : "bg-[#1c1a17] text-white hover:bg-[#2d2a26]"
+                  }`}
+                >
+                  {attorneySent ? "✓ Notificación Enviada a Despacho Legal" : "Enviar Instrucción a Despacho Legal"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ---------------- PESTAÑA 3: DIEGO AI (CAPEX & MANTENIMIENTO) ---------------- */}
       {activeTab === "maint" && (
-        <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-          <h3 className="font-bold text-base text-[#1c1a17] font-display">Auditoría de Gastos CapEx & Garantías de Equipos (Diego)</h3>
-          <p className="text-xs text-[#736c60]">Verificación técnica de reclamos de mantenimiento y pólizas Carrier / Caterpillar.</p>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+              <div>
+                <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
+                  Auditoría Técnica de Mantenimiento & Garantías de Equipos
+                </span>
+                <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
+                  Agente Diego · Verificación CapEx & Pólizas de Fábrica
+                </h2>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-[#f4efe6] text-[#6b5838] text-xs font-semibold border border-[#e2ddd4]">
+                $145,000 MXN en Pólizas Activas
+              </span>
+            </div>
+
+            {/* CapEx Cases List */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {CAPEX_CASES.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setSelectedCapex(item);
+                    setDiegoNotificationSent(false);
+                  }}
+                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer space-y-2 ${
+                    selectedCapex.id === item.id
+                      ? "border-[#1c1a17] bg-[#f9f8f5] shadow-xs"
+                      : "border-[#e8e4dc] bg-white hover:bg-[#f9f8f5]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-[#1c1a17]">{item.tenant}</span>
+                    <span className="font-mono text-xs font-bold text-[#1c1a17]">
+                      ${item.amount.toLocaleString()} MXN
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#736c60] line-clamp-1">{item.expenseType}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* CapEx Details Box */}
+            <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e4dc] pb-3">
+                <div>
+                  <span className="text-[10px] font-semibold text-[#8c8477] uppercase tracking-wider block">
+                    Verificación de Póliza & Número de Serie
+                  </span>
+                  <h3 className="font-bold text-base text-[#1c1a17] font-display">
+                    {selectedCapex.tenant} — {selectedCapex.expenseType}
+                  </h3>
+                </div>
+                <span className="text-xs font-semibold text-[#2b593a] bg-[#eaf2ec] px-3 py-1 rounded-full border border-[#d2e3d6]">
+                  Modelo: {selectedCapex.equipmentModel}
+                </span>
+              </div>
+
+              <div className="space-y-3 text-xs leading-relaxed text-[#2d2a26]">
+                <p><strong>Número de Serie Registrado:</strong> <code className="bg-white px-2 py-0.5 rounded border border-[#e2ddd4] font-mono">{selectedCapex.serialNumber}</code></p>
+                <p><strong>Resolución de Diego AI:</strong> {selectedCapex.details}</p>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => setDiegoNotificationSent(true)}
+                  className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    diegoNotificationSent
+                      ? "bg-[#2b593a] text-white"
+                      : "bg-[#1c1a17] text-white hover:bg-[#2d2a26]"
+                  }`}
+                >
+                  {diegoNotificationSent ? "✓ Póliza Reclamada con Proveedor" : "Reclamar Garantía con Proveedor Carrier"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ---------------- PESTAÑA 4: RENATA AI (CAM NNN & FISCAL SAT) ---------------- */}
       {activeTab === "cam" && (
-        <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-          <h3 className="font-bold text-base text-[#1c1a17] font-display">Prorrateo CAM NNN & Auditoría Fiscal SAT (Renata)</h3>
-          <p className="text-xs text-[#736c60]">Timbrado CFDI 4.0, complementos PPD y balance NNN exacto.</p>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+              <div>
+                <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
+                  Auditoría Fiscal SAT CFDI 4.0 & Prorrateo NNN Exacto
+                </span>
+                <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
+                  Agente Renata · Conciliación Bancaria & Complementos PPD / PUE
+                </h2>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-[#f5e9e8] text-[#7a2e2b] text-xs font-semibold border border-[#e8d2d1]">
+                1 Alerta de Inconsistencia PPD
+              </span>
+            </div>
+
+            {/* Table of SAT Inconsistencies */}
+            <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-4">
+              <h3 className="font-bold text-sm text-[#1c1a17] font-display">
+                Detalle de Alerta Fiscal: MINT Boutique (Local B-14)
+              </h3>
+              <p className="text-xs text-[#5e584e] leading-relaxed">
+                El depósito bancario se registró bajo clave PUE (Pago en Una Sola Exhibición), pero el sistema fiscal emitió la factura bajo el régimen PPD (Pago en Parcialidades o Diferido). Se requiere emitir el Complemento de Pago CFDI 4.0 para evitar multa del SAT.
+              </p>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => setRenataCfdiIssued(true)}
+                  className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    renataCfdiIssued
+                      ? "bg-[#2b593a] text-white"
+                      : "bg-[#1c1a17] text-white hover:bg-[#2d2a26]"
+                  }`}
+                >
+                  {renataCfdiIssued ? "✓ Complemento CFDI 4.0 Emitido Ante el SAT" : "Emitir Complemento de Pago CFDI 4.0 Automático"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ---------------- PESTAÑA 5: CONECTOR SAARI ERP ---------------- */}
       {activeTab === "saari" && (
         <div className="bg-white rounded-2xl p-6 border border-[#e8e4dc] shadow-xs space-y-4">
-          <h3 className="font-bold text-base text-[#1c1a17] font-display">Conector SAARI ERP</h3>
-          <p className="text-xs text-[#736c60]">Ingestión de auxiliares de cobranza y exportación de lotes para SAARI ERP.</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
+            <div>
+              <span className="text-xs font-semibold text-[#8c8273] uppercase tracking-wider block">
+                Integración de Datos de Inmuebles
+              </span>
+              <h2 className="text-xl font-bold text-[#1c1a17] font-display mt-0.5">
+                Conector Directo SAARI ERP
+              </h2>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-[#eaf2ec] text-[#2b593a] text-xs font-semibold border border-[#d2e3d6]">
+              Estado: Sincronizado
+            </span>
+          </div>
+
+          <div className="bg-[#f9f8f5] rounded-xl p-6 border border-[#e8e4dc] space-y-3 text-xs text-[#2d2a26]">
+            <p><strong>Última Sincronización:</strong> Hace 12 minutos (Lote Batch #SAARI-8849)</p>
+            <p><strong>Auxiliares de Cobranza Procesados:</strong> 85 contratos de arrendamiento en Mexicali.</p>
+            <button
+              onClick={() => alert("Sincronizando base de datos SAARI ERP...")}
+              className="mt-2 px-4 py-2 bg-[#1c1a17] text-white rounded-full font-medium hover:bg-[#2d2a26] transition-all cursor-pointer"
+            >
+              Forzar Resincronización SAARI
+            </button>
+          </div>
         </div>
       )}
     </div>
