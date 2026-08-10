@@ -318,7 +318,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           {/* Navigation Links */}
           <nav className="space-y-1">
             <p className="px-2 text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Analítica & Operaciones
+              Panel del Portafolio
             </p>
 
             <button
@@ -343,14 +343,14 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Rent Roll & Ocupación</span>
+              <span>Rent Roll & Locales</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
                 84 Locales
               </span>
             </button>
 
             <p className="px-2 text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mt-6 mb-2">
-              Módulos de Inteligencia (IA)
+              Gestión & Inteligencia Operativa
             </p>
 
             <button
@@ -361,23 +361,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Renata (CAM / SAT)</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+              <span>Finanzas & Gastos CAM</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
                 1 Alerta
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("legal")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === "legal"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              }`}
-            >
-              <span>Mariana (Legal RAG)</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-                Contratos
               </span>
             </button>
 
@@ -389,9 +375,23 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Diego (CapEx & Ops)</span>
+              <span>Mantenimiento & CapEx</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                 Garantías
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("legal")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === "legal"
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>Bóveda Legal & RAG</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                Contratos
               </span>
             </button>
 
@@ -403,9 +403,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Conector ERP SAP</span>
+              <span>Integración ERP SAP</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
-                Sincronizado
+                200 OK
               </span>
             </button>
           </nav>
