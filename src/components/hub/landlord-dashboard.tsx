@@ -1028,21 +1028,21 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           )}
 
           {activeTab === "cam" && (
-            <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 space-y-8 animate-fadeIn text-slate-900 font-sans">
-              {/* HEADER & ACTION BAR */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-8 animate-fadeIn text-slate-900 font-sans shadow-sm">
+              {/* TOP EXECUTIVE HEADER */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-amber-500" />
-                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Módulo Operativo Renata AI
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Módulo de Finanzas & Gastos Comunes · Renata AI
                     </span>
                   </div>
                   <h2 className="font-display text-2xl font-bold text-slate-900 mt-1">
-                    Administración de Gastos Comunes (CAM NNN) & Auditoría SAT
+                    Fondo de Mantenimiento CAM NNN & Auditoría Fiscal
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1 font-mono">
-                    Total del mes: <strong>$268,500 MXN</strong> · Superficie Total: <strong>35,400 m²</strong> · <strong>84 Locales</strong>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Prorrateo automatizado de gastos comunes entre los 84 locales de La Gran Vía Mexicali.
                   </p>
                 </div>
 
@@ -1051,97 +1051,159 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     onClick={() => {
                       triggerToast("Factura cargada. Renata calculó el prorrateo automáticamente entre los 84 locales.");
                     }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer flex items-center gap-2 shadow-xs"
+                    className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-sm"
                   >
-                    <span>📄</span> Cargar Factura PDF / XML
+                    <span>📄</span> Subir Factura PDF / XML
                   </button>
                 </div>
               </div>
 
-              {/* FISCAL SAT ALERT CARD (CLEAN EXECUTIVE STYLE) */}
-              <div className="bg-slate-900 text-white rounded-xl p-5 space-y-3 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* 4 EXECUTIVE KPI SUMMARY CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Gastos CAM del Mes</p>
+                  <p className="text-2xl font-bold text-slate-900">$268,500 MXN</p>
+                  <p className="text-xs text-slate-500">4 Facturas acumuladas en Julio</p>
+                </div>
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Superficie Total (GLA)</p>
+                  <p className="text-2xl font-bold text-slate-900">35,400 m²</p>
+                  <p className="text-xs text-slate-500">84 Locales comerciales activos</p>
+                </div>
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Inquilinos al Corriente</p>
+                  <p className="text-2xl font-bold text-emerald-700">83 / 84</p>
+                  <p className="text-xs text-emerald-600 font-medium">98.8% de cuotas pagadas</p>
+                </div>
+                <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4.5 space-y-1">
+                  <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Auditoría Fiscal SAT</p>
+                  <p className="text-2xl font-bold text-amber-900">1 Pendiente</p>
+                  <p className="text-xs text-amber-700 font-medium">Complemento CFDI MINT Boutique</p>
+                </div>
+              </div>
+
+              {/* FISCAL SAT ACTION CARD */}
+              <div className="bg-gradient-to-r from-amber-50 via-amber-50/60 to-orange-50/40 border border-amber-200 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                      <span className="font-mono text-[11px] font-bold text-amber-300 uppercase tracking-wider">
-                        Alerta de Inconsistencia SAT (CFDI 4.0)
+                      <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                      <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                        Requerimiento Fiscal SAT (CFDI 4.0)
                       </span>
                     </div>
-                    <p className="text-sm font-medium">
-                      <strong>MINT Boutique (Local B-12)</strong> pagó <strong>$18,400 MXN</strong> en banco pero no tiene timbrado el recibo fiscal ante el SAT.
+                    <h3 className="text-base font-bold text-slate-900">
+                      MINT Boutique (Local B-12) · Pago de $18,400 MXN sin timbrado
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
+                      MINT realizó una transferencia bancaria por su cuota mensual. Como la factura inicial fue PPD (Pago en Parcialidades), la ley del SAT exige emitir un <strong>Complemento de Recepción de Pagos (CRP)</strong> para evitar sanciones fiscales a la plaza.
                     </p>
                   </div>
                   <button
                     onClick={() => {
                       setCfdiIssued(true);
-                      triggerToast("Complemento de pago CFDI 4.0 emitido y timbrado exitosamente en el SAT.");
+                      triggerToast("Complemento de pago CFDI 4.0 timbrado y enviado al SAT exitosamente.");
                     }}
-                    className="bg-amber-400 hover:bg-amber-300 text-slate-950 px-4 py-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+                    className="bg-amber-800 hover:bg-amber-900 text-white px-5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 shadow-sm"
                   >
-                    {cfdiIssued ? "✓ CFDI 4.0 Timbrado" : "Emitir Complemento SAT →"}
+                    {cfdiIssued ? "✓ Complemento SAT Timbrado" : "Timbrar Recibo SAT →"}
                   </button>
                 </div>
-                <p className="text-xs text-slate-300 font-mono border-t border-slate-800 pt-2.5">
-                  <strong>¿Qué significa esto?</strong> El SAT exige timbrar un Complemento de Recepción de Pagos (CRP) cuando la renta se paga por transferencia bancaria. Al pulsar el botón, Renata timbra el documento oficial ante el SAT sin multas.
-                </p>
               </div>
 
-              {/* INGESTED INVOICES LEDGER */}
-              <div className="space-y-3">
+              {/* THREE INGESTION CHANNELS SUMMARY */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <h3 className="font-display text-base font-bold text-slate-900">
+                    Canales de Ingreso de Facturas
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Renata recopila automáticamente los gastos desde tres fuentes principales:
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-slate-900">1. Portal Inquilinos</span>
+                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Automático</span>
+                    </div>
+                    <p className="text-xs text-slate-600">Comprobantes y ventas enviados directamente por los locales en <code className="bg-slate-200/80 px-1 py-0.5 rounded text-slate-900 font-mono">/inquilinos</code>.</p>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-slate-900">2. Conector ERP SAP</span>
+                      <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Sincronizado</span>
+                    </div>
+                    <p className="text-xs text-slate-600">Facturas de CFE, Seguridad Securitas y Climas de Mexicali recibidas por API.</p>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-slate-900">3. Carga Manual</span>
+                      <span className="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">Administración</span>
+                    </div>
+                    <p className="text-xs text-slate-600">Subida directa de archivos PDF/XML para prorrateo inmediato.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* INVOICES RECEIVED LEDGER */}
+              <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-between">
                   <h3 className="font-display text-base font-bold text-slate-900">
-                    1. Facturas Recibidas este Mes (Canales de Entrada)
+                    Facturas de Mantenimiento Ingeridas este Mes
                   </h3>
-                  <span className="text-xs text-slate-500 font-mono">
-                    Ingestión por: Portal Inquilinos, ERP SAP y Carga Directa
+                  <span className="text-xs text-slate-500 font-medium">
+                    Fórmula de División: (Monto Total × m² del Local) ÷ 35,400 m²
                   </span>
                 </div>
 
                 <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs font-mono">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                       <tr>
-                        <th className="p-3.5">Proveedor / Emisor</th>
-                        <th className="p-3.5">Concepto</th>
-                        <th className="p-3.5">Canal de Recepción</th>
-                        <th className="p-3.5 text-right">Monto Total</th>
-                        <th className="p-3.5">Regla de División</th>
-                        <th className="p-3.5 text-center">Estado Renata</th>
+                        <th className="p-4">Proveedor / Emisor</th>
+                        <th className="p-4">Concepto</th>
+                        <th className="p-4">Origen</th>
+                        <th className="p-4 text-right">Monto Total</th>
+                        <th className="p-4">Criterio de Reparto</th>
+                        <th className="p-4 text-center">Estado</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-sans text-slate-700">
-                      <tr className="hover:bg-slate-50/80">
-                        <td className="p-3.5 font-bold text-slate-900">CFE Mexicali</td>
-                        <td className="p-3.5">Energía Eléctrica Áreas Comunes</td>
-                        <td className="p-3.5 font-mono text-[11px] text-slate-600">🔌 Conector ERP SAP</td>
-                        <td className="p-3.5 text-right font-mono font-bold text-slate-900">$145,000 MXN</td>
-                        <td className="p-3.5 text-slate-500 font-mono text-[11px]">(Monto × m² local) / 35,400 m²</td>
-                        <td className="p-3.5 text-center font-mono text-[11px] font-bold text-emerald-700">Dividido en 84 locales</td>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      <tr className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 font-bold text-slate-900">CFE Mexicali</td>
+                        <td className="p-4 text-slate-600">Energía Eléctrica (Pasillos y Áreas Comunes)</td>
+                        <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[11px] font-medium">Conector ERP</span></td>
+                        <td className="p-4 text-right font-bold text-slate-900">$145,000 MXN</td>
+                        <td className="p-4 text-slate-500">Prorrateado según superficie (m²)</td>
+                        <td className="p-4 text-center"><span className="text-emerald-700 font-bold">Prorrateado ✓</span></td>
                       </tr>
-                      <tr className="hover:bg-slate-50/80">
-                        <td className="p-3.5 font-bold text-slate-900">Grupo Securitas</td>
-                        <td className="p-3.5">Vigilancia & Seguridad 24/7</td>
-                        <td className="p-3.5 font-mono text-[11px] text-slate-600">🔌 Conector ERP SAP</td>
-                        <td className="p-3.5 text-right font-mono font-bold text-slate-900">$65,000 MXN</td>
-                        <td className="p-3.5 text-slate-500 font-mono text-[11px]">(Monto × m² local) / 35,400 m²</td>
-                        <td className="p-3.5 text-center font-mono text-[11px] font-bold text-emerald-700">Dividido en 84 locales</td>
+                      <tr className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 font-bold text-slate-900">Grupo Securitas</td>
+                        <td className="p-4 text-slate-600">Vigilancia & Control de Acceso 24/7</td>
+                        <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[11px] font-medium">Conector ERP</span></td>
+                        <td className="p-4 text-right font-bold text-slate-900">$65,000 MXN</td>
+                        <td className="p-4 text-slate-500">Prorrateado según superficie (m²)</td>
+                        <td className="p-4 text-center"><span className="text-emerald-700 font-bold">Prorrateado ✓</span></td>
                       </tr>
-                      <tr className="hover:bg-slate-50/80">
-                        <td className="p-3.5 font-bold text-slate-900">Climas de Mexicali</td>
-                        <td className="p-3.5">Mantenimiento HVAC Torres</td>
-                        <td className="p-3.5 font-mono text-[11px] text-slate-600">📄 Carga Manual Admin</td>
-                        <td className="p-3.5 text-right font-mono font-bold text-slate-900">$38,500 MXN</td>
-                        <td className="p-3.5 text-slate-500 font-mono text-[11px]">(Monto × m² local) / 35,400 m²</td>
-                        <td className="p-3.5 text-center font-mono text-[11px] font-bold text-emerald-700">Dividido en 84 locales</td>
+                      <tr className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 font-bold text-slate-900">Climas de Mexicali</td>
+                        <td className="p-4 text-slate-600">Mantenimiento Preventivo Climas Torre Central</td>
+                        <td className="p-4"><span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-[11px] font-medium">Carga Manual</span></td>
+                        <td className="p-4 text-right font-bold text-slate-900">$38,500 MXN</td>
+                        <td className="p-4 text-slate-500">Prorrateado según superficie (m²)</td>
+                        <td className="p-4 text-center"><span className="text-emerald-700 font-bold">Prorrateado ✓</span></td>
                       </tr>
-                      <tr className="hover:bg-slate-50/80 bg-amber-50/30">
-                        <td className="p-3.5 font-bold text-slate-900">MINT Boutique (B-12)</td>
-                        <td className="p-3.5">Pago de Renta + Cuota CAM</td>
-                        <td className="p-3.5 font-mono text-[11px] text-slate-600">🌐 Portal Inquilinos</td>
-                        <td className="p-3.5 text-right font-mono font-bold text-slate-900">$18,400 MXN</td>
-                        <td className="p-3.5 text-slate-500 font-mono text-[11px]">Asignación Directa Local B-12</td>
-                        <td className="p-3.5 text-center font-mono text-[11px] font-bold text-amber-700">⚠️ Pendiente CFDI 4.0</td>
+                      <tr className="hover:bg-amber-50/40 transition-colors bg-amber-50/20">
+                        <td className="p-4 font-bold text-slate-900">MINT Boutique (B-12)</td>
+                        <td className="p-4 text-slate-600">Comprobante de Pago Renta + CAM</td>
+                        <td className="p-4"><span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md text-[11px] font-medium">Portal Inquilinos</span></td>
+                        <td className="p-4 text-right font-bold text-amber-900">$18,400 MXN</td>
+                        <td className="p-4 text-amber-800">Directo a Local B-12</td>
+                        <td className="p-4 text-center"><span className="text-amber-700 font-bold">⚠️ Pendiente SAT</span></td>
                       </tr>
                     </tbody>
                   </table>
@@ -1149,39 +1211,41 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               </div>
 
               {/* TENANT PRORATION MATRIX */}
-              <div className="space-y-3 pt-2">
+              <div className="space-y-4 pt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h3 className="font-display text-base font-bold text-slate-900">
-                    2. Tabla de División Final por Inquilino (Cobro NNN)
-                  </h3>
-                  <span className="text-xs text-slate-500 font-mono">
-                    Calculado automáticamente por superficie rentada (m²)
-                  </span>
+                  <div>
+                    <h3 className="font-display text-base font-bold text-slate-900">
+                      Cobro Final por Inquilino (Cuota CAM NNN)
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Desglose individual correspondiente a cada local para el periodo actual.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs font-mono">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                       <tr>
-                        <th className="p-3.5">Inquilino</th>
-                        <th className="p-3.5 text-right">Superficie</th>
-                        <th className="p-3.5 text-right">% Prorrateo</th>
-                        <th className="p-3.5 text-right">Cuota Base CAM</th>
-                        <th className="p-3.5 text-right">Admin</th>
-                        <th className="p-3.5 text-right">IVA (16%)</th>
-                        <th className="p-3.5 text-right">Total NNN</th>
+                        <th className="p-4">Inquilino / Local</th>
+                        <th className="p-4 text-right">Superficie</th>
+                        <th className="p-4 text-right">% Participación</th>
+                        <th className="p-4 text-right">Cuota Base CAM</th>
+                        <th className="p-4 text-right">Administración</th>
+                        <th className="p-4 text-right">IVA (16%)</th>
+                        <th className="p-4 text-right">Total NNN</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-sans text-slate-700">
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
                       {camRows.slice(0, 10).map((c) => (
-                        <tr key={c.key} className="hover:bg-slate-50">
-                          <td className="p-3.5 font-bold text-slate-900">{c.label}</td>
-                          <td className="p-3.5 text-right font-mono">{c.sqm} m²</td>
-                          <td className="p-3.5 text-right font-mono">{c.sharePct.toFixed(2)}%</td>
-                          <td className="p-3.5 text-right font-mono">{formatMxn(c.base)}</td>
-                          <td className="p-3.5 text-right font-mono">{formatMxn(c.admin)}</td>
-                          <td className="p-3.5 text-right font-mono">{formatMxn(c.iva)}</td>
-                          <td className="p-3.5 text-right font-mono font-bold text-slate-900">{formatMxn(c.total)}</td>
+                        <tr key={c.key} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 font-bold text-slate-900">{c.label}</td>
+                          <td className="p-4 text-right font-medium">{c.sqm} m²</td>
+                          <td className="p-4 text-right font-medium">{c.sharePct.toFixed(2)}%</td>
+                          <td className="p-4 text-right font-medium">{formatMxn(c.base)}</td>
+                          <td className="p-4 text-right font-medium">{formatMxn(c.admin)}</td>
+                          <td className="p-4 text-right font-medium">{formatMxn(c.iva)}</td>
+                          <td className="p-4 text-right font-bold text-slate-900">{formatMxn(c.total)}</td>
                         </tr>
                       ))}
                     </tbody>
