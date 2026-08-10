@@ -35,7 +35,7 @@ export const PITCH_COST = {
   items: [
     { tag: "Renta", text: "Cada solicitud de local, revisada a mano — a veces después de haber dicho que sí." },
     { tag: "Mantenim.", text: "Cada falla de aire acondicionado, un mensaje a tu WhatsApp personal." },
-    { tag: "CAM", text: "Cada mes, horas en Excel dividiendo los gastos comunes entre 79 locales." },
+    { tag: "CAM", text: "Cada mes, horas en Excel dividiendo los gastos comunes entre 84 locales." },
     { tag: "Contratos", text: "Cada renovación por vencer, una alarma que pusiste tú, para no olvidarla tú." },
   ],
   close: "Ninguna de estas tareas necesita que seas tú quien las haga.",

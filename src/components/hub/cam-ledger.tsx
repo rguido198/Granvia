@@ -1,7 +1,10 @@
 "use client";
 
-import { CAM_LEDGER } from "@/content/hub";
+import { CAM_LEDGER, PORTAL_TENANT } from "@/content/hub";
 import { downloadBlob, generateMockPdf } from "@/lib/mock-pdf";
+
+/** Plaza GLA the CAM prorateo divides by — the same basis as the landlord console. */
+const PLAZA_GLA = 12745;
 
 const currency = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
@@ -17,7 +20,7 @@ function downloadInvoice(concept: string, provider: string, plazaMonthly: number
           `Concepto: ${concept}`,
           `Proveedor: ${provider}`,
           `Costo total plaza: ${currency(plazaMonthly)} MXN`,
-          `Participación Local A-04 (145 m² / 7,550 m²): ${currency(tenantShare)} MXN`,
+          `Participación ${PORTAL_TENANT.unit} (${PORTAL_TENANT.sqm} m² / ${PLAZA_GLA.toLocaleString("es-MX")} m²): ${currency(tenantShare)} MXN`,
           "Prorrateo: proporcional a m² rentados por local.",
         ],
       },
@@ -107,7 +110,7 @@ export function CamLedger() {
           <tfoot>
             <tr className="border-t border-hairline-strong">
               <td className="pt-3 font-semibold text-ink" colSpan={2}>
-                Total CAM · MINT Boutique — Local A-04 (145 m² / 7,550 m²)
+                Total CAM · {PORTAL_TENANT.name} — {PORTAL_TENANT.unit} ({PORTAL_TENANT.sqm} m² / {PLAZA_GLA.toLocaleString("es-MX")} m²)
               </td>
               <td className="pt-3 font-mono text-ink-400">{currency(plazaTotal)}</td>
               <td className="pt-3 font-mono font-semibold text-ink">{currency(total)}</td>

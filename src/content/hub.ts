@@ -59,7 +59,11 @@ export const HUB_ACTIONS: HubAction[] = [
  * Line items on the tenant's NNN / CAM operating-expense ledger — demo data.
  *
  * `plazaMonthly` is what the plaza pays that provider; `tenantShare` is Local
- * A-04's slice of it, at its 145 / 7,550 m² pro-rata share.
+ * B-12's slice of it, at its 70 / 12,745 m² pro-rata share.
+ *
+ * The 12,745 m² basis is the plaza GLA the landlord dashboard derives from the
+ * rent roll (12,300 m² leased + 445 m² vacant). Every CAM figure in this file
+ * uses it; nothing here may be rebased in isolation.
  */
 export type CamLineItem = {
   concept: string;
@@ -70,18 +74,36 @@ export type CamLineItem = {
 
 /**
  * Reconciles to CAM_ALLOCATION: plazaMonthly sums to its invoiceTotal
- * (268,500), and tenantShare sums to MINT Boutique's allocated 5,157 — the
- * ledger itemizes exactly what that one number is made of. The 1-peso
- * rounding residual sits on the largest line. Keep both totals tied if these
- * figures are ever edited.
+ * (268,500), and tenantShare sums to MINT Boutique's allocated 1,475 — the
+ * ledger itemizes exactly what that one number is made of. The rounding
+ * residual sits on the largest line. Keep both totals tied if these figures
+ * are ever edited.
  */
 export const CAM_LEDGER: CamLineItem[] = [
-  { concept: "Seguridad & Vigilancia", provider: "Grupo Custodia Fronteriza", plazaMonthly: 113237, tenantShare: 2176 },
-  { concept: "Recolección de Basura", provider: "Servicios Urbanos Mexicali", plazaMonthly: 26150, tenantShare: 502 },
-  { concept: "Jardinería & Áreas Comunes", provider: "Verde Paisajismo", plazaMonthly: 39224, tenantShare: 753 },
-  { concept: "Iluminación & Electricidad Común", provider: "CFE / Plaza", plazaMonthly: 54634, tenantShare: 1049 },
-  { concept: "Administración & Limpieza", provider: "Servicios Plaza", plazaMonthly: 35255, tenantShare: 677 },
+  { concept: "Seguridad & Vigilancia", provider: "Grupo Custodia Fronteriza", plazaMonthly: 113237, tenantShare: 622 },
+  { concept: "Recolección de Basura", provider: "Servicios Urbanos Mexicali", plazaMonthly: 26150, tenantShare: 144 },
+  { concept: "Jardinería & Áreas Comunes", provider: "Verde Paisajismo", plazaMonthly: 39224, tenantShare: 215 },
+  { concept: "Iluminación & Electricidad Común", provider: "CFE / Plaza", plazaMonthly: 54634, tenantShare: 300 },
+  { concept: "Administración & Limpieza", provider: "Servicios Plaza", plazaMonthly: 35255, tenantShare: 194 },
 ];
+
+/**
+ * The tenant whose own view the portal demo renders.
+ *
+ * Every figure here matches what the landlord console shows for the same unit:
+ * 70 m² and $32,000 come from the rent roll, and the lease end date comes from
+ * CHURN_RADAR below. The portal previously said 145 m², $40,000 and "Octubre
+ * 2026" — three numbers a tenant could disprove by reading their own contract.
+ */
+export const PORTAL_TENANT = {
+  name: "MINT Boutique",
+  unit: "Local B-12",
+  zone: "Zona Boutique",
+  sqm: 70,
+  monthlyRent: 32000,
+  leaseEnds: "Diciembre 2026",
+  contactEmail: "gerente@mintboutique.com",
+} as const;
 
 /** Scripted exchange for the AC-malfunction ticket simulator. */
 export type AcTicketMessage = { role: "ai" | "tenant"; text: string };
@@ -103,13 +125,13 @@ export type ActivityEntry = { agent: string; text: string; accent: "terra" | "pi
 
 export const AI_ACTIVITY_POOL: ActivityEntry[] = [
   { agent: "Agente de Arrendamiento", text: "Evaluó una solicitud entrante para Local C-08 — sin conflicto de exclusividad.", accent: "pine" },
-  { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local A-04 (falla de AC, código E4).", accent: "terra" },
+  { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local B-12 (falla de AC, código E4).", accent: "terra" },
   { agent: "Agente Financiero", text: "Procesó el reporte de ventas de Bodega 8 con OCR y emitió el CFDI correspondiente.", accent: "pine" },
   { agent: "Agente de Asset Management", text: "Detectó una caída de 6% en afluencia hacia MINT Boutique — añadida al radar de riesgo.", accent: "gold" },
   { agent: "Agente de Arrendamiento", text: "Generó lineamientos de Islas Comerciales para un giro con cláusula de exclusividad activa.", accent: "terra" },
   { agent: "Agente Financiero", text: "Envió recordatorio automático de reporte de ventas a 3 locales pendientes.", accent: "pine" },
   { agent: "Agente de Mantenimiento", text: "Cerró el ticket #INC-401 (trampa de grasa) — confirmado por Alma Verde.", accent: "pine" },
-  { agent: "Agente de Asset Management", text: "Actualizó el prorrateo de CAM de julio para los 79 locales activos.", accent: "gold" },
+  { agent: "Agente de Asset Management", text: "Actualizó el prorrateo de CAM de julio para los 84 locales activos.", accent: "gold" },
 ];
 
 /** CAM allocation demo — one plaza invoice divided proportionally by tenant m². */
@@ -118,16 +140,18 @@ export type CamAllocationRow = { tenant: string; sqm: number; share: number; amo
 export const CAM_ALLOCATION = {
   invoiceLabel: "Recibo CFE + Seguridad + Mantenimiento — Julio 2026",
   invoiceTotal: 268500,
-  // Shares and amounts are derived from sqm / 7,550 m² total, at full precision.
+  // Shares and amounts are derived from sqm / 12,745 m² GLA, at full precision.
+  // Tenant names and areas match the rent roll in landlord-dashboard.tsx — the
+  // two views describe one plaza and must not diverge.
   // Invariants: shares sum to exactly 1.000 and amounts sum to exactly
-  // invoiceTotal. The 1-peso rounding residual is assigned to the largest-GLA
-  // row. Keep both invariants intact if these figures are ever edited.
+  // invoiceTotal. The rounding residual is assigned to the largest-GLA row.
+  // Keep both invariants intact if these figures are ever edited.
   rows: [
-    { tenant: "Ashley Furniture", sqm: 1450, share: 0.192, amount: 51566 },
-    { tenant: "Cinépolis VIP", sqm: 1180, share: 0.156, amount: 41964 },
-    { tenant: "MINT Boutique", sqm: 145, share: 0.019, amount: 5157 },
-    { tenant: "Derma Club", sqm: 95, share: 0.013, amount: 3378 },
-    { tenant: "Resto de la plaza (75 locales)", sqm: 4680, share: 0.620, amount: 166435 },
+    { tenant: "Ashley", sqm: 1450, share: 0.114, amount: 30547 },
+    { tenant: "Cinemex Premium", sqm: 1180, share: 0.093, amount: 24859 },
+    { tenant: "MINT Boutique", sqm: 70, share: 0.005, amount: 1475 },
+    { tenant: "Derma Club Farmacia Dermatológica", sqm: 66, share: 0.005, amount: 1390 },
+    { tenant: "Resto de la plaza (80 locales + vacancia)", sqm: 9979, share: 0.783, amount: 210229 },
   ] as CamAllocationRow[],
 } as const;
 
@@ -142,7 +166,7 @@ export type ChurnRow = {
 
 export const CHURN_RADAR: ChurnRow[] = [
   {
-    tenant: "Ashley Furniture",
+    tenant: "Ashley",
     leaseEnds: "Mar 2027",
     portalActivity: "Alta · 92%",
     risk: "green",

@@ -1,0 +1,56 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import { PageFade } from "@/components/ui";
+import { LoginForm } from "./login-form";
+
+export const runtime = "edge";
+
+export const metadata: Metadata = {
+  title: "Acceso a la Consola | La Gran Vía Mexicali",
+  description: "Acceso restringido a la consola de asset management de La Gran Vía Mexicali.",
+  robots: { index: false, follow: false },
+};
+
+export default function ConsoleLoginPage() {
+  return (
+    <PageFade>
+      <div className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-12">
+        <div className="w-full rounded-lg border border-hairline-strong bg-sand-100 p-6 sm:p-8 shadow-lg">
+          <div className="flex justify-center">
+            <Image
+              src="/brand/la-gran-via-logo.png"
+              alt="La Gran Vía"
+              width={2408}
+              height={923}
+              priority
+              className="h-11 w-auto"
+            />
+          </div>
+
+          <p className="mt-5 text-center">
+            <span className="inline-block rounded-full border border-pine/30 bg-pine/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-pine">
+              Acceso restringido
+            </span>
+          </p>
+
+          <h1 className="mt-3 text-center font-display text-2xl font-bold leading-tight text-ink">
+            Consola de Asset Management
+          </h1>
+          <p className="mt-2 text-center text-xs leading-relaxed text-ink-500">
+            Rent roll consolidado, prorrateo CAM NNN y auditoría fiscal de la plaza. Uso exclusivo del personal
+            autorizado de La Gran Vía Mexicali.
+          </p>
+
+          <LoginForm />
+
+          <p className="mt-5 border-t border-hairline pt-4 text-center font-mono text-[10px] leading-relaxed text-ink-500">
+            La sesión caduca a las 8 horas. ¿Sin acceso? Escribe a{" "}
+            <a className="underline hover:text-ink" href="mailto:contact@technologyconsultants.ventures">
+              contact@technologyconsultants.ventures
+            </a>
+          </p>
+        </div>
+      </div>
+    </PageFade>
+  );
+}

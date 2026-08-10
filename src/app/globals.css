@@ -48,6 +48,72 @@
   --color-gold: #d4a637;
   --color-gold-dark: #b88d28;
 
+  /* ── Asset-management console ──────────────────────────────────────────────
+     The console is a working surface, not a marketing page: it stays on the
+     achromatic Ventriloc greys above rather than the warm sand system, because
+     an 85-row financial table needs a neutral ground.
+
+     These add the two things that ramp was missing — a named brand red, and a
+     semantic status set. Each status pairs a text tone with the surface it is
+     legible on; every pairing below clears WCAG AA for body text.
+
+     Colour carries meaning here. `signal` has exactly two jobs — the item that
+     needs a human, and the interactive accent on links and hovers. It is not an
+     emphasis colour: it previously marked 33 things, including the pro-rata
+     column on all 85 rows, which taught the eye to skip it. Emphasis is weight.
+
+     Palette provenance is still the open §7 B1 question in the brand guidelines
+     (mark-red vs concept-comp terracotta). Naming the values does not settle it —
+     it just means settling it later edits this block instead of 458 literals. */
+  --color-signal: #ea2c28;        /* brand red, measured from the registered mark */
+  --color-signal-dark: #b8231f;
+
+  --color-ok: #2b593a;
+  --color-ok-surface: #eaf2ec;
+  --color-ok-on-dark: #7fb894;
+
+  --color-alert: #7a2e2b;
+  --color-alert-surface: #f5e9e8;
+  --color-alert-edge: #e8d2d1;
+
+  --color-caution: #816729;       /* same value as brass, named for its job here */
+  --color-caution-surface: #f4efe6;
+  --color-caution-on-dark: #e0b04a;
+
+  /* Console darks — one cool ramp. The dark panels previously mixed #202020
+     (cool) with dune-800 #2d2a26 (warm), which read as a rendering bug. */
+  --color-graphite-800: #333333;
+  --color-graphite-950: #121212;
+  --color-graphite-300: #b0b0b0;  /* body text on the dark panels; #828282 fails there */
+
+  /* ── Console dark surface — PROPOSED, not signed off ───────────────────────
+     Prototype ramp for the dark console at /consola/prototipo.
+
+     Derived from the registered mark's own near-black (#211E1F) rather than
+     lifted from the swipe file: the canvas sits one step below the mark black
+     and the panel just under it, so the surface is the brand's own black rather
+     than a generic matte black. The mark is 82% near-black by ink area, which is
+     the argument for a dark console in the first place.
+
+     Every text step below clears WCAG AA on all three surfaces.
+
+     Note for the guidelines: the brand red #EA2C28 fails AA as text on BOTH
+     white (4.30) and this canvas (4.38). It is a mid-luminance red — it works as
+     a fill with white on it, never as small text. `signal-on-dark` is the
+     lightened step for text use here, the same job `signal-dark` does on light. */
+  --color-console-canvas: #131112;
+  --color-console-panel: #1c191a;
+  --color-console-raised: #262223;
+
+  --color-console-bone: #ededed;   /* primary text      — 16.06 on canvas */
+  --color-console-ash: #a5a0a1;    /* secondary text    —  7.29 on canvas */
+  --color-console-slate: #8f8a8c;  /* tertiary / labels —  5.54 on canvas, 4.63 on raised */
+
+  --color-console-hairline: rgb(255 255 255 / 0.08);
+  --color-console-hairline-strong: rgb(255 255 255 / 0.16);
+
+  --color-signal-on-dark: #ff6259; /* 6.40 on canvas — the red that is legible as text here */
+
   /* Hairlines */
   --color-hairline: rgb(33 31 28 / 0.1);
   --color-hairline-strong: rgb(33 31 28 / 0.22);

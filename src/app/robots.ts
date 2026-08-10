@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: "/inquilinos",
+      disallow: ["/inquilinos", "/consola"],
     },
     sitemap: new URL("/sitemap.xml", SITE.url).toString(),
   };

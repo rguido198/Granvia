@@ -52,10 +52,10 @@ export function SiteHeader() {
             href={HUB_NAV.href}
             aria-current={hubActive ? "page" : undefined}
             className={cn(
-              "rounded-xs border border-pine px-4.5 py-2.5 text-[13.5px] font-semibold transition-colors",
+              "rounded-xs border border-terra px-4.5 py-2.5 text-[13.5px] font-semibold transition-colors",
               hubActive
-                ? "bg-pine text-sand-100"
-                : "text-pine hover:bg-pine hover:text-sand-100",
+                ? "bg-terra text-sand-100"
+                : "text-terra hover:bg-terra hover:text-sand-100",
             )}
           >
             {HUB_NAV.label}
@@ -120,8 +120,8 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 aria-current={hubActive ? "page" : undefined}
                 className={cn(
-                  "block rounded-xs border border-pine px-4 py-2.5 text-center text-sm font-semibold",
-                  hubActive ? "bg-pine text-sand-100" : "text-pine",
+                  "block rounded-xs border border-terra px-4 py-2.5 text-center text-sm font-semibold",
+                  hubActive ? "bg-terra text-sand-100" : "text-terra",
                 )}
               >
                 {HUB_NAV.label}

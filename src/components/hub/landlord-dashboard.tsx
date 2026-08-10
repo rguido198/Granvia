@@ -1,1433 +1,1280 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { TENANTS } from "@/content/tenants";
+import type {
+  AgentReply,
+  ConsoleData,
+} from "@/lib/console-data";
 
-type ActiveTab = "overview" | "leasing" | "maint" | "cam" | "saari";
+type SidebarTab = "analytics" | "rentroll" | "cam" | "maint" | "legal" | "erp";
 
-interface ApplicantCase {
-  id: string;
-  brand: string;
-  category: string;
-  menu: string;
-  sqm: number;
-  conflictingTenant: string;
-  conflictingClause: string;
-  status: "RECHAZADO" | "CONDICIONADO" | "APROBADO";
-  reasoning: string;
-  rentLossPrevented: string;
-  contractPdfName: string;
-  contractPdfPage: string;
-  contractExactSnippet: string;
-  overlapScore: string;
-  legalFilter: string;
+/**
+ * Format currency in MXN with optional decimals
+ */
+function formatMxn(val: number, decimals = 0) {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: decimals,
+    minimumFractionDigits: decimals,
+  }).format(val);
 }
 
-interface CapexCase {
-  id: string;
-  tenant: string;
-  expenseType: string;
-  amount: number;
-  isQuestionable: boolean;
-  verdict: "RECHAZADO_RESPONSABILIDAD_INQUILINO" | "APROBADO_GARANTIA_COSTO_CERO" | "APROBADO_PRORRATEO_CAM";
-  details: string;
-  equipmentModel: string;
-  serialNumber: string;
-}
-
-const LEASING_APPLICANTS: ApplicantCase[] = [
-  {
-    id: "SOL-01",
-    brand: "Starbucks Reserve",
-    category: "Cafetería & Bar de Espresso",
-    menu: "Café espresso, bebidas frías, repostería importada",
-    sqm: 190,
-    conflictingTenant: "Blue Luna Café (Local B-02 / Zona 4)",
-    conflictingClause: "Cláusula #14: Exclusividad absoluta en venta de café preparado & bar de espresso.",
-    status: "RECHAZADO",
-    reasoning: "Imposible arrendar. Solapamiento directo del 98.4% en menú de café espresso. Incumplimiento directo del contrato vigente de Blue Luna Café. Riesgo de demanda legal inmediata y pérdida de renta de $65,000 MXN/mes.",
-    rentLossPrevented: "$780,000 MXN / año",
-    contractPdfName: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
-    contractPdfPage: "Página 12, Párrafo 3.4 (Sección de Exclusividades)",
-    contractExactSnippet: '"...EL ARRENDADOR otorga al ARRENDATARIO exclusividad comercial absoluta dentro de la Zona 4 de Plaza La Gran Vía, prohibiendo expresamente la instalación de cualquier negocio o franquicia cuyo giro principal o secundario sea la venta de café espresso preparado, bebidas a base de café o bar de especialidad durante los 60 meses de vigencia del contrato..."',
-    overlapScore: "98.4% Coincidencia Semántica de Menú",
-    legalFilter: "Cumplimiento Estricto de Contrato Vigente",
-  },
-  {
-    id: "SOL-02",
-    brand: "Krispy Kreme",
-    category: "Donas & Repostería Glaseada",
-    menu: "Donas glaseadas, café americano, pan dulce",
-    sqm: 110,
-    conflictingTenant: "La Purísima Bakery (Local B-05 / Zona 4)",
-    conflictingClause: "Cláusula #08: Exclusividad en productos de postres y repostería glaseada.",
-    status: "RECHAZADO",
-    reasoning: "Violación de pacto de no-competencia de La Purísima Bakery. El algoritmo de Mariana detectó solapamiento directo en categoría 'postres/repostería glaseada'.",
-    rentLossPrevented: "$540,000 MXN / año",
-    contractPdfName: "Contrato_LaPurisima_Bakery_LocB05_Firmado.pdf",
-    contractPdfPage: "Página 8, Párrafo 2.1 (Protección de Giro)",
-    contractExactSnippet: '"...Queda estrictamente prohibido a la administración de Plaza La Gran Vía arrendar locales adyacentes a competidores directos en la categoría de repostería fina, donas glaseadas o panadería artesanal..."',
-    overlapScore: "91.2% Coincidencia en Repostería",
-    legalFilter: "Protección de Arrendatario Ancla",
-  },
-  {
-    id: "SOL-03",
-    brand: "La Vicenta Tacos & Parrilla",
-    category: "Restaurante Mexicano & Cortes de Carne",
-    menu: "Tacos de arrachera, ensaladas verdes, margaritas",
-    sqm: 240,
-    conflictingTenant: "Alma Verde (Local B-10 / Zona 7)",
-    conflictingClause: "Cláusula #22: Exclusividad genérica en 'comida saludable y ensaladas'.",
-    status: "CONDICIONADO",
-    reasoning: "Conflicto parcial en ensaladas. Sin embargo, tras aplicar el filtro de Ley Antimonopolio (LFCE §3), la exclusividad genérica de Alma Verde es legalmente excesiva. Se aprueba condicionando el menú a no vender ensaladas bowls como plato fuerte.",
-    rentLossPrevented: "Aprobación Viable ($1,150,000 MXN Renta Nueva)",
-    contractPdfName: "Contrato_AlmaVerde_LocB10_Firmado.pdf",
-    contractPdfPage: "Página 15, Párrafo 5.2 (Filtro Antimonopolio LFCE)",
-    contractExactSnippet: '"...Las partes acuerdan que la restricción de giro sobre ensaladas aplica únicamente a conceptos dedicados 100% a bowls saludables, no limitando la venta de acompañamientos en restaurantes de especialidad de carne..."',
-    overlapScore: "24.5% Coincidencia Menor (Ajustable)",
-    legalFilter: "Ley Federal de Competencia Económica (LFCE §3)",
-  },
-];
-
-const CAPEX_CASES: CapexCase[] = [
-  {
-    id: "CAP-01",
-    tenant: "Derma Club Farmacia Dermatológica",
-    expenseType: "Remodelación de Luminarias Decorativas Interiores",
-    amount: 78000,
-    isQuestionable: true,
-    verdict: "RECHAZADO_RESPONSABILIDAD_INQUILINO",
-    details: "RECHAZADO: Solicitud improcedente. El contrato de arrendamiento (Sección 12) establece que la iluminación estética interior es responsabilidad 100% del arrendatario.",
-    equipmentModel: "Luminaria LED Estética 240V",
-    serialNumber: "DL-99482-DECO",
-  },
-  {
-    id: "CAP-02",
-    tenant: "Ashley Furniture",
-    expenseType: "Falla de Compresor HVAC 15 Toneladas (Calor 44°C Mexicali)",
-    amount: 145000,
-    isQuestionable: false,
-    verdict: "APROBADO_GARANTIA_COSTO_CERO",
-    details: "GARANTÍA APLICADA ($0 COSTO PROPIETARIO): Diego verificó número de serie Carrier #CR-884920. El reemplazo está cubierto al 100% por póliza de fábrica de Carrier.",
-    equipmentModel: "Carrier Commercial WeatherMaster",
-    serialNumber: "CR-884920",
-  },
-  {
-    id: "CAP-03",
-    tenant: "Cinemex Premium",
-    expenseType: "Mantenimiento Preventivo de Planta de Emergencia Común",
-    amount: 52000,
-    isQuestionable: false,
-    verdict: "APROBADO_PRORRATEO_CAM",
-    details: "APROBADO PARA CAM NNN: Gasto de infraestructura común prorrateable entre todos los locales en la liquidación mensual.",
-    equipmentModel: "Caterpillar C15 ACERT 500kW",
-    serialNumber: "CAT-500-9942",
-  },
-];
-
-function getTenantSqm(name: string, index: number): number {
-  if (name.includes("Ashley")) return 1450;
-  if (name.includes("Cinemex")) return 1180;
-  if (name.includes("Buffalo")) return 650;
-  if (name.includes("Fairfield") || name.includes("Holiday Inn")) return 850;
-  if (name.includes("Cabanna") || name.includes("Bodega 8") || name.includes("260 Grill")) return 320;
-  if (name.includes("Banorte") || name.includes("Banregio") || name.includes("Santander")) return 210;
-  if (name.includes("PETCO")) return 420;
-  if (name.includes("Alma Verde")) return 220;
-  if (name.includes("Blue Luna")) return 180;
-  if (name.includes("IHOP")) return 340;
-  return Math.max(45, 80 - (index % 15) * 2);
-}
-
-function getTenantRent(sqm: number, name: string): number {
-  if (name.includes("Ashley")) return 348000;
-  if (name.includes("Cinemex")) return 283200;
-  if (name.includes("Buffalo")) return 156000;
-  if (name.includes("260 Grill")) return 76800;
-  if (name.includes("Alma Verde")) return 52800;
-  if (name.includes("AmoreMe")) return 18240;
-  if (name.includes("ARA Transportes")) return 17760;
-  if (name.includes("Ary Casa")) return 17280;
-  if (name.includes("Asian Wok")) return 16320;
-  if (name.includes("AT&T")) return 15840;
-  if (name.includes("AXA")) return 15360;
-  if (name.includes("Baja Brunch")) return 14880;
-  if (name.includes("Banorte")) return 50400;
-  if (name.includes("Banregio")) return 50400;
-  if (name.includes("Be a Lash")) return 13440;
-  if (name.includes("Best Optical")) return 12960;
-  if (name.includes("Blue Luna")) return 43200;
-  if (name.includes("Bodega 8")) return 76800;
-  if (name.includes("Bonaprime")) return 18720;
-  if (name.includes("Cabanna")) return 76800;
-  return Math.round(sqm * 240);
-}
-
-export function LandlordDashboard() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const [selectedLeasingApp, setSelectedLeasingApp] = useState<ApplicantCase>(LEASING_APPLICANTS[0]);
-  const [selectedCapex, setSelectedCapex] = useState<CapexCase>(CAPEX_CASES[0]);
-  const [attorneySent, setAttorneySent] = useState(false);
-  const [diegoNotificationSent, setDiegoNotificationSent] = useState(false);
-  const [renataCfdiIssued, setRenataCfdiIssued] = useState(false);
-
-  // SAARI Mode Switcher
-  const [saariMode, setSaariMode] = useState<"inbound" | "outbound">("inbound");
-  const [saariProcessed, setSaariProcessed] = useState(false);
-
-  // Mariana Chat Query State
-  const [marianaQuery, setMarianaQuery] = useState("");
-  const [marianaChatResponse, setMarianaChatResponse] = useState({
-    query: "¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?",
-    answer: "Blue Luna Café (Local B-02, Zona 4) cuenta con la Cláusula #14 en su contrato vigente (2023-2028). Otorga exclusividad comercial absoluta en la venta de café espresso y especialidad en Zona 4. La propuesta de Starbucks Reserve presentaba un 98.4% de solapamiento semántico en menú.",
-    pdfName: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
-    pdfClause: "Página 12, Cláusula 14",
-  });
-
-  // Diego Chat Query State
-  const [diegoQuery, setDiegoQuery] = useState("");
-  const [diegoChatResponse, setDiegoChatResponse] = useState({
-    query: "¿Por qué el reemplazo de compresor HVAC de Ashley Furniture no le cuesta al propietario?",
-    answer: "Diego verificó el número de serie Carrier #CR-884920. La póliza de garantía del fabricante Carrier cubre fallas mecánicas de compresores de 15 toneladas durante 5 años (vigente hasta Noviembre 2028). Se tramitó la sustitución sin costo para el propietario ($0 MXN).",
-    pdfName: "Poliza_Garantia_Carrier_Ashley_HVAC.pdf",
-    pdfClause: "Serie #CR-884920 (Cobertura 100% Fábrica)",
-  });
-
-  // Renata Chat Query State
-  const [renataQuery, setRenataQuery] = useState("");
-  const [renataChatResponse, setRenataChatResponse] = useState({
-    query: "¿Por qué MINT Boutique registró una alerta fiscal SAT CFDI 4.0?",
-    answer: "MINT Boutique pagó $32,000 MXN mediante transferencia registrando el método PUE (Pago en una sola exhibición), pero la factura original se emitió bajo el régimen PPD (Pago en parcialidades). Renata detectó la discrepancia antes de la declaración mensual del SAT para auto-emitir el Complemento de Recepción de Pagos sin sanción.",
-    xmlName: "CFDI_4.0_Complemento_Pago_SAT_MINT.xml",
-    xmlClause: "Anexo 20 RMF SAT §2.7.1.35",
-  });
-
-  const plazaTotalGla = 12745;
-
-  const filteredTenants = TENANTS.filter((t) => {
-    return (
-      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.zone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.tag.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+/**
+ * SVG Sparkline Curve for Metric Cards (Monochrome & Understated)
+ */
+function Sparkline({ data, color = "#0F172A" }: { data: number[]; color?: string }) {
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data
+    .map((val, idx) => {
+      const x = (idx / (data.length - 1)) * 120;
+      const y = 32 - ((val - min) / range) * 26;
+      return `${x},${y}`;
+    })
+    .join(" ");
 
   return (
-    <div className="min-h-screen bg-[#ffffff] text-[#202020] font-sans p-4 sm:p-8 space-y-10 max-w-[1250px] mx-auto">
-      {/* ---------------- 1. VENTRILOC FLOATING PILL HEADER ---------------- */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[#e8e8e8]">
-        <Link href="/" className="block shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/brand/la-gran-via-logo-horizontal.png"
-            alt="La Gran Vía Mexicali"
-            className="h-8 w-auto object-contain"
+    <svg className="w-24 h-8 overflow-visible" viewBox="0 0 120 32">
+      <defs>
+        <linearGradient id={`grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      <polygon
+        points={`0,32 ${points} 120,32`}
+        fill={`url(#grad-${color.replace('#', '')})`}
+      />
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
+}
+
+/**
+ * Institutional 12-Month Revenue & Collection Dual Line Chart (Achromatic Slate)
+ */
+function RevenueTrendChart() {
+  const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  const contracted = [2.35, 2.38, 2.41, 2.42, 2.45, 2.46, 2.47, 2.48, 2.48, 2.48, 2.49, 2.50];
+  const collected = [2.28, 2.34, 2.39, 2.40, 2.42, 2.45, 2.46, 2.48, 2.45, 2.46, 2.47, 2.49];
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(7); // Default August
+
+  const width = 640;
+  const height = 170;
+  const paddingX = 40;
+  const paddingY = 20;
+
+  const minVal = 2.2;
+  const maxVal = 2.55;
+
+  const getX = (i: number) => paddingX + (i / (months.length - 1)) * (width - 2 * paddingX);
+  const getY = (v: number) => height - paddingY - ((v - minVal) / (maxVal - minVal)) * (height - 2 * paddingY);
+
+  const contractedPoints = contracted.map((v, i) => `${getX(i)},${getY(v)}`).join(" ");
+  const collectedPoints = collected.map((v, i) => `${getX(i)},${getY(v)}`).join(" ");
+
+  return (
+    <div className="relative w-full space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-display text-sm font-bold text-slate-900 tracking-tight">Actividad de Cobranza vs Facturación</h3>
+          <p className="text-[11px] text-slate-500 font-mono">Tendencia mensual de Renta Base en Millones MXN (2026)</p>
+        </div>
+        <div className="flex items-center gap-4 text-xs font-medium font-mono">
+          <span className="flex items-center gap-1.5 text-slate-900">
+            <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
+            Facturado
+          </span>
+          <span className="flex items-center gap-1.5 text-emerald-700">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-700" />
+            Recaudado
+          </span>
+        </div>
+      </div>
+
+      <div className="relative w-full overflow-x-auto">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-w-[480px]">
+          {[2.25, 2.35, 2.45].map((level) => (
+            <g key={level}>
+              <line
+                x1={paddingX}
+                y1={getY(level)}
+                x2={width - paddingX}
+                y2={getY(level)}
+                stroke="#E2E8F0"
+                strokeDasharray="4 4"
+              />
+              <text x="5" y={getY(level) + 4} className="text-[9px] fill-slate-400 font-mono">
+                ${level}M
+              </text>
+            </g>
+          ))}
+
+          <polyline
+            fill="none"
+            stroke="#0F172A"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={contractedPoints}
           />
-        </Link>
 
-        {/* Ventriloc Navigation Pill Container */}
-        <nav className="hidden sm:flex items-center gap-2 bg-[#efefef] px-4 py-2 rounded-[200px]">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`px-4 py-1.5 rounded-[200px] text-xs font-normal transition-colors cursor-pointer ${
-              activeTab === "overview" ? "bg-[#202020] text-white" : "text-[#202020] hover:text-[#ff682c]"
-            }`}
-          >
-            Resumen Rent Roll ({TENANTS.length})
-          </button>
+          <polyline
+            fill="none"
+            stroke="#047857"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={collectedPoints}
+          />
 
-          <button
-            onClick={() => setActiveTab("leasing")}
-            className={`px-4 py-1.5 rounded-[200px] text-xs font-normal transition-colors cursor-pointer ${
-              activeTab === "leasing" ? "bg-[#202020] text-white" : "text-[#202020] hover:text-[#ff682c]"
-            }`}
-          >
-            Arrendamiento (Mariana)
-          </button>
+          {months.map((m, i) => {
+            const cx = getX(i);
+            const cyCol = getY(collected[i]);
+            const cyCon = getY(contracted[i]);
+            const isHovered = hoveredIdx === i;
 
-          <button
-            onClick={() => setActiveTab("maint")}
-            className={`px-4 py-1.5 rounded-[200px] text-xs font-normal transition-colors cursor-pointer ${
-              activeTab === "maint" ? "bg-[#202020] text-white" : "text-[#202020] hover:text-[#ff682c]"
-            }`}
-          >
-            CapEx & Gastos (Diego)
-          </button>
-
-          <button
-            onClick={() => setActiveTab("cam")}
-            className={`px-4 py-1.5 rounded-[200px] text-xs font-normal transition-colors cursor-pointer ${
-              activeTab === "cam" ? "bg-[#202020] text-white" : "text-[#202020] hover:text-[#ff682c]"
-            }`}
-          >
-            CAM & Fiscal SAT (Renata)
-          </button>
-
-          <button
-            onClick={() => setActiveTab("saari")}
-            className={`px-4 py-1.5 rounded-[200px] text-xs font-normal transition-colors cursor-pointer ${
-              activeTab === "saari" ? "bg-[#202020] text-white" : "text-[#202020] hover:text-[#ff682c]"
-            }`}
-          >
-            SAARI ERP (Conector)
-          </button>
-        </nav>
-
-        {/* Buttons Stack */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => alert("Exportando informe oficial en PDF...")}
-            className="px-5 py-2.5 bg-transparent border border-[#202020] text-[#202020] rounded-none text-xs font-normal hover:bg-[#f5f5f5] transition-colors cursor-pointer"
-          >
-            Exportar Reporte (.PDF)
-          </button>
-
-          <button
-            onClick={() => setActiveTab("saari")}
-            className="px-5 py-2.5 bg-[#202020] text-white rounded-none text-xs font-normal hover:bg-[#333333] transition-colors cursor-pointer"
-          >
-            Sincronizar SAARI →
-          </button>
-        </div>
-      </header>
-
-      {/* ---------------- PESTAÑA 1: RESUMEN RENT ROLL ---------------- */}
-      {activeTab === "overview" && (
-        <div className="space-y-10">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
-            <div>
-              <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
-                🟢 OPERACIÓN AL DÍA | La Gran Vía Mexicali
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-normal text-[#202020] tracking-[-0.02em] mt-2">
-                Resumen Consolidado del Rent Roll (84 Locales Activos)
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => alert("Exportando informe en PDF...")} className="px-4 py-2 bg-white border border-[#202020] text-[#202020] text-xs">
-                Exportar Reporte (.PDF)
-              </button>
-              <button onClick={() => setActiveTab("saari")} className="px-4 py-2 bg-[#ff682c] text-white text-xs">
-                Sincronizar SAARI →
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
-              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">COBRANZA MENSUAL RENTA</span>
-              <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">$3,145,000 MXN</div>
-              <span className="inline-block px-2.5 py-1 bg-[#eaf2ec] text-[#2b593a] text-[11px] font-mono">✓ 98.2% Al Día (Julio 2026)</span>
-            </div>
-
-            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
-              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">SUPERFICIE RENTABLE (GLA)</span>
-              <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">94.1% Ocupado</div>
-              <span className="inline-block px-2.5 py-1 bg-[#eaf2ec] text-[#2b593a] text-[11px] font-mono">12,300 m² Rentados (445 m² Vacantes)</span>
-            </div>
-
-            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
-              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">INVARIANTE PRORRATEO CAM</span>
-              <div className="text-3xl font-normal text-[#816729] tracking-[-0.02em]">1.0000 Balance</div>
-              <span className="inline-block px-2.5 py-1 bg-[#f4efe6] text-[#816729] text-[11px] font-mono">Sumatoria Exacta NNN</span>
-            </div>
-
-            <div className="bg-[#efefef] p-6 border border-[#e8e8e8] space-y-3">
-              <span className="text-[10px] font-mono text-[#828282] uppercase tracking-wider block">GASTO DUDOSO RECHAZADO</span>
-              <div className="text-3xl font-normal text-[#202020] tracking-[-0.02em]">$78,000 MXN</div>
-              <span className="inline-block px-2.5 py-1 bg-[#eaf2ec] text-[#2b593a] text-[11px] font-mono">Ahorro Directo Propietario</span>
-            </div>
-          </div>
-
-          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-normal text-[#202020]">
-                  Rent Roll Matriz Consolidada (84 Locales Activos + Vacancia)
-                </h2>
-              </div>
-              <input
-                type="text"
-                placeholder="Buscar inquilino o local..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-4 py-2 bg-white border border-[#e8e8e8] text-xs text-[#202020]"
-              />
-            </div>
-
-            <div className="overflow-x-auto bg-white border border-[#e8e8e8] rounded-[8px]">
-              <table className="w-full text-left text-xs border-collapse font-sans">
-                <thead>
-                  <tr className="border-b border-[#e8e8e8] text-[#828282] uppercase text-[10px] bg-[#f5f5f5] font-mono">
-                    <th className="p-3.5">#</th>
-                    <th className="p-3.5">LOCAL / INQUILINO</th>
-                    <th className="p-3.5">ZONA</th>
-                    <th className="p-3.5">GIRO / CATEGORÍA</th>
-                    <th className="p-3.5 text-right">SUPERFICIE M²</th>
-                    <th className="p-3.5 text-right">PARTICIPACIÓN PRO-RATA</th>
-                    <th className="p-3.5 text-right">RENTA EST. MXN</th>
-                    <th className="p-3.5">ESTATUS COBRANZA & FISCAL</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e8e8e8] font-normal text-[#202020]">
-                  {filteredTenants.map((t, idx) => (
-                    <tr key={t.slug} className="hover:bg-[#f5f5f5]">
-                      <td className="p-3.5 text-[#828282] font-mono">{idx + 1}</td>
-                      <td className="p-3.5 font-bold">{t.name}</td>
-                      <td className="p-3.5 text-[#4d4d4d]">{t.zone}</td>
-                      <td className="p-3.5 text-[#4d4d4d]">{t.tag}</td>
-                      <td className="p-3.5 text-right font-mono">{getTenantSqm(t.name, idx)} m²</td>
-                      <td className="p-3.5 text-right font-mono text-[#ff682c] font-bold">{((getTenantSqm(t.name, idx) / plazaTotalGla) * 100).toFixed(2)}%</td>
-                      <td className="p-3.5 text-right font-mono font-bold">${getTenantRent(getTenantSqm(t.name, idx), t.name).toLocaleString()}</td>
-                      <td className="p-3.5"><span className="bg-[#eaf2ec] text-[#2b593a] px-2.5 py-1 text-[11px] font-mono">✓ Al Día (CFDI Emitido)</span></td>
-                    </tr>
-                  ))}
-                  <tr className="bg-[#fff9f5] border-t-2 border-[#ff682c]">
-                    <td className="p-3.5 text-[#828282] font-mono">85</td>
-                    <td className="p-3.5 font-bold text-[#ff682c]">LOCAL VACANTE DISPONIBLE (Local A-14 / Zona 2)</td>
-                    <td className="p-3.5 text-[#4d4d4d]">Zona 2 (Pasillo Central)</td>
-                    <td className="p-3.5 text-[#4d4d4d]">Retail / Franquicia AAA</td>
-                    <td className="p-3.5 text-right font-mono font-bold text-[#ff682c]">445 m²</td>
-                    <td className="p-3.5 text-right font-mono font-bold text-[#ff682c]">3.49%</td>
-                    <td className="p-3.5 text-right font-mono font-bold text-[#ff682c]">$106,800 MXN</td>
-                    <td className="p-3.5"><span className="bg-[#f4efe6] text-[#816729] px-2.5 py-1 text-[11px] font-mono">● Absorción Vacancia Propietario</span></td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr className="bg-[#202020] text-white font-mono text-xs">
-                    <td colSpan={4} className="p-4 font-bold text-right">TOTAL PLAZA LA GRAN VÍA MEXICALI:</td>
-                    <td className="p-4 text-right font-bold">12,745 m²</td>
-                    <td className="p-4 text-right font-bold text-[#ff682c]">1.0000 (100%)</td>
-                    <td className="p-4 text-right font-bold text-[#4ade80]">$3,145,000 MXN</td>
-                    <td className="p-4 text-center">85 LOCALES REGISTRADOS</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {/* Dark Box: Resumen Ejecutivo de Cobertura Operativa & Auditoría Contínua */}
-            <div className="bg-[#202020] text-white p-8 border border-[#4d4d4d] space-y-6">
-              <div className="border-b border-[#4d4d4d] pb-4 flex justify-between items-center">
-                <h3 className="text-sm font-normal uppercase tracking-wider text-[#ff682c] font-mono">
-                  RESUMEN EJECUTIVO DE COBERTURA OPERATIVA & AUDITORÍA CONTÍNUA (AGENTES IA)
-                </h3>
-                <span className="px-3 py-1 bg-[#333333] text-white text-xs font-mono">4 AGENTES MONITOREANDO</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-xs font-mono">
-                <div className="space-y-2 border-r border-[#333333] pr-4">
-                  <span className="text-[#ff682c] block">1. MARIANA (LEASING RAG)</span>
-                  <p className="text-[#828282]">100% de los 84 contratos digitalizados en vectorial. Previene demandas por exclusividad de giro.</p>
-                </div>
-                <div className="space-y-2 border-r border-[#333333] pr-4">
-                  <span className="text-[#4ade80] block">2. DIEGO (CAPEX GUARDIAN)</span>
-                  <p className="text-[#828282]">Auditoría de pólizas Carrier/Cat. $78k MXN rechazados en gastos improcedentes de inquilinos.</p>
-                </div>
-                <div className="space-y-2 border-r border-[#333333] pr-4">
-                  <span className="text-[#38bdf8] block">3. RENATA (FISCAL SAT CFDI 4.0)</span>
-                  <p className="text-[#828282]">Liquidación NNN invariante 1.0000 cuadrada. Previene multas SAT por errores PPD/PUE.</p>
-                </div>
-                <div className="space-y-2">
-                  <span className="text-[#facc15] block">4. SAARI ERP CONECTOR</span>
-                  <p className="text-[#828282]">Ingestión bidireccional automática. Lotes batch listos para importación a SAARI.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ---------------- PESTAÑA 2: MARIANA AI (FULL RESTORATION) ---------------- */}
-      {activeTab === "leasing" && (
-        <div className="space-y-10">
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
-            <div>
-              <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
-                🟢 OPERACIÓN AL DÍA | La Gran Vía Mexicali
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-normal text-[#202020] tracking-[-0.02em] mt-2">
-                Módulo de Arrendamiento & Inteligencia Legal (Mariana)
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => alert("Exportando informe en PDF...")} className="px-4 py-2 bg-white border border-[#202020] text-[#202020] text-xs">
-                Exportar Reporte (.PDF)
-              </button>
-              <button onClick={() => setActiveTab("saari")} className="px-4 py-2 bg-[#ff682c] text-white text-xs">
-                Sincronizar SAARI →
-              </button>
-            </div>
-          </div>
-
-          {/* 3 Metric Cards Strip */}
-          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
-              <div>
-                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
-                  Módulo de Arrendamiento & Inteligencia Legal (Mariana) <span className="bg-[#ebe6dd] px-2 py-0.5 text-[#816729]">SOP §2A & LEGAL RAG AI</span>
-                </span>
-                <p className="text-xs text-[#4d4d4d] mt-1">
-                  Protección de exclusividades de giro, análisis semántico RAG de contratos firmados y dictámenes automáticos de prospección.
-                </p>
-              </div>
-              <span className="px-4 py-2 bg-[#202020] text-white font-mono text-xs">84 CONTRATOS EN BÓVEDA</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">SOLICITUDES AUDITADAS</span>
-                <div className="text-2xl font-normal text-[#202020]">3 Solicitudes Eval.</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">EXCLUSIVIDADES PROTEGIDAS</span>
-                <div className="text-2xl font-normal text-[#2b593a]">100% Sin Demandas</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">RENTA PROTEGIDA ANUAL</span>
-                <div className="text-2xl font-normal text-[#ff682c]">$1,320,000 MXN / Año</div>
-              </div>
-            </div>
-          </div>
-
-          {/* RAG AI Chat Console */}
-          <div className="bg-white p-8 border border-[#e8e8e8] rounded-[20px] space-y-6">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 bg-[#202020] text-white flex items-center justify-center text-xs font-mono font-bold">M</div>
-                <div>
-                  <h3 className="text-sm font-normal text-[#202020] uppercase font-mono tracking-wider">
-                    ASISTENTE LEGAL AI: CONSULTA DIRECTA A MARIANA
-                  </h3>
-                  <p className="text-xs text-[#828282]">Haz preguntas sobre exclusividades, cláusulas de contratos vigentes o restricciones de giro.</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-[#efefef] text-[#816729] text-xs font-mono">● MOTOR LEGAL RAG ACTIVO</span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => {
-                  setMarianaQuery("Exclusividad Blue Luna vs Starbucks");
-                  setMarianaChatResponse({
-                    query: "¿Cuál es la exclusividad exacta de Blue Luna Café y por qué bloqueó a Starbucks?",
-                    answer: "Blue Luna Café (Local B-02, Zona 4) cuenta con la Cláusula #14 en su contrato vigente (2023-2028). Otorga exclusividad comercial absoluta en la venta de café espresso y especialidad en Zona 4. La propuesta de Starbucks Reserve presentaba un 98.4% de solapamiento semántico en menú.",
-                    pdfName: "Contrato_Arrendamiento_BlueLuna_LocB02_Firmado.pdf",
-                    pdfClause: "Página 12, Cláusula 14",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                ☕ Exclusividad Blue Luna (Loc B-02)
-              </button>
-
-              <button
-                onClick={() => {
-                  setMarianaQuery("Conflicto Krispy Kreme vs La Purísima");
-                  setMarianaChatResponse({
-                    query: "¿Por qué Krispy Kreme fue rechazado en la Zona 4?",
-                    answer: "La Purísima Bakery (Local B-05) ostenta exclusividad en repostería y postres glaseados (Cláusula #08). El algoritmo de Mariana detectó un 91.2% de conflicto directo en la venta de donas glaseadas.",
-                    pdfName: "Contrato_LaPurisima_Bakery_LocB05_Firmado.pdf",
-                    pdfClause: "Página 8, Cláusula 08",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                🍩 Conflicto Krispy Kreme (Loc B-05)
-              </button>
-
-              <button
-                onClick={() => {
-                  setMarianaQuery("Dictamen La Vicenta LFCE Antimonopolio");
-                  setMarianaChatResponse({
-                    query: "¿Por qué La Vicenta fue condicionada bajo la Ley Antimonopolio?",
-                    answer: "Alma Verde solicitó bloquear a La Vicenta por vender ensaladas. Mariana aplicó el filtro de la Ley Federal de Competencia Económica (§3), dictaminando que la exclusividad genérica de Alma Verde es legalmente excesiva. Se aprueba a La Vicenta condicionada a no ofrecer bowls saludables.",
-                    pdfName: "Contrato_AlmaVerde_LocB10_Firmado.pdf",
-                    pdfClause: "Página 15, Cláusula 22 (LFCE §3)",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                🌮 Dictamen La Vicenta (LFCE §3)
-              </button>
-            </div>
-
-            <div className="bg-[#f5f5f5] p-6 border border-[#e8e8e8] space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#828282]">
-                <span className="font-mono text-[#202020] font-bold">Consulta Legal: {marianaChatResponse.query}</span>
-                <span className="text-[#2b593a] font-mono">✓ Bóveda RAG Vectorial Verified</span>
-              </div>
-              <p className="text-sm text-[#202020] leading-relaxed">{marianaChatResponse.answer}</p>
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-[#e8e8e8]">
-                <span className="font-mono text-[#816729]">📄 Documento Origen: {marianaChatResponse.pdfName} ({marianaChatResponse.pdfClause})</span>
-                <button onClick={() => alert(`Descargando ${marianaChatResponse.pdfName}...`)} className="text-[#202020] border-b border-[#ff682c] cursor-pointer">
-                  Descargar PDF Contrato →
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={marianaQuery}
-                onChange={(e) => setMarianaQuery(e.target.value)}
-                placeholder="Pregunta a Mariana sobre cláusulas de exclusiva, penalizaciones o giros prohibidos..."
-                className="flex-1 px-4 py-3 bg-[#f5f5f5] border border-[#e8e8e8] text-xs text-[#202020] focus:outline-none"
-              />
-              <button onClick={() => alert("Consultando Bóveda Legal Mariana...")} className="px-6 py-3 bg-[#202020] text-white text-xs font-normal cursor-pointer hover:bg-[#333333]">
-                Consultar AI →
-              </button>
-            </div>
-          </div>
-
-          {/* Split View Applicant Evaluator */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
-              <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
-                1. EVALUADOR DE SOLICITUDES DE ARRENDAMIENTO & EXCLUSIVIDADES DE GIRO
-              </h3>
-              <span className="text-xs text-[#828282] font-mono">3 CANDIDATOS EVALUADOS</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {LEASING_APPLICANTS.map((app) => (
-                <div
-                  key={app.id}
-                  onClick={() => setSelectedLeasingApp(app)}
-                  className={`p-6 border cursor-pointer transition-all space-y-3 ${
-                    selectedLeasingApp.id === app.id ? "bg-white border-[#202020] shadow-sm" : "bg-[#efefef] border-[#e8e8e8] hover:bg-white"
+            return (
+              <g key={m} className="cursor-pointer" onMouseEnter={() => setHoveredIdx(i)}>
+                {isHovered && (
+                  <line
+                    x1={cx}
+                    y1={paddingY}
+                    x2={cx}
+                    y2={height - paddingY}
+                    stroke="#94A3B8"
+                    strokeDasharray="2 2"
+                    strokeWidth="1.5"
+                  />
+                )}
+                <circle
+                  cx={cx}
+                  cy={cyCol}
+                  r={isHovered ? 5 : 3.5}
+                  className="fill-emerald-700 stroke-white stroke-2 transition-all"
+                />
+                <circle
+                  cx={cx}
+                  cy={cyCon}
+                  r={isHovered ? 5 : 3.5}
+                  className="fill-slate-900 stroke-white stroke-2 transition-all"
+                />
+                <text
+                  x={cx}
+                  y={height - 4}
+                  textAnchor="middle"
+                  className={`text-[10px] font-mono transition-colors ${
+                    isHovered ? "fill-slate-900 font-bold" : "fill-slate-500"
                   }`}
                 >
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-bold text-[#202020]">{app.brand}</span>
-                    <span className={`px-2 py-0.5 text-[10px] font-bold ${app.status === "RECHAZADO" ? "bg-[#7a2e2b] text-white" : "bg-[#816729] text-white"}`}>
-                      {app.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#828282] font-mono">{app.category}</p>
-                  <div className="pt-2 flex justify-between text-xs border-t border-[#e8e8e8] font-mono">
-                    <span>Impacto Renta:</span>
-                    <span className="font-bold text-[#ff682c]">{app.rentLossPrevented}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  {m}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
 
-            {/* Selected Case Dictamen Box */}
-            <div className="bg-[#efefef] p-8 border border-[#e8e8e8] space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
-                <div>
-                  <span className="text-xs font-mono text-[#816729] uppercase">DICTAMEN AUTOMÁTICO DE MARIANA IA ({selectedLeasingApp.id})</span>
-                  <h3 className="text-2xl font-normal text-[#202020] mt-1">{selectedLeasingApp.brand}</h3>
-                </div>
-                <span className={`px-4 py-2 font-mono text-xs font-bold text-white ${selectedLeasingApp.status === "RECHAZADO" ? "bg-[#7a2e2b]" : "bg-[#816729]"}`}>
-                  STATUS: {selectedLeasingApp.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-                <div className="bg-white p-4 space-y-1 border border-[#e8e8e8]">
-                  <span className="text-[#828282] block text-[10px]">Inquilino Conflicto:</span>
-                  <span className="font-bold text-[#202020]">{selectedLeasingApp.conflictingTenant}</span>
-                </div>
-                <div className="bg-white p-4 space-y-1 border border-[#e8e8e8]">
-                  <span className="text-[#828282] block text-[10px]">Cláusula Afectada:</span>
-                  <span className="font-bold text-[#816729]">{selectedLeasingApp.conflictingClause}</span>
-                </div>
-                <div className="bg-white p-4 space-y-1 border border-[#e8e8e8]">
-                  <span className="text-[#828282] block text-[10px]">Riesgo Legal / Financiero:</span>
-                  <span className="font-bold text-[#ff682c]">{selectedLeasingApp.rentLossPrevented}</span>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-3">
-                <span className="text-xs font-mono text-[#816729] uppercase block font-bold">FRAGMENTO EXACTO DEL CONTRATO EN BÓVEDA (MARIANA RAG)</span>
-                <p className="text-xs font-mono text-[#4d4d4d] italic bg-[#f5f5f5] p-4 border border-[#e8e8e8]">
-                  {selectedLeasingApp.contractExactSnippet}
-                </p>
-                <div className="flex justify-between items-center text-xs font-mono pt-2">
-                  <span className="text-[#828282]">Ubicación: {selectedLeasingApp.contractPdfPage}</span>
-                  <button onClick={() => setAttorneySent(true)} className="px-4 py-2 bg-[#202020] text-white cursor-pointer text-xs">
-                    {attorneySent ? "✓ Notificación Enviada al Lic. Ramírez" : "Escalar a Lic. Ramírez (Abogado Corporate) →"}
-                  </button>
-                </div>
-              </div>
-            </div>
+        {hoveredIdx !== null && (
+          <div
+            className="absolute top-2 bg-slate-900 text-white rounded-md p-2 text-[11px] shadow-lg border border-slate-700 pointer-events-none transition-all font-mono"
+            style={{
+              left: `${(hoveredIdx / (months.length - 1)) * 75 + 10}%`,
+            }}
+          >
+            <p className="font-bold text-slate-300 mb-0.5">{months[hoveredIdx]} 2026</p>
+            <p className="text-emerald-400">Recaudado: ${collected[hoveredIdx].toFixed(2)}M MXN</p>
+            <p className="text-slate-300">Facturado: ${contracted[hoveredIdx].toFixed(2)}M MXN</p>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Main Landlord Asset Management Console Component
+ */
+export function LandlordDashboard({ data }: { data: ConsoleData }) {
+  const {
+    rentRoll,
+    camRows,
+    camMonthlyPool,
+    leasedSqm,
+    plazaTotalGla,
+    contractedRent,
+    occupancyRate,
+    collectionRate,
+    leasingApplicants,
+    criticalEquipment,
+    periodLabel,
+    marianaReplies,
+    diegoReplies,
+    renataReplies,
+  } = data;
+
+  // View & Filter States
+  const [activeTab, setActiveTab] = useState<SidebarTab>("analytics");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+
+  // AI Copilot Drawer State
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [activeAgent, setActiveAgent] = useState<"renata" | "mariana" | "diego">("renata");
+  const [userQuery, setUserQuery] = useState("");
+  const [queryResult, setQueryResult] = useState<string | null>(null);
+
+  // Interactive AI Action States & Simulations
+  const [cfdiIssued, setCfdiIssued] = useState(false);
+  const [attorneyNotified, setAttorneyNotified] = useState(false);
+  const [hvacDispatched, setHvacDispatched] = useState(false);
+
+  // Toast Notification State
+  const [toast, setToast] = useState<string | null>(null);
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  // Filtered Rent Roll Data
+  const filteredRentRoll = rentRoll.filter((row) => {
+    const matchesSearch =
+      row.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.zone.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory = categoryFilter === "ALL" || row.tag === categoryFilter;
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "ALERT" && row.fiscalAlert) ||
+      (statusFilter === "OK" && !row.fiscalAlert);
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  const handleQuerySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userQuery.trim()) return;
+
+    const q = userQuery.toLowerCase();
+    if (q.includes("mint") || q.includes("sat") || q.includes("cfdi") || q.includes("renata")) {
+      setActiveAgent("renata");
+      setQueryResult(
+        "Renata AI (Fiscal & CAM): Inconsistencia detectada en MINT Boutique (Local B-12). Se registraron $18,400 MXN de cobro sin emisión de complemento CFDI 4.0. Utiliza el botón 'Emitir Complemento SAT' para regularizar."
+      );
+    } else if (q.includes("contrato") || q.includes("starbucks") || q.includes("dunkin") || q.includes("mariana")) {
+      setActiveAgent("mariana");
+      setQueryResult(
+        "Mariana AI (Legal & Leasing): Conflicto de exclusividad detectado. La solicitud de Dunkin' Donuts viola la Cláusula 14.2 del contrato de Starbucks (Bóveda PDF página 4). Dictamen: RECHAZADO."
+      );
+    } else if (q.includes("climas") || q.includes("hvac") || q.includes("mantenimiento") || q.includes("diego")) {
+      setActiveAgent("diego");
+      setQueryResult(
+        "Diego AI (CapEx & Ops): Póliza de garantía vigente con Climas de Mexicali para equipo MX-HVAC-9902 (Local A-04). Cobertura al 100% sin costo para la plaza."
+      );
+    } else {
+      setQueryResult(
+        `Gran Vía Asset Copilot: Consulta "${userQuery}" procesada. Rent Roll contratado: ${formatMxn(contractedRent)}, Ocupación: ${(occupancyRate * 100).toFixed(1)}%.`
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col lg:flex-row font-sans antialiased">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-md shadow-xl border border-slate-700 flex items-center gap-3 font-mono text-xs animate-slideUp">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span>{toast}</span>
+          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer">
+            ✕
+          </button>
         </div>
       )}
 
-      {/* ---------------- PESTAÑA 3: DIEGO AI (FULL RESTORATION) ---------------- */}
-      {activeTab === "maint" && (
-        <div className="space-y-10">
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
+      {/* LEFT SIDEBAR NAVIGATION */}
+      <aside className="w-full lg:w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between p-4 space-y-6">
+        <div className="space-y-6">
+          {/* Brand Header */}
+          <div className="flex items-center gap-3 px-2 py-1">
+            <div className="h-8 w-8 rounded bg-slate-900 text-white flex items-center justify-center font-display font-bold text-sm shadow-xs">
+              GV
+            </div>
             <div>
-              <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
-                🟢 OPERACIÓN AL DÍA | La Gran Vía Mexicali
+              <h1 className="font-display font-bold text-slate-900 text-sm tracking-tight">La Gran Vía</h1>
+              <p className="text-[11px] text-slate-500 font-mono">Asset Operations Hub</p>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="space-y-1">
+            <p className="px-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
+              General Analytics
+            </p>
+
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                activeTab === "analytics"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>Analytics Dashboard</span>
+              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${activeTab === "analytics" ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
+                General
               </span>
-              <h1 className="text-3xl sm:text-4xl font-normal text-[#202020] tracking-[-0.02em] mt-2">
-                Auditoría de Gastos CapEx Dudosos vs. Garantías (Diego)
-              </h1>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("rentroll")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                activeTab === "rentroll"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>Rent Roll & Ocupación</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                84 Locales
+              </span>
+            </button>
+
+            <p className="px-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mt-5 mb-2">
+              Agentes de IA Autónomos
+            </p>
+
+            <button
+              onClick={() => setActiveTab("cam")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                activeTab === "cam"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>Renata AI (CAM / SAT)</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                1 Alerta
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("legal")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                activeTab === "legal"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>Mariana AI (Legal RAG)</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                Exclusividad
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("maint")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                activeTab === "maint"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>Diego AI (CapEx & Ops)</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                Garantías
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("erp")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                activeTab === "erp"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span>Conector ERP Universal</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                Neutral ERP
+              </span>
+            </button>
+          </nav>
+        </div>
+
+        {/* Footer Session Badge */}
+        <div className="pt-4 border-t border-slate-200 space-y-3">
+          <div className="rounded-md bg-slate-100 p-2.5 space-y-1 text-xs">
+            <div className="flex items-center justify-between text-slate-700 font-medium">
+              <span>Propietario / Admin</span>
+              <span className="h-2 w-2 rounded-full bg-emerald-600" />
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => alert("Exportando informe en PDF...")} className="px-4 py-2 bg-white border border-[#202020] text-[#202020] text-xs">
-                Exportar Reporte (.PDF)
-              </button>
-              <button onClick={() => setActiveTab("saari")} className="px-4 py-2 bg-[#ff682c] text-white text-xs">
-                Sincronizar SAARI →
-              </button>
-            </div>
-          </div>
-
-          {/* 3 Metric Cards Strip */}
-          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
-              <div>
-                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
-                  Auditoría de Gastos CapEx Dudosos vs. Garantías (Diego) <span className="bg-[#ebe6dd] px-2 py-0.5 text-[#816729]">SOP §2B & CAPEX GUARDIAN AI</span>
-                </span>
-                <p className="text-xs text-[#4d4d4d] mt-1">
-                  Protección del fondo de reserva del propietario, validación de números de serie de equipos críticos y aplicación de garantías de fabricante.
-                </p>
-              </div>
-              <span className="px-4 py-2 bg-[#202020] text-white font-mono text-xs">6 EQUIPOS CRÍTICOS MONITOREADOS</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">RECLAMOS AUDITADOS</span>
-                <div className="text-2xl font-normal text-[#202020]">3 Casos Auditados</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">GARANTÍAS RECOBRADAS ($0)</span>
-                <div className="text-2xl font-normal text-[#2b593a]">$145,000 MXN / Evento</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">GASTO IMPROCEDENTE RECHAZADO</span>
-                <div className="text-2xl font-normal text-[#ff682c]">$78,000 MXN Rechazado</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Diego RAG Chat Console */}
-          <div className="bg-white p-8 border border-[#e8e8e8] rounded-[20px] space-y-6">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 bg-[#202020] text-white flex items-center justify-center text-xs font-mono font-bold">D</div>
-                <div>
-                  <h3 className="text-sm font-normal text-[#202020] uppercase font-mono tracking-wider">
-                    ASISTENTE OPERATIVO AI: CONSULTA DIRECTA A DIEGO
-                  </h3>
-                  <p className="text-xs text-[#828282]">Haz preguntas sobre números de serie de equipos HVAC, pólizas Carrier/Caterpillar o deslinde CapEx/OpEx.</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-[#efefef] text-[#816729] text-xs font-mono">● AUDITORÍA TÉCNICA ACTIVA</span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => {
-                  setDiegoQuery("Póliza Carrier HVAC Ashley (#CR-884920)");
-                  setDiegoChatResponse({
-                    query: "¿Por qué el reemplazo de compresor HVAC de Ashley Furniture no le cuesta al propietario?",
-                    answer: "Diego verificó el número de serie Carrier #CR-884920. La póliza de garantía del fabricante Carrier cubre fallas mecánicas de compresores de 15 toneladas durante 5 años (vigente hasta Noviembre 2028). Se tramitó la sustitución sin costo para el propietario ($0 MXN).",
-                    pdfName: "Poliza_Garantia_Carrier_Ashley_HVAC.pdf",
-                    pdfClause: "Serie #CR-884920 (Cobertura 100% Fábrica)",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                ❄️ Póliza Carrier HVAC Ashley (#CR-884920)
-              </button>
-
-              <button
-                onClick={() => {
-                  setDiegoQuery("Iluminación Estética Derma Club ($78k)");
-                  setDiegoChatResponse({
-                    query: "¿Por qué se rechazó la factura de $78,000 MXN de Derma Club?",
-                    answer: "Derma Club solicitó que la plaza cubriera la remodelación de luminarias decorativas de su fachada. Diego consultó la Sección 12 del contrato de arrendamiento, determinando que el mantenimiento estético interior es responsabilidad 100% del arrendatario.",
-                    pdfName: "Contrato_DermaClub_LocB08_Firmado.pdf",
-                    pdfClause: "Sección 12 (Mantenimiento Inquilino)",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                💡 Iluminación Estética Derma Club ($78k)
-              </button>
-
-              <button
-                onClick={() => {
-                  setDiegoQuery("Mantenimiento Planta Emergencia Cinemex");
-                  setDiegoChatResponse({
-                    query: "¿Cómo se aprueba el mantenimiento de la planta diésel de Cinemex?",
-                    answer: "La planta Caterpillar C15 (Serie #CAT-500-9942) provee respaldo eléctrico común a las salas de cine y pasillos centrales. Diego aprobó el gasto de $52,000 MXN para ser prorrateado bajo la cuota CAM NNN de la plaza.",
-                    pdfName: "Mantenimiento_Preventivo_Cat_2026.pdf",
-                    pdfClause: "Contrato Mantenimiento Infraestructura CAM",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                ⚡ Mantenimiento Planta Emergencia Cinemex
-              </button>
-            </div>
-
-            <div className="bg-[#f5f5f5] p-6 border border-[#e8e8e8] space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#828282]">
-                <span className="font-mono text-[#202020] font-bold">Consulta Técnica: {diegoChatResponse.query}</span>
-                <span className="text-[#2b593a] font-mono">✓ Bitácora de Serie Verified</span>
-              </div>
-              <p className="text-sm text-[#202020] leading-relaxed">{diegoChatResponse.answer}</p>
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-[#e8e8e8]">
-                <span className="font-mono text-[#816729]">📄 Certificado de Garantía / Contrato: {diegoChatResponse.pdfName} ({diegoChatResponse.pdfClause})</span>
-                <button onClick={() => alert(`Descargando ${diegoChatResponse.pdfName}...`)} className="text-[#202020] border-b border-[#ff682c] cursor-pointer">
-                  Descargar Póliza PDF →
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={diegoQuery}
-                onChange={(e) => setDiegoQuery(e.target.value)}
-                placeholder="Pregunta a Diego sobre números de serie, garantías Carrier o deslinde CapEx/OpEx..."
-                className="flex-1 px-4 py-3 bg-[#f5f5f5] border border-[#e8e8e8] text-xs text-[#202020] focus:outline-none"
-              />
-              <button onClick={() => alert("Consultando Bitácora de Diego...")} className="px-6 py-3 bg-[#202020] text-white text-xs font-normal cursor-pointer hover:bg-[#333333]">
-                Consultar AI →
-              </button>
-            </div>
-          </div>
-
-          {/* Evaluador de Solicitudes CapEx */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
-              <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
-                1. EVALUADOR DE SOLICITUDES CAPEX & RECLAMACIÓN DE GARANTÍAS
-              </h3>
-              <span className="text-xs text-[#828282] font-mono">3 SOLICITUDES AUDITADAS</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {CAPEX_CASES.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => setSelectedCapex(c)}
-                  className={`p-6 border cursor-pointer transition-all space-y-3 ${
-                    selectedCapex.id === c.id ? "bg-white border-[#202020] shadow-sm" : "bg-[#efefef] border-[#e8e8e8] hover:bg-white"
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-bold text-[#202020]">{c.tenant}</span>
-                    <span className={`px-2 py-0.5 text-[10px] font-bold ${c.verdict.includes("RECHAZADO") ? "bg-[#7a2e2b] text-white" : "bg-[#2b593a] text-white"}`}>
-                      {c.verdict.includes("RECHAZADO") ? "RECHAZADO" : "GARANTÍA/CAM"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#828282] font-mono">{c.expenseType}</p>
-                  <div className="pt-2 flex justify-between text-xs border-t border-[#e8e8e8] font-mono">
-                    <span>Monto Reclamado:</span>
-                    <span className="font-bold text-[#ff682c]">${c.amount.toLocaleString()} MXN</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Dark Dictamen Box */}
-            <div className="bg-[#202020] text-white p-8 border border-[#4d4d4d] space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#4d4d4d] pb-4">
-                <div>
-                  <span className="text-xs font-mono text-[#ff682c] uppercase">● DICTAMEN TÉCNICO & CONTRACTUAL DIEGO AI ({selectedCapex.id})</span>
-                  <h3 className="text-2xl font-normal text-white mt-1">{selectedCapex.tenant}</h3>
-                </div>
-                <span className={`px-4 py-2 font-mono text-xs font-bold ${selectedCapex.verdict.includes("RECHAZADO") ? "bg-[#7a2e2b] text-white" : "bg-[#2b593a] text-white"}`}>
-                  {selectedCapex.verdict.includes("RECHAZADO") ? "🚫 RECHAZADO (RESPONSABILIDAD INQUILINO)" : "✓ GARANTÍA FABRICANTE APLICADA ($0 COSTO)"}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-                <div className="bg-[#2d2a26] p-4 space-y-1 border border-[#4d4d4d]">
-                  <span className="text-[#828282] block text-[10px]">Inquilino Solicitante:</span>
-                  <span className="font-bold text-white">{selectedCapex.tenant}</span>
-                </div>
-                <div className="bg-[#2d2a26] p-4 space-y-1 border border-[#4d4d4d]">
-                  <span className="text-[#828282] block text-[10px]">Monto Monitoreado:</span>
-                  <span className="font-bold text-[#ff682c]">${selectedCapex.amount.toLocaleString()} MXN</span>
-                </div>
-                <div className="bg-[#2d2a26] p-4 space-y-1 border border-[#4d4d4d]">
-                  <span className="text-[#828282] block text-[10px]">Impacto al Propietario:</span>
-                  <span className="font-bold text-[#4ade80]">{selectedCapex.verdict.includes("RECHAZADO") ? "$0 MXN (Absorbido por Inquilino)" : "$0 MXN (Cubierto por Garantía)"}</span>
-                </div>
-              </div>
-
-              <div className="bg-[#121212] p-6 border border-[#4d4d4d] space-y-3">
-                <span className="text-xs font-mono text-[#ff682c] uppercase block font-bold">ANÁLISIS COGNITIVO DIEGO (DESLINDE CAPEX/OPEX)</span>
-                <p className="text-xs font-mono text-[#4ade80] leading-relaxed">
-                  {selectedCapex.details}
-                </p>
-                <div className="flex justify-between items-center text-xs font-mono pt-2 border-t border-[#333333]">
-                  <span className="text-[#828282]">Equipo: {selectedCapex.equipmentModel} (Serie #{selectedCapex.serialNumber})</span>
-                  <div className="flex gap-2">
-                    <button onClick={() => alert("Generando informe técnico PDF...")} className="px-4 py-2 bg-[#333333] text-white cursor-pointer text-xs">
-                      📄 Dictamen PDF
-                    </button>
-                    <button onClick={() => setDiegoNotificationSent(true)} className="px-4 py-2 bg-[#ff682c] text-white cursor-pointer text-xs font-bold">
-                      {diegoNotificationSent ? "✓ Notificación Enviada al Inquilino" : "✉️ Notificar Resolución Técnica →"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Bitácora de Equipos Críticos */}
-          <div className="space-y-6 pt-4">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
-              <div>
-                <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
-                  2. BITÁCORA DE EQUIPOS CRÍTICOS & PÓLIZAS DE GARANTÍA VIGENTES
-                </h3>
-                <p className="text-xs text-[#4d4d4d] mt-0.5">Inventario auditado de infraestructura mayor con trazabilidad de números de serie y garantías de fabricante.</p>
-              </div>
-              <span className="px-3 py-1 bg-[#202020] text-white text-xs font-mono">6 EQUIPOS REGISTRADOS</span>
-            </div>
-
-            <div className="overflow-x-auto bg-white border border-[#e8e8e8] rounded-[8px]">
-              <table className="w-full text-left text-xs border-collapse font-sans">
-                <thead>
-                  <tr className="border-b border-[#e8e8e8] text-[#828282] uppercase text-[10px] bg-[#f5f5f5] font-mono">
-                    <th className="p-3.5 font-normal">EQUIPO / UBICACIÓN</th>
-                    <th className="p-3.5 font-normal">MARCA Y MODELO</th>
-                    <th className="p-3.5 font-normal">NÚMERO DE SERIE</th>
-                    <th className="p-3.5 font-normal">VIGENCIA GARANTÍA</th>
-                    <th className="p-3.5 font-normal text-right">ESTATUS AUDITORÍA</th>
-                    <th className="p-3.5 font-normal text-right">DOCUMENTO PÓLIZA</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e8e8e8] font-normal text-[#202020] font-mono text-[11px]">
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">Carrier HVAC 15 Toneladas (Ashley)</td>
-                    <td className="p-3.5 text-[#4d4d4d]">Carrier Commercial WeatherMaster</td>
-                    <td className="p-3.5 font-bold text-[#ff682c]">#CR-884920</td>
-                    <td className="p-3.5 text-[#4d4d4d]">2023 - 2028 (5 Años)</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Garantía 100% Activa ($0 MXN)</span></td>
-                    <td className="p-3.5 text-right"><button onClick={() => alert("Descargando Carrier_Poliza.pdf...")} className="text-[#202020] underline">📄 Carrier_Poliza.pdf</button></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">Planta de Emergencia Diésel 500kW (Cinemex)</td>
-                    <td className="p-3.5 text-[#4d4d4d]">Caterpillar C15 ACERT</td>
-                    <td className="p-3.5 font-bold text-[#ff682c]">#CAT-500-9942</td>
-                    <td className="p-3.5 text-[#4d4d4d]">Contrato Anual Preventivo</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Cobertura CAM Prorrateable</span></td>
-                    <td className="p-3.5 text-right"><button onClick={() => alert("Descargando Cat_Maint_2026.pdf...")} className="text-[#202020] underline">📄 Cat_Maint_2026.pdf</button></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">Subestación Eléctrica Principal 13.8kV</td>
-                    <td className="p-3.5 text-[#4d4d4d]">Schneider Electric Trihal 1500kVA</td>
-                    <td className="p-3.5 font-bold text-[#ff682c]">#SCH-SE-44210</td>
-                    <td className="p-3.5 text-[#4d4d4d]">Garantía Infraestructura Propietario</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Mantenimiento Bianual Al Día</span></td>
-                    <td className="p-3.5 text-right"><button onClick={() => alert("Descargando Schneider_13.8kV.pdf...")} className="text-[#202020] underline">📄 Schneider_13.8kV.pdf</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <p className="text-[11px] text-slate-500 font-mono truncate">Sesión activa · {periodLabel}</p>
           </div>
         </div>
-      )}
+      </aside>
 
-      {/* ---------------- PESTAÑA 4: RENATA AI (FULL RESTORATION) ---------------- */}
-      {activeTab === "cam" && (
-        <div className="space-y-10">
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
-            <div>
-              <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
-                🟢 OPERACIÓN AL DÍA | La Gran Vía Mexicali
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-normal text-[#202020] tracking-[-0.02em] mt-2">
-                Prorrateo CAM NNN & Auditoría Fiscal SAT CFDI 4.0 (Renata)
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => alert("Exportando informe en PDF...")} className="px-4 py-2 bg-white border border-[#202020] text-[#202020] text-xs">
-                Exportar Reporte (.PDF)
-              </button>
-              <button onClick={() => setActiveTab("saari")} className="px-4 py-2 bg-[#ff682c] text-white text-xs">
-                Sincronizar SAARI →
-              </button>
-            </div>
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* TOP HEADER BAR */}
+        <header className="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20">
+          {/* Global Search Bar */}
+          <div className="relative flex-1 max-w-md">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar inquilino, local, contrato o serie..."
+              className="w-full bg-slate-100 border border-slate-200 rounded-md pl-3 pr-12 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white transition-all font-mono"
+            />
+            <kbd className="absolute right-3 top-2 text-[10px] font-mono text-slate-400 border border-slate-200 bg-white px-1.5 py-0.5 rounded">
+              ⌘K
+            </kbd>
           </div>
 
-          {/* 3 Metric Cards Strip */}
-          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
-              <div>
-                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
-                  Prorrateo NNN & Auditoría Fiscal SAT CFDI 4.0 (Renata) <span className="bg-[#ebe6dd] px-2 py-0.5 text-[#816729]">SOP §2C & FISCAL GUARDIAN AI</span>
-                </span>
-                <p className="text-xs text-[#4d4d4d] mt-1">
-                  Auditoría en tiempo real de timbrado CFDI 4.0, complementos de pago PPD/PUE y balance matemático invariante del prorrateo CAM.
-                </p>
-              </div>
-              <span className="px-4 py-2 bg-[#202020] text-white font-mono text-xs">85 LOCALES BALANCED 1.0000</span>
-            </div>
+          {/* Controls & AI Copilot Drawer Toggle */}
+          <div className="flex items-center gap-3">
+            <select className="bg-slate-100 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-mono text-slate-700 focus:outline-none cursor-pointer">
+              <option>{periodLabel}</option>
+              <option>Julio 2026</option>
+              <option>Q3 2026</option>
+              <option>Año 2026</option>
+            </select>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">VALIDACIÓN FISCAL SAT</span>
-                <div className="text-2xl font-normal text-[#202020]">84 / 85 CFDIs Validados</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">INVARIANTE PRORRATEO CAM</span>
-                <div className="text-2xl font-normal text-[#2b593a]">1.0000 Balance Exacto</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] font-mono text-[#828282] block uppercase">MULTA SAT PREVENIDA</span>
-                <div className="text-2xl font-normal text-[#ff682c]">$12,500 MXN Sanción $0</div>
-              </div>
-            </div>
+            <button
+              onClick={() => triggerToast("Generando reporte ejecutivo en PDF...")}
+              className="hidden sm:flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
+            >
+              Exportar PDF
+            </button>
+
+            <button
+              onClick={() => setCopilotOpen(!copilotOpen)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                copilotOpen
+                  ? "bg-slate-800 text-white"
+                  : "bg-slate-900 hover:bg-slate-800 text-white"
+              }`}
+            >
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span>Copilot Sidebar</span>
+            </button>
           </div>
+        </header>
 
-          {/* Interactive RAG AI Chat Assistant Console */}
-          <div className="bg-white p-8 border border-[#e8e8e8] rounded-[20px] space-y-6">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 bg-[#202020] text-white flex items-center justify-center text-xs font-mono font-bold">R</div>
-                <div>
-                  <h3 className="text-sm font-normal text-[#202020] uppercase font-mono tracking-wider">
-                    ASISTENTE FISCAL AI: CONSULTA DIRECTA A RENATA
-                  </h3>
-                  <p className="text-xs text-[#828282]">
-                    Haz preguntas sobre timbrado SAT CFDI 4.0, complementos de pago PPD vs PUE o la fórmula de prorrateo NNN.
+        {/* MAIN BODY AREA */}
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl w-full mx-auto">
+          {/* TAB 1: ANALYTICS OVERVIEW DASHBOARD */}
+          {activeTab === "analytics" && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* TOP KPI CARDS GRID */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                      Renta Contratada Mensual
+                    </span>
+                    <span className="text-xs font-bold text-emerald-700 font-mono">
+                      +3.5%
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold font-display text-slate-900">
+                      {formatMxn(contractedRent)}
+                    </span>
+                    <Sparkline data={[2.1, 2.2, 2.25, 2.3, 2.4, 2.45, 2.48]} color="#0F172A" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    79 de 84 locales con pago al día
+                  </p>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                      Ocupación de Plaza (GLA)
+                    </span>
+                    <span className="text-xs font-bold text-emerald-700 font-mono">
+                      +1.2%
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold font-display text-slate-900">
+                      {(occupancyRate * 100).toFixed(1)}%
+                    </span>
+                    <Sparkline data={[94, 94.5, 95, 95.2, 95.8, 96, 96.4]} color="#0F172A" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    {leasedSqm.toLocaleString("es-MX")} m² de {plazaTotalGla.toLocaleString("es-MX")} m²
+                  </p>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                      Fondo CAM NNN Mensual
+                    </span>
+                    <span className="text-xs font-bold text-slate-600 font-mono">
+                      100% Bal.
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold font-display text-slate-900">
+                      {formatMxn(camMonthlyPool)}
+                    </span>
+                    <Sparkline data={[250, 255, 260, 262, 265, 268.5, 268.5]} color="#475569" />
+                  </div>
+                  <p className="text-[11px] text-slate-600 font-mono">
+                    Renata AI: Prorrateado sin desbalance
+                  </p>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                      Eficiencia de Cobranza
+                    </span>
+                    <span className="text-xs font-bold text-amber-800 font-mono">
+                      1 Alerta SAT
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold font-display text-slate-900">
+                      {(collectionRate * 100).toFixed(1)}%
+                    </span>
+                    <Sparkline data={[95, 96, 97, 96.5, 97.2, 97.6, 97.6]} color="#D97706" />
+                  </div>
+                  <p className="text-[11px] text-slate-600 font-mono">
+                    MINT Boutique CFDI pendiente
                   </p>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-[#efefef] text-[#816729] text-xs font-mono">● VALIDADOR SAT CFDI 4.0 ACTIVO</span>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => {
-                  setRenataQuery("Alerta MINT Boutique (PPD vs PUE)");
-                  setRenataChatResponse({
-                    query: "¿Por qué MINT Boutique registró una alerta fiscal SAT CFDI 4.0?",
-                    answer: "MINT Boutique pagó $32,000 MXN mediante transferencia registrando el método PUE (Pago en una sola exhibición), pero la factura original se emitió bajo el régimen PPD (Pago en parcialidades). Renata detectó la discrepancia antes de la declaración mensual del SAT para auto-emitir el Complemento de Recepción de Pagos sin sanción.",
-                    xmlName: "CFDI_4.0_Complemento_Pago_SAT_MINT.xml",
-                    xmlClause: "Anexo 20 RMF SAT §2.7.1.35",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                ⚠️ Alerta MINT Boutique (PPD vs PUE)
-              </button>
+              {/* MIDDLE ANALYTICS VISUALS GRID */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg p-5 shadow-2xs">
+                  <RevenueTrendChart />
+                </div>
 
-              <button
-                onClick={() => {
-                  setRenataQuery("Invariante Matemática Prorrateo CAM 1.0000");
-                  setRenataChatResponse({
-                    query: "¿Cómo funciona la Invariante Matemática del Prorrateo CAM 1.0000?",
-                    answer: "La cuota CAM de cada inquilino se calcula dividiendo su superficie arrendada individual entre los 7,550 m² GLA de la plaza. La sumatoria de participaciones pro-rata es exactamente 1.0000 (100.00%), sin fugas ni errores de redondeo.",
-                    xmlName: "Matriz_Prorrateo_NNN_GranVia.xml",
-                    xmlClause: "Invariante 1.0000 Cuadrada",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                📐 Invariante Matemática Prorrateo CAM 1.0000
-              </button>
+                <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-display text-sm font-bold text-slate-900 tracking-tight">Distribución por Giro Comercial</h3>
+                      <p className="text-[11px] text-slate-500 font-mono">84 Locales en 4 zonas clave</p>
+                    </div>
+                    <span className="text-xs font-mono text-slate-400">7,550 m²</span>
+                  </div>
 
-              <button
-                onClick={() => {
-                  setRenataQuery("Requisitos CFDI 4.0 para Deducción NNN");
-                  setRenataChatResponse({
-                    query: "¿Cuáles son los requisitos CFDI 4.0 obligatorios para deducir gastos NNN?",
-                    answer: "Conforme al Anexo 20 RMF SAT, se requiere RFC receptor válido, Régimen Fiscal 601, Código Postal del domicilio fiscal del inquilino y la clave de producto/servicio SAT 80131502 (Arrendamiento de centros comerciales).",
-                    xmlName: "Guia_Timbrado_SAT_CFDI40.xml",
-                    xmlClause: "Anexo 20 SAT §4.0",
-                  });
-                }}
-                className="px-4 py-2 bg-[#efefef] hover:bg-[#ebe6dd] text-[#202020] text-xs rounded-[200px] transition-colors cursor-pointer font-sans"
-              >
-                📜 Requisitos CFDI 4.0 para Deducción NNN
-              </button>
-            </div>
+                  <div className="space-y-2">
+                    <div className="h-2.5 w-full rounded bg-slate-100 flex overflow-hidden">
+                      <div className="bg-slate-900 h-full w-[32%]" title="Gastronomía (32%)" />
+                      <div className="bg-slate-700 h-full w-[28%]" title="Retail & Moda (28%)" />
+                      <div className="bg-slate-500 h-full w-[24%]" title="Servicios (24%)" />
+                      <div className="bg-slate-300 h-full w-[16%]" title="Entretenimiento (16%)" />
+                    </div>
 
-            <div className="bg-[#f5f5f5] p-6 border border-[#e8e8e8] space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#828282]">
-                <span className="font-mono text-[#202020] font-bold">Consulta Fiscal: {renataChatResponse.query}</span>
-                <span className="text-[#2b593a] font-mono">✓ Validación SAT Anexo 20</span>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-slate-900" />
+                        <span className="text-slate-600">Gastronomía (32%)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-slate-700" />
+                        <span className="text-slate-600">Retail/Moda (28%)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-slate-500" />
+                        <span className="text-slate-600">Servicios (24%)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-slate-300" />
+                        <span className="text-slate-600">Entretenimiento (16%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-slate-800">Mapa de Ocupación por Local</span>
+                      <span className="text-[10px] font-mono text-slate-500">81 Activos · 1 Vacante</span>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-1 max-h-24 overflow-y-auto p-1 bg-slate-50 rounded border border-slate-200">
+                      {rentRoll.slice(0, 48).map((r, i) => (
+                        <div
+                          key={r.slug}
+                          title={`${r.name} (${r.zone}) - ${r.fiscalAlert ? 'Alerta SAT' : 'OK'}`}
+                          className={`h-3 rounded-xs transition-transform hover:scale-125 cursor-pointer ${
+                            r.fiscalAlert
+                              ? "bg-amber-600"
+                              : i === 12
+                              ? "bg-slate-300 border border-slate-400"
+                              : "bg-slate-800"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-[#202020] leading-relaxed">{renataChatResponse.answer}</p>
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-[#e8e8e8]">
-                <span className="font-mono text-[#816729]">📄 Esquema XML / Póliza SAT: {renataChatResponse.xmlName} ({renataChatResponse.xmlClause})</span>
-                <button onClick={() => alert(`Descargando ${renataChatResponse.xmlName}...`)} className="text-[#202020] border-b border-[#ff682c] cursor-pointer">
-                  Descargar XML SAT →
+
+              {/* RESTRAINED & INSTITUTIONAL AI AGENT OPERATIONS CONSOLE */}
+              <section className="bg-white border border-slate-200 rounded-lg p-5 space-y-5 shadow-2xs">
+                {/* Console Title & Live Status */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                        AI Agent Operations
+                      </span>
+                      <span className="text-xs text-slate-500 font-mono">// Conector ERP Universal</span>
+                    </div>
+                    <h2 className="font-display text-lg font-bold text-slate-900 tracking-tight">
+                      Módulos Operativos de Inteligencia (Renata · Mariana · Diego)
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Tres agentes autónomos conectados al ERP de la plaza para auditoría fiscal, análisis legal RAG y mantenimiento.
+                    </p>
+                  </div>
+
+                  <div className="shrink-0 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1 rounded-md text-xs font-mono text-slate-700">
+                      <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                      3 Agentes Activos
+                    </span>
+                  </div>
+                </div>
+
+                {/* Interactive Query Input Bar */}
+                <div className="bg-slate-50 border border-slate-200 rounded-md p-3.5 space-y-3">
+                  <label className="block font-mono text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+                    Consulta RAG al Copilot de Asset Management
+                  </label>
+
+                  <form onSubmit={handleQuerySubmit} className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={userQuery}
+                      onChange={(e) => setUserQuery(e.target.value)}
+                      placeholder="Ej. ¿Cómo resolver la alerta fiscal de MINT Boutique? o ¿Qué contratos vencen pronto?"
+                      className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-500 font-mono"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded-md text-xs font-bold font-mono transition-colors shrink-0 cursor-pointer"
+                    >
+                      Consultar IA →
+                    </button>
+                  </form>
+
+                  {/* Suggestion Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs pt-0.5">
+                    <span className="text-slate-400 font-mono text-[10.5px] mr-1">Sugerencias:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserQuery("¿Cómo resolver la alerta fiscal de MINT Boutique?");
+                        setActiveAgent("renata");
+                        setQueryResult(
+                          "Renata AI: MINT Boutique pagó $18,400 MXN en banco pero falta timbrar el complemento CFDI 4.0 en el SAT. Haz clic en 'Emitir Complemento SAT' en el módulo de Renata para resolverlo automáticamente."
+                        );
+                      }}
+                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer transition-colors"
+                    >
+                      Alerta SAT MINT Boutique
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserQuery("Evaluar exclusividad de café (Dunkin' vs Starbucks)");
+                        setActiveAgent("mariana");
+                        setQueryResult(
+                          "Mariana AI: Dunkin' Donuts solicita abrir en Local B-04. El análisis RAG del PDF del contrato de Starbucks (página 4, Cláusula 14.2) prohibe strictly competidores directos de café de especialidad. Dictamen: RECHAZADO."
+                        );
+                      }}
+                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer transition-colors"
+                    >
+                      Exclusividad Starbucks (RAG)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserQuery("Despachar mantenimiento HVAC de climas");
+                        setActiveAgent("diego");
+                        setQueryResult(
+                          "Diego AI: Recibido reporte por WhatsApp para el Local A-04. Verifiqué póliza de garantía vigente con Climas de Mexicali (Serie: MX-HVAC-9902). Asignado a Carlos R. con $0 costo para la plaza."
+                        );
+                      }}
+                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer transition-colors"
+                    >
+                      WhatsApp HVAC Climas
+                    </button>
+                  </div>
+
+                  {/* Query Result Box */}
+                  {queryResult && (
+                    <div className="mt-2.5 bg-white border border-slate-300 rounded-md p-3 text-xs text-slate-800 animate-fadeIn space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-slate-900 text-[10.5px]">Respuesta RAG</span>
+                        <button onClick={() => setQueryResult(null)} className="text-slate-400 hover:text-slate-700 font-mono cursor-pointer">✕</button>
+                      </div>
+                      <p className="leading-relaxed font-sans">{queryResult}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3 CORE INSTITUTIONAL AGENT CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* AGENT 1: RENATA AI */}
+                  <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-bold text-slate-900">Renata AI</span>
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-mono text-[10px] font-bold">
+                          CAM & SAT CFDI
+                        </span>
+                      </div>
+                      <h3 className="font-display font-bold text-sm text-slate-900">
+                        Fondo CAM & Auditoría SAT
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Audita el fondo CAM de $268,500 MXN sin desbalance y verifica el timbrado fiscal CFDI 4.0 de los 84 inquilinos.
+                      </p>
+
+                      <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-1 text-xs font-mono">
+                        <span className="text-[10px] font-bold text-slate-700 uppercase block">
+                          {cfdiIssued ? "Status: REGULARIZADO" : "Estatus: ALERTA DETECTADA"}
+                        </span>
+                        <p className="text-slate-600 text-[11px]">
+                          {cfdiIssued
+                            ? "Complemento de pago timbrado exitosamente en el SAT."
+                            : "MINT Boutique ($18,400 MXN) pagó sin complemento CFDI."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                      <button
+                        onClick={() => {
+                          setCfdiIssued(true);
+                          triggerToast("Renata AI: Complemento de pago CFDI 4.0 emitido y enviado a contabilidad.");
+                        }}
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-1.5 rounded-md text-xs font-mono font-bold transition-colors cursor-pointer"
+                      >
+                        {cfdiIssued ? "Complemento Emitido" : "Emitir Complemento SAT →"}
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab("cam")}
+                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer text-center block"
+                      >
+                        Ver Matriz NNN ($268.5k) →
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* AGENT 2: MARIANA AI */}
+                  <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-bold text-slate-900">Mariana AI</span>
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-mono text-[10px] font-bold">
+                          Legal RAG & Lease
+                        </span>
+                      </div>
+                      <h3 className="font-display font-bold text-sm text-slate-900">
+                        Bóveda Legal & Exclusividades
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Analiza contratos PDF en tiempo real para proteger $1.8M MXN anuales y evaluar nuevos prospectos de arrendamiento.
+                      </p>
+
+                      <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-1 text-xs">
+                        <span className="font-mono text-[10px] font-bold text-slate-700 uppercase block">
+                          Cláusula 14.2 (Starbucks)
+                        </span>
+                        <p className="text-slate-600 text-[11px] italic font-mono">
+                          &ldquo;Queda prohibida la venta de café de especialidad a menos de 50m...&rdquo;
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                      <button
+                        onClick={() => {
+                          setAttorneyNotified(true);
+                          triggerToast("Mariana AI: Dictamen legal enviado al despacho de abogados.");
+                        }}
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-1.5 rounded-md text-xs font-mono font-bold transition-colors cursor-pointer"
+                      >
+                        {attorneyNotified ? "Notificación Enviada" : "Enviar a Abogado →"}
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab("legal")}
+                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer text-center block"
+                      >
+                        Ver Bóveda Legal PDF →
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* AGENT 3: DIEGO AI */}
+                  <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-bold text-slate-900">Diego AI</span>
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-mono text-[10px] font-bold">
+                          CapEx & Ops
+                        </span>
+                      </div>
+                      <h3 className="font-display font-bold text-sm text-slate-900">
+                        Bitácora CapEx & Mantenimiento
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Mesa de ayuda 24/7 por WhatsApp para inquilinos. Verifica pólizas de garantía para reducir costos de plaza a $0.
+                      </p>
+
+                      <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-1 text-xs font-mono">
+                        <p className="text-slate-700 text-[10.5px]">
+                          Inquilino: &ldquo;Aire no enfría en A-04&rdquo;
+                        </p>
+                        <p className="text-slate-500 text-[10.5px]">
+                          Diego: Garantie MX-HVAC-9902 activa. Técnico asignado.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                      <button
+                        onClick={() => {
+                          setHvacDispatched(true);
+                          triggerToast("Diego AI: Orden enviada por WhatsApp a Climas de Mexicali.");
+                        }}
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-1.5 rounded-md text-xs font-mono font-bold transition-colors cursor-pointer"
+                      >
+                        {hvacDispatched ? "Técnico Despachado" : "Despachar Mantenimiento →"}
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab("maint")}
+                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer text-center block"
+                      >
+                        Ver Bitácora de Equipos →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* RENT ROLL & TENANT ANALYTICS TABLE */}
+              <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden space-y-4 p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-display text-base font-bold text-slate-900 tracking-tight">Rent Roll de Inquilinos & Estatus IA</h3>
+                    <p className="text-xs text-slate-500 font-mono">Métrica individual de 84 locales con verificación fiscal y mantenimiento</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center bg-slate-100 p-1 rounded-md text-xs font-mono">
+                      <button
+                        onClick={() => setCategoryFilter("ALL")}
+                        className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${categoryFilter === "ALL" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
+                      >
+                        Todos ({rentRoll.length})
+                      </button>
+                      <button
+                        onClick={() => setCategoryFilter("Restaurante & Bar")}
+                        className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${categoryFilter === "Restaurante & Bar" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
+                      >
+                        Gastronomía
+                      </button>
+                      <button
+                        onClick={() => setCategoryFilter("Tienda & Moda")}
+                        className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${categoryFilter === "Tienda & Moda" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
+                      >
+                        Retail
+                      </button>
+                    </div>
+
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="bg-slate-100 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-mono text-slate-700 focus:outline-none cursor-pointer"
+                    >
+                      <option value="ALL">Estatus: Todos</option>
+                      <option value="OK">Al día</option>
+                      <option value="ALERT">Alerta SAT / IA</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-700">
+                    <thead className="bg-slate-50 text-[10px] font-mono uppercase text-slate-500 border-y border-slate-200">
+                      <tr>
+                        <th className="py-2.5 px-3">Local / Inquilino</th>
+                        <th className="py-2.5 px-3">Giro / Zona</th>
+                        <th className="py-2.5 px-3 text-right">Superficie (GLA)</th>
+                        <th className="py-2.5 px-3 text-right">Renta Base</th>
+                        <th className="py-2.5 px-3 text-right">Cuota CAM NNN</th>
+                        <th className="py-2.5 px-3">Estatus Fiscal & IA</th>
+                        <th className="py-2.5 px-3 text-center">Acciones IA</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-mono">
+                      {filteredRentRoll.slice(0, 10).map((row) => (
+                        <tr key={row.slug} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3 px-3">
+                            <div className="font-sans font-bold text-slate-900 text-xs">{row.name}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">{row.slug}</div>
+                          </td>
+                          <td className="py-3 px-3 font-sans">
+                            <span className="inline-block bg-slate-100 px-2 py-0.5 rounded text-[11px] text-slate-600">
+                              {row.zone}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono">
+                            {row.sqm} m² <span className="text-slate-400">({row.sharePct.toFixed(2)}%)</span>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-medium text-slate-900">
+                            {formatMxn(row.rent)}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono text-slate-600">
+                            {formatMxn((row.rent * 0.12))}
+                          </td>
+                          <td className="py-3 px-3 font-sans">
+                            {row.fiscalAlert ? (
+                              <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-0.5 rounded text-[10.5px] font-mono font-medium">
+                                Inconsistencia CFDI SAT
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded text-[10.5px] font-mono font-medium">
+                                Al Día
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3 text-center font-sans">
+                            <button
+                              onClick={() => {
+                                setCopilotOpen(true);
+                                setActiveAgent(row.fiscalAlert ? "renata" : "mariana");
+                                triggerToast(`Copilot IA activado para ${row.name}`);
+                              }}
+                              className="bg-white hover:bg-slate-900 hover:text-white text-slate-700 border border-slate-200 px-2.5 py-1 rounded text-[11px] font-mono transition-all cursor-pointer"
+                            >
+                              Consultar IA →
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-500 font-mono pt-2 border-t border-slate-100">
+                  <span>Mostrando {Math.min(10, filteredRentRoll.length)} de {rentRoll.length} locales</span>
+                  <div className="flex items-center gap-2">
+                    <button className="px-3 py-1 bg-white rounded border border-slate-200 text-slate-600 cursor-pointer hover:bg-slate-50">Anterior</button>
+                    <button className="px-3 py-1 bg-slate-900 text-white rounded cursor-pointer">Siguiente</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OTHER DEEP DIVE TABS (Rent Roll, CAM, Mantenimiento, Legal, Universal ERP) */}
+          {activeTab === "rentroll" && (
+            <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 animate-fadeIn">
+              <div>
+                <h2 className="font-display text-xl font-bold text-slate-900">Rent Roll Completo & Distribución GLA</h2>
+                <p className="text-xs text-slate-500 font-mono">84 Locales activos en La Gran Vía Mexicali</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 font-mono text-[10px] uppercase text-slate-500 border-y border-slate-200">
+                    <tr>
+                      <th className="p-3">Local</th>
+                      <th className="p-3">Inquilino</th>
+                      <th className="p-3">Superficie</th>
+                      <th className="p-3 font-right">Renta Mensual</th>
+                      <th className="p-3">% Prorrateo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-mono">
+                    {rentRoll.map((r) => (
+                      <tr key={r.slug} className="hover:bg-slate-50">
+                        <td className="p-3 text-slate-500">{r.slug}</td>
+                        <td className="p-3 font-sans font-bold text-slate-900">{r.name}</td>
+                        <td className="p-3">{r.sqm} m²</td>
+                        <td className="p-3 font-bold">{formatMxn(r.rent)}</td>
+                        <td className="p-3">{r.sharePct.toFixed(2)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "cam" && (
+            <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 animate-fadeIn">
+              <div>
+                <h2 className="font-display text-xl font-bold text-slate-900">Fondo CAM NNN & Auditoría Fiscal Renata AI</h2>
+                <p className="text-xs text-slate-500 font-mono">Distribución de $268,500 MXN mensuales de mantenimiento</p>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-amber-900 text-xs font-mono uppercase">
+                    ALERTA RENATA AI: MINT Boutique (Local B-12)
+                  </span>
+                  <button
+                    onClick={() => {
+                      setCfdiIssued(true);
+                      triggerToast("Complemento de pago CFDI 4.0 emitido exitosamente.");
+                    }}
+                    className="bg-amber-900 text-white px-3 py-1 rounded text-xs font-mono font-bold cursor-pointer hover:bg-amber-800"
+                  >
+                    {cfdiIssued ? "CFDI Emitido" : "Emitir Complemento SAT →"}
+                  </button>
+                </div>
+                <p className="text-xs text-amber-800 font-mono">
+                  Cobro de $18,400 MXN registrado en banco pero sin timbrado CFDI 4.0 en el SAT.
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-slate-50 text-[10px] uppercase text-slate-500 border-y border-slate-200">
+                    <tr>
+                      <th className="p-3">Inquilino</th>
+                      <th className="p-3 text-right">Superficie</th>
+                      <th className="p-3 text-right">% Prorrateo</th>
+                      <th className="p-3 text-right">Cuota Base CAM</th>
+                      <th className="p-3 text-right">Admin</th>
+                      <th className="p-3 text-right">IVA (16%)</th>
+                      <th className="p-3 text-right">Total NNN</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {camRows.slice(0, 10).map((c) => (
+                      <tr key={c.key} className="hover:bg-slate-50">
+                        <td className="p-3 font-sans font-bold text-slate-900">{c.label}</td>
+                        <td className="p-3 text-right">{c.sqm} m²</td>
+                        <td className="p-3 text-right">{c.sharePct.toFixed(2)}%</td>
+                        <td className="p-3 text-right">{formatMxn(c.base)}</td>
+                        <td className="p-3 text-right">{formatMxn(c.admin)}</td>
+                        <td className="p-3 text-right">{formatMxn(c.iva)}</td>
+                        <td className="p-3 text-right font-bold text-slate-900">{formatMxn(c.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "maint" && (
+            <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-display text-xl font-bold text-slate-900">Bitácora CapEx & Diego AI</h2>
+                  <p className="text-xs text-slate-500 font-mono">Garantías, mantenimiento y reclamos a proveedores</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setHvacDispatched(true);
+                    triggerToast("Técnico de Climas de Mexicali despachado.");
+                  }}
+                  className="bg-slate-900 text-white px-3 py-1.5 rounded text-xs font-mono font-bold cursor-pointer"
+                >
+                  {hvacDispatched ? "Despachado" : "Despachar Técnico HVAC →"}
                 </button>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {criticalEquipment.map((eq) => (
+                  <div key={eq.serial} className="border border-slate-200 rounded-lg p-4 space-y-2 bg-slate-50">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 text-xs font-mono">{eq.asset}</span>
+                      <span className="bg-slate-200 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                        {eq.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 font-mono">Modelo: {eq.model} | Serie: {eq.serial}</p>
+                    <p className="text-xs text-slate-500 font-mono">Garantía: {eq.warranty} ({eq.doc})</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "legal" && (
+            <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-display text-xl font-bold text-slate-900">Bóveda Legal RAG & Mariana AI</h2>
+                  <p className="text-xs text-slate-500 font-mono">Análisis de contratos y exclusividades</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setAttorneyNotified(true);
+                    triggerToast("Notificación legal enviada a despacho.");
+                  }}
+                  className="bg-slate-900 text-white px-3 py-1.5 rounded text-xs font-mono font-bold cursor-pointer"
+                >
+                  {attorneyNotified ? "Notificado" : "Enviar a Abogado →"}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {leasingApplicants.map((app) => (
+                  <div key={app.id} className="border border-slate-200 rounded-lg p-4 space-y-3 bg-slate-50">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 text-sm font-display">{app.brand} ({app.category})</span>
+                      <span className="bg-slate-200 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                        {app.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-700">{app.reasoning}</p>
+                    <div className="bg-white p-2.5 rounded border border-slate-200 text-[11px] font-mono text-slate-600 space-y-1">
+                      <p className="font-bold text-slate-800">Cláusula Extraída ({app.contractPdfName}):</p>
+                      <p className="italic text-slate-500">&ldquo;{app.contractExactSnippet}&rdquo;</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "erp" && (
+            <div className="bg-slate-900 text-white border border-slate-800 rounded-lg p-6 space-y-6 font-mono animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-display text-xl font-bold text-white">Conector ERP Universal Stream</h2>
+                  <p className="text-xs text-slate-400">Adaptador de datos neutral (SAARI, Yardi, RealPage, SAP, Custom API)</p>
+                </div>
+                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 rounded text-xs font-bold">
+                  Endpoint Neutral Activo
+                </span>
+              </div>
+
+              <div className="bg-black/60 p-4 rounded-md border border-slate-800 text-xs space-y-2 max-h-64 overflow-y-auto text-emerald-400">
+                <p>[ERP-SYNC 14:58:12] POST /api/v2/erp/batch-ingest ... 200 OK (Universal Adapter)</p>
+                <p>[ERP-SYNC 14:58:14] Processing 84 Rent Roll rows for La Gran Vía Mexicali.</p>
+                <p>[ERP-SYNC 14:58:15] Validated CAM Pool: $268,500 MXN against 79 active leases.</p>
+                <p>[ERP-SYNC 14:58:16] System Adapter: Connected to ERP System (Auto-detect schema).</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* AI ASSISTANT DRAWER / SLIDE-OVER PANEL */}
+      {copilotOpen && (
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between animate-slideLeft">
+          <div className="p-4 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <h3 className="font-display font-bold text-sm">Copilot Sidebar</h3>
+            </div>
+            <button
+              onClick={() => setCopilotOpen(false)}
+              className="text-slate-400 hover:text-white text-xs cursor-pointer font-mono"
+            >
+              ✕ Cerrar
+            </button>
+          </div>
+
+          <div className="p-3 bg-slate-100 border-b border-slate-200 flex gap-1 font-mono text-xs">
+            <button
+              onClick={() => setActiveAgent("renata")}
+              className={`flex-1 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                activeAgent === "renata" ? "bg-slate-900 text-white font-bold" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Renata (CAM)
+            </button>
+            <button
+              onClick={() => setActiveAgent("mariana")}
+              className={`flex-1 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                activeAgent === "mariana" ? "bg-slate-900 text-white font-bold" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Mariana (Legal)
+            </button>
+            <button
+              onClick={() => setActiveAgent("diego")}
+              className={`flex-1 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                activeAgent === "diego" ? "bg-slate-900 text-white font-bold" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Diego (CapEx)
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+            <div className="bg-slate-50 border border-slate-200 rounded-md p-3 space-y-1.5">
+              <span className="font-bold text-slate-800 text-[10.5px] uppercase tracking-wider block font-mono">
+                Alerta Detectada por el Agente
+              </span>
+              <p className="text-slate-700 leading-relaxed font-mono text-[11px]">
+                {activeAgent === "renata" && "MINT Boutique presenta inconsistencia CFDI 4.0 ($18,400 MXN pagados sin complemento)."}
+                {activeAgent === "mariana" && "Solicitud de Dunkin' Donuts viola la exclusividad de café de Starbucks (Cláusula 14.2)."}
+                {activeAgent === "diego" && "Equipo HVAC de Mexicali Climas en garantía vigente (Serie: MX-HVAC-9902)."}
+              </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="bg-slate-50 border border-slate-200 rounded-md p-3 space-y-2">
+              <div className="flex items-center justify-between font-mono text-[10px] text-slate-500">
+                <span>Consulta al Agente</span>
+                <span>{activeAgent.toUpperCase()} AI</span>
+              </div>
+              <p className="font-bold text-slate-900 font-mono text-[11px]">
+                {activeAgent === "renata" && renataReplies[0].query}
+                {activeAgent === "mariana" && marianaReplies[0].query}
+                {activeAgent === "diego" && diegoReplies[0].query}
+              </p>
+              <div className="bg-white p-2.5 rounded border border-slate-200 text-slate-700 leading-relaxed text-[11px]">
+                {activeAgent === "renata" && renataReplies[0].answer}
+                {activeAgent === "mariana" && marianaReplies[0].answer}
+                {activeAgent === "diego" && diegoReplies[0].answer}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 border-t border-slate-200 bg-slate-50">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                triggerToast(`Consulta procesada por ${activeAgent.toUpperCase()} AI`);
+              }}
+              className="flex gap-2"
+            >
               <input
                 type="text"
-                value={renataQuery}
-                onChange={(e) => setRenataQuery(e.target.value)}
-                placeholder="Pregunta a Renata sobre el timbrado SAT, complementos PPD/PUE o prorrateo NNN..."
-                className="flex-1 px-4 py-3 bg-[#f5f5f5] border border-[#e8e8e8] text-xs text-[#202020] focus:outline-none"
+                placeholder="Pregunta a la IA sobre la plaza..."
+                className="flex-1 bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 font-mono"
               />
-              <button onClick={() => alert("Consultando Validador SAT Renata...")} className="px-6 py-3 bg-[#202020] text-white text-xs font-normal cursor-pointer hover:bg-[#333333]">
-                Consultar AI →
-              </button>
-            </div>
-          </div>
-
-          {/* Section 1: AUDITORÍA DE ERRORES FISCALES SAT CFDI 4.0 & COMPLEMENTOS PPD */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
-              <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
-                1. AUDITORÍA DE ERRORES FISCALES SAT CFDI 4.0 & COMPLEMENTOS PPD
-              </h3>
-              <span className="text-xs text-[#828282] font-mono">MONITOREO AUTOMÁTICO PRE-DECLARACIÓN</span>
-            </div>
-
-            <div className="bg-[#f5e9e8] p-8 border border-[#e8d2d1] space-y-6">
-              <div className="flex items-center justify-between border-b border-[#e8d2d1] pb-4 font-mono text-xs">
-                <span className="text-[#7a2e2b] font-bold">🚨 ⚠️ ALERTA FISCAL SAT CFDI 4.0: MINT BOUTIQUE (LOCAL B-12)</span>
-                <span className="bg-[#7a2e2b] text-white px-3 py-1 font-bold text-[11px]">RIESGO MULTA: $12,500 MXN PREVENIDO</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
-                <div className="bg-white p-4 space-y-1 border border-[#e8d2d1]">
-                  <span className="text-[#828282] block text-[10px]">Factura Original Emitida:</span>
-                  <span className="text-sm font-bold text-[#202020]">Folio #CFDI-8842 (Método PPD)</span>
-                </div>
-                <div className="bg-white p-4 space-y-1 border border-[#e8d2d1]">
-                  <span className="text-[#828282] block text-[10px]">Pago Recibido en Banco:</span>
-                  <span className="text-sm font-bold text-[#2b593a]">$32,000 MXN (Registrado PUE)</span>
-                </div>
-                <div className="bg-white p-4 space-y-1 border border-[#e8d2d1]">
-                  <span className="text-[#828282] block text-[10px]">Discrepancia SAT:</span>
-                  <span className="text-sm font-bold text-[#7a2e2b]">Falta Complemento de Pago</span>
-                </div>
-              </div>
-
-              <p className="text-xs text-[#7a2e2b] leading-relaxed">
-                Renata detectó que la transferencia bancaria fue registrada erróneamente por el cliente como PUE (Pago en una sola exhibición). Conforme al Reglamento de la Cédula Fiscal SAT CFDI 4.0, se requiere auto-emitir el Complemento de Recepción de Pagos oficial antes del cierre del mes para evitar auditorías al propietario.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-[#e8d2d1] text-xs font-mono">
-                <span className="text-[#7a2e2b]">Estado: Esperando confirmación para timbrado directo ante el PAC SAT</span>
-                <button
-                  onClick={() => setRenataCfdiIssued(true)}
-                  className="px-6 py-3 bg-[#7a2e2b] text-white rounded-none font-bold text-xs cursor-pointer hover:bg-[#962826]"
-                >
-                  ⚡ {renataCfdiIssued ? "✓ Complemento SAT CFDI 4.0 Emitido" : "Auto-Emitir Complemento SAT CFDI 4.0"}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: MATRIZ DE PRORRATEO NNN */}
-          <div className="space-y-6 pt-4">
-            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
-              <div>
-                <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
-                  2. MATRIZ DE PRORRATEO NNN & LIQUIDACIÓN CAM POR INQUILINO (85 LOCALES)
-                </h3>
-                <p className="text-xs text-[#4d4d4d] mt-0.5">Cálculo automatizado de participación pro-rata, cuota base, honorarios de administración e IVA.</p>
-              </div>
-              <span className="px-3 py-1 bg-[#202020] text-white text-xs font-mono">
-                INVARIANTE 1.0000 CUADRADA
-              </span>
-            </div>
-
-            <div className="overflow-x-auto bg-white border border-[#e8e8e8] rounded-[8px]">
-              <table className="w-full text-left text-xs border-collapse font-sans">
-                <thead>
-                  <tr className="border-b border-[#e8e8e8] text-[#828282] uppercase text-[10px] bg-[#f5f5f5] font-mono">
-                    <th className="p-3.5 font-normal">INQUILINO / LOCAL</th>
-                    <th className="p-3.5 font-normal text-right">SUPERFICIE M²</th>
-                    <th className="p-3.5 font-normal text-right">% PRO-RATA NNN</th>
-                    <th className="p-3.5 font-normal text-right">CUOTA CAM BASE</th>
-                    <th className="p-3.5 font-normal text-right">ADMIN (15%)</th>
-                    <th className="p-3.5 font-normal text-right">IVA (16%)</th>
-                    <th className="p-3.5 font-normal text-right">TOTAL CFDI MXN</th>
-                    <th className="p-3.5 font-normal text-right">ESTADO SAT</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e8e8e8] font-normal text-[#202020] font-mono text-[11px]">
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">260 Grill & Bar</td>
-                    <td className="p-3.5 text-right font-bold">320 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">2.51%</td>
-                    <td className="p-3.5 text-right">$11,360</td>
-                    <td className="p-3.5 text-right">$1,704</td>
-                    <td className="p-3.5 text-right">$2,090</td>
-                    <td className="p-3.5 text-right font-bold">$15,154</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">Alma Verde</td>
-                    <td className="p-3.5 text-right font-bold">220 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">1.73%</td>
-                    <td className="p-3.5 text-right">$7,810</td>
-                    <td className="p-3.5 text-right">$1,172</td>
-                    <td className="p-3.5 text-right">$1,437</td>
-                    <td className="p-3.5 text-right font-bold">$10,419</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">AmoreMe</td>
-                    <td className="p-3.5 text-right font-bold">76 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">0.60%</td>
-                    <td className="p-3.5 text-right">$2,698</td>
-                    <td className="p-3.5 text-right">$405</td>
-                    <td className="p-3.5 text-right">$496</td>
-                    <td className="p-3.5 text-right font-bold">$3,599</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">ARA Transportes</td>
-                    <td className="p-3.5 text-right font-bold">74 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">0.58%</td>
-                    <td className="p-3.5 text-right">$2,627</td>
-                    <td className="p-3.5 text-right">$394</td>
-                    <td className="p-3.5 text-right">$483</td>
-                    <td className="p-3.5 text-right font-bold">$3,504</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">Ary Casa de Novias</td>
-                    <td className="p-3.5 text-right font-bold">72 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">0.56%</td>
-                    <td className="p-3.5 text-right">$2,556</td>
-                    <td className="p-3.5 text-right">$383</td>
-                    <td className="p-3.5 text-right">$470</td>
-                    <td className="p-3.5 text-right font-bold">$3,409</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">Ashley</td>
-                    <td className="p-3.5 text-right font-bold">1450 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">11.38%</td>
-                    <td className="p-3.5 text-right">$51,475</td>
-                    <td className="p-3.5 text-right">$7,721</td>
-                    <td className="p-3.5 text-right">$9,471</td>
-                    <td className="p-3.5 text-right font-bold">$68,667</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">Asian Wok Box</td>
-                    <td className="p-3.5 text-right font-bold">68 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">0.53%</td>
-                    <td className="p-3.5 text-right">$2,414</td>
-                    <td className="p-3.5 text-right">$362</td>
-                    <td className="p-3.5 text-right">$444</td>
-                    <td className="p-3.5 text-right font-bold">$3,220</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                  <tr className="hover:bg-[#f5f5f5]">
-                    <td className="p-3.5 font-bold font-sans">AT&T</td>
-                    <td className="p-3.5 text-right font-bold">66 m²</td>
-                    <td className="p-3.5 text-right text-[#ff682c] font-bold">0.52%</td>
-                    <td className="p-3.5 text-right">$2,343</td>
-                    <td className="p-3.5 text-right">$351</td>
-                    <td className="p-3.5 text-right">$431</td>
-                    <td className="p-3.5 text-right font-bold">$3,125</td>
-                    <td className="p-3.5 text-right"><span className="bg-[#eaf2ec] text-[#2b593a] px-2 py-0.5">✓ Timbrado SAT CFDI 4.0</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ---------------- PESTAÑA 5: CONECTOR SAARI ERP (FULL RESTORATION) ---------------- */}
-      {activeTab === "saari" && (
-        <div className="space-y-10">
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-4">
-            <div>
-              <span className="px-3 py-1 bg-[#eaf2ec] text-[#2b593a] font-mono text-[11px] font-bold uppercase tracking-wider inline-block">
-                🟢 OPERACIÓN AL DÍA | La Gran Vía Mexicali
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-normal text-[#202020] tracking-[-0.02em] mt-2">
-                Conector SAARI ERP: Ingestión de Auxiliares & Salidas Batch
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => alert("Exportando informe en PDF...")} className="px-4 py-2 bg-white border border-[#202020] text-[#202020] text-xs">
-                Exportar Reporte (.PDF)
-              </button>
-              <button onClick={() => setActiveTab("saari")} className="px-4 py-2 bg-[#ff682c] text-white text-xs">
-                Sincronizar SAARI →
-              </button>
-            </div>
-          </div>
-
-          {/* 3 Metric Cards Strip */}
-          <div className="bg-[#efefef] rounded-tl-[6px] p-8 sm:p-10 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
-              <div>
-                <span className="text-xs font-normal text-[#816729] uppercase tracking-wider block font-mono">
-                  Adaptador SAARI ERP: Conector Bidireccional de Ingestión & Salidas <span className="bg-[#ebe6dd] px-2 py-0.5 text-[#816729]">PUENTE ERP CONTABLE & RAG AI</span>
-                </span>
-                <p className="text-xs text-[#4d4d4d] mt-1">
-                  Arquitectura de sincronización: SAARI ERP mantiene el libro contable de la plaza, mientras los Agentes IA efectúan la auditoría y enriquecen la operación.
-                </p>
-              </div>
-              <span className="px-4 py-2 bg-[#202020] text-white font-mono text-xs">
-                SAARI BATCH READY v4.2
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] uppercase font-mono text-[#828282] block">LECTURA AUXILIARES</span>
-                <div className="text-2xl font-normal text-[#202020]">85 Locales Ingestados</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] uppercase font-mono text-[#828282] block">LOTE BATCH CAM NNN</span>
-                <div className="text-2xl font-normal text-[#ff682c]">100% Estructurado</div>
-              </div>
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-1">
-                <span className="text-[10px] uppercase font-mono text-[#828282] block">DISCREPANCIAS FISCALES</span>
-                <div className="text-2xl font-normal text-[#2b593a]">0 Pendientes</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 1: DIAGRAMA DE FLUJO DE DATOS */}
-          <div className="bg-[#efefef] p-8 border border-[#e8e8e8] space-y-6">
-            <div className="border-b border-[#e8e8e8] pb-3">
-              <h3 className="text-xs font-normal text-[#816729] uppercase tracking-wider font-mono">
-                📐 DIAGRAMA DE FLUJO DE DATOS: ¿CÓMO SE CONECTA SAARI ERP CON LOS AGENTES IA?
-              </h3>
-              <p className="text-xs text-[#4d4d4d] mt-1">
-                SAARI ERP es el sistema de registro contable oficial. Los agentes IA consumen sus datos para validar y retornan lotes limpios.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-4">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#202020] font-bold">1. SAARI ERP (Fuente)</span>
-                  <span className="px-2 py-0.5 bg-[#f4efe6] text-[#816729] text-[10px]">ENTRADA</span>
-                </div>
-                <p className="text-xs text-[#4d4d4d] leading-relaxed">
-                  SAARI genera los auxiliares de cobranza, transferencias bancarias SPEI recibidas y expedientes de contratos comerciales firmados.
-                </p>
-                <div className="bg-[#f5f5f5] p-4 border border-[#e8e8e8] text-xs font-mono text-[#202020] space-y-1">
-                  <p>• Ingestión diaria &apos;.CSV / API&apos;</p>
-                  <p>• Depósitos bancarios del mes</p>
-                  <p>• Expedientes de inquilinos</p>
-                </div>
-              </div>
-
-              <div className="bg-[#202020] text-white p-6 space-y-4">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-white font-bold">2. Capa Agentes IA (Control)</span>
-                  <span className="px-2 py-0.5 bg-[#4d4d4d] text-white text-[10px]">AUDITORÍA</span>
-                </div>
-                <p className="text-xs text-[#828282] leading-relaxed">
-                  <strong className="text-white">Mariana</strong> audita exclusividades RAG. <strong className="text-white">Diego</strong> rechaza cargos no cubiertos. <strong className="text-white">Renata</strong> detecta errores SAT CFDI PPD.
-                </p>
-                <div className="bg-[#2d2a26] p-4 border border-[#4d4d4d] text-xs font-mono text-[#4ade80] space-y-1">
-                  <p>• Mariana: Bóveda RAG PDF</p>
-                  <p>• Diego: Pólizas Carrier/Cat</p>
-                  <p>• Renata: SAT CFDI 4.0 PPD</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 border border-[#e8e8e8] space-y-4">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#202020] font-bold">3. SAARI ERP (Exportación)</span>
-                  <span className="px-2 py-0.5 bg-[#f4efe6] text-[#816729] text-[10px]">SALIDA BATCH</span>
-                </div>
-                <p className="text-xs text-[#4d4d4d] leading-relaxed">
-                  Se devuelven a SAARI los complementos de pago SAT timbrados y el archivo batch listo para facturación NNN masiva.
-                </p>
-                <div className="bg-[#f5f5f5] p-4 border border-[#e8e8e8] text-xs font-mono text-[#202020] space-y-1">
-                  <p>• Lote Batch de Facturación</p>
-                  <p>• XML Complementos SAT</p>
-                  <p>• Rent Roll Actualizado al Día</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: CONSOLA INTERACTIVA DEL CONECTOR SAARI ERP */}
-          <div className="bg-white p-8 border border-[#e8e8e8] space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e8e8] pb-4">
-              <div>
-                <h3 className="text-base font-normal text-[#202020]">CONSOLA INTERACTIVA DEL CONECTOR SAARI ERP</h3>
-                <p className="text-xs text-[#828282]">Prueba la lectura de auxiliares o la generación del lote batch para importador automático de SAARI.</p>
-              </div>
-              <span className="px-3 py-1 bg-[#f4efe6] text-[#816729] text-xs font-mono">ADAPTADOR ACTIVO</span>
-            </div>
-
-            <div className="flex items-center gap-3">
               <button
-                onClick={() => setSaariMode("inbound")}
-                className={`px-5 py-2.5 rounded-none text-xs font-normal cursor-pointer transition-colors ${
-                  saariMode === "inbound" ? "bg-[#ff682c] text-white" : "bg-[#efefef] text-[#202020]"
-                }`}
+                type="submit"
+                className="bg-slate-900 text-white px-3 py-1.5 rounded text-xs font-bold font-mono cursor-pointer"
               >
-                📥 ENTRADAS (Ingestión de Auxiliares de SAARI)
+                Enviar
               </button>
-              <button
-                onClick={() => setSaariMode("outbound")}
-                className={`px-5 py-2.5 rounded-none text-xs font-normal cursor-pointer transition-colors ${
-                  saariMode === "outbound" ? "bg-[#ff682c] text-white" : "bg-[#efefef] text-[#202020]"
-                }`}
-              >
-                📤 SALIDAS (Exportación Lote Batch a SAARI)
-              </button>
-            </div>
-
-            <div className="bg-[#202020] text-white p-6 space-y-4 font-mono text-xs">
-              <div className="flex items-center justify-between border-b border-[#4d4d4d] pb-3">
-                <span className="text-[#ff682c]">
-                  {saariMode === "inbound" ? "// LECTOR DE ENTRADAS SAARI ERP" : "// GENERADOR DE LOTE BATCH B2B SAARI ERP"}
-                </span>
-                <span className="text-[#828282] text-[10px]">FORMATO: JSON / CSV NATIVO SAARI</span>
-              </div>
-
-              <p className="text-[#828282]">
-                {saariMode === "inbound"
-                  ? "Lectura en tiempo real del reporte de auxiliares de cobranza emitido por SAARI (&apos;SAARI_EXP_JULIO_2026.CSV&apos;):"
-                  : "Generando estructura de archivo batch para importación masiva en SAARI ERP:"}
-              </p>
-
-              <div className="bg-[#121212] p-5 border border-[#4d4d4d] text-xs leading-relaxed font-mono">
-                {saariMode === "inbound" ? (
-                  <div className="space-y-1 text-[#4ade80]">
-                    <p>[INBOUND LECTURA SAARI OPERATIVA]</p>
-                    <p>- Local A-01 (Ashley Furniture): $248,500.00 MXN -&gt; APLICADO AL RENT ROLL</p>
-                    <p>- Local B-02 (Blue Luna Café): $65,000.00 MXN -&gt; APLICADO AL RENT ROLL</p>
-                    <p className="text-[#ff682c]">- Local B-12 (MINT Boutique): $32,000.00 MXN -&gt; ALERTA DISCREPANCIA PUE/PPD DETECTADA POR RENATA</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1 text-[#38bdf8]">
-                    <p>[OUTBOUND BATCH SAARI ERP v4.2]</p>
-                    <p>&#123; &quot;batch_id&quot;: &quot;SAARI-EXP-202607-001&quot;, &quot;total_tenants&quot;: 85, &quot;nnn_balance&quot;: &quot;1.0000&quot;, &quot;cfdi_xml_attached&quot;: 85 &#125;</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <button
-                  onClick={() => setSaariProcessed(true)}
-                  className="px-6 py-3 bg-[#ff682c] text-white rounded-none text-xs font-normal hover:bg-[#e0561e] cursor-pointer"
-                >
-                  {saariProcessed ? "✓ Operación SAARI ERP Completada con Éxito" : saariMode === "inbound" ? "Procesar Lectura Entradas SAARI →" : "Generar y Exportar Lote Batch SAARI →"}
-                </button>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

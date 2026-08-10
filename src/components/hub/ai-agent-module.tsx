@@ -29,7 +29,7 @@ export function AiAgentModule() {
       );
     } else if (q.includes("contrato") || q.includes("vence") || q.includes("renovacion")) {
       setQueryResponse(
-        "🤖 [Agente de Arrendamiento]: Próximos vencimientos Q3: Bodega 8 (Oct 2026, incremento sugerido +5.5%) y Cinépolis VIP (Nov 2026, renovación segura 5 años). El Agente preparó las cartas de intención."
+        "🤖 [Agente de Arrendamiento]: Próximos vencimientos Q3: Bodega 8 (Oct 2026, incremento sugerido +5.5%) y Cinemex Premium (Nov 2026, renovación segura 5 años). El Agente preparó las cartas de intención."
       );
     } else {
       setQueryResponse(
@@ -96,7 +96,7 @@ export function AiAgentModule() {
             onClick={() => {
               setUserQuery("¿Qué contratos vencen en Q3?");
               setQueryResponse(
-                "🤖 [Agente de Arrendamiento]: Próximos vencimientos Q3: Bodega 8 (Oct 2026, incremento sugerido +5.5%) y Cinépolis VIP (Nov 2026). Cartas de intención generadas."
+                "🤖 [Agente de Arrendamiento]: Próximos vencimientos Q3: Bodega 8 (Oct 2026, incremento sugerido +5.5%) y Cinemex Premium (Nov 2026). Cartas de intención generadas."
               );
             }}
             className="cursor-pointer rounded border border-hairline bg-sand-50 px-2 py-0.5 text-ink-600 hover:border-pine hover:text-pine"
@@ -179,10 +179,10 @@ export function AiAgentModule() {
             {activeDemo === "helpdesk" && (
               <div className="mt-3 rounded-md bg-sand-200 p-3 text-[11px] space-y-2 border border-hairline font-mono">
                 <div className="text-emerald-700 bg-emerald-50 p-2 rounded">
-                  📱 <strong>Inquilino (WhatsApp):</strong> &ldquo;Hola, el aire acondicionado del Local A-04 no enfría.&rdquo;
+                  📱 <strong>Inquilino (WhatsApp):</strong> &ldquo;Hola, el aire acondicionado del Local B-12 no enfría.&rdquo;
                 </div>
                 <div className="text-pine bg-pine/10 p-2 rounded">
-                  🤖 <strong>Agente IA:</strong> &ldquo;Entendido, Local A-04 (MINT Boutique). Verifiqué disponibilidad en ERP y asigné a Carlos R. (Climas). Llegada estimada: 25 min. Ticket #INC-402 registrado.&rdquo;
+                  🤖 <strong>Agente IA:</strong> &ldquo;Entendido, Local B-12 (MINT Boutique). Verifiqué disponibilidad en ERP y asigné a Carlos R. (Climas). Llegada estimada: 25 min. Ticket #INC-402 registrado.&rdquo;
                 </div>
               </div>
             )}

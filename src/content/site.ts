@@ -40,5 +40,5 @@ export const SOCIAL = {
   instagramHandle: "lagranviamxl",
 } as const;
 
-export const HUB_NAV: NavItem = { href: "/inquilinos", label: "Tenant Hub" };
+export const HUB_NAV: NavItem = { href: "/consola", label: "Acceso Corporativo" };
 export const TEAM_NAV: NavItem = { href: "/equipo-ia", label: "Tu Equipo de IA" };
