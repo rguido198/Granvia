@@ -426,7 +426,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* TOP HEADER BAR */}
-        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20">
+        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20 font-sans shadow-2xs">
           {/* Global Search Bar */}
           <div className="relative flex-1 max-w-md">
             <input
@@ -443,7 +443,10 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
           {/* Controls & AI Copilot Drawer Toggle */}
           <div className="flex items-center gap-3">
-            <select className="bg-slate-100/80 border border-slate-200/80 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
+            <select
+              aria-label="Periodo de reporte"
+              className="bg-slate-100/80 border border-slate-200/80 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
+            >
               <option>{periodLabel}</option>
               <option>Julio 2026</option>
               <option>Q3 2026</option>
@@ -452,14 +455,14 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
             <button
               onClick={() => triggerToast("Generando reporte ejecutivo en PDF...")}
-              className="hidden sm:flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
+              className="hidden sm:flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200/80 transition-colors cursor-pointer shadow-2xs"
             >
-              Exportar PDF
+              <span>📥</span> Exportar PDF
             </button>
 
             <button
               onClick={() => setCopilotOpen(!copilotOpen)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 copilotOpen
                   ? "bg-slate-800 text-white"
                   : "bg-slate-900 hover:bg-slate-800 text-white"
@@ -476,14 +479,14 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           {/* TAB 1: ANALYTICS OVERVIEW DASHBOARD */}
           {activeTab === "analytics" && (
             <div className="space-y-6 animate-fadeIn">
-              {/* TOP KPI CARDS GRID */}
+              {/* TOP KPI CARDS GRID WITH INSTITUTIONAL BORDER ACCENTS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
+                <div className="bg-white border border-slate-200/90 border-t-2 border-t-slate-900 rounded-2xl p-5 space-y-3 shadow-2xs hover:shadow-xs transition-shadow">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                       Renta Contratada Mensual
                     </span>
-                    <span className="text-xs font-bold text-emerald-700">
+                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                       +3.5%
                     </span>
                   </div>
@@ -498,12 +501,12 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   </p>
                 </div>
 
-                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
+                <div className="bg-white border border-slate-200/90 border-t-2 border-t-emerald-600 rounded-2xl p-5 space-y-3 shadow-2xs hover:shadow-xs transition-shadow">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                       Ocupación de Plaza (GLA)
                     </span>
-                    <span className="text-xs font-bold text-emerald-700">
+                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                       +1.2%
                     </span>
                   </div>
@@ -511,19 +514,19 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     <span className="text-2xl font-bold font-display text-slate-900">
                       {(occupancyRate * 100).toFixed(1)}%
                     </span>
-                    <Sparkline data={[94, 94.5, 95, 95.2, 95.8, 96, 96.4]} color="#0F172A" />
+                    <Sparkline data={[94, 94.5, 95, 95.2, 95.8, 96, 96.4]} color="#059669" />
                   </div>
                   <p className="text-xs text-slate-500 font-medium">
                     {leasedSqm.toLocaleString("es-MX")} m² de {plazaTotalGla.toLocaleString("es-MX")} m²
                   </p>
                 </div>
 
-                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
+                <div className="bg-white border border-slate-200/90 border-t-2 border-t-blue-600 rounded-2xl p-5 space-y-3 shadow-2xs hover:shadow-xs transition-shadow">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                       Fondo CAM NNN Mensual
                     </span>
-                    <span className="text-xs font-bold text-slate-600">
+                    <span className="text-xs font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
                       100% Bal.
                     </span>
                   </div>
@@ -531,19 +534,19 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     <span className="text-2xl font-bold font-display text-slate-900">
                       {formatMxn(camMonthlyPool)}
                     </span>
-                    <Sparkline data={[250, 255, 260, 262, 265, 268.5, 268.5]} color="#475569" />
+                    <Sparkline data={[250, 255, 260, 262, 265, 268.5, 268.5]} color="#2563EB" />
                   </div>
-                  <p className="text-xs text-slate-600 font-medium">
+                  <p className="text-xs text-slate-500 font-medium">
                     Renata AI: Prorrateado sin desbalance
                   </p>
                 </div>
 
-                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
+                <div className="bg-white border border-slate-200/90 border-t-2 border-t-amber-500 rounded-2xl p-5 space-y-3 shadow-2xs hover:shadow-xs transition-shadow">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                       Eficiencia de Cobranza
                     </span>
-                    <span className="text-xs font-bold text-amber-800">
+                    <span className="text-xs font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                       1 Alerta SAT
                     </span>
                   </div>
@@ -553,7 +556,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                     <Sparkline data={[95, 96, 97, 96.5, 97.2, 97.6, 97.6]} color="#D97706" />
                   </div>
-                  <p className="text-xs text-slate-600 font-medium">
+                  <p className="text-xs text-slate-500 font-medium">
                     MINT Boutique CFDI pendiente
                   </p>
                 </div>
