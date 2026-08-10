@@ -22,9 +22,10 @@ export const config = {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // 1. Bypass static assets, private gate form, and site auth API
+  // 1. Bypass static assets, private gate form, console login, and site auth API
   if (
     pathname.startsWith(PRIVATE_GATE_PATH) ||
+    pathname.startsWith(CONSOLE_LOGIN_PATH) ||
     pathname.startsWith("/api/site-auth")
   ) {
     return NextResponse.next();

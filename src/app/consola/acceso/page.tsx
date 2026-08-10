@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { PageFade } from "@/components/ui";
 import { LoginForm } from "./login-form";
 
@@ -17,13 +16,11 @@ export default function ConsoleLoginPage() {
       <div className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-12">
         <div className="w-full rounded-lg border border-hairline-strong bg-sand-100 p-6 sm:p-8 shadow-lg">
           <div className="flex justify-center">
-            <Image
-              src="/brand/la-gran-via-logo.png"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/la-gran-via-logo-horizontal.png"
               alt="La Gran Vía"
-              width={2408}
-              height={923}
-              priority
-              className="h-11 w-auto"
+              className="h-11 w-auto object-contain"
             />
           </div>
 

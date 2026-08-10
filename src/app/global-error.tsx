@@ -15,6 +15,12 @@ export default function GlobalError({
           <p className="text-xs text-ink-500 font-sans">
             Ocurrió una interrupción al cargar el layout raíz.
           </p>
+          {_error?.message && (
+            <div className="p-3 bg-sand-200 border border-hairline rounded text-[11px] font-mono text-ink text-left overflow-auto max-h-36">
+              <p className="font-bold mb-1">Detalle técnico:</p>
+              <p>{_error.message}</p>
+            </div>
+          )}
           <button
             onClick={() => reset()}
             className="px-4 py-2 bg-dune-900 text-sand-100 font-bold text-xs rounded-xs hover:bg-dune-800 transition-all cursor-pointer"

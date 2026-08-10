@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { PageFade } from "@/components/ui";
 import { AccesoForm } from "./acceso-form";
 
@@ -17,13 +16,11 @@ export default function PrivateGatePage() {
       <div className="mx-auto flex min-h-[80vh] max-w-md items-center px-4 py-16">
         <div className="w-full rounded-xl border border-hairline-strong bg-sand-100 p-6 sm:p-8 shadow-xl">
           <div className="flex justify-center">
-            <Image
-              src="/brand/la-gran-via-logo.png"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/la-gran-via-logo-horizontal.png"
               alt="La Gran Vía"
-              width={2408}
-              height={923}
-              priority
-              className="h-12 w-auto"
+              className="h-12 w-auto object-contain"
             />
           </div>
 
