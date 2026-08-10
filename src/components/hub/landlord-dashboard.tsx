@@ -82,13 +82,13 @@ function RevenueTrendChart() {
   const collectedPoints = collected.map((v, i) => `${getX(i)},${getY(v)}`).join(" ");
 
   return (
-    <div className="relative w-full space-y-3">
+    <div className="relative w-full space-y-3 font-sans">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-display text-sm font-bold text-slate-900 tracking-tight">Actividad de Cobranza vs Facturación</h3>
-          <p className="text-[11px] text-slate-500 font-mono">Tendencia mensual de Renta Base en Millones MXN (2026)</p>
+          <p className="text-xs text-slate-500">Tendencia mensual de Renta Base en Millones MXN (2026)</p>
         </div>
-        <div className="flex items-center gap-4 text-xs font-medium font-mono">
+        <div className="flex items-center gap-4 text-xs font-semibold">
           <span className="flex items-center gap-1.5 text-slate-900">
             <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
             Facturado
@@ -112,7 +112,7 @@ function RevenueTrendChart() {
                 stroke="#E2E8F0"
                 strokeDasharray="4 4"
               />
-              <text x="5" y={getY(level) + 4} className="text-[9px] fill-slate-400 font-mono">
+              <text x="5" y={getY(level) + 4} className="text-[10px] fill-slate-400 font-medium">
                 ${level}M
               </text>
             </g>
@@ -171,8 +171,8 @@ function RevenueTrendChart() {
                   x={cx}
                   y={height - 4}
                   textAnchor="middle"
-                  className={`text-[10px] font-mono transition-colors ${
-                    isHovered ? "fill-slate-900 font-bold" : "fill-slate-500"
+                  className={`text-[11px] transition-colors ${
+                    isHovered ? "fill-slate-900 font-bold" : "fill-slate-500 font-medium"
                   }`}
                 >
                   {m}
@@ -184,14 +184,14 @@ function RevenueTrendChart() {
 
         {hoveredIdx !== null && (
           <div
-            className="absolute top-2 bg-slate-900 text-white rounded-md p-2 text-[11px] shadow-lg border border-slate-700 pointer-events-none transition-all font-mono"
+            className="absolute top-2 bg-slate-900 text-white rounded-xl p-3 text-xs shadow-xl border border-slate-700 pointer-events-none transition-all"
             style={{
               left: `${(hoveredIdx / (months.length - 1)) * 75 + 10}%`,
             }}
           >
-            <p className="font-bold text-slate-300 mb-0.5">{months[hoveredIdx]} 2026</p>
-            <p className="text-emerald-400">Recaudado: ${collected[hoveredIdx].toFixed(2)}M MXN</p>
-            <p className="text-slate-300">Facturado: ${contracted[hoveredIdx].toFixed(2)}M MXN</p>
+            <p className="font-bold text-slate-200 mb-0.5">{months[hoveredIdx]} 2026</p>
+            <p className="text-emerald-400 font-semibold">Recaudado: ${collected[hoveredIdx].toFixed(2)}M MXN</p>
+            <p className="text-slate-300 font-medium">Facturado: ${contracted[hoveredIdx].toFixed(2)}M MXN</p>
           </div>
         )}
       </div>
@@ -291,133 +291,133 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col lg:flex-row font-sans antialiased">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-md shadow-xl border border-slate-700 flex items-center gap-3 font-mono text-xs animate-slideUp">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs font-semibold animate-slideUp">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           <span>{toast}</span>
-          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer">
+          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer font-bold">
             ✕
           </button>
         </div>
       )}
 
       {/* LEFT SIDEBAR NAVIGATION */}
-      <aside className="w-full lg:w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between p-4 space-y-6">
+      <aside className="w-full lg:w-64 bg-white border-r border-slate-200/80 shrink-0 flex flex-col justify-between p-4.5 space-y-6">
         <div className="space-y-6">
           {/* Brand Header */}
           <div className="flex items-center gap-3 px-2 py-1">
-            <div className="h-8 w-8 rounded bg-slate-900 text-white flex items-center justify-center font-display font-bold text-sm shadow-xs">
+            <div className="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-display font-bold text-sm shadow-sm">
               GV
             </div>
             <div>
               <h1 className="font-display font-bold text-slate-900 text-sm tracking-tight">La Gran Vía</h1>
-              <p className="text-[11px] text-slate-500 font-mono">Asset Operations Hub</p>
+              <p className="text-xs text-slate-500 font-medium">Asset Management Hub</p>
             </div>
           </div>
 
           {/* Navigation Links */}
           <nav className="space-y-1">
-            <p className="px-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
-              General Analytics
+            <p className="px-2 text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Analítica & Operaciones
             </p>
 
             <button
               onClick={() => setActiveTab("analytics")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "analytics"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Analytics Dashboard</span>
-              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${activeTab === "analytics" ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
+              <span>Resumen Ejecutivo</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${activeTab === "analytics" ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
                 General
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("rentroll")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "rentroll"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
               <span>Rent Roll & Ocupación</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
                 84 Locales
               </span>
             </button>
 
-            <p className="px-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mt-5 mb-2">
-              Agentes de IA Autónomos
+            <p className="px-2 text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mt-6 mb-2">
+              Módulos de Inteligencia (IA)
             </p>
 
             <button
               onClick={() => setActiveTab("cam")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "cam"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Renata AI (CAM / SAT)</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+              <span>Renata (CAM / SAT)</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
                 1 Alerta
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("legal")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "legal"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Mariana AI (Legal RAG)</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
-                Exclusividad
+              <span>Mariana (Legal RAG)</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                Contratos
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("maint")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "maint"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Diego AI (CapEx & Ops)</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+              <span>Diego (CapEx & Ops)</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                 Garantías
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("erp")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "erp"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Conector ERP Universal</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
-                Neutral ERP
+              <span>Conector ERP SAP</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                Sincronizado
               </span>
             </button>
           </nav>
         </div>
 
         {/* Footer Session Badge */}
-        <div className="pt-4 border-t border-slate-200 space-y-3">
-          <div className="rounded-md bg-slate-100 p-2.5 space-y-1 text-xs">
-            <div className="flex items-center justify-between text-slate-700 font-medium">
+        <div className="pt-4 border-t border-slate-100 space-y-3">
+          <div className="rounded-xl bg-slate-50 p-3 space-y-1 text-xs border border-slate-200/60">
+            <div className="flex items-center justify-between text-slate-900 font-bold">
               <span>Propietario / Admin</span>
-              <span className="h-2 w-2 rounded-full bg-emerald-600" />
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
             </div>
-            <p className="text-[11px] text-slate-500 font-mono truncate">Sesión activa · {periodLabel}</p>
+            <p className="text-xs text-slate-500 font-medium truncate">Sesión activa · {periodLabel}</p>
           </div>
         </div>
       </aside>
@@ -425,24 +425,24 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* TOP HEADER BAR */}
-        <header className="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20">
+        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20">
           {/* Global Search Bar */}
           <div className="relative flex-1 max-w-md">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar inquilino, local, contrato o serie..."
-              className="w-full bg-slate-100 border border-slate-200 rounded-md pl-3 pr-12 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white transition-all font-mono"
+              placeholder="Buscar por inquilino, local, contrato o serie..."
+              className="w-full bg-slate-100/80 border border-slate-200/80 rounded-xl pl-4 pr-12 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white transition-all font-medium"
             />
-            <kbd className="absolute right-3 top-2 text-[10px] font-mono text-slate-400 border border-slate-200 bg-white px-1.5 py-0.5 rounded">
+            <span className="absolute right-3.5 top-2.5 text-[10px] font-bold text-slate-400 border border-slate-200 bg-white px-2 py-0.5 rounded-md">
               ⌘K
-            </kbd>
+            </span>
           </div>
 
           {/* Controls & AI Copilot Drawer Toggle */}
           <div className="flex items-center gap-3">
-            <select className="bg-slate-100 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-mono text-slate-700 focus:outline-none cursor-pointer">
+            <select className="bg-slate-100/80 border border-slate-200/80 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
               <option>{periodLabel}</option>
               <option>Julio 2026</option>
               <option>Q3 2026</option>
@@ -477,12 +477,12 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
             <div className="space-y-6 animate-fadeIn">
               {/* TOP KPI CARDS GRID */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                       Renta Contratada Mensual
                     </span>
-                    <span className="text-xs font-bold text-emerald-700 font-mono">
+                    <span className="text-xs font-bold text-emerald-700">
                       +3.5%
                     </span>
                   </div>
@@ -492,17 +492,17 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                     <Sparkline data={[2.1, 2.2, 2.25, 2.3, 2.4, 2.45, 2.48]} color="#0F172A" />
                   </div>
-                  <p className="text-[11px] text-slate-500 font-mono">
+                  <p className="text-xs text-slate-500 font-medium">
                     79 de 84 locales con pago al día
                   </p>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                       Ocupación de Plaza (GLA)
                     </span>
-                    <span className="text-xs font-bold text-emerald-700 font-mono">
+                    <span className="text-xs font-bold text-emerald-700">
                       +1.2%
                     </span>
                   </div>
@@ -512,17 +512,17 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                     <Sparkline data={[94, 94.5, 95, 95.2, 95.8, 96, 96.4]} color="#0F172A" />
                   </div>
-                  <p className="text-[11px] text-slate-500 font-mono">
+                  <p className="text-xs text-slate-500 font-medium">
                     {leasedSqm.toLocaleString("es-MX")} m² de {plazaTotalGla.toLocaleString("es-MX")} m²
                   </p>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                       Fondo CAM NNN Mensual
                     </span>
-                    <span className="text-xs font-bold text-slate-600 font-mono">
+                    <span className="text-xs font-bold text-slate-600">
                       100% Bal.
                     </span>
                   </div>
@@ -532,17 +532,17 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                     <Sparkline data={[250, 255, 260, 262, 265, 268.5, 268.5]} color="#475569" />
                   </div>
-                  <p className="text-[11px] text-slate-600 font-mono">
+                  <p className="text-xs text-slate-600 font-medium">
                     Renata AI: Prorrateado sin desbalance
                   </p>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+                <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                       Eficiencia de Cobranza
                     </span>
-                    <span className="text-xs font-bold text-amber-800 font-mono">
+                    <span className="text-xs font-bold text-amber-800">
                       1 Alerta SAT
                     </span>
                   </div>
@@ -552,7 +552,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                     <Sparkline data={[95, 96, 97, 96.5, 97.2, 97.6, 97.6]} color="#D97706" />
                   </div>
-                  <p className="text-[11px] text-slate-600 font-mono">
+                  <p className="text-xs text-slate-600 font-medium">
                     MINT Boutique CFDI pendiente
                   </p>
                 </div>
@@ -560,59 +560,59 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
               {/* MIDDLE ANALYTICS VISUALS GRID */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg p-5 shadow-2xs">
+                <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
                   <RevenueTrendChart />
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4 shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-display text-sm font-bold text-slate-900 tracking-tight">Distribución por Giro Comercial</h3>
-                      <p className="text-[11px] text-slate-500 font-mono">84 Locales en 4 zonas clave</p>
+                      <h3 className="font-display text-base font-bold text-slate-900 tracking-tight">Distribución por Giro Comercial</h3>
+                      <p className="text-xs text-slate-500">84 Locales en 4 zonas clave</p>
                     </div>
-                    <span className="text-xs font-mono text-slate-400">7,550 m²</span>
+                    <span className="text-xs font-bold text-slate-400">7,550 m²</span>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="h-2.5 w-full rounded bg-slate-100 flex overflow-hidden">
+                  <div className="space-y-3">
+                    <div className="h-3 w-full rounded-full bg-slate-100 flex overflow-hidden">
                       <div className="bg-slate-900 h-full w-[32%]" title="Gastronomía (32%)" />
                       <div className="bg-slate-700 h-full w-[28%]" title="Retail & Moda (28%)" />
                       <div className="bg-slate-500 h-full w-[24%]" title="Servicios (24%)" />
                       <div className="bg-slate-300 h-full w-[16%]" title="Entretenimiento (16%)" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-1">
+                    <div className="grid grid-cols-2 gap-2 text-xs font-medium pt-1">
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-slate-900" />
-                        <span className="text-slate-600">Gastronomía (32%)</span>
+                        <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
+                        <span className="text-slate-700">Gastronomía (32%)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-slate-700" />
-                        <span className="text-slate-600">Retail/Moda (28%)</span>
+                        <span className="h-2.5 w-2.5 rounded-full bg-slate-700" />
+                        <span className="text-slate-700">Retail/Moda (28%)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-slate-500" />
-                        <span className="text-slate-600">Servicios (24%)</span>
+                        <span className="h-2.5 w-2.5 rounded-full bg-slate-500" />
+                        <span className="text-slate-700">Servicios (24%)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-slate-300" />
-                        <span className="text-slate-600">Entretenimiento (16%)</span>
+                        <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                        <span className="text-slate-700">Entretenimiento (16%)</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100">
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-800">Mapa de Ocupación por Local</span>
-                      <span className="text-[10px] font-mono text-slate-500">81 Activos · 1 Vacante</span>
+                      <span className="text-xs text-slate-500 font-medium">81 Activos · 1 Vacante</span>
                     </div>
 
-                    <div className="grid grid-cols-12 gap-1 max-h-24 overflow-y-auto p-1 bg-slate-50 rounded border border-slate-200">
+                    <div className="grid grid-cols-12 gap-1 max-h-24 overflow-y-auto p-1.5 bg-slate-50 rounded-xl border border-slate-200/80">
                       {rentRoll.slice(0, 48).map((r, i) => (
                         <div
                           key={r.slug}
                           title={`${r.name} (${r.zone}) - ${r.fiscalAlert ? 'Alerta SAT' : 'OK'}`}
-                          className={`h-3 rounded-xs transition-transform hover:scale-125 cursor-pointer ${
+                          className={`h-3.5 rounded-xs transition-transform hover:scale-125 cursor-pointer ${
                             r.fiscalAlert
                               ? "bg-amber-600"
                               : i === 12
@@ -627,15 +627,15 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               </div>
 
               {/* RESTRAINED & INSTITUTIONAL AI AGENT OPERATIONS CONSOLE */}
-              <section className="bg-white border border-slate-200 rounded-lg p-5 space-y-5 shadow-2xs">
+              <section className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-xs">
                 {/* Console Title & Live Status */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                        AI Agent Operations
+                      <span className="bg-slate-900 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wide">
+                        Módulos de Inteligencia
                       </span>
-                      <span className="text-xs text-slate-500 font-mono">{"// Conector ERP Universal"}</span>
+                      <span className="text-xs text-slate-500 font-medium">Sincronización con ERP SAP</span>
                     </div>
                     <h2 className="font-display text-lg font-bold text-slate-900 tracking-tight">
                       Módulos Operativos de Inteligencia (Renata · Mariana · Diego)
@@ -646,7 +646,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   </div>
 
                   <div className="shrink-0 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1 rounded-md text-xs font-mono text-slate-700">
+                    <span className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700">
                       <span className="h-2 w-2 rounded-full bg-emerald-600" />
                       3 Agentes Activos
                     </span>
@@ -654,8 +654,8 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 </div>
 
                 {/* Interactive Query Input Bar */}
-                <div className="bg-slate-50 border border-slate-200 rounded-md p-3.5 space-y-3">
-                  <label className="block font-mono text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                     Consulta RAG al Copilot de Asset Management
                   </label>
 
@@ -665,19 +665,19 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       value={userQuery}
                       onChange={(e) => setUserQuery(e.target.value)}
                       placeholder="Ej. ¿Cómo resolver la alerta fiscal de MINT Boutique? o ¿Qué contratos vencen pronto?"
-                      className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-500 font-mono"
+                      className="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-500 font-medium"
                     />
                     <button
                       type="submit"
-                      className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded-md text-xs font-bold font-mono transition-colors shrink-0 cursor-pointer"
+                      className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
                     >
                       Consultar IA →
                     </button>
                   </form>
 
                   {/* Suggestion Chips */}
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs pt-0.5">
-                    <span className="text-slate-400 font-mono text-[10.5px] mr-1">Sugerencias:</span>
+                  <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
+                    <span className="text-slate-400 font-semibold text-xs mr-1">Sugerencias:</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -687,7 +687,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           "Renata AI: MINT Boutique pagó $18,400 MXN en banco pero falta timbrar el complemento CFDI 4.0 en el SAT. Haz clic en 'Emitir Complemento SAT' en el módulo de Renata para resolverlo automáticamente."
                         );
                       }}
-                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer transition-colors"
+                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors"
                     >
                       Alerta SAT MINT Boutique
                     </button>
@@ -701,7 +701,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           "Mariana AI: Dunkin' Donuts solicita abrir en Local B-04. El análisis RAG del PDF del contrato de Starbucks (página 4, Cláusula 14.2) prohibe strictly competidores directos de café de especialidad. Dictamen: RECHAZADO."
                         );
                       }}
-                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer transition-colors"
+                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors"
                     >
                       Exclusividad Starbucks (RAG)
                     </button>
@@ -715,7 +715,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           "Diego AI: Recibido reporte por WhatsApp para el Local A-04. Verifiqué póliza de garantía vigente con Climas de Mexicali (Serie: MX-HVAC-9902). Asignado a Carlos R. con $0 costo para la plaza."
                         );
                       }}
-                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer transition-colors"
+                      className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors"
                     >
                       WhatsApp HVAC Climas
                     </button>
@@ -723,12 +723,12 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
                   {/* Query Result Box */}
                   {queryResult && (
-                    <div className="mt-2.5 bg-white border border-slate-300 rounded-md p-3 text-xs text-slate-800 animate-fadeIn space-y-1">
+                    <div className="mt-3 bg-white border border-slate-300 rounded-xl p-4 text-xs text-slate-800 animate-fadeIn space-y-1.5 shadow-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-slate-900 text-[10.5px]">Respuesta RAG</span>
-                        <button onClick={() => setQueryResult(null)} className="text-slate-400 hover:text-slate-700 font-mono cursor-pointer">✕</button>
+                        <span className="font-bold text-slate-900 text-xs">Respuesta RAG</span>
+                        <button onClick={() => setQueryResult(null)} className="text-slate-400 hover:text-slate-700 font-bold cursor-pointer">✕</button>
                       </div>
-                      <p className="leading-relaxed font-sans">{queryResult}</p>
+                      <p className="leading-relaxed text-slate-700">{queryResult}</p>
                     </div>
                   )}
                 </div>
@@ -736,11 +736,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 {/* 3 CORE INSTITUTIONAL AGENT CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* AGENT 1: RENATA AI */}
-                  <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between space-y-4">
-                    <div className="space-y-2">
+                  <div className="bg-white border border-slate-200/80 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-xs">
+                    <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold text-slate-900">Renata AI</span>
-                        <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-mono text-[10px] font-bold">
+                        <span className="text-xs font-bold text-slate-900">Renata AI</span>
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 rounded-md text-[11px] font-bold">
                           CAM & SAT CFDI
                         </span>
                       </div>
@@ -751,11 +751,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         Audita el fondo CAM de $268,500 MXN sin desbalance y verifica el timbrado fiscal CFDI 4.0 de los 84 inquilinos.
                       </p>
 
-                      <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-1 text-xs font-mono">
-                        <span className="text-[10px] font-bold text-slate-700 uppercase block">
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1 text-xs">
+                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide block">
                           {cfdiIssued ? "Status: REGULARIZADO" : "Estatus: ALERTA DETECTADA"}
                         </span>
-                        <p className="text-slate-600 text-[11px]">
+                        <p className="text-slate-600 text-xs font-medium">
                           {cfdiIssued
                             ? "Complemento de pago timbrado exitosamente en el SAT."
                             : "MINT Boutique ($18,400 MXN) pagó sin complemento CFDI."}
@@ -763,20 +763,20 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                    <div className="pt-3 border-t border-slate-100 space-y-2">
                       <button
                         onClick={() => {
                           setCfdiIssued(true);
                           triggerToast("Renata AI: Complemento de pago CFDI 4.0 emitido y enviado a contabilidad.");
                         }}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-1.5 rounded-md text-xs font-mono font-bold transition-colors cursor-pointer"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                       >
                         {cfdiIssued ? "Complemento Emitido" : "Emitir Complemento SAT →"}
                       </button>
 
                       <button
                         onClick={() => setActiveTab("cam")}
-                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer text-center block"
+                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-center block"
                       >
                         Ver Matriz NNN ($268.5k) →
                       </button>
@@ -784,11 +784,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   </div>
 
                   {/* AGENT 2: MARIANA AI */}
-                  <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between space-y-4">
-                    <div className="space-y-2">
+                  <div className="bg-white border border-slate-200/80 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-xs">
+                    <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold text-slate-900">Mariana AI</span>
-                        <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-mono text-[10px] font-bold">
+                        <span className="text-xs font-bold text-slate-900">Mariana AI</span>
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 rounded-md text-[11px] font-bold">
                           Legal RAG & Lease
                         </span>
                       </div>
@@ -799,30 +799,30 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         Analiza contratos PDF en tiempo real para proteger $1.8M MXN anuales y evaluar nuevos prospectos de arrendamiento.
                       </p>
 
-                      <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-1 text-xs">
-                        <span className="font-mono text-[10px] font-bold text-slate-700 uppercase block">
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1 text-xs">
+                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide block">
                           Cláusula 14.2 (Starbucks)
                         </span>
-                        <p className="text-slate-600 text-[11px] italic font-mono">
+                        <p className="text-slate-600 text-xs italic font-medium">
                           &ldquo;Queda prohibida la venta de café de especialidad a menos de 50m...&rdquo;
                         </p>
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                    <div className="pt-3 border-t border-slate-100 space-y-2">
                       <button
                         onClick={() => {
                           setAttorneyNotified(true);
                           triggerToast("Mariana AI: Dictamen legal enviado al despacho de abogados.");
                         }}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-1.5 rounded-md text-xs font-mono font-bold transition-colors cursor-pointer"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                       >
                         {attorneyNotified ? "Notificación Enviada" : "Enviar a Abogado →"}
                       </button>
 
                       <button
                         onClick={() => setActiveTab("legal")}
-                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer text-center block"
+                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-center block"
                       >
                         Ver Bóveda Legal PDF →
                       </button>
@@ -830,11 +830,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   </div>
 
                   {/* AGENT 3: DIEGO AI */}
-                  <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between space-y-4">
-                    <div className="space-y-2">
+                  <div className="bg-white border border-slate-200/80 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-xs">
+                    <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold text-slate-900">Diego AI</span>
-                        <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-mono text-[10px] font-bold">
+                        <span className="text-xs font-bold text-slate-900">Diego AI</span>
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 rounded-md text-[11px] font-bold">
                           CapEx & Ops
                         </span>
                       </div>
@@ -845,30 +845,30 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         Mesa de ayuda 24/7 por WhatsApp para inquilinos. Verifica pólizas de garantía para reducir costos de plaza a $0.
                       </p>
 
-                      <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-1 text-xs font-mono">
-                        <p className="text-slate-700 text-[10.5px]">
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1 text-xs">
+                        <p className="text-slate-800 text-xs font-semibold">
                           Inquilino: &ldquo;Aire no enfría en A-04&rdquo;
                         </p>
-                        <p className="text-slate-500 text-[10.5px]">
-                          Diego: Garantie MX-HVAC-9902 activa. Técnico asignado.
+                        <p className="text-slate-600 text-xs font-medium">
+                          Diego: Garantía MX-HVAC-9902 activa. Técnico asignado.
                         </p>
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                    <div className="pt-3 border-t border-slate-100 space-y-2">
                       <button
                         onClick={() => {
                           setHvacDispatched(true);
                           triggerToast("Diego AI: Orden enviada por WhatsApp a Climas de Mexicali.");
                         }}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-1.5 rounded-md text-xs font-mono font-bold transition-colors cursor-pointer"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                       >
                         {hvacDispatched ? "Técnico Despachado" : "Despachar Mantenimiento →"}
                       </button>
 
                       <button
                         onClick={() => setActiveTab("maint")}
-                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer text-center block"
+                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-center block"
                       >
                         Ver Bitácora de Equipos →
                       </button>
@@ -878,30 +878,30 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               </section>
 
               {/* RENT ROLL & TENANT ANALYTICS TABLE */}
-              <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden space-y-4 p-5">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden space-y-4 p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="font-display text-base font-bold text-slate-900 tracking-tight">Rent Roll de Inquilinos & Estatus IA</h3>
-                    <p className="text-xs text-slate-500 font-mono">Métrica individual de 84 locales con verificación fiscal y mantenimiento</p>
+                    <p className="text-xs text-slate-500 font-medium">Métrica individual de 84 locales con verificación fiscal y mantenimiento</p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center bg-slate-100 p-1 rounded-md text-xs font-mono">
+                    <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
                       <button
                         onClick={() => setCategoryFilter("ALL")}
-                        className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${categoryFilter === "ALL" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
+                        className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${categoryFilter === "ALL" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
                       >
                         Todos ({rentRoll.length})
                       </button>
                       <button
                         onClick={() => setCategoryFilter("Restaurante & Bar")}
-                        className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${categoryFilter === "Restaurante & Bar" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
+                        className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${categoryFilter === "Restaurante & Bar" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
                       >
                         Gastronomía
                       </button>
                       <button
                         onClick={() => setCategoryFilter("Tienda & Moda")}
-                        className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${categoryFilter === "Tienda & Moda" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
+                        className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${categoryFilter === "Tienda & Moda" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600"}`}
                       >
                         Retail
                       </button>
@@ -910,7 +910,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="bg-slate-100 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-mono text-slate-700 focus:outline-none cursor-pointer"
+                      className="bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
                     >
                       <option value="ALL">Estatus: Todos</option>
                       <option value="OK">Al día</option>
@@ -920,58 +920,58 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-700">
-                    <thead className="bg-slate-50 text-[10px] font-mono uppercase text-slate-500 border-y border-slate-200">
+                  <table className="w-full text-left text-xs text-slate-700 font-sans">
+                    <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-600 border-y border-slate-200">
                       <tr>
-                        <th className="py-2.5 px-3">Local / Inquilino</th>
-                        <th className="py-2.5 px-3">Giro / Zona</th>
-                        <th className="py-2.5 px-3 text-right">Superficie (GLA)</th>
-                        <th className="py-2.5 px-3 text-right">Renta Base</th>
-                        <th className="py-2.5 px-3 text-right">Cuota CAM NNN</th>
-                        <th className="py-2.5 px-3">Estatus Fiscal & IA</th>
-                        <th className="py-2.5 px-3 text-center">Acciones IA</th>
+                        <th className="py-3 px-4">Local / Inquilino</th>
+                        <th className="py-3 px-4">Giro / Zona</th>
+                        <th className="py-3 px-4 text-right">Superficie (GLA)</th>
+                        <th className="py-3 px-4 text-right">Renta Base</th>
+                        <th className="py-3 px-4 text-right">Cuota CAM NNN</th>
+                        <th className="py-3 px-4">Estatus Fiscal & IA</th>
+                        <th className="py-3 px-4 text-center">Acciones IA</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-mono">
+                    <tbody className="divide-y divide-slate-100">
                       {filteredRentRoll.slice(0, 10).map((row) => (
                         <tr key={row.slug} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-3 px-3">
-                            <div className="font-sans font-bold text-slate-900 text-xs">{row.name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">{row.slug}</div>
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-slate-900 text-xs">{row.name}</div>
+                            <div className="text-[11px] text-slate-400 font-medium">{row.slug}</div>
                           </td>
-                          <td className="py-3 px-3 font-sans">
-                            <span className="inline-block bg-slate-100 px-2 py-0.5 rounded text-[11px] text-slate-600">
+                          <td className="py-3.5 px-4">
+                            <span className="inline-block bg-slate-100 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-700">
                               {row.zone}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-right font-mono">
+                          <td className="py-3.5 px-4 text-right font-medium">
                             {row.sqm} m² <span className="text-slate-400">({row.sharePct.toFixed(2)}%)</span>
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-medium text-slate-900">
+                          <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                             {formatMxn(row.rent)}
                           </td>
-                          <td className="py-3 px-3 text-right font-mono text-slate-600">
+                          <td className="py-3.5 px-4 text-right text-slate-600 font-medium">
                             {formatMxn((row.rent * 0.12))}
                           </td>
-                          <td className="py-3 px-3 font-sans">
+                          <td className="py-3.5 px-4">
                             {row.fiscalAlert ? (
-                              <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-0.5 rounded text-[10.5px] font-mono font-medium">
+                              <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-md text-xs font-bold">
                                 Inconsistencia CFDI SAT
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded text-[10.5px] font-mono font-medium">
+                              <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 border border-slate-200/80 px-2.5 py-1 rounded-md text-xs font-medium">
                                 Al Día
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center font-sans">
+                          <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => {
                                 setCopilotOpen(true);
                                 setActiveAgent(row.fiscalAlert ? "renata" : "mariana");
                                 triggerToast(`Copilot IA activado para ${row.name}`);
                               }}
-                              className="bg-white hover:bg-slate-900 hover:text-white text-slate-700 border border-slate-200 px-2.5 py-1 rounded text-[11px] font-mono transition-all cursor-pointer"
+                              className="bg-white hover:bg-slate-900 hover:text-white text-slate-700 border border-slate-200 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                             >
                               Consultar IA →
                             </button>
@@ -982,11 +982,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   </table>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-slate-500 font-mono pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-3 border-t border-slate-100">
                   <span>Mostrando {Math.min(10, filteredRentRoll.length)} de {rentRoll.length} locales</span>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 bg-white rounded border border-slate-200 text-slate-600 cursor-pointer hover:bg-slate-50">Anterior</button>
-                    <button className="px-3 py-1 bg-slate-900 text-white rounded cursor-pointer">Siguiente</button>
+                    <button className="px-3.5 py-1.5 bg-white rounded-xl border border-slate-200 text-slate-700 font-semibold cursor-pointer hover:bg-slate-50">Anterior</button>
+                    <button className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl font-bold cursor-pointer">Siguiente</button>
                   </div>
                 </div>
               </div>
@@ -995,30 +995,30 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
           {/* OTHER DEEP DIVE TABS (Rent Roll, CAM, Mantenimiento, Legal, Universal ERP) */}
           {activeTab === "rentroll" && (
-            <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 animate-fadeIn">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs font-sans">
               <div>
                 <h2 className="font-display text-xl font-bold text-slate-900">Rent Roll Completo & Distribución GLA</h2>
-                <p className="text-xs text-slate-500 font-mono">84 Locales activos en La Gran Vía Mexicali</p>
+                <p className="text-xs text-slate-500 font-medium mt-1">84 Locales activos en La Gran Vía Mexicali</p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 font-mono text-[10px] uppercase text-slate-500 border-y border-slate-200">
+                  <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-600 border-b border-slate-200">
                     <tr>
-                      <th className="p-3">Local</th>
-                      <th className="p-3">Inquilino</th>
-                      <th className="p-3">Superficie</th>
-                      <th className="p-3 font-right">Renta Mensual</th>
-                      <th className="p-3">% Prorrateo</th>
+                      <th className="p-3.5">Local</th>
+                      <th className="p-3.5">Inquilino</th>
+                      <th className="p-3.5">Superficie</th>
+                      <th className="p-3.5 text-right">Renta Mensual</th>
+                      <th className="p-3.5 text-right">% Prorrateo</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono">
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
                     {rentRoll.map((r) => (
-                      <tr key={r.slug} className="hover:bg-slate-50">
-                        <td className="p-3 text-slate-500">{r.slug}</td>
-                        <td className="p-3 font-sans font-bold text-slate-900">{r.name}</td>
-                        <td className="p-3">{r.sqm} m²</td>
-                        <td className="p-3 font-bold">{formatMxn(r.rent)}</td>
-                        <td className="p-3">{r.sharePct.toFixed(2)}%</td>
+                      <tr key={r.slug} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-3.5 text-slate-500 font-medium">{r.slug}</td>
+                        <td className="p-3.5 font-bold text-slate-900">{r.name}</td>
+                        <td className="p-3.5 font-medium">{r.sqm} m²</td>
+                        <td className="p-3.5 text-right font-bold text-slate-900">{formatMxn(r.rent)}</td>
+                        <td className="p-3.5 text-right font-medium">{r.sharePct.toFixed(2)}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1128,7 +1128,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       <span className="text-sm font-bold text-slate-900">1. Portal Inquilinos</span>
                       <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Automático</span>
                     </div>
-                    <p className="text-xs text-slate-600">Comprobantes y ventas enviados directamente por los locales en <code className="bg-slate-200/80 px-1 py-0.5 rounded text-slate-900 font-mono">/inquilinos</code>.</p>
+                    <p className="text-xs text-slate-600">Comprobantes y ventas enviados directamente por los locales en <code className="bg-slate-200/80 px-1.5 py-0.5 rounded text-slate-900 font-sans">/inquilinos</code>.</p>
                   </div>
 
                   <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
@@ -1256,34 +1256,34 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           )}
 
           {activeTab === "maint" && (
-            <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 animate-fadeIn">
-              <div className="flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs font-sans">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
                   <h2 className="font-display text-xl font-bold text-slate-900">Bitácora CapEx & Diego AI</h2>
-                  <p className="text-xs text-slate-500 font-mono">Garantías, mantenimiento y reclamos a proveedores</p>
+                  <p className="text-xs text-slate-500 font-medium mt-1">Garantías de equipos, mantenimiento preventivo y reclamos a proveedores</p>
                 </div>
                 <button
                   onClick={() => {
                     setHvacDispatched(true);
                     triggerToast("Técnico de Climas de Mexicali despachado.");
                   }}
-                  className="bg-slate-900 text-white px-3 py-1.5 rounded text-xs font-mono font-bold cursor-pointer"
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                 >
-                  {hvacDispatched ? "Despachado" : "Despachar Técnico HVAC →"}
+                  {hvacDispatched ? "✓ Técnico Despachado" : "Despachar Técnico HVAC →"}
                 </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {criticalEquipment.map((eq) => (
-                  <div key={eq.serial} className="border border-slate-200 rounded-lg p-4 space-y-2 bg-slate-50">
+                  <div key={eq.serial} className="border border-slate-200/80 rounded-xl p-5 space-y-3 bg-slate-50/50">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 text-xs font-mono">{eq.asset}</span>
-                      <span className="bg-slate-200 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                      <span className="font-bold text-slate-900 text-sm">{eq.asset}</span>
+                      <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                         {eq.status}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 font-mono">Modelo: {eq.model} | Serie: {eq.serial}</p>
-                    <p className="text-xs text-slate-500 font-mono">Garantía: {eq.warranty} ({eq.doc})</p>
+                    <p className="text-xs text-slate-600 font-medium">Modelo: {eq.model} | Serie: {eq.serial}</p>
+                    <p className="text-xs text-slate-500 font-medium">Garantía: {eq.warranty} ({eq.doc})</p>
                   </div>
                 ))}
               </div>
@@ -1291,36 +1291,36 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           )}
 
           {activeTab === "legal" && (
-            <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 animate-fadeIn">
-              <div className="flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs font-sans">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
                   <h2 className="font-display text-xl font-bold text-slate-900">Bóveda Legal RAG & Mariana AI</h2>
-                  <p className="text-xs text-slate-500 font-mono">Análisis de contratos y exclusividades</p>
+                  <p className="text-xs text-slate-500 font-medium mt-1">Análisis automatizado de contratos PDF y cláusulas de exclusividad comercial</p>
                 </div>
                 <button
                   onClick={() => {
                     setAttorneyNotified(true);
                     triggerToast("Notificación legal enviada a despacho.");
                   }}
-                  className="bg-slate-900 text-white px-3 py-1.5 rounded text-xs font-mono font-bold cursor-pointer"
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                 >
-                  {attorneyNotified ? "Notificado" : "Enviar a Abogado →"}
+                  {attorneyNotified ? "✓ Notificación Enviada" : "Enviar a Abogado →"}
                 </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {leasingApplicants.map((app) => (
-                  <div key={app.id} className="border border-slate-200 rounded-lg p-4 space-y-3 bg-slate-50">
+                  <div key={app.id} className="border border-slate-200/80 rounded-xl p-5 space-y-3 bg-slate-50/50">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-900 text-sm font-display">{app.brand} ({app.category})</span>
-                      <span className="bg-slate-200 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                      <span className="bg-amber-100 text-amber-900 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                         {app.status}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-700">{app.reasoning}</p>
-                    <div className="bg-white p-2.5 rounded border border-slate-200 text-[11px] font-mono text-slate-600 space-y-1">
-                      <p className="font-bold text-slate-800">Cláusula Extraída ({app.contractPdfName}):</p>
-                      <p className="italic text-slate-500">&ldquo;{app.contractExactSnippet}&rdquo;</p>
+                    <p className="text-xs text-slate-700 leading-relaxed font-medium">{app.reasoning}</p>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200/80 text-xs text-slate-600 space-y-1 shadow-2xs">
+                      <p className="font-bold text-slate-900">Cláusula Extraída ({app.contractPdfName}):</p>
+                      <p className="italic text-slate-600 font-medium">&ldquo;{app.contractExactSnippet}&rdquo;</p>
                     </div>
                   </div>
                 ))}
@@ -1329,22 +1329,22 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           )}
 
           {activeTab === "erp" && (
-            <div className="bg-slate-900 text-white border border-slate-800 rounded-lg p-6 space-y-6 font-mono animate-fadeIn">
-              <div className="flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs font-sans text-slate-900">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-5">
                 <div>
-                  <h2 className="font-display text-xl font-bold text-white">Conector ERP Universal Stream</h2>
-                  <p className="text-xs text-slate-400">Adaptador de datos neutral (SAARI, Yardi, RealPage, SAP, Custom API)</p>
+                  <h2 className="font-display text-xl font-bold text-slate-900">Conector ERP Universal Sync</h2>
+                  <p className="text-xs text-slate-500 font-medium mt-1">Sincronización automatizada con SAP, Yardi, RealPage y SAARI ERP</p>
                 </div>
-                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 rounded text-xs font-bold">
-                  Endpoint Neutral Activo
+                <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-3.5 py-1.5 rounded-xl text-xs font-bold">
+                  Sincronización Activa (200 OK)
                 </span>
               </div>
 
-              <div className="bg-black/60 p-4 rounded-md border border-slate-800 text-xs space-y-2 max-h-64 overflow-y-auto text-emerald-400">
-                <p>[ERP-SYNC 14:58:12] POST /api/v2/erp/batch-ingest ... 200 OK (Universal Adapter)</p>
-                <p>[ERP-SYNC 14:58:14] Processing 84 Rent Roll rows for La Gran Vía Mexicali.</p>
-                <p>[ERP-SYNC 14:58:15] Validated CAM Pool: $268,500 MXN against 79 active leases.</p>
-                <p>[ERP-SYNC 14:58:16] System Adapter: Connected to ERP System (Auto-detect schema).</p>
+              <div className="bg-slate-900 text-slate-200 p-5 rounded-2xl border border-slate-800 text-xs space-y-2.5 max-h-64 overflow-y-auto leading-relaxed shadow-sm font-sans">
+                <p className="text-emerald-400 font-semibold">[ERP-SYNC 14:58:12] POST /api/v2/erp/batch-ingest ... 200 OK (Universal Adapter)</p>
+                <p>[ERP-SYNC 14:58:14] Sincronizados 84 locales comerciales para La Gran Vía Mexicali.</p>
+                <p>[ERP-SYNC 14:58:15] Validado Fondo CAM: $268,500 MXN contra 79 contratos vigentes.</p>
+                <p>[ERP-SYNC 14:58:16] Adaptador Neutral: Conectado a ERP SAP (Esquema detectado automáticamente).</p>
               </div>
             </div>
           )}
@@ -1353,41 +1353,41 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
       {/* AI ASSISTANT DRAWER / SLIDE-OVER PANEL */}
       {copilotOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between animate-slideLeft">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between animate-slideLeft font-sans">
           <div className="p-4 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               <h3 className="font-display font-bold text-sm">Copilot Sidebar</h3>
             </div>
             <button
               onClick={() => setCopilotOpen(false)}
-              className="text-slate-400 hover:text-white text-xs cursor-pointer font-mono"
+              className="text-slate-400 hover:text-white text-xs cursor-pointer font-bold"
             >
               ✕ Cerrar
             </button>
           </div>
 
-          <div className="p-3 bg-slate-100 border-b border-slate-200 flex gap-1 font-mono text-xs">
+          <div className="p-3 bg-slate-100 border-b border-slate-200 flex gap-1 text-xs font-semibold">
             <button
               onClick={() => setActiveAgent("renata")}
-              className={`flex-1 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
-                activeAgent === "renata" ? "bg-slate-900 text-white font-bold" : "text-slate-600 hover:text-slate-900"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                activeAgent === "renata" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Renata (CAM)
             </button>
             <button
               onClick={() => setActiveAgent("mariana")}
-              className={`flex-1 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
-                activeAgent === "mariana" ? "bg-slate-900 text-white font-bold" : "text-slate-600 hover:text-slate-900"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                activeAgent === "mariana" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Mariana (Legal)
             </button>
             <button
               onClick={() => setActiveAgent("diego")}
-              className={`flex-1 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
-                activeAgent === "diego" ? "bg-slate-900 text-white font-bold" : "text-slate-600 hover:text-slate-900"
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                activeAgent === "diego" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Diego (CapEx)
@@ -1395,28 +1395,28 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-            <div className="bg-slate-50 border border-slate-200 rounded-md p-3 space-y-1.5">
-              <span className="font-bold text-slate-800 text-[10.5px] uppercase tracking-wider block font-mono">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1.5">
+              <span className="font-bold text-slate-800 text-xs uppercase tracking-wide block">
                 Alerta Detectada por el Agente
               </span>
-              <p className="text-slate-700 leading-relaxed font-mono text-[11px]">
+              <p className="text-slate-700 leading-relaxed font-medium text-xs">
                 {activeAgent === "renata" && "MINT Boutique presenta inconsistencia CFDI 4.0 ($18,400 MXN pagados sin complemento)."}
                 {activeAgent === "mariana" && "Solicitud de Dunkin' Donuts viola la exclusividad de café de Starbucks (Cláusula 14.2)."}
                 {activeAgent === "diego" && "Equipo HVAC de Mexicali Climas en garantía vigente (Serie: MX-HVAC-9902)."}
               </p>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-md p-3 space-y-2">
-              <div className="flex items-center justify-between font-mono text-[10px] text-slate-500">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                 <span>Consulta al Agente</span>
-                <span>{activeAgent.toUpperCase()} AI</span>
+                <span className="font-bold text-slate-900">{activeAgent.toUpperCase()} AI</span>
               </div>
-              <p className="font-bold text-slate-900 font-mono text-[11px]">
+              <p className="font-bold text-slate-900 text-xs">
                 {activeAgent === "renata" && renataReplies[0].query}
                 {activeAgent === "mariana" && marianaReplies[0].query}
                 {activeAgent === "diego" && diegoReplies[0].query}
               </p>
-              <div className="bg-white p-2.5 rounded border border-slate-200 text-slate-700 leading-relaxed text-[11px]">
+              <div className="bg-white p-3 rounded-lg border border-slate-200 text-slate-700 leading-relaxed text-xs font-medium shadow-2xs">
                 {activeAgent === "renata" && renataReplies[0].answer}
                 {activeAgent === "mariana" && marianaReplies[0].answer}
                 {activeAgent === "diego" && diegoReplies[0].answer}
@@ -1435,11 +1435,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               <input
                 type="text"
                 placeholder="Pregunta a la IA sobre la plaza..."
-                className="flex-1 bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 font-mono"
+                className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium"
               />
               <button
                 type="submit"
-                className="bg-slate-900 text-white px-3 py-1.5 rounded text-xs font-bold font-mono cursor-pointer"
+                className="bg-slate-900 text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-800 transition-colors shadow-xs"
               >
                 Enviar
               </button>
