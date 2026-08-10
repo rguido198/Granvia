@@ -1,6 +1,5 @@
 import {
   FOLLOW_UPS,
-  GUIDE_PDF,
   PROFILE_FIELDS,
 } from "@/content/leasing";
 import { SITE } from "@/content/site";
@@ -74,7 +73,7 @@ function CallBranch() {
   );
 }
 
-export function AutomationPreview({ branch }: { branch?: "call" }) {
+export function AutomationPreview({ branch: _branch }: { branch?: "call" }) {
   const activeBranch = "call";
   return (
     <div>

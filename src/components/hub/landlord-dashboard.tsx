@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type {
-  AgentReply,
   ConsoleData,
 } from "@/lib/console-data";
 
@@ -636,7 +635,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">
                         AI Agent Operations
                       </span>
-                      <span className="text-xs text-slate-500 font-mono">// Conector ERP Universal</span>
+                      <span className="text-xs text-slate-500 font-mono">{"// Conector ERP Universal"}</span>
                     </div>
                     <h2 className="font-display text-lg font-bold text-slate-900 tracking-tight">
                       Módulos Operativos de Inteligencia (Renata · Mariana · Diego)

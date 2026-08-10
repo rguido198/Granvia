@@ -17,24 +17,19 @@ export type InstagramResult = {
   source: "api" | "curated" | "empty";
 };
 
-type GraphMedia = {
-  id: string;
-  caption?: string;
-  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
-  media_url?: string;
-  thumbnail_url?: string;
-  permalink: string;
-  timestamp?: string;
-};
+// type GraphMedia = {
+//   id: string;
+//   caption?: string;
+//   media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+//   media_url?: string;
+//   thumbnail_url?: string;
+//   permalink: string;
+//   timestamp?: string;
+// };
 
-const FIELDS = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp";
+// const FIELDS = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp";
 
-/**
- * Convierte el caption en texto alternativo utilizable.
- * Instagram no expone alt real, así que usamos la primera frase del caption
- * y caemos a una descripción genérica cuando no hay texto.
- */
-function altFrom(caption: string | undefined, isVideo: boolean) {
+function _altFrom(caption: string | undefined, isVideo: boolean) {
   const clean = (caption ?? "")
     .replace(/#[\p{L}\p{N}_]+/gu, "")
     .replace(/\s+/g, " ")

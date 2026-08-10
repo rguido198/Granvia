@@ -10,7 +10,6 @@ import {
   type BusinessCategory,
   type LeaseKey,
 } from "@/content/leasing";
-import { SITE } from "@/content/site";
 import { submitLeasingInquiry } from "@/app/crece-tu-negocio/actions";
 import { initialLeasingState } from "@/lib/leasing-form";
 import { AutomationPreview } from "@/components/leasing/automation-preview";

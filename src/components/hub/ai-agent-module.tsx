@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/components/ui";
 
 interface AiDemoState {
   helpdesk: boolean;

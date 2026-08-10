@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { TENANTS, type Tenant, type Pillar, PILLAR_LABELS } from "@/content/tenants";
+import { TENANTS, type Pillar, PILLAR_LABELS } from "@/content/tenants";
 import { TenantLogo } from "@/components/tenant-logo";
 import { cn } from "@/components/ui";
 

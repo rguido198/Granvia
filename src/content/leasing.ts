@@ -36,7 +36,7 @@ export const LEASE_OPTIONS: LeaseOption[] = [
 
 export const LEASE_KEYS = LEASE_OPTIONS.map((option) => option.key);
 
-export function branchFor(key: LeaseKey): "call" {
+export function branchFor(_key: LeaseKey): "call" {
   return "call";
 }
 
