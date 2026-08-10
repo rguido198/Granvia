@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageFade } from "@/components/ui";
 
+export const runtime = "edge";
+
 export default function ConsoleLoginPage() {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
