@@ -431,16 +431,24 @@ function buildRenataReplies(fiscalAlertRent: number, plazaTotalGla: number, leas
  * /consola, once per request.
  */
 export function buildConsoleData(): ConsoleData {
-  const rows: RentRollRow[] = rentRoll.map((row) => ({
-    slug: row.tenant.slug,
-    name: row.tenant.name,
-    zone: row.tenant.zone,
-    tag: row.tenant.tag,
-    sqm: row.sqm,
-    rent: row.rent,
-    sharePct: shareByUnit.get(row.tenant.slug) ?? 0,
-    fiscalAlert: row.fiscalAlert,
-  }));
+  const rows: RentRollRow[] = rentRoll.map((row, index) => {
+    const match = row.tenant.zone.match(/\d+/);
+    const zoneNum = match ? match[0] : "1";
+    const unitSeq = (index + 1).toString().padStart(2, "0");
+    const unitCode = `Local ${zoneNum}-${unitSeq}`;
+
+    return {
+      slug: row.tenant.slug,
+      unitCode,
+      name: row.tenant.name,
+      zone: row.tenant.zone,
+      tag: row.tenant.tag,
+      sqm: row.sqm,
+      rent: row.rent,
+      sharePct: shareByUnit.get(row.tenant.slug) ?? 0,
+      fiscalAlert: row.fiscalAlert,
+    };
+  });
 
   const camMatrix: CamRow[] = camRows.map((row) => ({
     key: row.key,

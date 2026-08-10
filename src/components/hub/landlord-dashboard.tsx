@@ -941,7 +941,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         <tr key={row.slug} className="hover:bg-slate-50 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="font-bold text-slate-900 text-xs">{row.name}</div>
-                            <div className="text-[11px] text-slate-400 font-medium">{row.slug}</div>
+                            <div className="text-[11px] text-slate-500 font-medium">{row.unitCode} · {row.tag}</div>
                           </td>
                           <td className="py-3.5 px-4">
                             <span className="inline-block bg-slate-100 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-700">
@@ -1006,21 +1006,25 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               </div>
               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-600 border-b border-slate-200">
+                  <thead className="bg-slate-50 text-[10.5px] font-bold uppercase text-slate-700 border-b border-slate-200">
                     <tr>
-                      <th className="p-3.5">Local</th>
-                      <th className="p-3.5">Inquilino</th>
-                      <th className="p-3.5">Superficie</th>
+                      <th className="p-3.5">Unidad / Local</th>
+                      <th className="p-3.5">Inquilino (Marca Comercial)</th>
+                      <th className="p-3.5">Giro Comercial</th>
+                      <th className="p-3.5">Zona</th>
+                      <th className="p-3.5 text-right">Superficie</th>
                       <th className="p-3.5 text-right">Renta Mensual</th>
-                      <th className="p-3.5 text-right">% Prorrateo</th>
+                      <th className="p-3.5 text-right">% Participación GLA</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
                     {rentRoll.map((r) => (
                       <tr key={r.slug} className="hover:bg-slate-50 transition-colors">
-                        <td className="p-3.5 text-slate-500 font-medium">{r.slug}</td>
+                        <td className="p-3.5 text-slate-900 font-bold">{r.unitCode}</td>
                         <td className="p-3.5 font-bold text-slate-900">{r.name}</td>
-                        <td className="p-3.5 font-medium">{r.sqm} m²</td>
+                        <td className="p-3.5 font-medium text-slate-600">{r.tag}</td>
+                        <td className="p-3.5 font-medium text-slate-500">{r.zone}</td>
+                        <td className="p-3.5 text-right font-medium">{r.sqm} m²</td>
                         <td className="p-3.5 text-right font-bold text-slate-900">{formatMxn(r.rent)}</td>
                         <td className="p-3.5 text-right font-medium">{r.sharePct.toFixed(2)}%</td>
                       </tr>

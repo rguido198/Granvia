@@ -77,6 +77,7 @@ export type VacantUnit = {
  */
 export type RentRollRow = {
   slug: string;
+  unitCode: string;
   name: string;
   zone: string;
   tag: string;
