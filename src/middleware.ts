@@ -69,7 +69,7 @@ export async function middleware(request: NextRequest) {
 
     const redirectResponse = NextResponse.redirect(loginUrl);
     redirectResponse.headers.set("Cache-Control", "no-store");
-    if (token) redirectResponse.cookies.delete({ name: SESSION_COOKIE, path: "/consola" });
+    if (token) redirectResponse.cookies.delete({ name: SESSION_COOKIE, path: "/" });
     return redirectResponse;
   }
 
