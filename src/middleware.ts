@@ -35,12 +35,12 @@ export async function middleware(request: NextRequest) {
   const siteAccessCookie = request.cookies.get(SITE_ACCESS_COOKIE)?.value;
   const hasSiteAccess = siteAccessCookie === "granted";
 
-  // If site access cookie is missing, redirect to private access gate
+  // If site access cookie is missing, rewrite to private access gate
   if (!hasSiteAccess) {
     const gateUrl = request.nextUrl.clone();
     gateUrl.pathname = PRIVATE_GATE_PATH;
     gateUrl.search = "";
-    return NextResponse.redirect(gateUrl);
+    return NextResponse.rewrite(gateUrl);
   }
 
   // 3. Secondary Landlord Console Gate for /consola routes
@@ -68,10 +68,10 @@ export async function middleware(request: NextRequest) {
     loginUrl.pathname = CONSOLE_LOGIN_PATH;
     loginUrl.search = "";
 
-    const redirectResponse = NextResponse.redirect(loginUrl);
-    redirectResponse.headers.set("Cache-Control", "no-store");
-    if (token) redirectResponse.cookies.delete({ name: SESSION_COOKIE, path: "/" });
-    return redirectResponse;
+    const response = NextResponse.rewrite(loginUrl);
+    response.headers.set("Cache-Control", "no-store");
+    if (token) response.cookies.delete({ name: SESSION_COOKIE, path: "/" });
+    return response;
   }
 
   // 4. Serve requested page

@@ -20,6 +20,7 @@ export function SiteFooter() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  prefetch={false}
                   className="text-dune-300 transition-colors hover:text-sand-100"
                 >
                   {item.label}

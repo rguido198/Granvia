@@ -50,6 +50,7 @@ export function SiteHeader() {
           })}
           <Link
             href={HUB_NAV.href}
+            prefetch={false}
             aria-current={hubActive ? "page" : undefined}
             className={cn(
               "rounded-xs border border-terra px-4.5 py-2.5 text-[13.5px] font-semibold transition-colors",
@@ -117,6 +118,7 @@ export function SiteHeader() {
             <li className="pt-2">
               <Link
                 href={HUB_NAV.href}
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 aria-current={hubActive ? "page" : undefined}
                 className={cn(
