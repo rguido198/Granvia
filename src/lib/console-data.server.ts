@@ -485,11 +485,17 @@ export function buildConsoleData(): ConsoleData {
     // Generation time and data period are deliberately separate strings. The
     // figures close July; the view is produced now. Collapsing the two into one
     // "updated" stamp is how a dashboard ends up implying the numbers are live.
-    generatedAt: new Intl.DateTimeFormat("es-MX", {
-      dateStyle: "long",
-      timeStyle: "short",
-      timeZone: "America/Tijuana",
-    }).format(new Date()),
+    generatedAt: (() => {
+      try {
+        return new Intl.DateTimeFormat("es-MX", {
+          dateStyle: "long",
+          timeStyle: "short",
+          timeZone: "America/Tijuana",
+        }).format(new Date());
+      } catch {
+        return new Date().toISOString();
+      }
+    })(),
     periodLabel: "Julio 2026",
 
     marianaReplies: MARIANA_REPLIES,
