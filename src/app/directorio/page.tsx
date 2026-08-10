@@ -9,7 +9,6 @@ import {
   SectionTitle,
 } from "@/components/ui";
 
-export const runtime = "edge";
 
 export const metadata: Metadata = {
   title: "Directorio & Plano Interactivo",

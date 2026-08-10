@@ -16,7 +16,6 @@ import { buildConsoleData } from "@/lib/console-data.server";
  * exist: nothing on disk, nothing to serve by accident.
  */
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
 
 export const metadata: Metadata = {
   title: "Consola de Asset Management | La Gran Vía Mexicali",

@@ -13,7 +13,6 @@ import { buildConsoleData } from "@/lib/console-data.server";
  * the console gets its own chrome-less shell, rather than covering the chrome.
  */
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
 
 export const metadata: Metadata = {
   title: "Prototipo de Consola | La Gran Vía Mexicali",

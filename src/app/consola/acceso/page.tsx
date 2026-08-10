@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { PageFade } from "@/components/ui";
 import { LoginForm } from "./login-form";
 
-export const runtime = "edge";
 
 export const metadata: Metadata = {
   title: "Acceso a la Consola | La Gran Vía Mexicali",
