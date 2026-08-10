@@ -3,6 +3,7 @@ import { LEASING_HERO } from "@/content/leasing";
 import { LeasingExperience } from "@/components/leasing/leasing-experience";
 import { Container, Kicker, PageFade, SectionTitle } from "@/components/ui";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {

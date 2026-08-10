@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { SITE_ACCESS_COOKIE, SITE_PASSWORD } from "@/lib/site-session";
 
+export const runtime = "edge";
+
 
 export async function POST(request: Request) {
   try {
