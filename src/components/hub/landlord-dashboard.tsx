@@ -4038,16 +4038,31 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               {/* IMMUTABLE SHA-256 AUDIT TRAIL LOG VIEWER */}
               <div className="space-y-3.5 pt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-sans text-lg font-bold text-slate-900">
-                      Bitácora Inmutable de Auditoría & Logs de Seguridad (SHA-256)
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Cada aprobación Tier 3 en esta sesión (CAM, renovaciones, despachos CapEx) se añade aquí en vivo.
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 shadow-2xs">
+                      <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-sans text-lg font-bold text-slate-900">
+                          Bitácora Inmutable de Auditoría
+                        </h3>
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          En Vivo
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Cada aprobación Tier 3 en esta sesión (CAM, renovaciones, despachos CapEx) se añade aquí — verificado con hash SHA-256 por entrada.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-slate-600 font-semibold whitespace-nowrap">{auditLog.length} Entradas</span>
+                  <div className="flex items-center gap-2 shrink-0 sm:pl-12">
+                    <span className="text-xs text-slate-700 font-bold bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-lg whitespace-nowrap">
+                      {auditLog.length} Entradas
+                    </span>
                     <button
                       onClick={() => {
                         const header = "Timestamp,Tipo,Actor,Accion,Hash SHA-256\n";
@@ -4068,41 +4083,96 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         URL.revokeObjectURL(url);
                         triggerToast(`Bitácora exportada (${auditLog.length} entradas, CSV).`);
                       }}
-                      className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                      className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shadow-2xs"
                     >
-                      Exportar Bitácora (CSV) ↓
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                      Exportar CSV
                     </button>
                   </div>
                 </div>
 
-                <input
-                  type="text"
-                  value={auditLogFilter}
-                  onChange={(e) => setAuditLogFilter(e.target.value)}
-                  placeholder="Filtrar por usuario, agente o acción (ej: CFDI, m.hage, diego_ai_agent)..."
-                  className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 font-medium"
-                />
-
-                <div className="bg-slate-900 text-slate-100 p-5 rounded-2xl border border-slate-800 text-sm space-y-3 max-h-72 overflow-y-auto leading-relaxed shadow-sm font-mono">
-                  {[...auditLog]
-                    .reverse()
-                    .filter((e) => {
-                      const q = auditLogFilter.trim().toLowerCase();
-                      if (!q) return true;
-                      return e.actor.toLowerCase().includes(q) || e.action.toLowerCase().includes(q) || e.actorType.includes(q);
-                    })
-                    .map((e, idx) => (
-                      <p key={e.id} className={idx === 0 ? "text-slate-200 font-semibold" : "text-slate-400"}>
-                        [AUDIT {e.timestamp}] {e.actorType === "user" ? "USER" : "AGENT"}: {e.actor}
-                        {e.actorType === "user" ? " · IP: 189.210.42.10" : ""} · ACTION: {e.action} · HASH: {e.hash}
-                      </p>
-                    ))}
-                  {auditLog.filter((e) => {
-                    const q = auditLogFilter.trim().toLowerCase();
-                    if (!q) return true;
-                    return e.actor.toLowerCase().includes(q) || e.action.toLowerCase().includes(q) || e.actorType.includes(q);
-                  }).length === 0 && <p className="text-slate-500">Sin resultados para &quot;{auditLogFilter}&quot;.</p>}
+                <div className="relative">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={auditLogFilter}
+                    onChange={(e) => setAuditLogFilter(e.target.value)}
+                    placeholder="Filtrar por usuario, agente o acción (ej: CFDI, m.hage, diego_ai_agent)..."
+                    className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 font-medium transition-all"
+                  />
                 </div>
+
+                {(() => {
+                  const q = auditLogFilter.trim().toLowerCase();
+                  const filtered = [...auditLog]
+                    .reverse()
+                    .filter((e) => !q || e.actor.toLowerCase().includes(q) || e.action.toLowerCase().includes(q) || e.actorType.includes(q));
+
+                  return (
+                    <div className="bg-slate-950 rounded-2xl border border-slate-800 shadow-md overflow-hidden">
+                      <div className="grid grid-cols-[auto_1fr_auto] gap-4 px-5 py-2.5 border-b border-slate-800 bg-slate-900/60 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <span>Actor</span>
+                        <span>Acción Registrada</span>
+                        <span className="text-right">Verificación</span>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/70">
+                        {filtered.length === 0 ? (
+                          <p className="text-slate-500 text-xs p-6 text-center">Sin resultados para &quot;{auditLogFilter}&quot;.</p>
+                        ) : (
+                          filtered.map((e, idx) => (
+                            <div
+                              key={e.id}
+                              className={`grid grid-cols-[auto_1fr_auto] gap-4 px-5 py-3.5 hover:bg-slate-900/70 transition-colors ${idx === 0 ? "bg-slate-900/40" : ""}`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 border ${
+                                    e.actorType === "user"
+                                      ? "bg-slate-800 border-slate-700 text-slate-200"
+                                      : "bg-emerald-950 border-emerald-800 text-emerald-400"
+                                  }`}
+                                >
+                                  {e.actorType === "user" ? (
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.25 3v1.5M15.75 3v1.5M3 8.25h1.5M3 12h1.5m-1.5 3.75h1.5M19.5 8.25H21M19.5 12H21m-1.5 3.75H21M8.25 19.5v1.5m7.5-1.5v1.5M6.75 6.75h10.5v10.5H6.75V6.75z" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-100 truncate">{e.actor}</p>
+                                  <p className="text-[10.5px] text-slate-500 font-mono">{e.timestamp}{e.actorType === "user" ? " · 189.210.42.10" : ""}</p>
+                                </div>
+                              </div>
+                              <p className="text-xs text-slate-300 leading-relaxed self-center">{e.action}</p>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                <span
+                                  className={`text-[9.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                                    e.actorType === "user"
+                                      ? "bg-slate-800 text-slate-300 border border-slate-700"
+                                      : "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                                  }`}
+                                >
+                                  {e.actorType === "user" ? "Usuario" : "Agente IA"}
+                                </span>
+                                <span className="text-[10px] font-mono text-slate-600" title="Hash SHA-256 de la entrada">
+                                  {e.hash}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
