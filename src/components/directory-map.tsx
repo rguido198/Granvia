@@ -53,10 +53,10 @@ export function DirectoryMap() {
         t.tag.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.zone.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // 2. Zone Filter
+      // 2. Zone Filter (uses word boundary to prevent "Zona 1" matching "Zona 10")
       const matchesZone =
         selectedZone === null ||
-        t.zone.toLowerCase().includes(selectedZone.toLowerCase());
+        new RegExp(`\\b${selectedZone.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b`, "i").test(t.zone);
 
       // 3. Pillar / Category Filter
       const matchesPillar =
@@ -192,9 +192,9 @@ export function DirectoryMap() {
             </p>
           </div>
 
-          {/* Quick Zone Selector Buttons */}
+          {/* Quick Zone Selector Buttons — All Zones */}
           <div className="flex items-center gap-1.5 flex-wrap font-mono text-[11px]">
-            {ZONES.slice(0, 5).map((z) => (
+            {ZONES.map((z) => (
               <button
                 key={z.id}
                 onClick={() => setSelectedZone(selectedZone === z.id ? null : z.id)}

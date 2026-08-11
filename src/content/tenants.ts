@@ -847,7 +847,7 @@ export const TENANTS: Tenant[] = [
     tag: "Helados",
     logo: "/tenants/thrifty-ice-cream.png",
     logoOnDark: false,
-    zone: "Zona 11",
+    zone: "Zona 10",
     phone: "(686) 488 7769",
     hours: [{"days": "Lun - Dom", "times": "11:00 - 20:00"}],
   },
