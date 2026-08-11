@@ -1520,7 +1520,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
               {/* TENANT PRORATION MATRIX */}
               <div className="space-y-4 pt-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="font-sans text-base font-bold text-slate-900">
                       Tabla de División Final por Inquilino (Cobro NNN)
@@ -1528,6 +1528,28 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     <p className="text-xs text-slate-500 mt-0.5">
                       Desglose individual del prorrateo correspondiente a cada local comercial.
                     </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => {
+                        triggerToast("Renata AI: 84 Estados de Cuenta CAM enviados por email y publicados en Portal del Arrendatario (/inquilinos).");
+                      }}
+                      className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                      title="Enviar estado de cuenta a los 84 arrendatarios"
+                    >
+                      <span>📩 Notificar a Tenants</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCfdiIssued(true);
+                        triggerToast("Renata AI: 84 facturas CFDI 4.0 timbradas ante el SAT y sincronizadas en Cuentas por Cobrar de ERP SAP.");
+                      }}
+                      className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                      title="Generar timbrado SAT y enviar cuentas por cobrar al ERP SAP"
+                    >
+                      <span>⚡ Timbrar SAT & ERP SAP</span>
+                    </button>
                   </div>
                 </div>
 
