@@ -23,17 +23,17 @@ const ZONES = [
  * Key Anchors for Interactive Map Pins (Strict Collision-Free Coordinates)
  */
 const MAP_ANCHORS = [
-  { name: "Starbucks", zone: "Zona 1", x: 312, y: 175 },
-  { name: "IHOP", zone: "Zona 2", x: 462, y: 175 },
-  { name: "Wok Box", zone: "Zona 4", x: 312, y: 325 },
-  { name: "AT&T", zone: "Zona 5", x: 462, y: 325 },
-  { name: "AmoreMe", zone: "Zona 6", x: 615, y: 290 },
-  { name: "Cinemex", zone: "Zona 7", x: 830, y: 175 },
-  { name: "Petco", zone: "Zona 7", x: 765, y: 325 },
-  { name: "Alma Verde", zone: "Zona 7", x: 885, y: 325 },
-  { name: "Fairfield Hotel", zone: "Zona 8", x: 535, y: 465 },
-  { name: "260 Grill", zone: "Zona 10", x: 770, y: 465 },
-  { name: "Thrifty", zone: "Zona 10", x: 885, y: 465 },
+  { name: "Holy Cow", zone: "Zona 1", searchKey: "Holy Cow", x: 312, y: 175 },
+  { name: "Távola", zone: "Zona 2", searchKey: "Távola", x: 462, y: 175 },
+  { name: "Wok Box", zone: "Zona 4", searchKey: "Wok Box", x: 312, y: 325 },
+  { name: "IHOP", zone: "Zona 5", searchKey: "IHOP", x: 410, y: 325 },
+  { name: "AT&T", zone: "Zona 5", searchKey: "AT&T", x: 485, y: 325 },
+  { name: "Wendlandt", zone: "Zona 6", searchKey: "Wendlandt", x: 615, y: 290 },
+  { name: "Bodega 8", zone: "Zona 7", searchKey: "Bodega 8", x: 790, y: 220 },
+  { name: "Alma Verde", zone: "Zona 7", searchKey: "Alma Verde", x: 885, y: 325 },
+  { name: "Fairfield Hotel", zone: "Zona 8", searchKey: "Fairfield", x: 535, y: 465 },
+  { name: "260 Grill", zone: "Zona 10", searchKey: "260 Grill", x: 770, y: 465 },
+  { name: "Thrifty", zone: "Zona 10", searchKey: "Thrifty", x: 885, y: 465 },
 ];
 
 export function DirectoryMap() {
@@ -67,10 +67,10 @@ export function DirectoryMap() {
   }, [searchQuery, selectedZone, activePillar]);
 
   // Handle map anchor pin click
-  const handleAnchorClick = (anchorName: string, zone: string) => {
-    setSelectedAnchor(anchorName);
-    setSelectedZone(zone);
-    setSearchQuery(anchorName);
+  const handleAnchorClick = (anchor: (typeof MAP_ANCHORS)[number]) => {
+    setSelectedAnchor(anchor.name);
+    setSelectedZone(anchor.zone);
+    setSearchQuery(anchor.searchKey);
   };
 
   // Reset all map filters
@@ -305,7 +305,7 @@ export function DirectoryMap() {
                   key={a.name}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAnchorClick(a.name, a.zone);
+                    handleAnchorClick(a);
                   }}
                   className="cursor-pointer group"
                 >
