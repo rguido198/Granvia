@@ -479,6 +479,25 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
     setTimeout(() => setToast(null), 3500);
   };
 
+  // Immutable Audit Trail — every Tier 3 human-authorized action appends here live,
+  // instead of the log being 5 static lines that never reflect what actually happened
+  // in the session. Stored oldest-first; rendered newest-first.
+  const [auditLog, setAuditLog] = useState(() => [
+    { id: "seed-5", timestamp: "14:02:44", actorType: "user" as const, actor: "a.lopez@lagranvia.com.mx", action: "Carga de póliza de mantenimiento ThyssenKrupp 2026.pdf", hash: "sha256_a10984ee29" },
+    { id: "seed-4", timestamp: "15:12:00", actorType: "user" as const, actor: "contabilidad@lagranvia.com.mx", action: `Timbrado masivo SAT CFDI 4.0 aprobado para ${rentRoll.length} locales`, hash: "sha256_c773109a11" },
+    { id: "seed-3", timestamp: "16:45:19", actorType: "agent" as const, actor: "mariana_ai_agent", action: "Consulta RAG multi-contrato de exclusividades de giro (Cafeterías)", hash: "sha256_f9012a44b8" },
+    { id: "seed-2", timestamp: "17:58:02", actorType: "agent" as const, actor: "diego_ai_agent", action: "Reclamo autónomo expedido a Climas de Mexicali (#HVAC-884)", hash: "sha256_b31289fe12" },
+    { id: "seed-1", timestamp: "18:28:12", actorType: "user" as const, actor: "m.hage@lagranvia.com.mx", action: "Cambió permiso 'Diego CapEx' para a.lopez@lagranvia.com.mx", hash: "sha256_e84a92c10f" },
+  ]);
+  const [auditLogFilter, setAuditLogFilter] = useState("");
+
+  const appendAuditLog = (actorType: "user" | "agent", actor: string, action: string) => {
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString("es-MX", { hour12: false });
+    const hash = "sha256_" + Math.random().toString(16).slice(2, 12);
+    setAuditLog((prev) => [...prev, { id: `evt-${prev.length}-${now.getTime()}`, timestamp, actorType, actor, action, hash }]);
+  };
+
   // Filtered Rent Roll Data
   const filteredRentRoll = rentRoll.filter((row) => {
     const matchesSearch =
@@ -1642,6 +1661,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             ? "Renata AI: Cambios de prorrateo guardados. Reconciliación actualizada."
                             : "Modo Edición Controller activado. Puedes editar Superficie, Renta Base o Administración para cualquier local."
                         );
+                        if (isEditingCam) {
+                          appendAuditLog("user", "m.hage@lagranvia.com.mx", "Guardó cambios de prorrateo CAM en Modo Edición Controller");
+                        }
                       }}
                       className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
                         isEditingCam
@@ -2023,6 +2045,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           ? "Directorio de contratistas actualizado."
                           : "Modo Edición Controller activado. Puedes editar contratista, contacto o cobertura de cualquier especialidad."
                       );
+                      if (isEditingRoster) {
+                        appendAuditLog("user", "m.hage@lagranvia.com.mx", "Guardó cambios en el Directorio de Contratistas Preaprobados");
+                      }
                     }}
                     className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border shrink-0 ${
                       isEditingRoster
@@ -4012,19 +4037,71 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
               {/* IMMUTABLE SHA-256 AUDIT TRAIL LOG VIEWER */}
               <div className="space-y-3.5 pt-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-sans text-lg font-bold text-slate-900">
-                    Bitácora Inmutable de Auditoría & Logs de Seguridad (SHA-256)
-                  </h3>
-                  <span className="text-sm text-slate-600 font-semibold">Registro Criptográfico Inmutable</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-sans text-lg font-bold text-slate-900">
+                      Bitácora Inmutable de Auditoría & Logs de Seguridad (SHA-256)
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Cada aprobación Tier 3 en esta sesión (CAM, renovaciones, despachos CapEx) se añade aquí en vivo.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-slate-600 font-semibold whitespace-nowrap">{auditLog.length} Entradas</span>
+                    <button
+                      onClick={() => {
+                        const header = "Timestamp,Tipo,Actor,Accion,Hash SHA-256\n";
+                        const rows = [...auditLog]
+                          .reverse()
+                          .map((e) =>
+                            [e.timestamp, e.actorType === "user" ? "USER" : "AGENT", e.actor, `"${e.action.replace(/"/g, '""')}"`, e.hash].join(",")
+                          )
+                          .join("\n");
+                        const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `bitacora_auditoria_lagranvia_${periodLabel.replace(/\s+/g, "_")}.csv`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        triggerToast(`Bitácora exportada (${auditLog.length} entradas, CSV).`);
+                      }}
+                      className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Exportar Bitácora (CSV) ↓
+                    </button>
+                  </div>
                 </div>
 
+                <input
+                  type="text"
+                  value={auditLogFilter}
+                  onChange={(e) => setAuditLogFilter(e.target.value)}
+                  placeholder="Filtrar por usuario, agente o acción (ej: CFDI, m.hage, diego_ai_agent)..."
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 font-medium"
+                />
+
                 <div className="bg-slate-900 text-slate-100 p-5 rounded-2xl border border-slate-800 text-sm space-y-3 max-h-72 overflow-y-auto leading-relaxed shadow-sm font-mono">
-                  <p className="text-slate-200 font-semibold">[AUDIT 18:28:12] USER: m.hage@lagranvia.com.mx · IP: 189.210.42.10 · ACTION: Cambió permiso &apos;Diego CapEx&apos; para a.lopez@lagranvia.com.mx · HASH: sha256_e84a92c10f</p>
-                  <p>[AUDIT 17:58:02] AGENT: diego_ai_agent · ACTION: Reclamo autónomo expedido a Climas de Mexicali (#HVAC-884) · HASH: sha256_b31289fe12</p>
-                  <p>[AUDIT 16:45:19] AGENT: mariana_ai_agent · ACTION: Consulta RAG multi-contrato de exclusividades de giro (Cafeterías) · HASH: sha256_f9012a44b8</p>
-                  <p>[AUDIT 15:12:00] USER: contabilidad@lagranvia.com.mx · ACTION: Timbrado masivo SAT CFDI 4.0 aprobado para 78 locales · HASH: sha256_c773109a11</p>
-                  <p>[AUDIT 14:02:44] USER: a.lopez@lagranvia.com.mx · ACTION: Carga de póliza de mantenimiento ThyssenKrupp 2026.pdf · HASH: sha256_a10984ee29</p>
+                  {[...auditLog]
+                    .reverse()
+                    .filter((e) => {
+                      const q = auditLogFilter.trim().toLowerCase();
+                      if (!q) return true;
+                      return e.actor.toLowerCase().includes(q) || e.action.toLowerCase().includes(q) || e.actorType.includes(q);
+                    })
+                    .map((e, idx) => (
+                      <p key={e.id} className={idx === 0 ? "text-slate-200 font-semibold" : "text-slate-400"}>
+                        [AUDIT {e.timestamp}] {e.actorType === "user" ? "USER" : "AGENT"}: {e.actor}
+                        {e.actorType === "user" ? " · IP: 189.210.42.10" : ""} · ACTION: {e.action} · HASH: {e.hash}
+                      </p>
+                    ))}
+                  {auditLog.filter((e) => {
+                    const q = auditLogFilter.trim().toLowerCase();
+                    if (!q) return true;
+                    return e.actor.toLowerCase().includes(q) || e.action.toLowerCase().includes(q) || e.actorType.includes(q);
+                  }).length === 0 && <p className="text-slate-500">Sin resultados para &quot;{auditLogFilter}&quot;.</p>}
                 </div>
               </div>
             </div>
@@ -4228,9 +4305,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 onClick={() => {
                   if (camConfirmModal === "notify") {
                     triggerToast("Renata AI: Notificaciones de Estado de Cuenta enviadas a los 84 arrendatarios.");
+                    appendAuditLog("user", "m.hage@lagranvia.com.mx", `Aprobó envío de Estado de Cuenta CAM NNN a ${rentRoll.length} arrendatarios`);
                   } else {
                     setCfdiIssued(true);
                     triggerToast("Renata AI: 84 facturas CFDI 4.0 timbradas en SAT y registradas en ERP SAP.");
+                    appendAuditLog("user", "m.hage@lagranvia.com.mx", `Aprobó timbrado SAT CFDI 4.0 para ${rentRoll.length} facturas y sincronización ERP SAP`);
                   }
                   setCamConfirmModal(null);
                 }}
@@ -4420,6 +4499,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   setRenewalSent(true);
                   setRenewalConfirmOpen(false);
                   triggerToast("Mariana AI: Borrador de renovación enviado a la asesoría legal externa para revisión.");
+                  appendAuditLog("user", "m.hage@lagranvia.com.mx", "Aprobó envío de borrador de renovación (260 Grill & Bar) a asesoría legal externa");
                 }}
                 className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"
               >
@@ -4505,6 +4585,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     setEventApprovals((prev) => ({ ...prev, [event.id]: true }));
                     setApprovalConfirmEventId(null);
                     triggerToast(`Diego AI: Despacho aprobado — ${event.vendor} programado para ${event.date}.`);
+                    appendAuditLog("user", "m.hage@lagranvia.com.mx", `Aprobó despacho de ${formatVal(event.costEstimate)} a ${event.vendor} (${event.title})`);
                   }}
                   className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"
                 >
