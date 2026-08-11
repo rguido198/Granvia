@@ -8,6 +8,7 @@ import type {
   CapexCase,
   ConsoleData,
   CriticalEquipment,
+  MaintenanceEvent,
   RentRollRow,
   TechnicianRosterRow,
 } from "@/lib/console-data";
@@ -167,6 +168,21 @@ const TECHNICIAN_ROSTER = [
   { trade: "Solar Fotovoltaico", contractor: "Canadian Solar México / Enel X", contact: "+52 686 555 0341", coverage: "L-V 08:00-18:00", slaOnSite: "≤ 4h (P1) · ≤ 72h (P3)" },
   { trade: "Seguridad & Acceso", contractor: "Hikvision & FAAC México", contact: "+52 686 555 0378", coverage: "24/7", slaOnSite: "≤ 2h (P1) · Mismo día (P2)" },
   { trade: "Hidráulico & PTAR", contractor: "Grundfos México", contact: "+52 686 555 0412", coverage: "L-V 08:00-18:00", slaOnSite: "≤ 4h (P1) · ≤ 72h (P3)" },
+];
+
+/**
+ * Diego's forward-looking maintenance calendar — one entry per scheduled
+ * inspection, calibration, or preventive service on the equipment already
+ * cataloged above. Same vendors as TECHNICIAN_ROSTER and the warranty
+ * registry so a landlord never sees a fourth name for the same asset.
+ */
+const MAINTENANCE_EVENTS = [
+  { id: "EVT-01", date: "18 Ago 2026", title: "Calibración Cámaras LPR", vendor: "Hikvision & FAAC México", category: "Seguridad & Acceso", costEstimate: 8500, responsible: "Jefe de Seguridad", responsibleEmail: "seguridad@lagranvia.com.mx" },
+  { id: "EVT-02", date: "25 Ago 2026", title: "Prueba Trimestral de Aspersores", vendor: "Johnson Controls Fire Protection", category: "Protección Incendio", costEstimate: 12000, responsible: "Gerente de Mantenimiento", responsibleEmail: "mantenimiento@lagranvia.com.mx" },
+  { id: "EVT-03", date: "05 Sep 2026", title: "Revisión Preventiva Anual Chiller Trane", vendor: "Climas de Mexicali S.A. de C.V.", category: "HVAC & Climas", costEstimate: 34200, responsible: "Gerente de Mantenimiento", responsibleEmail: "mantenimiento@lagranvia.com.mx" },
+  { id: "EVT-04", date: "20 Sep 2026", title: "Inspección Técnica Semestral Elevador", vendor: "TK Elevator México", category: "Elevadores", costEstimate: 18900, responsible: "Gerente de Mantenimiento", responsibleEmail: "mantenimiento@lagranvia.com.mx" },
+  { id: "EVT-05", date: "10 Oct 2026", title: "Mantenimiento Bianual Subestación Eléctrica", vendor: "Schneider Electric México", category: "Eléctrico & Subestación", costEstimate: 62000, responsible: "Dirección General", responsibleEmail: "direccion@lagranvia.com.mx" },
+  { id: "EVT-06", date: "05 Nov 2026", title: "Servicio de Membranas PTAR", vendor: "Grundfos México", category: "Hidráulico & PTAR", costEstimate: 27800, responsible: "Gerente de Mantenimiento", responsibleEmail: "mantenimiento@lagranvia.com.mx" },
 ];
 
 /** Local A-14 — the one unit off the rent roll, absorbed by the landlord until re-let. */
@@ -508,6 +524,7 @@ export function buildConsoleData(): ConsoleData {
     capexCases: CAPEX_CASES,
     criticalEquipment: CRITICAL_EQUIPMENT satisfies CriticalEquipment[],
     technicianRoster: TECHNICIAN_ROSTER satisfies TechnicianRosterRow[],
+    maintenanceEvents: MAINTENANCE_EVENTS satisfies MaintenanceEvent[],
     rentProtectedAnnual,
     capexRejected,
     capexWarrantyRecovered,

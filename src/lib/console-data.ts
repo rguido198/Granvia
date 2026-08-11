@@ -60,6 +60,18 @@ export type TechnicianRosterRow = {
   slaOnSite: string;
 };
 
+/** One scheduled maintenance/warranty event on Diego's calendar. */
+export type MaintenanceEvent = {
+  id: string;
+  date: string;
+  title: string;
+  vendor: string;
+  category: string;
+  costEstimate: number;
+  responsible: string;
+  responsibleEmail: string;
+};
+
 /** A canned agent answer, cited back to its source document. */
 export type AgentReply = {
   chip: string;
@@ -137,6 +149,7 @@ export type ConsoleData = {
   capexCases: CapexCase[];
   criticalEquipment: CriticalEquipment[];
   technicianRoster: TechnicianRosterRow[];
+  maintenanceEvents: MaintenanceEvent[];
   rentProtectedAnnual: number;
   capexRejected: number;
   capexWarrantyRecovered: number;

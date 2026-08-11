@@ -353,6 +353,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
     capexRejected,
     capexWarrantyRecovered,
     technicianRoster,
+    maintenanceEvents,
     periodLabel,
     marianaReplies,
     diegoReplies,
@@ -399,6 +400,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
   const [attorneyNotified, setAttorneyNotified] = useState(false);
   const [hvacDispatched, setHvacDispatched] = useState(false);
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
+
+  // Diego AI Maintenance Calendar States
+  const [eventApprovals, setEventApprovals] = useState<Record<string, boolean>>({});
+  const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
+  const [approvalConfirmEventId, setApprovalConfirmEventId] = useState<string | null>(null);
 
   // Accessibility Font Scale State (default: large font size for enhanced legibility)
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("large");
@@ -1816,6 +1822,86 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 </div>
               </div>
 
+              {/* CALENDARIO DE PRÓXIMOS EVENTOS & APROBACIONES (LANDLORD-FIRST: WHAT NEEDS A DECISION NOW) */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-sans text-base font-bold text-slate-900">
+                      Calendario de Próximos Eventos
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Mantenimiento preventivo y calibraciones programadas. Diego AI despacha automáticamente hasta {formatVal(diegoThresholdVal)}; por encima requiere tu aprobación.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0">
+                    {maintenanceEvents.filter((e) => e.costEstimate > diegoThresholdVal && !eventApprovals[e.id]).length} Pendientes de Aprobación
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {maintenanceEvents.map((event) => {
+                    const needsApproval = event.costEstimate > diegoThresholdVal;
+                    const isApproved = eventApprovals[event.id];
+                    const isNotified = eventNotified[event.id];
+                    return (
+                      <div
+                        key={event.id}
+                        className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border ${
+                          needsApproval && !isApproved ? "bg-amber-50 border-amber-300" : "bg-white border-slate-200"
+                        }`}
+                      >
+                        <div className="text-center shrink-0 w-16">
+                          <p className="text-xs font-extrabold text-slate-900">{event.date.split(" ")[0]}</p>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">{event.date.split(" ")[1]} {event.date.split(" ")[2]}</p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-slate-900 text-xs">{event.title}</p>
+                          <p className="text-[11px] text-slate-500">{event.vendor} · {event.category} · Responsable: {event.responsible}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-slate-900 text-xs font-sans tabular-nums">{formatVal(event.costEstimate)}</p>
+                          <span
+                            className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${
+                              !needsApproval
+                                ? "bg-slate-100 text-slate-700 border border-slate-200"
+                                : isApproved
+                                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                  : "bg-amber-100 text-amber-900 border border-amber-300"
+                            }`}
+                          >
+                            {!needsApproval ? "Auto-Aprobado" : isApproved ? "Aprobado" : "Requiere Aprobación"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {needsApproval && !isApproved && (
+                            <button
+                              onClick={() => setApprovalConfirmEventId(event.id)}
+                              className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                            >
+                              Aprobar Despacho
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setEventNotified((prev) => ({ ...prev, [event.id]: true }));
+                              triggerToast(`Correo enviado a ${event.responsible} (${event.responsibleEmail}) sobre "${event.title}".`);
+                            }}
+                            disabled={isNotified}
+                            className={`font-bold px-3 py-1.5 rounded-lg text-[11px] transition-all whitespace-nowrap border ${
+                              isNotified
+                                ? "bg-slate-50 text-slate-400 border-slate-200 cursor-default"
+                                : "bg-white hover:bg-slate-100 text-slate-800 border-slate-300 cursor-pointer"
+                            }`}
+                          >
+                            {isNotified ? "Notificado ✓" : "Notificar por Correo"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* DIEGO AI AGENTIC AUTONOMOUS ACTIONS CONSOLE */}
               <div className="bg-slate-900 text-white rounded-2xl p-5 space-y-4 shadow-sm border border-slate-800">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
@@ -1854,6 +1940,161 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     <p className="font-bold text-white">Certificación NFPA 25</p>
                     <p className="text-[11px] text-slate-300">Prueba de aspersores contra incendio programada.</p>
                   </div>
+                </div>
+              </div>
+
+              {/* CAPEX COST-RESPONSIBILITY LEDGER (TIES DIEGO'S ACTIVITY TO A REAL $ FIGURE FOR FINANZAS) */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-sans text-base font-bold text-slate-900">
+                      Registro de Casos CapEx & Responsabilidad de Costo
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Cada solicitud de gasto mayor resuelta por Diego AI: quién paga y por qué. Alimenta la tarjeta &ldquo;CapEx Protegido&rdquo; en la Torre de Control CFO.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0">
+                    {formatVal(diegoProtectedCapex)} Protegidos del P&amp;L
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
+                  <table className="w-full text-left text-xs font-sans">
+                    <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px] tracking-wider">
+                      <tr>
+                        <th className="p-3.5">Caso / Inquilino</th>
+                        <th className="p-3.5">Tipo de Gasto & Equipo</th>
+                        <th className="p-3.5 text-right">Monto</th>
+                        <th className="p-3.5">Veredicto Diego AI</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {capexCases.map((c) => {
+                        const verdictMeta =
+                          c.verdict === "RECHAZADO_RESPONSABILIDAD_INQUILINO"
+                            ? { label: "Rechazado · Responsabilidad Inquilino", badge: "bg-slate-900 text-white" }
+                            : c.verdict === "APROBADO_GARANTIA_COSTO_CERO"
+                              ? { label: "Aprobado · Garantía ($0 MXN)", badge: "bg-slate-100 text-slate-800 border border-slate-200" }
+                              : { label: "Aprobado · Prorrateo CAM", badge: "bg-amber-100 text-amber-900 border border-amber-300" };
+                        return (
+                          <tr key={c.id} className="hover:bg-slate-50/90 transition-colors align-top">
+                            <td className="p-3.5">
+                              <p className="font-bold text-slate-900 text-xs">{c.tenant}</p>
+                              <p className="text-[11px] text-slate-500">{c.id}</p>
+                            </td>
+                            <td className="p-3.5">
+                              <p className="text-slate-800 font-semibold">{c.expenseType}</p>
+                              <p className="text-[11px] text-slate-500">{c.equipmentModel} · {c.serialNumber}</p>
+                            </td>
+                            <td className="p-3.5 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">
+                              {formatVal(c.amount)}
+                            </td>
+                            <td className="p-3.5">
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mb-1 ${verdictMeta.badge}`}>
+                                {verdictMeta.label}
+                              </span>
+                              <p className="text-[11px] text-slate-600 leading-relaxed max-w-md">{c.details}</p>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* PREAPPROVED TECHNICIAN ROSTER (CONTROLLER-EDITABLE, MATCHES CAM TABLE EDIT PATTERN) */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-sans text-base font-bold text-slate-900">
+                      Directorio de Contratistas Preaprobados
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Un contratista por especialidad, listo para contactar sin importar el motivo del ticket.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsEditingRoster(!isEditingRoster);
+                      triggerToast(
+                        isEditingRoster
+                          ? "Directorio de contratistas actualizado."
+                          : "Modo Edición Controller activado. Puedes editar contratista, contacto o cobertura de cualquier especialidad."
+                      );
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border shrink-0 ${
+                      isEditingRoster
+                        ? "bg-amber-500 hover:bg-amber-600 text-slate-950 border-amber-400 font-extrabold shadow-sm"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>{isEditingRoster ? "Guardar Directorio" : "Modo Edición Controller"}</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
+                  <table className="w-full text-left text-xs font-sans">
+                    <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px] tracking-wider">
+                      <tr>
+                        <th className="p-3.5">Especialidad</th>
+                        <th className="p-3.5">Contratista</th>
+                        <th className="p-3.5">Contacto</th>
+                        <th className="p-3.5">Cobertura</th>
+                        <th className="p-3.5">SLA En Sitio</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {editableTechnicianRoster.map((row, idx) => (
+                        <tr key={row.trade} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-3.5 font-bold text-slate-900 whitespace-nowrap">{row.trade}</td>
+                          <td className="p-3.5">
+                            {isEditingRoster ? (
+                              <input
+                                type="text"
+                                value={row.contractor}
+                                onChange={(e) => handleTechnicianRosterChange(idx, "contractor", e.target.value)}
+                                className="w-full min-w-[180px] bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 font-semibold text-slate-900 text-xs focus:border-amber-500 focus:outline-none"
+                              />
+                            ) : (
+                              <span className="text-slate-800 font-semibold">{row.contractor}</span>
+                            )}
+                          </td>
+                          <td className="p-3.5 whitespace-nowrap">
+                            {isEditingRoster ? (
+                              <input
+                                type="text"
+                                value={row.contact}
+                                onChange={(e) => handleTechnicianRosterChange(idx, "contact", e.target.value)}
+                                className="w-36 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 font-semibold text-slate-900 text-xs focus:border-amber-500 focus:outline-none"
+                              />
+                            ) : (
+                              <a href={`tel:${row.contact.replace(/\s+/g, "")}`} className="text-slate-900 font-bold hover:underline">
+                                {row.contact}
+                              </a>
+                            )}
+                          </td>
+                          <td className="p-3.5 whitespace-nowrap">
+                            {isEditingRoster ? (
+                              <input
+                                type="text"
+                                value={row.coverage}
+                                onChange={(e) => handleTechnicianRosterChange(idx, "coverage", e.target.value)}
+                                className="w-32 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 font-semibold text-slate-900 text-xs focus:border-amber-500 focus:outline-none"
+                              />
+                            ) : (
+                              <span className="text-slate-600 font-medium">{row.coverage}</span>
+                            )}
+                          </td>
+                          <td className="p-3.5 text-slate-600 font-medium whitespace-nowrap">{row.slaOnSite}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -2197,161 +2438,6 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* CAPEX COST-RESPONSIBILITY LEDGER (TIES DIEGO'S ACTIVITY TO A REAL $ FIGURE FOR FINANZAS) */}
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div>
-                    <h3 className="font-sans text-base font-bold text-slate-900">
-                      Registro de Casos CapEx & Responsabilidad de Costo
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Cada solicitud de gasto mayor resuelta por Diego AI: quién paga y por qué. Alimenta la tarjeta &ldquo;CapEx Protegido&rdquo; en la Torre de Control CFO.
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0">
-                    {formatVal(diegoProtectedCapex)} Protegidos del P&amp;L
-                  </span>
-                </div>
-
-                <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
-                  <table className="w-full text-left text-xs font-sans">
-                    <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px] tracking-wider">
-                      <tr>
-                        <th className="p-3.5">Caso / Inquilino</th>
-                        <th className="p-3.5">Tipo de Gasto & Equipo</th>
-                        <th className="p-3.5 text-right">Monto</th>
-                        <th className="p-3.5">Veredicto Diego AI</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {capexCases.map((c) => {
-                        const verdictMeta =
-                          c.verdict === "RECHAZADO_RESPONSABILIDAD_INQUILINO"
-                            ? { label: "Rechazado · Responsabilidad Inquilino", badge: "bg-slate-900 text-white" }
-                            : c.verdict === "APROBADO_GARANTIA_COSTO_CERO"
-                              ? { label: "Aprobado · Garantía ($0 MXN)", badge: "bg-slate-100 text-slate-800 border border-slate-200" }
-                              : { label: "Aprobado · Prorrateo CAM", badge: "bg-amber-100 text-amber-900 border border-amber-300" };
-                        return (
-                          <tr key={c.id} className="hover:bg-slate-50/90 transition-colors align-top">
-                            <td className="p-3.5">
-                              <p className="font-bold text-slate-900 text-xs">{c.tenant}</p>
-                              <p className="text-[11px] text-slate-500">{c.id}</p>
-                            </td>
-                            <td className="p-3.5">
-                              <p className="text-slate-800 font-semibold">{c.expenseType}</p>
-                              <p className="text-[11px] text-slate-500">{c.equipmentModel} · {c.serialNumber}</p>
-                            </td>
-                            <td className="p-3.5 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">
-                              {formatVal(c.amount)}
-                            </td>
-                            <td className="p-3.5">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mb-1 ${verdictMeta.badge}`}>
-                                {verdictMeta.label}
-                              </span>
-                              <p className="text-[11px] text-slate-600 leading-relaxed max-w-md">{c.details}</p>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* PREAPPROVED TECHNICIAN ROSTER (CONTROLLER-EDITABLE, MATCHES CAM TABLE EDIT PATTERN) */}
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div>
-                    <h3 className="font-sans text-base font-bold text-slate-900">
-                      Directorio de Contratistas Preaprobados
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Un contratista por especialidad, listo para contactar sin importar el motivo del ticket.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setIsEditingRoster(!isEditingRoster);
-                      triggerToast(
-                        isEditingRoster
-                          ? "Directorio de contratistas actualizado."
-                          : "Modo Edición Controller activado. Puedes editar contratista, contacto o cobertura de cualquier especialidad."
-                      );
-                    }}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border shrink-0 ${
-                      isEditingRoster
-                        ? "bg-amber-500 hover:bg-amber-600 text-slate-950 border-amber-400 font-extrabold shadow-sm"
-                        : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
-                    }`}
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    <span>{isEditingRoster ? "Guardar Directorio" : "Modo Edición Controller"}</span>
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
-                  <table className="w-full text-left text-xs font-sans">
-                    <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px] tracking-wider">
-                      <tr>
-                        <th className="p-3.5">Especialidad</th>
-                        <th className="p-3.5">Contratista</th>
-                        <th className="p-3.5">Contacto</th>
-                        <th className="p-3.5">Cobertura</th>
-                        <th className="p-3.5">SLA En Sitio</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {editableTechnicianRoster.map((row, idx) => (
-                        <tr key={row.trade} className="hover:bg-slate-50 transition-colors">
-                          <td className="p-3.5 font-bold text-slate-900 whitespace-nowrap">{row.trade}</td>
-                          <td className="p-3.5">
-                            {isEditingRoster ? (
-                              <input
-                                type="text"
-                                value={row.contractor}
-                                onChange={(e) => handleTechnicianRosterChange(idx, "contractor", e.target.value)}
-                                className="w-full min-w-[180px] bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 font-semibold text-slate-900 text-xs focus:border-amber-500 focus:outline-none"
-                              />
-                            ) : (
-                              <span className="text-slate-800 font-semibold">{row.contractor}</span>
-                            )}
-                          </td>
-                          <td className="p-3.5 whitespace-nowrap">
-                            {isEditingRoster ? (
-                              <input
-                                type="text"
-                                value={row.contact}
-                                onChange={(e) => handleTechnicianRosterChange(idx, "contact", e.target.value)}
-                                className="w-36 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 font-semibold text-slate-900 text-xs focus:border-amber-500 focus:outline-none"
-                              />
-                            ) : (
-                              <a href={`tel:${row.contact.replace(/\s+/g, "")}`} className="text-slate-900 font-bold hover:underline">
-                                {row.contact}
-                              </a>
-                            )}
-                          </td>
-                          <td className="p-3.5 whitespace-nowrap">
-                            {isEditingRoster ? (
-                              <input
-                                type="text"
-                                value={row.coverage}
-                                onChange={(e) => handleTechnicianRosterChange(idx, "coverage", e.target.value)}
-                                className="w-32 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 font-semibold text-slate-900 text-xs focus:border-amber-500 focus:outline-none"
-                              />
-                            ) : (
-                              <span className="text-slate-600 font-medium">{row.coverage}</span>
-                            )}
-                          </td>
-                          <td className="p-3.5 text-slate-600 font-medium whitespace-nowrap">{row.slaOnSite}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </div>
@@ -4343,6 +4429,92 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
           </div>
         </div>
       )}
+
+      {/* DIEGO AI · MAINTENANCE EVENT APPROVAL MODAL (TIER 3 HUMAN GATE — SPEND ABOVE AUTO-APPROVE THRESHOLD) */}
+      {approvalConfirmEventId !== null && (() => {
+        const event = maintenanceEvents.find((e) => e.id === approvalConfirmEventId);
+        if (!event) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 font-sans">
+              <div className="bg-slate-900 text-white p-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Diego AI · Confirmación de Despacho
+                  </span>
+                  <button
+                    onClick={() => setApprovalConfirmEventId(null)}
+                    className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
+                    aria-label="Cerrar ventana"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <h3 className="text-xl font-bold mt-2">{event.title}</h3>
+                <p className="text-xs text-slate-300 mt-1">
+                  {formatVal(event.costEstimate)} excede el umbral de auto-aprobación ({formatVal(diegoThresholdVal)}) — requiere tu firma.
+                </p>
+              </div>
+
+              <div className="p-6 space-y-4 text-xs">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
+                  <p className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
+                    Resumen del Despacho
+                  </p>
+                  <div className="space-y-2 text-slate-700">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Contratista:</span>
+                      <span className="font-bold text-slate-900">{event.vendor}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Categoría:</span>
+                      <span className="font-bold text-slate-900">{event.category}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Fecha Programada:</span>
+                      <span className="font-bold text-slate-900">{event.date}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Costo Estimado:</span>
+                      <span className="font-bold text-slate-900">{formatVal(event.costEstimate)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Responsable:</span>
+                      <span className="font-bold text-slate-900">{event.responsible}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-amber-900">
+                  <p className="font-bold text-xs">Aviso de Autorización de Gasto</p>
+                  <p className="text-[11.5px] mt-0.5 text-amber-800">
+                    Al aprobar, Diego AI despachará a {event.vendor} bajo el umbral vigente de Firma Dual Admin. El gasto quedará registrado en el Registro de Casos CapEx.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                <button
+                  onClick={() => setApprovalConfirmEventId(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    setEventApprovals((prev) => ({ ...prev, [event.id]: true }));
+                    setApprovalConfirmEventId(null);
+                    triggerToast(`Diego AI: Despacho aprobado — ${event.vendor} programado para ${event.date}.`);
+                  }}
+                  className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"
+                >
+                  Aprobar y Programar Despacho →
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
