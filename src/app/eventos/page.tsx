@@ -156,7 +156,7 @@ export default function EventsPage() {
                 </div>
                 <div className="p-4.5">
                   <p className="mb-2 font-display text-xl font-semibold">
-                    ¡Estás dentro! Tu pasaporte te espera 🏃
+                    ¡Estás dentro! Tu pasaporte está listo.
                   </p>
                   <p className="mb-3.5 text-[13.5px] text-ink-700">
                     Abre tu pasaporte digital y presenta cada código en caja.{" "}

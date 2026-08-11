@@ -110,7 +110,17 @@ export function DirectoryMap() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Search Input */}
           <div className="relative flex-1 max-w-md">
-            <span className="absolute left-3.5 top-2.5 text-ink-400 text-xs font-mono">🔍</span>
+            <svg
+              className="absolute left-3.5 top-3 h-3.5 w-3.5 text-ink-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
             <input
               type="text"
               value={searchQuery}
@@ -190,13 +200,13 @@ export function DirectoryMap() {
               <button
                 onClick={() => setActiveFloor("PA")}
                 className={cn(
-                  "px-2 py-1 rounded transition-all cursor-pointer text-[11px] font-medium border",
+                  "px-2 py-1 rounded transition-all cursor-pointer text-[11px] font-medium border flex items-center gap-1",
                   activeFloor === "PA"
                     ? "bg-amber-900 text-amber-100 border-amber-800 font-bold shadow-xs"
                     : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
                 )}
               >
-                ⬆️ 2do Piso ({secondFloorCount})
+                <span className="text-[10px] font-bold tracking-tighter">PA</span> 2do Piso ({secondFloorCount})
               </button>
             </div>
           </div>
@@ -219,7 +229,7 @@ export function DirectoryMap() {
               )}
               {activeFloor !== "ALL" && (
                 <span className="bg-amber-900 text-amber-100 px-2 py-0.5 rounded text-[11px] font-bold">
-                  {activeFloor === "PA" ? "⬆️ 2do Piso" : "Planta Baja"}
+                  {activeFloor === "PA" ? "2do Piso (Planta Alta)" : "Planta Baja"}
                 </span>
               )}
               {searchQuery && (
@@ -256,7 +266,7 @@ export function DirectoryMap() {
               Mapa Arquitectónico de la Plaza
             </h2>
             <p className="text-xs text-dune-300 mt-0.5 font-sans">
-              Haz clic en cualquier zona para filtrar. Revisa la insignia <strong className="text-amber-400 font-mono">⬆️ 2DO PISO</strong> para ubicar locales en Planta Alta.
+              Haz clic en cualquier zona para filtrar. Revisa la insignia <strong className="text-amber-400 font-mono">PA · 2DO PISO</strong> para ubicar locales en Planta Alta.
             </p>
           </div>
 
@@ -294,7 +304,7 @@ export function DirectoryMap() {
                     : "text-amber-400 hover:text-amber-300"
                 )}
               >
-                ⬆️ 2do Piso
+                2do Piso (PA)
               </button>
             </div>
 
@@ -404,7 +414,7 @@ export function DirectoryMap() {
                         textAnchor="middle"
                         className="fill-amber-300 font-mono text-[7px] font-bold tracking-wider uppercase"
                       >
-                        ⬆️ PLANTA BAJA + 2DO PISO
+                        PLANTA BAJA + 2DO PISO
                       </text>
                     </g>
                   )}
@@ -528,8 +538,8 @@ export function DirectoryMap() {
                       {tenant.zone.split(" ")[0]} {tenant.zone.split(" ")[1]}
                     </span>
                     {tenant.zone.includes("segundo piso") ? (
-                      <span className="bg-amber-900 text-amber-100 border border-amber-800 text-[9.5px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1 shadow-2xs">
-                        ⬆️ 2do Piso
+                      <span className="bg-amber-900 text-amber-100 border border-amber-800 text-[9.5px] px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider shadow-2xs">
+                        PA · 2do Piso
                       </span>
                     ) : tenant.zone.includes("interior") ? (
                       <span className="bg-sand-200/80 text-ink-600 border border-hairline text-[9.5px] px-1.5 py-0.5 rounded font-medium uppercase">

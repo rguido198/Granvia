@@ -110,8 +110,8 @@ export function EventsFeed({ showLink = true }: { showLink?: boolean }) {
                 </div>
 
                 <div className="px-4 pb-3.5 pt-2.5 border-t border-hairline flex items-center justify-between font-mono text-[11px] gap-2">
-                  <span className="text-ink-400 truncate">
-                    📍 {event.date}
+                  <span className="text-ink-500 font-medium truncate">
+                    {event.date}
                   </span>
                   <span className="font-bold text-terra group-hover:translate-x-0.5 transition-transform shrink-0">
                     {event.cta} →
