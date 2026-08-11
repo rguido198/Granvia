@@ -43,6 +43,7 @@ const MAP_ANCHORS = [
 export function DirectoryMap() {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [activePillar, setActivePillar] = useState<Pillar | "ALL">("ALL");
+  const [activeFloor, setActiveFloor] = useState<"ALL" | "PB" | "PA">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [selectedAnchor, setSelectedAnchor] = useState<string | null>(null);
@@ -66,9 +67,16 @@ export function DirectoryMap() {
       const matchesPillar =
         activePillar === "ALL" || t.pillar === activePillar;
 
-      return matchesSearch && matchesZone && matchesPillar;
+      // 4. Floor Level Filter (Planta Baja vs 2do Piso / Planta Alta)
+      const isSecondFloor = t.zone.toLowerCase().includes("segundo piso");
+      const matchesFloor =
+        activeFloor === "ALL" ||
+        (activeFloor === "PA" && isSecondFloor) ||
+        (activeFloor === "PB" && !isSecondFloor);
+
+      return matchesSearch && matchesZone && matchesPillar && matchesFloor;
     });
-  }, [searchQuery, selectedZone, activePillar]);
+  }, [searchQuery, selectedZone, activePillar, activeFloor]);
 
   // Handle map anchor pin click
   const handleAnchorClick = (anchor: (typeof MAP_ANCHORS)[number]) => {
@@ -81,15 +89,25 @@ export function DirectoryMap() {
   const resetFilters = () => {
     setSelectedZone(null);
     setActivePillar("ALL");
+    setActiveFloor("ALL");
     setSearchQuery("");
     setSelectedAnchor(null);
   };
 
+  const secondFloorCount = useMemo(
+    () => TENANTS.filter((t) => t.zone.includes("segundo piso")).length,
+    []
+  );
+  const groundFloorCount = useMemo(
+    () => TENANTS.filter((t) => !t.zone.includes("segundo piso")).length,
+    []
+  );
+
   return (
     <div className="space-y-8">
-      {/* MAP CONTROLS & FILTER BAR — 100% Achromatic Neutral Styling */}
+      {/* MAP CONTROLS & FILTER BAR — Achromatic Neutral Styling with Floor Selector */}
       <div className="bg-sand-100 border border-hairline rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Search Input */}
           <div className="relative flex-1 max-w-md">
             <span className="absolute left-3.5 top-2.5 text-ink-400 text-xs font-mono">🔍</span>
@@ -110,41 +128,82 @@ export function DirectoryMap() {
             )}
           </div>
 
-          {/* Pillar Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
-            <button
-              onClick={() => setActivePillar("ALL")}
-              className={cn(
-                "px-3 py-1.5 rounded-md transition-all cursor-pointer font-bold border",
-                activePillar === "ALL"
-                  ? "bg-ink text-sand-100 border-ink shadow-xs"
-                  : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
-              )}
-            >
-              Todos ({TENANTS.length})
-            </button>
-            {(["prueba", "consiente", "visita", "servicios"] as Pillar[]).map((p) => {
-              const count = TENANTS.filter((t) => t.pillar === p).length;
-              return (
-                <button
-                  key={p}
-                  onClick={() => setActivePillar(p)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md transition-all cursor-pointer font-medium border",
-                    activePillar === p
-                      ? "bg-ink text-sand-100 border-ink shadow-xs"
-                      : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
-                  )}
-                >
-                  {PILLAR_LABELS[p].kicker} ({count})
-                </button>
-              );
-            })}
+          {/* Filter Groups (Pillars & Floor Selector) */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Pillar Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+              <button
+                onClick={() => setActivePillar("ALL")}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-md transition-all cursor-pointer font-bold border",
+                  activePillar === "ALL"
+                    ? "bg-ink text-sand-100 border-ink shadow-xs"
+                    : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
+                )}
+              >
+                Todos ({TENANTS.length})
+              </button>
+              {(["prueba", "consiente", "visita", "servicios"] as Pillar[]).map((p) => {
+                const count = TENANTS.filter((t) => t.pillar === p).length;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setActivePillar(p)}
+                    className={cn(
+                      "px-2.5 py-1.5 rounded-md transition-all cursor-pointer font-medium border",
+                      activePillar === p
+                        ? "bg-ink text-sand-100 border-ink shadow-xs"
+                        : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
+                    )}
+                  >
+                    {PILLAR_LABELS[p].kicker} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Floor Level Filter Pills */}
+            <div className="flex items-center gap-1.5 border-t lg:border-t-0 lg:border-l border-hairline pt-2 lg:pt-0 lg:pl-3 font-mono text-xs">
+              <span className="text-[10.5px] text-ink-400 uppercase font-bold mr-0.5">Nivel:</span>
+              <button
+                onClick={() => setActiveFloor("ALL")}
+                className={cn(
+                  "px-2 py-1 rounded transition-all cursor-pointer text-[11px] font-medium border",
+                  activeFloor === "ALL"
+                    ? "bg-ink text-sand-100 border-ink font-bold"
+                    : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
+                )}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => setActiveFloor("PB")}
+                className={cn(
+                  "px-2 py-1 rounded transition-all cursor-pointer text-[11px] font-medium border",
+                  activeFloor === "PB"
+                    ? "bg-ink text-sand-100 border-ink font-bold"
+                    : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
+                )}
+              >
+                Planta Baja ({groundFloorCount})
+              </button>
+              <button
+                onClick={() => setActiveFloor("PA")}
+                className={cn(
+                  "px-2 py-1 rounded transition-all cursor-pointer text-[11px] font-medium border",
+                  activeFloor === "PA"
+                    ? "bg-amber-900 text-amber-100 border-amber-800 font-bold shadow-xs"
+                    : "bg-sand-50 text-ink border-hairline hover:border-ink-400"
+                )}
+              >
+                ⬆️ 2do Piso ({secondFloorCount})
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Selected Filter Banner */}
-        {(selectedZone || activePillar !== "ALL" || searchQuery) && (
+        {(selectedZone || activePillar !== "ALL" || activeFloor !== "ALL" || searchQuery) && (
           <div className="flex items-center justify-between bg-sand-200 border border-hairline-strong px-4 py-2.5 rounded-lg text-xs font-mono text-ink-700">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-ink">Filtro activo:</span>
@@ -156,6 +215,11 @@ export function DirectoryMap() {
               {activePillar !== "ALL" && (
                 <span className="bg-ink text-sand-100 px-2 py-0.5 rounded text-[11px]">
                   {PILLAR_LABELS[activePillar].kicker}
+                </span>
+              )}
+              {activeFloor !== "ALL" && (
+                <span className="bg-amber-900 text-amber-100 px-2 py-0.5 rounded text-[11px] font-bold">
+                  {activeFloor === "PA" ? "⬆️ 2do Piso" : "Planta Baja"}
                 </span>
               )}
               {searchQuery && (
@@ -390,9 +454,24 @@ export function DirectoryMap() {
                   <h4 className="font-display text-lg font-semibold text-ink leading-tight group-hover:text-black">
                     {tenant.name}
                   </h4>
-                  <span className="bg-sand-200 text-ink-700 text-[10px] font-mono px-2 py-0.5 rounded font-bold shrink-0 border border-hairline">
-                    {tenant.zone}
-                  </span>
+                  <div className="flex flex-col items-end gap-1 shrink-0 font-mono">
+                    <span className="bg-sand-200 text-ink-700 text-[10px] px-2 py-0.5 rounded font-bold border border-hairline">
+                      {tenant.zone.split(" ")[0]} {tenant.zone.split(" ")[1]}
+                    </span>
+                    {tenant.zone.includes("segundo piso") ? (
+                      <span className="bg-amber-900 text-amber-100 border border-amber-800 text-[9.5px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1 shadow-2xs">
+                        ⬆️ 2do Piso
+                      </span>
+                    ) : tenant.zone.includes("interior") ? (
+                      <span className="bg-sand-200/80 text-ink-600 border border-hairline text-[9.5px] px-1.5 py-0.5 rounded font-medium uppercase">
+                        Interior
+                      </span>
+                    ) : (
+                      <span className="bg-sand-200/50 text-ink-500 text-[9.5px] px-1.5 py-0.5 rounded font-medium uppercase">
+                        Planta Baja
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <p className="font-mono text-[10.5px] text-ink-400 uppercase tracking-wider">
