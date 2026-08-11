@@ -1434,7 +1434,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-display">Gastos del Mes (CAM)</p>
                   <p className="text-2xl font-bold font-display text-slate-900">{formatVal(camMonthlyPool)}</p>
-                  <p className="text-xs text-slate-500 font-display">4 Facturas acumuladas</p>
+                  <p className="text-xs text-slate-500 font-display">5 Facturas acumuladas</p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-display">Vía ERP SAP System</p>
@@ -1443,8 +1443,8 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 </div>
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-display">Vía Carga Manual</p>
-                  <p className="text-2xl font-bold font-display text-slate-900">{formatVal(38500)}</p>
-                  <p className="text-xs text-slate-500 font-display">1 Factura (Climas HVAC)</p>
+                  <p className="text-2xl font-bold font-display text-slate-900">{formatVal(90500)}</p>
+                  <p className="text-xs text-slate-500 font-display">2 Facturas (Climas HVAC + Diego AI CAP-03)</p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-display">Vía Portal Arrendatario</p>
@@ -1471,7 +1471,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       onClick={() => setInvoiceSourceFilter("ALL")}
                       className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${invoiceSourceFilter === "ALL" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600 hover:text-slate-900"}`}
                     >
-                      Todos (4)
+                      Todos (5)
                     </button>
                     <button
                       onClick={() => setInvoiceSourceFilter("ERP")}
@@ -1483,7 +1483,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       onClick={() => setInvoiceSourceFilter("MANUAL")}
                       className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${invoiceSourceFilter === "MANUAL" ? "bg-white text-slate-900 font-bold shadow-2xs" : "text-slate-600 hover:text-slate-900"}`}
                     >
-                      Carga Manual (1)
+                      Carga Manual (2)
                     </button>
                     <button
                       onClick={() => setInvoiceSourceFilter("TENANT")}
@@ -1551,6 +1551,23 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           <td className="p-4 font-bold text-slate-900 whitespace-nowrap">Climas de Mexicali</td>
                           <td className="p-4 text-slate-600">Mantenimiento Preventivo HVAC Torre Central</td>
                           <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(38500)}</td>
+                          <td className="p-4 text-slate-500">Prorrateado (m² ÷ {plazaTotalGla.toLocaleString("es-MX")})</td>
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <span className="text-slate-800 font-bold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Prorrateado</span>
+                          </td>
+                        </tr>
+                      )}
+
+                      {(invoiceSourceFilter === "ALL" || invoiceSourceFilter === "MANUAL") && (
+                        <tr className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-800 border border-slate-200 px-3 py-1 rounded-lg text-xs font-bold">
+                              Carga Manual Admin
+                            </span>
+                          </td>
+                          <td className="p-4 font-bold text-slate-900 whitespace-nowrap">Diego AI · Caso CAP-03</td>
+                          <td className="p-4 text-slate-600">Mantenimiento Preventivo Planta de Emergencia Común (Cinemex Premium)</td>
+                          <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(52000)}</td>
                           <td className="p-4 text-slate-500">Prorrateado (m² ÷ {plazaTotalGla.toLocaleString("es-MX")})</td>
                           <td className="p-4 text-center whitespace-nowrap">
                             <span className="text-slate-800 font-bold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Prorrateado</span>

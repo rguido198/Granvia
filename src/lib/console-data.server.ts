@@ -113,7 +113,7 @@ const CAPEX_CASES: CapexCase[] = [
     amount: 52000,
     isQuestionable: false,
     verdict: "APROBADO_PRORRATEO_CAM",
-    details: "APROBADO PARA CAM NNN: Gasto de infraestructura común prorrateable entre todos los locales en la liquidación mensual.",
+    details: "APROBADO PARA CAM NNN: Gasto de infraestructura común prorrateable entre todos los locales. Incorporado al Fondo CAM de Agosto 2026 ($504,468 MXN) — ver Registro Completo de Facturas en Finanzas & Gastos CAM.",
     equipmentModel: "Caterpillar C15 ACERT 500kW",
     serialNumber: "CAT-500-9942",
   },
@@ -182,8 +182,13 @@ const VACANT_UNIT = {
  * Monthly common-area pool billed across the plaza's GLA. Every figure in
  * Renata's prorateo matrix derives from this one number, so the column always
  * sums back to it exactly — that sum is the 1.0000 invariant the tab claims.
+ *
+ * $452,468 across the four ERP/manual/tenant invoices in Renata's ledger, plus
+ * $52,000 for Diego's case CAP-03 (Cinemex Premium emergency generator, approved
+ * APROBADO_PRORRATEO_CAM) — folded in as of the Ago 2026 cut. Both ledgers must
+ * list it or this total stops being traceable to its line items.
  */
-const CAM_MONTHLY_POOL = 452468;
+const CAM_MONTHLY_POOL = 504468;
 const CAM_ADMIN_RATE = 0.15;
 const IVA_RATE = 0.16;
 
