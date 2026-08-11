@@ -345,6 +345,8 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
     fiscalAlertRent,
     occupancyRate,
     collectionRate,
+    tenantsAlDia,
+    tenantsWithAlert,
     leasingApplicants,
     criticalEquipment,
     capexCases,
@@ -822,7 +824,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100 gap-2">
-                    <span className="font-display truncate">79 de 84 locales al día</span>
+                    <span className="font-display truncate">{tenantsAlDia} de {rentRoll.length} locales al día</span>
                     <span className="font-bold font-display text-slate-900 group-hover:underline shrink-0 whitespace-nowrap">
                       Ver Rent Roll &rarr;
                     </span>
@@ -902,7 +904,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       Eficiencia de Cobranza
                     </span>
                     <span className="text-xs font-bold font-display text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-300 shrink-0 whitespace-nowrap">
-                      1 Alerta SAT
+                      {tenantsWithAlert} Alerta{tenantsWithAlert === 1 ? "" : "s"} SAT
                     </span>
                   </div>
                   <div className="my-4">
