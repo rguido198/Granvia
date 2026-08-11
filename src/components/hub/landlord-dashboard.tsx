@@ -399,6 +399,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
   // Governance Policy Edit States
   const [editingPolicyCard, setEditingPolicyCard] = useState<null | "diego" | "renata" | "sso">(null);
+  const [camConfirmModal, setCamConfirmModal] = useState<null | "notify" | "sat_erp">(null);
   const [diegoThresholdVal, setDiegoThresholdVal] = useState<number>(50000);
   const [diegoAutoMode, setDiegoAutoMode] = useState<boolean>(true);
   const [renataAutoMode, setRenataAutoMode] = useState<boolean>(true);
@@ -1532,23 +1533,24 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <button
-                      onClick={() => {
-                        triggerToast("Renata AI: 84 Estados de Cuenta CAM enviados por email y publicados en Portal del Arrendatario (/inquilinos).");
-                      }}
-                      className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                      title="Enviar estado de cuenta a los 84 arrendatarios"
+                      onClick={() => setCamConfirmModal("notify")}
+                      className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
+                      title="Revisar y notificar estado de cuenta a los 84 arrendatarios"
                     >
-                      <span>📩 Notificar a Tenants</span>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <span>Notificar a Tenants</span>
                     </button>
                     <button
-                      onClick={() => {
-                        setCfdiIssued(true);
-                        triggerToast("Renata AI: 84 facturas CFDI 4.0 timbradas ante el SAT y sincronizadas en Cuentas por Cobrar de ERP SAP.");
-                      }}
-                      className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                      title="Generar timbrado SAT y enviar cuentas por cobrar al ERP SAP"
+                      onClick={() => setCamConfirmModal("sat_erp")}
+                      className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
+                      title="Revisar y autorizar timbrado SAT con sincronización ERP SAP"
                     >
-                      <span>⚡ Timbrar SAT & ERP SAP</span>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Timbrar SAT & ERP SAP</span>
                     </button>
                   </div>
                 </div>
@@ -3669,6 +3671,124 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 Enviar
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CAM CONFIRMATION MODAL */}
+      {camConfirmModal !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 font-sans">
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white p-6">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Renata AI · Confirmación de Operación Financiera
+                </span>
+                <button
+                  onClick={() => setCamConfirmModal(null)}
+                  className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
+                  aria-label="Cerrar ventana"
+                >
+                  ✕
+                </button>
+              </div>
+              <h3 className="text-xl font-bold mt-2">
+                {camConfirmModal === "notify"
+                  ? "Confirmar Notificación a Tenants"
+                  : "Confirmar Timbrado SAT & ERP SAP"}
+              </h3>
+              <p className="text-xs text-slate-300 mt-1">
+                {camConfirmModal === "notify"
+                  ? "Revisión previa a la distribución masiva de los Estados de Cuenta CAM NNN (Agosto 2026)."
+                  : "Generación de comprobantes fiscales CFDI 4.0 y registro automático en Cuentas por Cobrar."}
+              </p>
+            </div>
+
+            {/* Modal Content Details */}
+            <div className="p-6 space-y-4 text-xs">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
+                <p className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
+                  Resumen de la Transacción
+                </p>
+                {camConfirmModal === "notify" ? (
+                  <div className="space-y-2 text-slate-700">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Destinatarios:</span>
+                      <span className="font-bold text-slate-900">84 Arrendatarios (Contactos de Finanzas)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Monto Total Prorrateado:</span>
+                      <span className="font-bold text-slate-900">{formatVal(268500)} MXN</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Canal de Envío:</span>
+                      <span className="font-bold text-slate-900">Correo Directo + Portal Arrendatario (/inquilinos)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Archivos Adjuntos:</span>
+                      <span className="font-bold text-slate-900">Estado de Cuenta PDF + Anexo de Gastos Comunes</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-slate-700">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Lote de Facturación:</span>
+                      <span className="font-bold text-slate-900">84 Facturas Individuales NNN</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Régimen & Timbrado:</span>
+                      <span className="font-bold text-slate-900">SAT CFDI 4.0 (Gastos NNN)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Integración ERP:</span>
+                      <span className="font-bold text-slate-900">Módulo FI-AR (Cuentas por Cobrar SAP)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Monto Total a Timbrar:</span>
+                      <span className="font-bold text-slate-900">{formatVal(268500)} MXN</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-amber-900">
+                <p className="font-bold text-xs">Aviso de Responsabilidad Financiera</p>
+                <p className="text-[11.5px] mt-0.5 text-amber-800">
+                  {camConfirmModal === "notify"
+                    ? "Al autorizar, los 84 arrendatarios recibirán una notificación formal con el cobro de CAM correspondiente al mes en curso."
+                    : "Al autorizar, se generará el timbre fiscal ante el SAT y se afectará la cartera de Cuentas por Cobrar en el sistema ERP."}
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => setCamConfirmModal(null)}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (camConfirmModal === "notify") {
+                    triggerToast("Renata AI: Notificaciones de Estado de Cuenta enviadas a los 84 arrendatarios.");
+                  } else {
+                    setCfdiIssued(true);
+                    triggerToast("Renata AI: 84 facturas CFDI 4.0 timbradas en SAT y registradas en ERP SAP.");
+                  }
+                  setCamConfirmModal(null);
+                }}
+                className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm ${
+                  camConfirmModal === "notify" ? "bg-slate-900 hover:bg-slate-800" : "bg-emerald-700 hover:bg-emerald-800"
+                }`}
+              >
+                {camConfirmModal === "notify"
+                  ? "Aprobar y Enviar Notificaciones"
+                  : "Aprobar Timbrado & Sincronizar ERP"}
+              </button>
+            </div>
           </div>
         </div>
       )}
