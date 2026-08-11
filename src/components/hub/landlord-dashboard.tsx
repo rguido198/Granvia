@@ -499,10 +499,10 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
       setQueryResult(
         "Renata AI (Fiscal & CAM): Inconsistencia detectada en 260 Grill & Bar (Local 10-01). Se registraron $98,500 MXN de cobro sin emisión de complemento CFDI 4.0. Utiliza el botón 'Emitir Complemento SAT' para regularizar."
       );
-    } else if (q.includes("contrato") || q.includes("starbucks") || q.includes("dunkin") || q.includes("mariana")) {
+    } else if (q.includes("contrato") || q.includes("blue luna") || q.includes("dunkin") || q.includes("mariana")) {
       setActiveAgent("mariana");
       setQueryResult(
-        "Mariana AI (Legal & Leasing): Conflicto de exclusividad detectado. La solicitud de Dunkin' Donuts viola la Cláusula 14.2 del contrato de Starbucks (Bóveda PDF página 4). Dictamen: RECHAZADO."
+        "Mariana AI (Legal & Leasing): Conflicto de exclusividad detectado. La solicitud de Dunkin' Donuts viola la Cláusula 14.2 del contrato de Blue Luna Café (Bóveda PDF página 4). Dictamen: RECHAZADO."
       );
     } else if (q.includes("climas") || q.includes("hvac") || q.includes("mantenimiento") || q.includes("diego")) {
       setActiveAgent("diego");
@@ -1007,12 +1007,12 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     {/* Item 2 */}
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 hover:bg-slate-100/60 transition-colors">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-sm">Cinépolis</span>
+                        <span className="font-bold text-slate-900 text-sm">Cinemex Premium</span>
                         <span className="text-xs font-bold bg-slate-200 text-slate-800 px-2.5 py-0.5 rounded-md">Al Día · 2028</span>
                       </div>
                       <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
-                        <span>Superficie: 4,200 m² · Ancla 1</span>
-                        <span className="font-bold text-slate-900">{formatVal(320000)}/mes</span>
+                        <span>Superficie: 1,180 m² · Local 9-22</span>
+                        <span className="font-bold text-slate-900">{formatVal(283200)}/mes</span>
                       </div>
                       <div className="pt-2 border-t border-slate-200/60 flex justify-end">
                         <span className="text-xs text-slate-700 font-bold">Sin Riesgo Activo</span>
@@ -1301,7 +1301,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
                     {rentRoll.map((r) => {
                       const is260Grill = r.name.includes("260 Grill");
-                      const isStarbucks = r.name.includes("Starbucks");
+                      const isBlueLuna = r.name.includes("Blue Luna");
 
                       return (
                         <tr key={r.slug} className={`transition-colors ${isEditingRentRoll ? "bg-slate-100/50 hover:bg-slate-100" : "hover:bg-slate-50"}`}>
@@ -1358,20 +1358,20 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                                 {!renewalSent && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
                                 {renewalSent ? "Borrador Enviado a Abogado ✓" : "Renovación Próxima · Mariana AI →"}
                               </button>
-                            ) : isStarbucks ? (
+                            ) : isBlueLuna ? (
                               <button
                                 onClick={() => {
                                   setActiveAgent("mariana");
                                   setCopilotOpen(true);
                                   setQueryResult(
-                                    "Mariana AI (Contratos & Arrendamientos): Starbucks Coffee (Local A-05). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
+                                    "Mariana AI (Contratos & Arrendamientos): Blue Luna Café (Local 4-16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
                                   );
-                                  triggerToast("Mariana AI (Contratos): Expediente Starbucks Coffee abierto.");
+                                  triggerToast("Mariana AI (Contratos): Expediente Blue Luna Café abierto.");
                                 }}
                                 title="Ver auditoría de póliza asignada a Mariana AI"
                                 className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
                               >
-                                Revisión Quinquenal · Mariana AI →
+                                Revisar Seguro · Mariana AI →
                               </button>
                             ) : (
                               <span className="bg-slate-100 text-slate-800 border border-slate-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
@@ -2024,7 +2024,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             </span>
                             <span className="text-[10px] font-bold text-slate-500">Superficie: 8,400 m²</span>
                           </div>
-                          <h4 className="font-bold text-sm text-slate-900 mt-1">Impermeabilización Mapei (Cinépolis & Zona B)</h4>
+                          <h4 className="font-bold text-sm text-slate-900 mt-1">Impermeabilización Mapei (Cinemex & Zona B)</h4>
                         </div>
                         <span className="bg-slate-100 text-slate-900 border border-slate-200 text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía 10 Años ✓
@@ -2372,7 +2372,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     Mariana AI · Inteligencia Multi-Contrato & Exclusividades
                   </h2>
                   <p className="text-xs text-slate-500 mt-1">
-                    Supervisión activa de 79 contratos de arrendamiento, consultas legales en tiempo real y dictamen de exclusividades para prospectos.
+                    Supervisión activa de {rentRoll.length} contratos de arrendamiento, consultas legales en tiempo real y dictamen de exclusividades para prospectos.
                   </p>
                 </div>
 
@@ -2460,7 +2460,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0 cursor-default select-none"
                       title="SSOT = Single Source of Truth / Fuente Única de Verdad"
                     >
-                      79 Contratos Indexados (SSOT)
+                      9 de {rentRoll.length} Indexados (SSOT)
                     </span>
                   </div>
 
@@ -2503,12 +2503,12 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             insuranceStatus: "ok",
                           },
                           {
-                            id: "c-cinepolis",
-                            brand: "Cinépolis VIP",
-                            unit: "Ancla 1",
-                            sqm: "4,200 m²",
-                            pdf: "contrato_cinepolis_master_2028.pdf",
-                            insurancePdf: "poliza_seguro_cinepolis_2028.pdf",
+                            id: "c-cinemex",
+                            brand: "Cinemex Premium",
+                            unit: "Local 9-22",
+                            sqm: "1,180 m²",
+                            pdf: "contrato_cinemex_premium_2028.pdf",
+                            insurancePdf: "poliza_seguro_cinemex_premium_2028.pdf",
                             hash: "sha256-1b4d8c7...",
                             vectorChunks: 580,
                             expirationDate: "15 Jun 2028",
@@ -2516,24 +2516,24 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             exclusivityClause: "Cláusula 24.3: Exclusividad territorial absoluta para salas de cine en radio de 5km.",
                             inpcClause: "Cláusula 9.1: Ajuste trienal fijo del +5.0% sobre Renta Base.",
                             penaltyClause: "Cláusula 30.1: Incumplimiento grave faculta rescisión inmediata con retención de fianza.",
-                            deposit: "$640,000 MXN (Fianza Banorte)",
+                            deposit: "$849,600 MXN (Fianza Banorte)",
                             anomaly: "Sin anomalías. 100% al día.",
                             status: "Vigente SSOT",
                             statusBadge: "bg-slate-100 text-slate-800 border border-slate-200",
                             insuranceStatus: "ok",
                           },
                           {
-                            id: "c-starbucks",
-                            brand: "Starbucks Coffee",
-                            unit: "Local A-05",
+                            id: "c-blueluna",
+                            brand: "Blue Luna Café",
+                            unit: "Local 4-16",
                             sqm: "180 m²",
-                            pdf: "contrato_starbucks_2027.pdf",
-                            insurancePdf: "poliza_seguro_starbucks_vence_nov2026.pdf",
+                            pdf: "contrato_blue_luna_cafe_2027.pdf",
+                            insurancePdf: "poliza_seguro_blue_luna_cafe_vence_nov2026.pdf",
                             hash: "sha256-9a2c1f4...",
                             vectorChunks: 98,
                             expirationDate: "30 Nov 2027",
                             timeRemaining: "15 meses vigentes",
-                            exclusivityClause: "Cláusula 14.2: Exclusividad de café preparado y repostería artesanal únicamente en Zona A.",
+                            exclusivityClause: "Cláusula 14.2: Exclusividad de café preparado y repostería artesanal únicamente en Zona 4.",
                             inpcClause: "Cláusula 6.1: Ajuste anual INPC + 1.5% cada primero de Enero.",
                             penaltyClause: "Cláusula 19.3: Preaviso de 90 días naturales con indemnización de 3 meses.",
                             deposit: "$130,000 MXN (Carta Crédito)",
@@ -2543,80 +2543,80 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             insuranceStatus: "warning",
                           },
                           {
-                            id: "c-zara",
-                            brand: "Zara (Grupo Inditex)",
-                            unit: "Sub-Ancla B",
-                            sqm: "1,500 m²",
-                            pdf: "contrato_zara_inditex_2029.pdf",
-                            insurancePdf: "poliza_seguro_zara_2029.pdf",
+                            id: "c-ashley",
+                            brand: "Ashley",
+                            unit: "Local 9-07",
+                            sqm: "1,450 m²",
+                            pdf: "contrato_ashley_muebles_2029.pdf",
+                            insurancePdf: "poliza_seguro_ashley_muebles_2029.pdf",
                             hash: "sha256-3e7b8a1...",
                             vectorChunks: 310,
                             expirationDate: "15 Mar 2029",
                             timeRemaining: "31 meses vigentes",
-                            exclusivityClause: "Cláusula 12.1: Exclusividad en tienda insignia de moda fast-fashion multimarca.",
+                            exclusivityClause: "Cláusula 12.1: Exclusividad en tienda ancla de muebles y decoración para el hogar.",
                             inpcClause: "Cláusula 8.4: Ajuste condicionado a ventas brutas auditadas >$15M MXN.",
                             penaltyClause: "Cláusula 25.2: Penalización de 3 meses de renta base.",
-                            deposit: "$420,000 MXN (Garantía Santander)",
+                            deposit: "$1,044,000 MXN (Garantía Santander)",
                             anomaly: "Sin anomalías. 100% al día.",
                             status: "Vigente SSOT",
                             statusBadge: "bg-slate-100 text-slate-800 border border-slate-200",
                             insuranceStatus: "ok",
                           },
                           {
-                            id: "c-nike",
-                            brand: "Nike Store",
-                            unit: "Local B-02",
-                            sqm: "450 m²",
-                            pdf: "contrato_nike_store_2027.pdf",
-                            insurancePdf: "poliza_seguro_nike_2027.pdf",
+                            id: "c-fairfield",
+                            brand: "Fairfield Inn & Suites by Marriott",
+                            unit: "Local 8-28",
+                            sqm: "850 m²",
+                            pdf: "contrato_fairfield_marriott_2027.pdf",
+                            insurancePdf: "poliza_seguro_fairfield_marriott_2027.pdf",
                             hash: "sha256-4f9e1d8...",
                             vectorChunks: 215,
                             expirationDate: "15 Dic 2026",
                             timeRemaining: "En 4 meses",
-                            exclusivityClause: "Cláusula 10.3: Exclusividad en calzado y ropa deportiva técnica multimarca en Zona B.",
+                            exclusivityClause: "Cláusula 10.3: Exclusividad de marca hotelera de servicio completo dentro de la plaza.",
                             inpcClause: "Cláusula 5.2: Ajuste anual INPC INEGI en Enero.",
                             penaltyClause: "Cláusula 16.1: Rescisión anticipada con penalización de 4 meses.",
-                            deposit: "$280,000 MXN (Fianza BBVA)",
+                            deposit: "$408,000 MXN (Fianza BBVA)",
                             anomaly: "Sin anomalías. Timbrado SAT verificado.",
                             status: "Renovación Próxima",
                             statusBadge: "bg-slate-900 text-white",
                             insuranceStatus: "ok",
                           },
                           {
-                            id: "c-sephora",
-                            brand: "Sephora Beauty",
-                            unit: "Local A-12",
-                            sqm: "320 m²",
-                            pdf: "contrato_sephora_beauty_2028.pdf",
-                            insurancePdf: "poliza_seguro_sephora_2028.pdf",
+                            id: "c-holidayinn",
+                            brand: "Holiday Inn Express",
+                            unit: "Local 8-34",
+                            sqm: "850 m²",
+                            pdf: "contrato_holiday_inn_express_2028.pdf",
+                            insurancePdf: "poliza_seguro_holiday_inn_express_2028.pdf",
                             hash: "sha256-7c2a9b4...",
                             vectorChunks: 180,
                             expirationDate: "30 Sep 2028",
                             timeRemaining: "25 meses vigentes",
-                            exclusivityClause: "Cláusula 15.4: Exclusividad retail en cosméticos de lujo y perfumería de prestigio en Zona A.",
+                            exclusivityClause: "Cláusula 15.4: Exclusividad de marca hotelera de estadía económica/extendida dentro de la plaza.",
                             inpcClause: "Cláusula 7.1: Ajuste anual INPC en Octubre.",
                             penaltyClause: "Cláusula 21.2: Penalización de 3 meses de renta base.",
-                            deposit: "$210,000 MXN (Depósito Scotia)",
+                            deposit: "$408,000 MXN (Depósito Scotia)",
                             anomaly: "Alerta SAT: Pendiente timbrado parcial Jul 2026",
                             status: "Alerta SAT",
                             statusBadge: "bg-slate-900 text-white",
                             insuranceStatus: "ok",
                           },
                           {
-                            id: "c-innovasport",
-                            brand: "Innovasport",
-                            unit: "Local B-08",
-                            sqm: "680 m²",
-                            pdf: "contrato_innovasport_2027.pdf",
-                            insurancePdf: "poliza_seguro_innovasport_2027.pdf",
+                            id: "c-bodega8",
+                            brand: "Bodega 8",
+                            unit: "Local 7-17",
+                            sqm: "320 m²",
+                            pdf: "contrato_bodega_8_2027.pdf",
+                            insurancePdf: "poliza_seguro_bodega_8_2027.pdf",
                             hash: "sha256-5d1b3e9...",
                             vectorChunks: 195,
                             expirationDate: "30 Abr 2027",
                             timeRemaining: "8 meses vigentes",
-                            exclusivityClause: "Cláusula 11.2: Tienda de deportes general. Sin restricción de calzado marca propia.",
+                            exclusivityClause: "Cláusula 11.2: Concepto de restaurante-bar con terraza. Sin restricción sobre cocina internacional de otros locales.",
                             inpcClause: "Cláusula 6.3: Ajuste INPC anual.",
                             penaltyClause: "Cláusula 18.4: Penalización de 2 meses de renta base.",
-                            deposit: "$310,000 MXN (Fianza Banamex)",
+                            deposit: "$153,600 MXN (Fianza Banamex)",
                             anomaly: "Sin anomalías. Contrato al día.",
                             status: "Vigente SSOT",
                             statusBadge: "bg-slate-100 text-slate-800 border border-slate-200",
@@ -2624,10 +2624,10 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           },
                           {
                             id: "c-petco",
-                            brand: "Petco Park Plaza",
-                            unit: "Local C-01",
-                            sqm: "820 m²",
-                            pdf: "contrato_petco_plaza_2029.pdf",
+                            brand: "PETCO",
+                            unit: "Local 9-60",
+                            sqm: "420 m²",
+                            pdf: "contrato_petco_2029.pdf",
                             insurancePdf: "poliza_seguro_petco_2029.pdf",
                             hash: "sha256-2e8f4a1...",
                             vectorChunks: 240,
@@ -2636,19 +2636,19 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             exclusivityClause: "Cláusula 13.1: Exclusividad en tienda de mascotas y servicios veterinarios.",
                             inpcClause: "Cláusula 8.1: Ajuste anual INPC en Noviembre.",
                             penaltyClause: "Cláusula 24.1: Preaviso de 120 días con penalización de 4 meses.",
-                            deposit: "$350,000 MXN (Garantía HSBC)",
+                            deposit: "$201,600 MXN (Garantía HSBC)",
                             anomaly: "Sin anomalías. 100% al día.",
                             status: "Vigente SSOT",
                             statusBadge: "bg-slate-100 text-slate-800 border border-slate-200",
                             insuranceStatus: "ok",
                           },
                           {
-                            id: "c-smartfit",
-                            brand: "Smart Fit Gym",
-                            unit: "Local C-05",
-                            sqm: "1,200 m²",
-                            pdf: "contrato_smartfit_2030.pdf",
-                            insurancePdf: "poliza_seguro_smartfit_2030.pdf",
+                            id: "c-symmetry",
+                            brand: "SYMMETRY GYM Mexicali",
+                            unit: "Local 9-72",
+                            sqm: "60 m²",
+                            pdf: "contrato_symmetry_gym_2030.pdf",
+                            insurancePdf: "poliza_seguro_symmetry_gym_2030.pdf",
                             hash: "sha256-9b3c4e2...",
                             vectorChunks: 380,
                             expirationDate: "31 Ene 2030",
@@ -2656,27 +2656,27 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             exclusivityClause: "Cláusula 17.2: Operación de gimnasio de alta afluencia.",
                             inpcClause: "Cláusula 9.4: Ajuste bienal fijo +6.0%.",
                             penaltyClause: "Cláusula 28.3: Rescisión por falta de pago consecutiva de 2 meses.",
-                            deposit: "$520,000 MXN (Carta Crédito)",
+                            deposit: "$28,800 MXN (Carta Crédito)",
                             anomaly: "Sin anomalías. 100% al día.",
                             status: "Vigente SSOT",
                             statusBadge: "bg-slate-100 text-slate-800 border border-slate-200",
                             insuranceStatus: "ok",
                           },
                           {
-                            id: "c-hm",
-                            brand: "H&M Moda",
-                            unit: "Ancla 2",
-                            sqm: "2,800 m²",
-                            pdf: "contrato_hm_moda_2028.pdf",
-                            insurancePdf: "poliza_seguro_hm_2028.pdf",
+                            id: "c-cabanna",
+                            brand: "Cabanna",
+                            unit: "Local 4-20",
+                            sqm: "320 m²",
+                            pdf: "contrato_cabanna_2028.pdf",
+                            insurancePdf: "poliza_seguro_cabanna_2028.pdf",
                             hash: "sha256-6a1b2c3...",
                             vectorChunks: 490,
                             expirationDate: "31 Ago 2028",
                             timeRemaining: "24 meses vigentes",
-                            exclusivityClause: "Cláusula 20.1: Exclusividad tienda departamental de moda juvenil fast-fashion.",
+                            exclusivityClause: "Cláusula 20.1: Concepto de restaurante casual con menú internacional y terraza al aire libre.",
                             inpcClause: "Cláusula 11.1: Ajuste anual INPC + porcentaje sobre ventas.",
                             penaltyClause: "Cláusula 32.1: Preaviso de 180 días con indemnización de 6 meses.",
-                            deposit: "$780,000 MXN (Fianza Santander)",
+                            deposit: "$153,600 MXN (Fianza Santander)",
                             anomaly: "Alerta Legal: Revisión quinquenal de mantenimiento en curso",
                             status: "Revisión Quinquenal",
                             statusBadge: "bg-amber-100 text-amber-900 border border-amber-300",
@@ -2792,7 +2792,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                                     </div>
                                   </div>
 
-                                  {c.status === "Renovación Próxima" && (
+                                  {c.id === "c-260" && (
                                     <div className="bg-slate-900 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                       <div>
                                         <p className="text-white font-bold text-xs">Vence {c.expirationDate} ({c.timeRemaining})</p>
@@ -2830,9 +2830,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1 shadow-2xs">
                       <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                         <span>Cobertura Indexación INPC</span>
-                        <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200">76 / 79 Contratos</span>
+                        <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200">81 / {rentRoll.length} Contratos</span>
                       </div>
-                      <p className="text-xl font-extrabold text-slate-900 tracking-tight">96.2%</p>
+                      <p className="text-xl font-extrabold text-slate-900 tracking-tight">96.4%</p>
                       <p className="text-xs text-slate-600 font-medium">Promedio: INPC + 1.8% · 3 contratos antiguos a renta fija.</p>
                     </div>
 
@@ -2853,7 +2853,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded">2 por renovar</span>
                       </div>
                       <p className="text-xl font-extrabold text-slate-900 tracking-tight">97.5%</p>
-                      <p className="text-xs text-slate-600 font-medium">260 Grill & Starbucks notificados por Mariana AI.</p>
+                      <p className="text-xs text-slate-600 font-medium">260 Grill & Blue Luna Café notificados por Mariana AI.</p>
                     </div>
 
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1 shadow-2xs">
@@ -2872,7 +2872,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full bg-slate-900" />
                         <h3 className="font-sans text-lg sm:text-xl font-extrabold text-slate-900">
-                          Preguntar a Mariana AI sobre los 79 Contratos
+                          Preguntar a Mariana AI sobre los {rentRoll.length} Contratos
                         </h3>
                       </div>
                       <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
@@ -2893,7 +2893,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         onClick={() => {
                           if (!ragQueryText) return;
                           setActiveRagQueryResult(
-                            `Dictamen Mariana AI: Para la consulta "${ragQueryText}", se analizaron simultáneamente los 79 expedientes contractuales. Se identificaron 3 contratos con derecho de preferencia explícito (260 Grill & Bar, Cinépolis VIP y Zara Inditex), sujetos a notificación escrita con 90 días de anticipación al vencimiento.`
+                            `Dictamen Mariana AI: Para la consulta "${ragQueryText}", se analizaron simultáneamente los ${rentRoll.length} expedientes contractuales. Se identificaron 3 contratos con derecho de preferencia explícito (260 Grill & Bar, Cinemex Premium y Ashley), sujetos a notificación escrita con 90 días de anticipación al vencimiento.`
                           );
                           triggerToast("Mariana AI procesó la consulta legal.");
                         }}
@@ -2916,7 +2916,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             const q = "¿Cuáles contratos se ajustan con el incremento de inflación INPC en Q4 2026?";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Ajuste INPC Q4): El 96.2% de los 79 contratos contemplan incremento anual indexado al INPC + 1.8%. En Q4 2026 (1 de Octubre), aplica el ajuste del 5.4% proyectado para Cinépolis VIP (contrato_cinepolis_vip.pdf) e Inditex Zara (contrato_zara_inditex.pdf). Las notificaciones de cobro están pre-generadas.`
+                              `Dictamen Mariana AI (Ajuste INPC Q4): El 96.2% de los ${rentRoll.length} contratos contemplan incremento anual indexado al INPC + 1.8%. En Q4 2026 (1 de Octubre), aplica el ajuste proyectado para Holiday Inn Express (contrato_holiday_inn_express_2028.pdf, Cláusula 7.1) y Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 6.1). Las notificaciones de cobro están pre-generadas.`
                             );
                             triggerToast("Mariana AI analizó los ajustes INPC.");
                           }}
@@ -2932,7 +2932,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             ¿Cuáles contratos se ajustan con la inflación en Octubre 2026?
                           </h4>
                           <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            Consulta incrementos anuales INPC programados en Q4 para Cinépolis VIP e Inditex Zara.
+                            Consulta incrementos anuales INPC programados en Q4 para Holiday Inn Express y Blue Luna Café.
                           </p>
                         </div>
 
@@ -2942,7 +2942,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             const q = "¿Qué inquilinos tienen penalización por término anticipado mayores a 3 meses de renta?";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Penalizaciones): De los 79 contratos, únicamente 2 contemplan retención y pena convencional superior a 3 meses: Cinépolis VIP (retención total de fianza + 6 meses) y 260 Grill & Bar (6 meses de renta fija). El 97% restante prevé la pena estándar de 3 meses conforme al Código Civil de BC.`
+                              `Dictamen Mariana AI (Penalizaciones): De los ${rentRoll.length} contratos, únicamente 2 contemplan retención y pena convencional superior a 3 meses: Cinemex Premium (retención total de fianza + 6 meses) y 260 Grill & Bar (6 meses de renta fija). El 97% restante prevé la pena estándar de 3 meses conforme al Código Civil de BC.`
                             );
                             triggerToast("Mariana AI analizó penalizaciones por rescisión.");
                           }}
@@ -2965,10 +2965,10 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         {/* FAQ CARD 3: FIANZAS */}
                         <div
                           onClick={() => {
-                            const q = "Compara los depósitos en garantía de Cinépolis VIP vs 260 Grill & Bar";
+                            const q = "Compara los depósitos en garantía de Cinemex Premium vs 260 Grill & Bar";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Comparativa de Garantías): Cinépolis VIP mantiene en resguardo un depósito equivalente a 3 meses de renta ($2,304,000 MXN en fideicomiso), mientras que 260 Grill & Bar mantiene 2 meses de renta ($153,600 MXN). Ambos expedientes tienen sus pólizas de fianza respaldadas al 100%.`
+                              `Dictamen Mariana AI (Comparativa de Garantías): Cinemex Premium mantiene en resguardo un depósito equivalente a 3 meses de renta ($849,600 MXN en fideicomiso), mientras que 260 Grill & Bar mantiene 2 meses de renta ($153,600 MXN). Ambos expedientes tienen sus pólizas de fianza respaldadas al 100%.`
                             );
                             triggerToast("Mariana AI ejecutó comparativa de garantias.");
                           }}
@@ -2981,7 +2981,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             <span className="text-xs text-slate-400 font-bold group-hover:text-slate-900 transition-colors">Probar →</span>
                           </div>
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                            Compara depósitos en garantía de Cinépolis VIP vs 260 Grill & Bar
+                            Compara depósitos en garantía de Cinemex Premium vs 260 Grill & Bar
                           </h4>
                           <p className="text-xs text-slate-600 leading-relaxed font-medium">
                             Desglose de montos en resguardo y meses de renta en fideicomiso administrado.
@@ -2994,7 +2994,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             const q = "¿Cuáles contratos tienen opción a prórroga automática y derecho del tanto?";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Opción a Prórroga): Se identificaron 3 contratos con opción preferencial a prórroga quinquenal: Starbucks Coffee (vence Mayo 2027, ventana de ejercicio en Nov 2026), Inditex Zara (vence Dic 2028) y Cinépolis VIP (vence Ago 2031). Todos exigen aviso formal escrito con 90 días de anticipación.`
+                              `Dictamen Mariana AI (Opción a Prórroga): Se identificaron 3 contratos con opción preferencial a prórroga quinquenal: Blue Luna Café (vence Nov 2027, ventana de ejercicio en Ago 2027), Ashley (vence Mar 2029) y Cinemex Premium (vence Jun 2028). Todos exigen aviso formal escrito con 90 días de anticipación.`
                             );
                             triggerToast("Mariana AI verificó cláusulas de prórroga.");
                           }}
@@ -3039,7 +3039,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         </p>
 
                         <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
-                          <span className="text-slate-500 font-mono">Verificación SHA-256: 8f4a9b2c | 79 Contratos Auditados</span>
+                          <span className="text-slate-500 font-mono">Verificación SHA-256: 8f4a9b2c | {rentRoll.length} Contratos Auditados</span>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => triggerToast("Dictamen legal copiado al portapapeles.")}
@@ -3079,9 +3079,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           </span>
                           <span className="text-xs font-bold text-slate-500">Q4 2026</span>
                         </div>
-                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Aumento Programado Cinépolis & Zara</h5>
+                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Aumento Programado Holiday Inn & Blue Luna</h5>
                         <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                          Mariana AI identificó que el 1 de Octubre de 2026 aplica el ajuste del 5.4% INPC en Cinépolis VIP e Inditex. Las notificaciones legales ya están listas.
+                          Mariana AI identificó que el 1 de Octubre de 2026 aplica el ajuste INPC (Cláusula 7.1) en Holiday Inn Express y Blue Luna Café. Las notificaciones legales ya están listas.
                         </p>
                       </div>
 
@@ -3103,11 +3103,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
                             Prórroga Contractual
                           </span>
-                          <span className="text-xs font-bold text-slate-500">Mayo 2027</span>
+                          <span className="text-xs font-bold text-slate-500">Ago 2027</span>
                         </div>
-                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Derecho del Tanto Starbucks</h5>
+                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Derecho del Tanto Blue Luna Café</h5>
                         <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                          Starbucks cuenta con ventana de notificación previa de 90 días (Noviembre 2026) para ejercer su opción a prórroga quinquenal en Zona A.
+                          Blue Luna Café cuenta con ventana de notificación previa de 90 días (Ago 2027) para ejercer su opción a prórroga quinquenal en Zona 4.
                         </p>
                       </div>
                     </div>
@@ -3129,11 +3129,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         </h3>
                       </div>
                       <p className="text-xs text-slate-600 mt-1">
-                        Mariana AI cruza el giro y ubicación del prospecto contra los 79 contratos vigentes para prevenir violaciones de exclusividad.
+                        Mariana AI cruza el giro y ubicación del prospecto contra los {rentRoll.length} contratos vigentes para prevenir violaciones de exclusividad.
                       </p>
                     </div>
                     <span className="text-xs font-bold text-slate-700 bg-white px-3 py-1 rounded-lg border border-slate-200 shrink-0">
-                      79 Contratos Audibles
+                      {rentRoll.length} Contratos Audibles
                     </span>
                   </div>
 
@@ -3222,7 +3222,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           requestedUnit: "Local Disponible Solicitado",
                           zone: "Zona General",
                           viable: true,
-                          reasoning: `Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO. Tras auditar la marca ${customProspectBrand} (${customProspectCategory}) contra el índice vectorial de los 79 contratos de La Gran Vía, Mariana AI confirma que no se detectaron cláusulas de exclusividad ni radio restrictivo en su categoría comercial.`,
+                          reasoning: `Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO. Tras auditar la marca ${customProspectBrand} (${customProspectCategory}) contra el índice vectorial de los ${rentRoll.length} contratos de La Gran Vía, Mariana AI confirma que no se detectaron cláusulas de exclusividad ni radio restrictivo en su categoría comercial.`,
                           conflictingContract: "Ninguno (0 Conflictos RAG)",
                           snippet: `Bóveda Legal RAG: 'La marca ${customProspectBrand} cumple con todos los requisitos de compatibilidad comercial sin colisión de exclusividad.'`,
                         }
@@ -3233,9 +3233,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             requestedUnit: "Local B-14 (320 m²)",
                             zone: "Zona B (Exterior)",
                             viable: true,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Starbucks Coffee (contrato_starbucks_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona A (Local A-05). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con 260 Grill & Bar ni Cinépolis.",
-                            conflictingContract: "Ninguno (Local B-14 fuera de Zona A)",
-                            snippet: "Cláusula 14.2 de Starbucks: 'El derecho de exclusividad para expendio de café de especialidad comprende única y exclusivamente la crujía de Zona A del inmueble comercial.'",
+                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona 4 (Local 4-16). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con 260 Grill & Bar ni Cinemex Premium.",
+                            conflictingContract: "Ninguno (Local B-14 fuera de Zona 4)",
+                            snippet: "Cláusula 14.2 de Blue Luna Café: 'El derecho de exclusividad para expendio de café de especialidad comprende única y exclusivamente la crujía de Zona 4 del inmueble comercial.'",
                           },
                           {
                             brand: "Krispy Kreme",
@@ -3243,9 +3243,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             requestedUnit: "Local A-08 (140 m²)",
                             zone: "Zona A",
                             viable: false,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El Local A-08 colinda directamente con el pasillo central de Zona A. El contrato vigente de Starbucks Coffee (contrato_starbucks_2027.pdf, Cláusula 14.2) otorga exclusividad sobre conceptos de café preparado y repostería en toda la Zona A. El arrendamiento a Krispy Kreme en esta ubicación provocaría una demanda por rescisión con penalización a favor de Starbucks.",
-                            conflictingContract: "contrato_starbucks_2027.pdf (Cláusula 14.2)",
-                            snippet: "Cláusula 14.2 de Starbucks: 'El Arrendador se obliga expresamente a no arrendar ni subarrendar ningún local comercial de la Zona A a empresas cuyo giro principal sea el expendio de café o donas.'",
+                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El Local A-08 colinda directamente con el pasillo central de Zona 4. El contrato vigente de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) otorga exclusividad sobre conceptos de café preparado y repostería en toda la Zona 4. El arrendamiento a Krispy Kreme en esta ubicación provocaría una demanda por rescisión con penalización a favor de Blue Luna Café.",
+                            conflictingContract: "contrato_blue_luna_cafe_2027.pdf (Cláusula 14.2)",
+                            snippet: "Cláusula 14.2 de Blue Luna Café: 'El Arrendador se obliga expresamente a no arrendar ni subarrendar ningún local comercial de la Zona 4 a empresas cuyo giro principal sea el expendio de café o donas.'",
                           },
                           {
                             brand: "Buffalo Wild Wings",
@@ -3263,8 +3263,8 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             requestedUnit: "Local C-02 (850 m²)",
                             zone: "Zona C",
                             viable: true,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO. Ningún contrato vigente en el índice RAG de los 79 inquilinos de La Gran Vía contempla cláusulas de exclusividad en giros de acondicionamiento físico o gimnasios. Operación 100% procedente.",
-                            conflictingContract: "Ninguno (0 Conflictos en 79 contratos SSOT)",
+                            reasoning: `Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO. Ningún contrato vigente en el índice RAG de los ${rentRoll.length} inquilinos de La Gran Vía contempla cláusulas de exclusividad en giros de acondicionamiento físico o gimnasios. Operación 100% procedente.`,
+                            conflictingContract: `Ninguno (0 Conflictos en ${rentRoll.length} contratos SSOT)`,
                             snippet: "Bóveda Legal RAG: 'No existen cláusulas restrictivas relativas a centros de salud, fitness o gimnasios en la plaza.'",
                           },
                         ][selectedProspectIndex];
@@ -3328,7 +3328,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           </h3>
                         </div>
                         <p className="text-xs text-slate-600 mt-1">
-                          Mariana AI monitorea continuamente las publicaciones del Diario Oficial de la Federación (DOF) y del Periódico Oficial de Baja California (POE) para verificar automáticamente los 79 contratos vigentes ante cambios legales.
+                          Mariana AI monitorea continuamente las publicaciones del Diario Oficial de la Federación (DOF) y del Periódico Oficial de Baja California (POE) para verificar automáticamente los {rentRoll.length} contratos vigentes ante cambios legales.
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -3342,7 +3342,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           onClick={() => {
                             const nowStr = `Hoy, 10 Ago 2026 · ${new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} hrs`;
                             setLastLawScanDate(nowStr);
-                            triggerToast("Mariana AI consultó DOF y POE Baja California. 0 reformas recientes afectan los 79 contratos.");
+                            triggerToast(`Mariana AI consultó DOF y POE Baja California. 0 reformas recientes afectan los ${rentRoll.length} contratos.`);
                           }}
                           className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                         >
@@ -3357,7 +3357,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         <span>Última Verificación de Leyes: <strong>{lastLawScanDate}</strong></span>
                       </div>
                       <span className="bg-white text-slate-800 font-bold px-3 py-1 rounded-lg border border-slate-200 text-[11px]">
-                        79 Contratos Auditados vs Normativa BC & Federal
+                        {rentRoll.length} Contratos Auditados vs Normativa BC & Federal
                       </span>
                     </div>
                   </div>
@@ -3389,7 +3389,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs font-bold text-slate-800">
                         <span>Estado de Contratos en Plaza:</span>
-                        <span className="text-slate-900 font-extrabold">79 de 79 Cumplen 100% ✓</span>
+                        <span className="text-slate-900 font-extrabold">{rentRoll.length} de {rentRoll.length} Cumplen 100% ✓</span>
                       </div>
                     </div>
 
@@ -3418,7 +3418,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs font-bold text-slate-800">
                         <span>Estado de Contratos en Plaza:</span>
-                        <span className="text-slate-900 font-extrabold">79 de 79 Cumplen 100% ✓</span>
+                        <span className="text-slate-900 font-extrabold">{rentRoll.length} de {rentRoll.length} Cumplen 100% ✓</span>
                       </div>
                     </div>
 
@@ -3447,7 +3447,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
 
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs font-bold text-slate-800">
                         <span>Cláusula de Deslinde Incluida:</span>
-                        <span className="text-slate-900 font-extrabold">79 de 79 Protegidos ✓</span>
+                        <span className="text-slate-900 font-extrabold">{rentRoll.length} de {rentRoll.length} Protegidos ✓</span>
                       </div>
                     </div>
 
@@ -3996,7 +3996,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               </span>
               <p className="text-slate-700 leading-relaxed font-medium text-xs">
                 {activeAgent === "renata" && "260 Grill & Bar presenta inconsistencia CFDI 4.0 ($98,500 MXN pagados sin complemento)."}
-                {activeAgent === "mariana" && "Solicitud de Dunkin' Donuts viola la exclusividad de café de Starbucks (Cláusula 14.2)."}
+                {activeAgent === "mariana" && "Solicitud de Krispy Kreme viola la exclusividad de café de Blue Luna Café (Cláusula 14.2)."}
                 {activeAgent === "diego" && "Equipo HVAC de Mexicali Climas en garantía vigente (Serie: MX-HVAC-9902)."}
               </p>
             </div>
