@@ -3519,7 +3519,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 </div>
 
                 <div className="bg-slate-900 text-slate-100 p-5 rounded-2xl border border-slate-800 text-sm space-y-3 max-h-72 overflow-y-auto leading-relaxed shadow-sm font-mono">
-                  <p className="text-slate-200 font-semibold">[AUDIT 18:28:12] USER: m.hage@lagranvia.com.mx · IP: 189.210.42.10 · ACTION: Cambió permiso 'Diego CapEx' para a.lopez@lagranvia.com.mx · HASH: sha256_e84a92c10f</p>
+                  <p className="text-slate-200 font-semibold">[AUDIT 18:28:12] USER: m.hage@lagranvia.com.mx · IP: 189.210.42.10 · ACTION: Cambió permiso &apos;Diego CapEx&apos; para a.lopez@lagranvia.com.mx · HASH: sha256_e84a92c10f</p>
                   <p>[AUDIT 17:58:02] AGENT: diego_ai_agent · ACTION: Reclamo autónomo expedido a Climas de Mexicali (#HVAC-884) · HASH: sha256_b31289fe12</p>
                   <p>[AUDIT 16:45:19] AGENT: mariana_ai_agent · ACTION: Consulta RAG multi-contrato de exclusividades de giro (Cafeterías) · HASH: sha256_f9012a44b8</p>
                   <p>[AUDIT 15:12:00] USER: contabilidad@lagranvia.com.mx · ACTION: Timbrado masivo SAT CFDI 4.0 aprobado para 78 locales · HASH: sha256_c773109a11</p>
