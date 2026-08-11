@@ -7,6 +7,7 @@ import {
 } from "@/content/events";
 import { SITE } from "@/content/site";
 import { RaceRegistration } from "@/components/events/race-registration";
+import { EventsFeed } from "@/components/events-feed";
 import {
   Container,
   ImagePlaceholder,
@@ -17,7 +18,7 @@ import {
 } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Eventos & Carrera",
+  title: "Eventos",
   description: `${RACE.name} ${RACE.year}: 5K y 10K por el corazón de la plaza, música en vivo y un pasaporte digital con promociones en los negocios participantes.`,
 };
 
@@ -53,8 +54,11 @@ export default function EventsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(raceJsonLd()) }}
       />
 
+      {/* ---------------- Featured Events Grid ---------------- */}
+      <EventsFeed showLink={false} />
+
       {/* ---------------- Race hero ---------------- */}
-      <section className="bg-ink text-sand-100" aria-labelledby="carrera-titulo">
+      <section className="bg-ink text-sand-100" id="registro" aria-labelledby="carrera-titulo">
         <Container className="py-14 sm:py-18">
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <div>

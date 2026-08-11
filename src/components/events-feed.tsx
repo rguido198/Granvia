@@ -10,7 +10,7 @@ const FEATURED_EVENTS = [
     desc: "5K y 10K por el corazón de la plaza, música en vivo todo el día y Pasaporte Digital de promociones.",
     image: "/photos/carrera-5k.png",
     date: "Dom 18 Oct · 7:00 AM",
-    href: "/eventos#registro",
+    href: "#registro",
     badge: "5K / 10K",
     cta: "Regístrate",
   },
@@ -21,7 +21,7 @@ const FEATURED_EVENTS = [
     desc: "Al registrarte en nuestros eventos, desbloqueas cupones exclusivos en restaurantes, tiendas y spas participantes.",
     image: "/photos/plaza-hotel-restaurantes.jpg",
     date: "Exclusivo Corredores",
-    href: "/eventos",
+    href: "#pasaporte-titulo",
     badge: "Pasaporte QR",
     cta: "Ver Beneficios",
   },
@@ -49,29 +49,31 @@ const FEATURED_EVENTS = [
   },
 ];
 
-export function EventsFeed() {
+export function EventsFeed({ showLink = true }: { showLink?: boolean }) {
   return (
     <section
       className="border-t border-hairline bg-sand-100"
       aria-labelledby="eventos-feed-titulo"
     >
-      <Container className="py-14 sm:py-18">
-        <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
+      <Container className="py-12 sm:py-16">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
           <div>
-            <Kicker className="mb-3.5 tracking-[0.24em]">
+            <Kicker className="mb-3 tracking-[0.24em]">
               Eventos & Vida en la Plaza
             </Kicker>
             <SectionTitle id="eventos-feed-titulo">
               Lo que está pasando en La Gran Vía
             </SectionTitle>
           </div>
-          <Link
-            href="/eventos"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-terra hover:underline"
-          >
-            Ver todos los eventos y la carrera
-            <span aria-hidden="true">→</span>
-          </Link>
+          {showLink && (
+            <Link
+              href="/eventos"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-terra hover:underline"
+            >
+              Ver todos los eventos
+              <span aria-hidden="true">→</span>
+            </Link>
+          )}
         </div>
 
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,11 +109,11 @@ export function EventsFeed() {
                   </div>
                 </div>
 
-                <div className="px-4.5 pb-4 pt-2.5 border-t border-hairline flex items-center justify-between font-mono text-xs">
-                  <span className="text-ink-400 text-[11px] truncate max-w-[130px]">
+                <div className="px-4 pb-3.5 pt-2.5 border-t border-hairline flex items-center justify-between font-mono text-[11px] gap-2">
+                  <span className="text-ink-400 truncate">
                     📍 {event.date}
                   </span>
-                  <span className="font-bold text-terra group-hover:translate-x-0.5 transition-transform">
+                  <span className="font-bold text-terra group-hover:translate-x-0.5 transition-transform shrink-0">
                     {event.cta} →
                   </span>
                 </div>

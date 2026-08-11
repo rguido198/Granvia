@@ -32,7 +32,7 @@ export const NAV: NavItem[] = [
   { href: "/", label: "Vive Un Gran Día" },
   { href: "/directorio", label: "Directorio" },
   { href: "/crece-tu-negocio", label: "Crece Tu Negocio" },
-  { href: "/eventos", label: "Eventos & Carrera" },
+  { href: "/eventos", label: "Eventos" },
 ];
 
 export const SOCIAL = {

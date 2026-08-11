@@ -45,7 +45,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link href="/eventos" className="hover:text-white transition-colors text-slate-300">
-                  Eventos & Carrera
+                  Eventos
                 </Link>
               </li>
             </ul>
