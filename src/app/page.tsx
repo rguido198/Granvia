@@ -1,7 +1,7 @@
 import { HERO, NEW_TENANTS } from "@/content/home";
 import { TENANTS } from "@/content/tenants";
 import { PlanYourDay } from "@/components/home/plan-your-day";
-import { InstagramFeed } from "@/components/instagram-feed";
+import { EventsFeed } from "@/components/events-feed";
 import {
   ButtonLink,
   Container,
@@ -87,8 +87,8 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* ---------------- Instagram ---------------- */}
-      <InstagramFeed />
+      {/* ---------------- Events Feed ---------------- */}
+      <EventsFeed />
     </PageFade>
   );
 }
