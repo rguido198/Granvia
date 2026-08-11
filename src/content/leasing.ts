@@ -19,7 +19,7 @@ export const BUSINESS_CATEGORIES: BusinessCategory[] = [
   "Entretenimiento & Hoteles",
 ];
 
-export type LeaseKey = "short" | "mid" | "long";
+export type LeaseKey = "standard" | "mid" | "long";
 
 export type LeaseOption = {
   key: LeaseKey;
@@ -29,9 +29,9 @@ export type LeaseOption = {
 };
 
 export const LEASE_OPTIONS: LeaseOption[] = [
-  { key: "short", label: "Corto plazo · 6 a 12 meses", branch: "call" },
-  { key: "mid", label: "Mediano plazo · 1 a 3 años", branch: "call" },
-  { key: "long", label: "Contrato Ancla · 3 a 5+ años", branch: "call" },
+  { key: "standard", label: "1 a 3 años", branch: "call" },
+  { key: "mid", label: "3 a 5 años", branch: "call" },
+  { key: "long", label: "5+ años (Ancla)", branch: "call" },
 ];
 
 export const LEASE_KEYS = LEASE_OPTIONS.map((option) => option.key);
@@ -103,7 +103,7 @@ export const LEASING_SCENARIOS: LeasingScenario[] = [
     correo: "valeria@modaurbana.mx",
     giro: "Moda & Boutiques",
     metros: 75,
-    duracion: "short",
+    duracion: "standard",
   },
   {
     key: "healthy",

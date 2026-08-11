@@ -41,7 +41,7 @@ function SubmitButton() {
 }
 
 export function LeasingExperience() {
-  const [leaseType, setLeaseType] = useState<LeaseKey>("short");
+  const [leaseType, setLeaseType] = useState<LeaseKey>("standard");
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [correo, setCorreo] = useState("");

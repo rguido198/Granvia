@@ -12,9 +12,9 @@ import { downloadBlob, generateMockPdf } from "@/lib/mock-pdf";
 import { cn, Kicker } from "@/components/ui";
 
 const LEASE_LABEL: Record<LeaseKey, string> = {
-  short: "Corto plazo (6–12 meses)",
-  mid: "Mediano plazo (1–3 años)",
-  long: "Contrato ancla (3–5+ años)",
+  standard: "1–3 años",
+  mid: "3–5 años",
+  long: "5+ años (Ancla)",
 };
 
 type Outcome =
@@ -29,7 +29,7 @@ function evaluate(giro: BusinessCategory, metros: number, duracion: LeaseKey): O
   let score = base;
   score += categoryBonus[giro] ?? 0;
   if (metros >= metrosBonus.min && metros <= metrosBonus.max) score += metrosBonus.amount;
-  if (duracion !== "short") score += nonShortDurationBonus;
+  if (duracion !== "standard") score += nonShortDurationBonus;
   return { kind: "match", score: Math.min(score, cap) };
 }
 
