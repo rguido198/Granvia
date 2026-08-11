@@ -17,7 +17,7 @@ const ZONES = [
   { id: "Zona 6", label: "Zona 6 · Moda & Boutiques", category: "visita", count: 10, x: 550, y: 90, w: 130, h: 280 },
   { id: "Zona 7", label: "Zona 7 · Cine & Entretenimiento", category: "visita", count: 2, x: 700, y: 90, w: 260, h: 280 },
   { id: "Zona 8", label: "Zona 8 · Hotel & Negocios", category: "servicios", count: 4, x: 390, y: 390, w: 145, h: 100 },
-  { id: "Zona 9", label: "Zona 9 · Corredor Interior & Retail", category: "visita", count: 41, x: 550, y: 390, w: 130, h: 100 },
+  { id: "Zona 9", label: "Zona 9 · Retail Interior", category: "visita", count: 41, x: 550, y: 390, w: 130, h: 100 },
   { id: "Zona 10", label: "Zona 10 · Lifestyle & Dining", category: "prueba", count: 4, x: 700, y: 390, w: 260, h: 100 },
 ];
 
@@ -27,17 +27,17 @@ const ZONES = [
 const MAP_ANCHORS = [
   { name: "Holy Cow", zone: "Zona 1", searchKey: "Holy Cow", x: 312, y: 175 },
   { name: "Távola", zone: "Zona 2", searchKey: "Távola", x: 462, y: 175 },
-  { name: "Koori", zone: "Zona 3", searchKey: "Koori", x: 312, y: 440 },
+  { name: "Koori", zone: "Zona 3", searchKey: "Koori", x: 312, y: 472 },
   { name: "Wok Box", zone: "Zona 4", searchKey: "Wok Box", x: 312, y: 325 },
   { name: "IHOP", zone: "Zona 5", searchKey: "IHOP", x: 410, y: 325 },
   { name: "AT&T", zone: "Zona 5", searchKey: "AT&T", x: 485, y: 325 },
   { name: "Wendlandt", zone: "Zona 6", searchKey: "Wendlandt", x: 615, y: 290 },
   { name: "Bodega 8", zone: "Zona 7", searchKey: "Bodega 8", x: 790, y: 220 },
   { name: "Alma Verde", zone: "Zona 7", searchKey: "Alma Verde", x: 885, y: 325 },
-  { name: "Fairfield Hotel", zone: "Zona 8", searchKey: "Fairfield", x: 462, y: 440 },
-  { name: "Cinemex", zone: "Zona 9", searchKey: "Cinemex", x: 615, y: 440 },
-  { name: "260 Grill", zone: "Zona 10", searchKey: "260 Grill", x: 770, y: 465 },
-  { name: "Thrifty", zone: "Zona 10", searchKey: "Thrifty", x: 885, y: 465 },
+  { name: "Fairfield Hotel", zone: "Zona 8", searchKey: "Fairfield", x: 462, y: 472 },
+  { name: "Cinemex", zone: "Zona 9", searchKey: "Cinemex", x: 615, y: 472 },
+  { name: "260 Grill", zone: "Zona 10", searchKey: "260 Grill", x: 770, y: 472 },
+  { name: "Thrifty", zone: "Zona 10", searchKey: "Thrifty", x: 885, y: 472 },
 ];
 
 export function DirectoryMap() {
