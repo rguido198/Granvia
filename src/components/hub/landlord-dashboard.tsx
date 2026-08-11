@@ -1347,7 +1347,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     Renata AI · Fondo CAM NNN & Ingesta de Facturas
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    Supervisión de comprobantes y prorrateo de {formatVal(268500)} acumulados entre los 84 locales comerciales.
+                    Supervisión de comprobantes y prorrateo de {formatVal(camMonthlyPool)} acumulados entre los 84 locales comerciales.
                   </p>
                 </div>
 
@@ -1384,12 +1384,12 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-display">
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-display">Gastos del Mes (CAM)</p>
-                  <p className="text-2xl font-bold font-display text-slate-900">{formatVal(268500)}</p>
+                  <p className="text-2xl font-bold font-display text-slate-900">{formatVal(camMonthlyPool)}</p>
                   <p className="text-xs text-slate-500 font-display">4 Facturas acumuladas</p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-display">Vía ERP SAP System</p>
-                  <p className="text-2xl font-bold font-display text-slate-900">{formatVal(210000)}</p>
+                  <p className="text-2xl font-bold font-display text-slate-900">{formatVal(315468)}</p>
                   <p className="text-xs text-slate-500 font-display">2 Facturas (CFE + Securitas)</p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
@@ -1467,7 +1467,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           </td>
                           <td className="p-4 font-bold text-slate-900 whitespace-nowrap">CFE Mexicali</td>
                           <td className="p-4 text-slate-600">Energía Eléctrica (Pasillos y Áreas Comunes)</td>
-                          <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(145000)}</td>
+                          <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(250468)}</td>
                           <td className="p-4 text-slate-500">Prorrateado (m² ÷ 35,400)</td>
                           <td className="p-4 text-center whitespace-nowrap">
                             <span className="text-slate-800 font-bold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Prorrateado</span>
@@ -1689,14 +1689,20 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 </div>
 
                 {/* RECONCILIATION AUDIT CARD */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    <span>
-                      <strong>Auditoría de Reconciliación Controller:</strong> La suma de Cuotas Base ({formatVal(editableCamRows.reduce((sum, r) => sum + r.base, 0))}) {editableCamRows.reduce((sum, r) => sum + r.base, 0) === 268500 ? "coincide al 100% con los Gastos Ingeridos del Mes ($268,500 MXN). Variación: $0.00 MXN." : `difiere por ${formatVal(Math.abs(268500 - editableCamRows.reduce((sum, r) => sum + r.base, 0)))} de los Gastos Ingeridos ($268,500 MXN).`}
-                    </span>
-                  </div>
-                </div>
+                {(() => {
+                  const cuotaBaseSum = editableCamRows.reduce((sum, r) => sum + r.base, 0);
+                  const isReconciled = cuotaBaseSum === camMonthlyPool;
+                  return (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${isReconciled ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        <span>
+                          <strong>Auditoría de Reconciliación Controller:</strong> La suma de Cuotas Base ({formatVal(cuotaBaseSum)}) {isReconciled ? `coincide al 100% con el Fondo CAM Mensual (${formatVal(camMonthlyPool)}). Variación: $0.00 MXN.` : `difiere por ${formatVal(Math.abs(camMonthlyPool - cuotaBaseSum))} del Fondo CAM Mensual (${formatVal(camMonthlyPool)}).`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -3246,7 +3252,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
               <div className="bg-slate-900 text-slate-200 p-5 rounded-2xl border border-slate-800 text-xs space-y-2.5 max-h-64 overflow-y-auto leading-relaxed shadow-sm font-sans">
                 <p className="text-slate-300 font-semibold">[ERP-SYNC 14:58:12] POST /api/v2/erp/batch-ingest ... 200 OK (Universal Adapter)</p>
                 <p>[ERP-SYNC 14:58:14] Sincronizados 84 locales comerciales para La Gran Vía Mexicali.</p>
-                <p>[ERP-SYNC 14:58:15] Validado Fondo CAM: $268,500 MXN contra 79 contratos vigentes.</p>
+                <p>[ERP-SYNC 14:58:15] Validado Fondo CAM: {formatVal(camMonthlyPool)} MXN contra 84 contratos vigentes.</p>
                 <p>[ERP-SYNC 14:58:16] Adaptador Neutral: Conectado a ERP SAP (Esquema detectado automáticamente).</p>
               </div>
             </div>
@@ -3833,7 +3839,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500 font-medium">Monto Total Prorrateado:</span>
-                      <span className="font-bold text-slate-900">{formatVal(268500)} MXN</span>
+                      <span className="font-bold text-slate-900">{formatVal(camMonthlyPool)} MXN</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500 font-medium">Canal de Envío:</span>
@@ -3860,7 +3866,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500 font-medium">Monto Total a Timbrar:</span>
-                      <span className="font-bold text-slate-900">{formatVal(268500)} MXN</span>
+                      <span className="font-bold text-slate-900">{formatVal(camMonthlyPool)} MXN</span>
                     </div>
                   </div>
                 )}
