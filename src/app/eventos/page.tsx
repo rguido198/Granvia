@@ -1,20 +1,12 @@
 import type { Metadata } from "next";
-import {
-  PASSPORT,
-  PASSPORT_FLOW,
-  PASSPORT_OFFERS,
-  RACE,
-} from "@/content/events";
+import { RACE } from "@/content/events";
 import { SITE } from "@/content/site";
-import { RaceRegistration } from "@/components/events/race-registration";
 import { EventsFeed } from "@/components/events-feed";
 import {
   Container,
   ImagePlaceholder,
   Kicker,
-  MonoNote,
   PageFade,
-  SectionTitle,
 } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -92,94 +84,6 @@ export default function EventsPage() {
               tone="dark"
               className="order-first h-56 sm:h-80 lg:order-none lg:h-[380px]"
             />
-          </div>
-        </Container>
-      </section>
-
-      {/* ---------------- Digital passport ---------------- */}
-      <section aria-labelledby="pasaporte-titulo">
-        <Container className="py-16 sm:py-19">
-          <div className="mx-auto mb-12 max-w-[620px] text-center">
-            <Kicker className="mb-4 tracking-[0.22em]">{PASSPORT.kicker}</Kicker>
-            <SectionTitle
-              id="pasaporte-titulo"
-              className="mb-4.5 text-[clamp(2.25rem,5vw,3.25rem)]!"
-            >
-              {PASSPORT.title}
-            </SectionTitle>
-            <p className="text-[17px] text-ink-500">{PASSPORT.lead}</p>
-          </div>
-
-          <div className="grid items-start gap-12 lg:grid-cols-[0.85fr_1.15fr]">
-            <RaceRegistration />
-
-            <div>
-              <Kicker accent="pine" className="mb-4.5 tracking-[0.2em]">
-                El loop · de la carrera a la venta
-              </Kicker>
-
-              <ol className="mb-7 grid gap-3.5">
-                {PASSPORT_FLOW.map((step) => (
-                  <li
-                    key={step.n}
-                    className="flex items-start gap-4.5 rounded-md border border-hairline bg-sand-100 px-4.5 py-4"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="w-8.5 flex-none font-display text-[30px] leading-none font-bold text-terra"
-                    >
-                      {step.n}
-                    </span>
-                    <span>
-                      <span className="mb-0.5 block text-[15px] font-semibold">
-                        {step.title}
-                      </span>
-                      <span className="block text-[13.5px] text-ink-500">
-                        {step.desc}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-
-              {/* Confirmation email mock */}
-              <div className="overflow-hidden rounded-lg border border-hairline bg-sand-50 shadow-[0_10px_30px_-20px_rgba(33,31,28,0.5)]">
-                <div className="flex flex-wrap justify-between gap-2 bg-ink px-4 py-2.75 text-dune-100">
-                  <span className="font-mono text-[10.5px] tracking-[0.08em]">
-                    EMAIL · CONFIRMACIÓN DE REGISTRO
-                  </span>
-                  <span dangerouslySetInnerHTML={{ __html: "<!--email_off-->" }} />
-                  <span className="font-mono text-[10.5px] text-gold">
-                    {SITE.emails.race}
-                  </span>
-                  <span dangerouslySetInnerHTML={{ __html: "<!--/email_off-->" }} />
-                </div>
-                <div className="p-4.5">
-                  <p className="mb-2 font-display text-xl font-semibold">
-                    ¡Estás dentro! Tu pasaporte está listo.
-                  </p>
-                  <p className="mb-3.5 text-[13.5px] text-ink-700">
-                    Abre tu pasaporte digital y presenta cada código en caja.{" "}
-                    {PASSPORT.validity}
-                  </p>
-                  <ul className="flex flex-wrap gap-2.5">
-                    {PASSPORT_OFFERS.map((offer) => (
-                      <li
-                        key={offer.code}
-                        className="rounded-sm border border-dashed border-terra bg-sand-100 px-3 py-1.75 font-mono text-xs text-terra"
-                      >
-                        {offer.code}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <MonoNote className="mt-4">
-                Códigos de ejemplo — los reales se generan por corredor al
-                registrarse.
-              </MonoNote>
-            </div>
           </div>
         </Container>
       </section>
