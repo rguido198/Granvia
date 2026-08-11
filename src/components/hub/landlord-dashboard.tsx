@@ -1263,13 +1263,36 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           </td>
                           <td className="p-3.5 text-center whitespace-nowrap">
                             {is260Grill ? (
-                              <span className="bg-slate-900 text-white px-2.5 py-0.5 rounded-full font-bold text-[10px]">
-                                Renovación Próxima
-                              </span>
+                              <button
+                                onClick={() => {
+                                  setActiveAgent("mariana");
+                                  setCopilotOpen(true);
+                                  setQueryResult(
+                                    "Mariana AI (Contratos & Arrendamientos): Expediente contractual de 260 Grill & Bar (Local 10-01) preparado para renovación. Vence el 31 de Octubre de 2026 (60 días). Propuesta redactada con ajuste INPC del +4.5% ($76,800 → $80,256 MXN/mes). ¿Deseas autorizar el envío de la notificación formal?"
+                                  );
+                                  triggerToast("Mariana AI (Contratos): Expediente de renovación 260 Grill & Bar abierto.");
+                                }}
+                                title="Ver expedientes y renovaciones asignados a Mariana (Gerente de Contratos)"
+                                className="bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1.5 mx-auto"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                Renovación Próxima · Mariana AI →
+                              </button>
                             ) : isStarbucks ? (
-                              <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
-                                Revisión Quinquenal
-                              </span>
+                              <button
+                                onClick={() => {
+                                  setActiveAgent("mariana");
+                                  setCopilotOpen(true);
+                                  setQueryResult(
+                                    "Mariana AI (Contratos & Arrendamientos): Starbucks Coffee (Local A-05). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
+                                  );
+                                  triggerToast("Mariana AI (Contratos): Expediente Starbucks Coffee abierto.");
+                                }}
+                                title="Ver auditoría de póliza asignada a Mariana AI"
+                                className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
+                              >
+                                Revisión Quinquenal · Mariana AI →
+                              </button>
                             ) : (
                               <span className="bg-slate-100 text-slate-800 border border-slate-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
                                 Vigente SSOT
