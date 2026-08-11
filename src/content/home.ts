@@ -34,7 +34,7 @@ export const PILLARS: Pillar[] = [
     key: "prueba",
     kicker: "PRUEBA",
     en: "Taste",
-    title: "Mesa & buena vida",
+    title: "Gastronomía & buena vida",
     desc: "Restaurantes, cafés y bares para cada antojo.",
     accent: "terra",
     venues: [

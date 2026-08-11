@@ -968,7 +968,7 @@ export const PILLAR_LABELS: Record<Pillar, { kicker: string; en: string; title: 
   prueba: {
     kicker: "PRUEBA",
     en: "Taste",
-    title: "Mesa & buena vida",
+    title: "Gastronomía & buena vida",
     desc: "Restaurantes, cafés y bares para cada antojo.",
   },
   consiente: {
