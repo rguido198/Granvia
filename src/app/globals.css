@@ -265,3 +265,17 @@
 @utility animate-pulse-glow {
   animation: pulse-glow 2.2s ease-in-out infinite;
 }
+
+/* ── ACCESSIBILITY FONT SCALE ENGINE ────────────────────────────────────── */
+.scale-font-normal {
+  zoom: 1;
+  font-size: 100%;
+}
+.scale-font-large {
+  zoom: 1.12;
+  font-size: 112.5%;
+}
+.scale-font-xlarge {
+  zoom: 1.25;
+  font-size: 125%;
+}

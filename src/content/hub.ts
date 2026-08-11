@@ -96,13 +96,13 @@ export const CAM_LEDGER: CamLineItem[] = [
  * 2026" — three numbers a tenant could disprove by reading their own contract.
  */
 export const PORTAL_TENANT = {
-  name: "MINT Boutique",
-  unit: "Local B-12",
-  zone: "Zona Boutique",
-  sqm: 70,
-  monthlyRent: 32000,
-  leaseEnds: "Diciembre 2026",
-  contactEmail: "gerente@mintboutique.com",
+  name: "Buffalo Wild Wings",
+  unit: "Local 10-01",
+  zone: "Zona Restaurantes & Terrazas",
+  sqm: 450,
+  monthlyRent: 98500,
+  leaseEnds: "Noviembre 2028",
+  contactEmail: "gerencia@bwwmexicali.com.mx",
 } as const;
 
 /** Scripted exchange for the AC-malfunction ticket simulator. */
@@ -125,9 +125,9 @@ export type ActivityEntry = { agent: string; text: string; accent: "terra" | "pi
 
 export const AI_ACTIVITY_POOL: ActivityEntry[] = [
   { agent: "Agente de Arrendamiento", text: "Evaluó una solicitud entrante para Local C-08 — sin conflicto de exclusividad.", accent: "pine" },
-  { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local B-12 (falla de AC, código E4).", accent: "terra" },
+  { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local 10-01 (falla de AC, código E4).", accent: "terra" },
   { agent: "Agente Financiero", text: "Procesó el reporte de ventas de Bodega 8 con OCR y emitió el CFDI correspondiente.", accent: "pine" },
-  { agent: "Agente de Asset Management", text: "Detectó una caída de 6% en afluencia hacia MINT Boutique — añadida al radar de riesgo.", accent: "gold" },
+  { agent: "Agente de Asset Management", text: "Detectó un incremento del 14% en ventas para Buffalo Wild Wings — excelente desempeño.", accent: "pine" },
   { agent: "Agente de Arrendamiento", text: "Generó lineamientos de Islas Comerciales para un giro con cláusula de exclusividad activa.", accent: "terra" },
   { agent: "Agente Financiero", text: "Envió recordatorio automático de reporte de ventas a 3 locales pendientes.", accent: "pine" },
   { agent: "Agente de Mantenimiento", text: "Cerró el ticket #INC-401 (trampa de grasa) — confirmado por Alma Verde.", accent: "pine" },
@@ -138,7 +138,7 @@ export const AI_ACTIVITY_POOL: ActivityEntry[] = [
 export type CamAllocationRow = { tenant: string; sqm: number; share: number; amount: number };
 
 export const CAM_ALLOCATION = {
-  invoiceLabel: "Recibo CFE + Seguridad + Mantenimiento — Julio 2026",
+  invoiceLabel: "Recibo CFE + Seguridad + Mantenimiento — Agosto 2026",
   invoiceTotal: 268500,
   // Shares and amounts are derived from sqm / 12,745 m² GLA, at full precision.
   // Tenant names and areas match the rent roll in landlord-dashboard.tsx — the
@@ -149,9 +149,9 @@ export const CAM_ALLOCATION = {
   rows: [
     { tenant: "Ashley", sqm: 1450, share: 0.114, amount: 30547 },
     { tenant: "Cinemex Premium", sqm: 1180, share: 0.093, amount: 24859 },
-    { tenant: "MINT Boutique", sqm: 70, share: 0.005, amount: 1475 },
+    { tenant: "Buffalo Wild Wings", sqm: 450, share: 0.035, amount: 9480 },
     { tenant: "Derma Club Farmacia Dermatológica", sqm: 66, share: 0.005, amount: 1390 },
-    { tenant: "Resto de la plaza (80 locales + vacancia)", sqm: 9979, share: 0.783, amount: 210229 },
+    { tenant: "Resto de la plaza (80 locales + vacancia)", sqm: 9599, share: 0.753, amount: 202224 },
   ] as CamAllocationRow[],
 } as const;
 
@@ -180,11 +180,11 @@ export const CHURN_RADAR: ChurnRow[] = [
     note: "Reportes de ventas 2 de los últimos 3 meses con retraso.",
   },
   {
-    tenant: "MINT Boutique",
-    leaseEnds: "Dic 2026",
-    portalActivity: "Baja · 34%",
-    risk: "red",
-    note: "Afluencia -6%, sin respuesta a la propuesta de renovación.",
+    tenant: "Buffalo Wild Wings",
+    leaseEnds: "Nov 2028",
+    portalActivity: "Alta · 98%",
+    risk: "green",
+    note: "Excelente desempeño comercial, pago de renta al día y reporte POS constante.",
   },
 ];
 

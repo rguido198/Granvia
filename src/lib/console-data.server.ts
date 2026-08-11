@@ -240,7 +240,7 @@ const VACANT_KEY = "__vacant__";
 
 /** Renata's fiscal SAT check — the same condition that drives the CFDI alert on the CAM tab. */
 function hasFiscalAlert(name: string): boolean {
-  return name.includes("MINT");
+  return name.includes("260 Grill");
 }
 
 // The rent roll is the single source of truth: every headline figure on this
@@ -504,7 +504,7 @@ export function buildConsoleData(): ConsoleData {
         return new Date().toISOString();
       }
     })(),
-    periodLabel: "Julio 2026",
+    periodLabel: "Agosto 2026",
 
     marianaReplies: MARIANA_REPLIES,
     diegoReplies: DIEGO_REPLIES,

@@ -96,7 +96,7 @@ export type LeasingScenario = {
 export const LEASING_SCENARIOS: LeasingScenario[] = [
   {
     key: "rival",
-    label: "Boutique de moda rival a MINT",
+    label: "Boutique de moda rival a ZARA",
     sublabel: "Match bajo · posible conflicto de exclusividad",
     nombre: "Valeria Ponce",
     telefono: "686 234 5566",
@@ -120,7 +120,7 @@ export const LEASING_SCENARIOS: LeasingScenario[] = [
 
 /** Giros con cláusula de uso exclusivo activa — motor de reglas del demo. */
 export const EXCLUSIVE_USE_CLAUSES: Partial<Record<BusinessCategory, { tenant: string; local: string }>> = {
-  "Moda & Boutiques": { tenant: "MINT Boutique", local: "Local B-12" },
+  "Moda & Boutiques": { tenant: "ZARA Mexicali", local: "Local B-12" },
 };
 
 export const AI_TERMINAL_STEPS = [

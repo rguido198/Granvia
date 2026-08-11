@@ -181,7 +181,7 @@ export function AiAgentModule() {
                   📱 <strong>Inquilino (WhatsApp):</strong> &ldquo;Hola, el aire acondicionado del Local B-12 no enfría.&rdquo;
                 </div>
                 <div className="text-pine bg-pine/10 p-2 rounded">
-                  🤖 <strong>Agente IA:</strong> &ldquo;Entendido, Local B-12 (MINT Boutique). Verifiqué disponibilidad en ERP y asigné a Carlos R. (Climas). Llegada estimada: 25 min. Ticket #INC-402 registrado.&rdquo;
+                  🤖 <strong>Agente IA:</strong> &ldquo;Entendido, Local 10-01 (260 Grill & Bar). Verifiqué disponibilidad en ERP y asigné a Carlos R. (Climas). Llegada estimada: 25 min. Ticket #INC-402 registrado.&rdquo;
                 </div>
               </div>
             )}

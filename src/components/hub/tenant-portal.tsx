@@ -18,23 +18,23 @@ export function TenantPortal() {
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-xs space-y-6 font-sans">
       {/* Store Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-800">
-              Renta al día (Julio 2026)
+            <span className="rounded-full bg-slate-100 border border-slate-300 px-3.5 py-1 text-xs sm:text-sm font-bold text-slate-900">
+              Renta al día (Agosto 2026)
             </span>
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs sm:text-sm text-slate-600 font-semibold">
               {`${PORTAL_TENANT.unit} · ${PORTAL_TENANT.zone}`}
             </span>
           </div>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900">{PORTAL_TENANT.name}</h2>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900">{PORTAL_TENANT.name}</h2>
+          <p className="mt-1 text-sm sm:text-base text-slate-600 font-medium">
             Portal Arrendatario. Envío de ventas mensuales, reporte de incidencias y reglamentos internos.
           </p>
         </div>
 
-        <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+        <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5 text-xs sm:text-sm text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
           <span>
             <strong>Contrato Activo:</strong> Hasta {PORTAL_TENANT.leaseEnds}
           </span>
@@ -49,60 +49,45 @@ export function TenantPortal() {
 
       {/* Tenant Quick Action Tools */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4.5 space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl" aria-hidden="true">
-              📄
-            </span>
-            <h3 className="font-display text-sm font-bold text-slate-900">Reportar Ventas Mensuales</h3>
-          </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
+          <h3 className="font-display text-base font-bold text-slate-900">Reportar Ventas Mensuales</h3>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
             Sube tu comprobante de cierre de caja en PDF o fotografía antes del día 5 del mes.
           </p>
 
           {salesSubmitted ? (
-            <p className="rounded-xl bg-emerald-100 p-2.5 text-center text-xs font-bold text-emerald-800" role="status">
-              ✓ Reporte de Julio Enviado Correctamente
+            <p className="rounded-xl bg-slate-100 border border-slate-300 p-3 text-center text-xs sm:text-sm font-bold text-slate-900" role="status">
+              Reporte de Agosto Enviado Correctamente
             </p>
           ) : (
             <button
               type="button"
               onClick={() => setSalesSubmitted(true)}
-              className="w-full cursor-pointer rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition-colors shadow-xs"
+              className="w-full cursor-pointer rounded-xl bg-slate-900 py-3 text-xs sm:text-sm font-bold text-white hover:bg-slate-800 transition-colors shadow-xs"
             >
-              Subir Reporte POS (Julio 2026) →
+              Subir Reporte POS (Agosto 2026)
             </button>
           )}
         </div>
 
-        <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4.5 space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl" aria-hidden="true">
-              🛠️
-            </span>
-            <h3 className="font-display text-sm font-bold text-slate-900">Reportar Incidencia HVAC / Mantenimiento</h3>
-          </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
+          <h3 className="font-display text-base font-bold text-slate-900">Reportar Incidencia HVAC / Mantenimiento</h3>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
             El Agente de IA atiende 24/7 vía WhatsApp y asigna al técnico de plaza en minutos.
           </p>
 
           <AcTicketSimulator />
         </div>
 
-        <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4.5 space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl" aria-hidden="true">
-              📋
-            </span>
-            <h3 className="font-display text-sm font-bold text-slate-900">Reglamento &amp; Horarios</h3>
-          </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
+          <h3 className="font-display text-base font-bold text-slate-900">Reglamento &amp; Horarios</h3>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
             Horarios de carga y descarga de proveedores, música ambiental y permisos de modificación.
           </p>
           <button
             type="button"
             disabled
-            className="w-full rounded-xl bg-slate-200/80 py-2.5 text-xs font-bold text-slate-500 cursor-not-allowed"
+            className="w-full rounded-xl bg-slate-200 py-3 text-xs sm:text-sm font-bold text-slate-600 cursor-not-allowed"
           >
             Reglamento (.PDF) — próximamente
           </button>
@@ -110,21 +95,21 @@ export function TenantPortal() {
       </div>
 
       {/* Store Active Tickets Section */}
-      <div className="pt-4 border-t border-slate-100">
-        <h3 className="font-display text-base font-bold text-slate-900 mb-3">
+      <div className="pt-4 border-t border-slate-200">
+        <h3 className="font-display text-lg font-bold text-slate-900 mb-3">
           Mis Solicitudes &amp; Incidencias ({PORTAL_TENANT.unit})
         </h3>
-        <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4.5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3 mb-3">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
             <div>
-              <span className="text-xs font-bold text-slate-900">#INC-402 · Compresor HVAC Terraza</span>
-              <span className="ml-2.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
+              <span className="text-sm font-bold text-slate-900">#INC-402 · Compresor HVAC Terraza</span>
+              <span className="ml-2.5 rounded-full bg-slate-100 border border-slate-300 px-2.5 py-0.5 text-xs font-bold text-slate-900">
                 EN PROGRESO
               </span>
             </div>
-            <span className="text-xs text-slate-500 font-medium">Asignado: Carlos R. (Climas)</span>
+            <span className="text-xs sm:text-sm text-slate-600 font-semibold">Asignado: Carlos R. (Climas)</span>
           </div>
-          <p className="text-xs text-slate-600 font-medium">
+          <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
             Diagnóstico: El Agente de IA detectó falla en el compresor secundario. El técnico llegará a las 11:30 AM con el repuesto.
           </p>
         </div>
