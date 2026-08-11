@@ -9,6 +9,7 @@ import type {
   ConsoleData,
   CriticalEquipment,
   RentRollRow,
+  TechnicianRosterRow,
 } from "@/lib/console-data";
 
 /**
@@ -148,6 +149,24 @@ const CRITICAL_EQUIPMENT = [
     status: "✓ Mantenimiento Bianual Al Día",
     doc: "Schneider_13.8kV.pdf",
   },
+];
+
+/**
+ * Preapproved contractors Diego can dispatch, one per trade. Same vendors
+ * cited throughout the warranty registry below (Climas de Mexicali, TK
+ * Elevator, Schneider, Mapei, Johnson Controls, Canadian Solar, Hikvision/
+ * FAAC, Grundfos) so the roster and the equipment file never name two
+ * different providers for the same asset.
+ */
+const TECHNICIAN_ROSTER = [
+  { trade: "HVAC & Climas", contractor: "Climas de Mexicali S.A. de C.V.", contact: "+52 686 555 0142", coverage: "24/7", slaOnSite: "≤ 2h (P1) · Mismo día (P2)" },
+  { trade: "Elevadores", contractor: "TK Elevator México", contact: "+52 686 555 0187", coverage: "24/7", slaOnSite: "≤ 2h (P1) · Mismo día (P2)" },
+  { trade: "Eléctrico & Subestación", contractor: "Schneider Electric México", contact: "+52 686 555 0219", coverage: "L-D 07:00-22:00", slaOnSite: "≤ 2h (P1) · Mismo día (P2)" },
+  { trade: "Techos & Impermeabilización", contractor: "Mapei de México", contact: "+52 686 555 0256", coverage: "L-V 08:00-18:00", slaOnSite: "≤ 4h (P1) · ≤ 72h (P3)" },
+  { trade: "Protección Incendio", contractor: "Johnson Controls Fire Protection", contact: "+52 686 555 0303", coverage: "24/7", slaOnSite: "≤ 2h (P1) · Mismo día (P2)" },
+  { trade: "Solar Fotovoltaico", contractor: "Canadian Solar México / Enel X", contact: "+52 686 555 0341", coverage: "L-V 08:00-18:00", slaOnSite: "≤ 4h (P1) · ≤ 72h (P3)" },
+  { trade: "Seguridad & Acceso", contractor: "Hikvision & FAAC México", contact: "+52 686 555 0378", coverage: "24/7", slaOnSite: "≤ 2h (P1) · Mismo día (P2)" },
+  { trade: "Hidráulico & PTAR", contractor: "Grundfos México", contact: "+52 686 555 0412", coverage: "L-V 08:00-18:00", slaOnSite: "≤ 4h (P1) · ≤ 72h (P3)" },
 ];
 
 /** Local A-14 — the one unit off the rent roll, absorbed by the landlord until re-let. */
@@ -483,6 +502,7 @@ export function buildConsoleData(): ConsoleData {
     leasingApplicants: LEASING_APPLICANTS,
     capexCases: CAPEX_CASES,
     criticalEquipment: CRITICAL_EQUIPMENT satisfies CriticalEquipment[],
+    technicianRoster: TECHNICIAN_ROSTER satisfies TechnicianRosterRow[],
     rentProtectedAnnual,
     capexRejected,
     capexWarrantyRecovered,

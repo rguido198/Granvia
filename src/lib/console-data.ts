@@ -51,6 +51,15 @@ export type CriticalEquipment = {
   doc: string;
 };
 
+/** One preapproved contractor Diego can dispatch, by trade. */
+export type TechnicianRosterRow = {
+  trade: string;
+  contractor: string;
+  contact: string;
+  coverage: string;
+  slaOnSite: string;
+};
+
 /** A canned agent answer, cited back to its source document. */
 export type AgentReply = {
   chip: string;
@@ -127,6 +136,7 @@ export type ConsoleData = {
   leasingApplicants: ApplicantCase[];
   capexCases: CapexCase[];
   criticalEquipment: CriticalEquipment[];
+  technicianRoster: TechnicianRosterRow[];
   rentProtectedAnnual: number;
   capexRejected: number;
   capexWarrantyRecovered: number;
