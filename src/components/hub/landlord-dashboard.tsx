@@ -461,6 +461,11 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
   const [activeRagQueryResult, setActiveRagQueryResult] = useState<string | null>(null);
   const [inspectedContractId, setInspectedContractId] = useState<string | null>(null);
 
+  // Mariana AI Renewal Draft States — 260 Grill & Bar (Local 10-01)
+  const [renewalDraftOpen, setRenewalDraftOpen] = useState(false);
+  const [renewalConfirmOpen, setRenewalConfirmOpen] = useState(false);
+  const [renewalSent, setRenewalSent] = useState(false);
+
   // Toast Notification State
   const [toast, setToast] = useState<string | null>(null);
   const triggerToast = (msg: string) => {
@@ -492,7 +497,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
     if (q.includes("260") || q.includes("grill") || q.includes("sat") || q.includes("cfdi") || q.includes("renata")) {
       setActiveAgent("renata");
       setQueryResult(
-        "Renata AI (Fiscal & CAM): Inconsistencia detectada en Buffalo Wild Wings (Local 10-01). Se registraron $98,500 MXN de cobro sin emisión de complemento CFDI 4.0. Utiliza el botón 'Emitir Complemento SAT' para regularizar."
+        "Renata AI (Fiscal & CAM): Inconsistencia detectada en 260 Grill & Bar (Local 10-01). Se registraron $98,500 MXN de cobro sin emisión de complemento CFDI 4.0. Utiliza el botón 'Emitir Complemento SAT' para regularizar."
       );
     } else if (q.includes("contrato") || q.includes("starbucks") || q.includes("dunkin") || q.includes("mariana")) {
       setActiveAgent("mariana");
@@ -895,7 +900,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     setActiveTab("cam");
                     setCopilotOpen(true);
                     setActiveAgent("renata");
-                    triggerToast("Abriendo Copilot Renata AI sobre Alerta SAT Buffalo Wild Wings...");
+                    triggerToast("Abriendo Copilot Renata AI sobre Alerta SAT 260 Grill & Bar...");
                   }}
                   className="bg-white border border-slate-200/90 border-t-2 border-t-slate-900 rounded-2xl p-6 sm:p-7 flex flex-col justify-between h-full shadow-2xs hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group"
                 >
@@ -913,7 +918,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100 gap-2">
-                    <span className="font-display truncate">Buffalo Wild Wings CFDI</span>
+                    <span className="font-display truncate">260 Grill & Bar CFDI</span>
                     <span className="font-bold font-display text-slate-900 group-hover:underline shrink-0 whitespace-nowrap">
                       Consultar Agente &rarr;
                     </span>
@@ -973,12 +978,12 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     {/* Item 1 */}
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 hover:bg-slate-100/60 transition-colors">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-sm">Buffalo Wild Wings</span>
+                        <span className="font-bold text-slate-900 text-sm">260 Grill & Bar</span>
                         <span className="text-xs font-bold bg-slate-200 text-slate-800 px-2.5 py-0.5 rounded-md">Vence Q4 2026</span>
                       </div>
                       <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
-                        <span>Superficie: 280 m² · Local 10-01</span>
-                        <span className="font-bold text-slate-900">{formatVal(98500)}/mes</span>
+                        <span>Superficie: 320 m² · Local 10-01</span>
+                        <span className="font-bold text-slate-900">{formatVal(76800)}/mes</span>
                       </div>
                       <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between gap-2">
                         <span className="text-xs text-slate-500 font-medium truncate">Mariana AI · Legal</span>
@@ -988,9 +993,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             setCopilotOpen(true);
                             setActiveAgent("mariana");
                             setQueryResult(
-                              "Mariana AI (Legal & Leasing): Propuesta de renovación para Buffalo Wild Wings (Local 10-01) redactada con incremento de 4.5% INPC. Bóveda RAG verificada sin conflictos."
+                              "Mariana AI (Legal & Leasing): Propuesta de renovación para 260 Grill & Bar (Local 10-01) redactada con incremento de 4.5% INPC. Bóveda RAG verificada sin conflictos."
                             );
-                            triggerToast("Mariana AI generó la propuesta de renovación para Buffalo Wild Wings.");
+                            triggerToast("Mariana AI generó la propuesta de renovación para 260 Grill & Bar.");
                           }}
                           className="text-xs text-slate-900 font-bold hover:underline cursor-pointer shrink-0 whitespace-nowrap"
                         >
@@ -1241,7 +1246,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 <div className="bg-slate-50 border border-slate-300 border-t-2 border-t-slate-900 rounded-xl p-4.5 space-y-1">
                   <p className="text-xs font-bold text-slate-700 uppercase tracking-wide font-display">Variación / Pendiente</p>
                   <p className="text-2xl font-bold font-display text-slate-900">-{formatVal(fiscalAlertRent)}</p>
-                  <p className="text-xs text-slate-600 font-medium font-display">1 Alerta CFDI SAT (Buffalo Wild Wings)</p>
+                  <p className="text-xs text-slate-600 font-medium font-display">1 Alerta CFDI SAT (260 Grill & Bar)</p>
                 </div>
 
                 <div className="bg-slate-50 border border-slate-200/90 border-t-2 border-t-slate-900 rounded-xl p-4.5 space-y-1">
@@ -1340,18 +1345,18 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             {is260Grill ? (
                               <button
                                 onClick={() => {
-                                  setActiveAgent("mariana");
-                                  setCopilotOpen(true);
-                                  setQueryResult(
-                                    "Mariana AI (Contratos & Arrendamientos): Expediente contractual de 260 Grill & Bar (Local 10-01) preparado para renovación. Vence el 31 de Octubre de 2026 (60 días). Propuesta redactada con ajuste INPC del +4.5% ($76,800 → $80,256 MXN/mes). ¿Deseas autorizar el envío de la notificación formal?"
-                                  );
-                                  triggerToast("Mariana AI (Contratos): Expediente de renovación 260 Grill & Bar abierto.");
+                                  setRenewalDraftOpen(true);
+                                  triggerToast("Mariana AI generó el borrador de renovación de 260 Grill & Bar.");
                                 }}
-                                title="Ver expedientes y renovaciones asignados a Mariana (Gerente de Contratos)"
-                                className="bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1.5 mx-auto"
+                                title="Ver borrador de renovación generado por Mariana (Gerente de Contratos)"
+                                className={`px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1.5 mx-auto ${
+                                  renewalSent
+                                    ? "bg-slate-100 text-slate-800 border border-slate-200"
+                                    : "bg-slate-900 hover:bg-slate-800 text-white"
+                                }`}
                               >
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                                Renovación Próxima · Mariana AI →
+                                {!renewalSent && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+                                {renewalSent ? "Borrador Enviado a Abogado ✓" : "Renovación Próxima · Mariana AI →"}
                               </button>
                             ) : isStarbucks ? (
                               <button
@@ -1451,7 +1456,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-1 font-display">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-display">Vía Portal Arrendatario</p>
                   <p className="text-2xl font-bold font-display text-slate-900">{formatVal(98500)}</p>
-                  <p className="text-xs text-slate-500 font-display">1 Comprobante (Buffalo Wild Wings)</p>
+                  <p className="text-xs text-slate-500 font-display">1 Comprobante (260 Grill & Bar)</p>
                 </div>
               </div>
 
@@ -1584,7 +1589,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                               Portal Arrendatario
                             </span>
                           </td>
-                          <td className="p-4 font-bold text-slate-900 whitespace-nowrap">Buffalo Wild Wings (Local 10-01)</td>
+                          <td className="p-4 font-bold text-slate-900 whitespace-nowrap">260 Grill & Bar (Local 10-01)</td>
                           <td className="p-4 text-slate-700 font-medium">Comprobante de Pago Renta + Cuota CAM</td>
                           <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(98500)}</td>
                           <td className="p-4 text-slate-600">Asignación Directa Local 10-01</td>
@@ -2479,9 +2484,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         {[
                           {
                             id: "c-260",
-                            brand: "Buffalo Wild Wings",
+                            brand: "260 Grill & Bar",
                             unit: "Local 10-01",
-                            sqm: "280 m²",
+                            sqm: "320 m²",
                             pdf: "contrato_260_grill_2026_firmado.pdf",
                             insurancePdf: "poliza_seguro_260_grill_2026.pdf",
                             hash: "sha256-8f3a9e2...",
@@ -2491,7 +2496,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             exclusivityClause: "Cláusula 18.1: Exclusividad en concepto Steakhouse & Gastro-Pub en bloque 10. No afecta cafeterías ni tiendas retail.",
                             inpcClause: "Cláusula 7.2: Incremento anual de Renta Base indexado al INPC publicado por INEGI en Octubre.",
                             penaltyClause: "Cláusula 22.4: Penalización equitativa a 6 meses de Renta Base por rescisión anticipada.",
-                            deposit: "$197,000 MXN (2 Meses)",
+                            deposit: "$153,600 MXN (2 Meses)",
                             anomaly: "Alerta SAT: Pendiente timbrado CFDI 4.0",
                             status: "Renovación Próxima",
                             statusBadge: "bg-slate-900 text-white",
@@ -2786,6 +2791,26 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                                       <p className="text-slate-800 text-xs leading-relaxed font-medium">{c.penaltyClause}</p>
                                     </div>
                                   </div>
+
+                                  {c.status === "Renovación Próxima" && (
+                                    <div className="bg-slate-900 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                      <div>
+                                        <p className="text-white font-bold text-xs">Vence {c.expirationDate} ({c.timeRemaining})</p>
+                                        <p className="text-slate-300 text-[11px] mt-0.5">
+                                          Mariana AI puede redactar el borrador de renovación a partir de {c.pdf}, actualizando solo los parámetros que corresponde.
+                                        </p>
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          setRenewalDraftOpen(true);
+                                          triggerToast(`Mariana AI generó el borrador de renovación de ${c.brand}.`);
+                                        }}
+                                        className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+                                      >
+                                        {renewalSent ? "Ver Borrador Enviado ✓" : "Generar Borrador de Renovación →"}
+                                      </button>
+                                    </div>
+                                  )}
                                 </td>
                               </tr>
                             )}
@@ -2868,7 +2893,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         onClick={() => {
                           if (!ragQueryText) return;
                           setActiveRagQueryResult(
-                            `Dictamen Mariana AI: Para la consulta "${ragQueryText}", se analizaron simultáneamente los 79 expedientes contractuales. Se identificaron 3 contratos con derecho de preferencia explícito (Buffalo Wild Wings, Cinépolis VIP y Zara Inditex), sujetos a notificación escrita con 90 días de anticipación al vencimiento.`
+                            `Dictamen Mariana AI: Para la consulta "${ragQueryText}", se analizaron simultáneamente los 79 expedientes contractuales. Se identificaron 3 contratos con derecho de preferencia explícito (260 Grill & Bar, Cinépolis VIP y Zara Inditex), sujetos a notificación escrita con 90 días de anticipación al vencimiento.`
                           );
                           triggerToast("Mariana AI procesó la consulta legal.");
                         }}
@@ -2917,7 +2942,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             const q = "¿Qué inquilinos tienen penalización por término anticipado mayores a 3 meses de renta?";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Penalizaciones): De los 79 contratos, únicamente 2 contemplan retención y pena convencional superior a 3 meses: Cinépolis VIP (retención total de fianza + 6 meses) y Buffalo Wild Wings (6 meses de renta fija). El 97% restante prevé la pena estándar de 3 meses conforme al Código Civil de BC.`
+                              `Dictamen Mariana AI (Penalizaciones): De los 79 contratos, únicamente 2 contemplan retención y pena convencional superior a 3 meses: Cinépolis VIP (retención total de fianza + 6 meses) y 260 Grill & Bar (6 meses de renta fija). El 97% restante prevé la pena estándar de 3 meses conforme al Código Civil de BC.`
                             );
                             triggerToast("Mariana AI analizó penalizaciones por rescisión.");
                           }}
@@ -2940,10 +2965,10 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                         {/* FAQ CARD 3: FIANZAS */}
                         <div
                           onClick={() => {
-                            const q = "Compara los depósitos en garantía de Cinépolis VIP vs Buffalo Wild Wings";
+                            const q = "Compara los depósitos en garantía de Cinépolis VIP vs 260 Grill & Bar";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Comparativa de Garantías): Cinépolis VIP mantiene en resguardo un depósito equivalente a 3 meses de renta ($2,304,000 MXN en fideicomiso), mientras que Buffalo Wild Wings mantiene 2 meses de renta ($153,600 MXN). Ambos expedientes tienen sus pólizas de fianza respaldadas al 100%.`
+                              `Dictamen Mariana AI (Comparativa de Garantías): Cinépolis VIP mantiene en resguardo un depósito equivalente a 3 meses de renta ($2,304,000 MXN en fideicomiso), mientras que 260 Grill & Bar mantiene 2 meses de renta ($153,600 MXN). Ambos expedientes tienen sus pólizas de fianza respaldadas al 100%.`
                             );
                             triggerToast("Mariana AI ejecutó comparativa de garantias.");
                           }}
@@ -2956,7 +2981,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             <span className="text-xs text-slate-400 font-bold group-hover:text-slate-900 transition-colors">Probar →</span>
                           </div>
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                            Compara depósitos en garantía de Cinépolis VIP vs Buffalo Wild Wings
+                            Compara depósitos en garantía de Cinépolis VIP vs 260 Grill & Bar
                           </h4>
                           <p className="text-xs text-slate-600 leading-relaxed font-medium">
                             Desglose de montos en resguardo y meses de renta en fideicomiso administrado.
@@ -3067,7 +3092,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           </span>
                           <span className="text-xs font-bold text-slate-500">Vence 31 Ago</span>
                         </div>
-                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Póliza Seguro Buffalo Wild Wings</h5>
+                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Póliza Seguro 260 Grill & Bar</h5>
                         <p className="text-xs text-slate-600 leading-relaxed font-medium">
                           La póliza de seguro de responsabilidad civil por $5.0M MXN vence en 21 días. Mariana AI envió recordatorio automático a la gerencia del restaurante.
                         </p>
@@ -3208,7 +3233,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             requestedUnit: "Local B-14 (320 m²)",
                             zone: "Zona B (Exterior)",
                             viable: true,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Starbucks Coffee (contrato_starbucks_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona A (Local A-05). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con Buffalo Wild Wings ni Cinépolis.",
+                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Starbucks Coffee (contrato_starbucks_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona A (Local A-05). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con 260 Grill & Bar ni Cinépolis.",
                             conflictingContract: "Ninguno (Local B-14 fuera de Zona A)",
                             snippet: "Cláusula 14.2 de Starbucks: 'El derecho de exclusividad para expendio de café de especialidad comprende única y exclusivamente la crujía de Zona A del inmueble comercial.'",
                           },
@@ -3228,7 +3253,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                             requestedUnit: "Local 10-04 (450 m²)",
                             zone: "Zona 10",
                             viable: false,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El contrato firmado con Buffalo Wild Wings (contrato_260_grill_2026_firmado.pdf, Cláusula 18.1) estipula un radio de exclusividad de 50 metros para conceptos de Sports Bar gastronómico con transmisión deportiva en pantallas gigantes. El Local 10-04 se encuentra a sólo 15 metros del Local 10-01.",
+                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El contrato firmado con 260 Grill & Bar (contrato_260_grill_2026_firmado.pdf, Cláusula 18.1) estipula un radio de exclusividad de 50 metros para conceptos de Sports Bar gastronómico con transmisión deportiva en pantallas gigantes. El Local 10-04 se encuentra a sólo 15 metros del Local 10-01.",
                             conflictingContract: "contrato_260_grill_2026_firmado.pdf (Cláusula 18.1)",
                             snippet: "Cláusula 18.1 de 260 Grill: 'Queda prohibida la instalación de Sports Bar u hostelería con pantalla gigante dentro de los locales contiguos del mismo bloque 10.'",
                           },
@@ -3970,7 +3995,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 Alerta Detectada por el Agente
               </span>
               <p className="text-slate-700 leading-relaxed font-medium text-xs">
-                {activeAgent === "renata" && "Buffalo Wild Wings presenta inconsistencia CFDI 4.0 ($98,500 MXN pagados sin complemento)."}
+                {activeAgent === "renata" && "260 Grill & Bar presenta inconsistencia CFDI 4.0 ($98,500 MXN pagados sin complemento)."}
                 {activeAgent === "mariana" && "Solicitud de Dunkin' Donuts viola la exclusividad de café de Starbucks (Cláusula 14.2)."}
                 {activeAgent === "diego" && "Equipo HVAC de Mexicali Climas en garantía vigente (Serie: MX-HVAC-9902)."}
               </p>
@@ -4130,6 +4155,189 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 {camConfirmModal === "notify"
                   ? "Aprobar y Enviar Notificaciones"
                   : "Aprobar Timbrado & Sincronizar ERP"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MARIANA AI · RENEWAL DRAFT MODAL (260 GRILL & BAR / LOCAL 10-01) */}
+      {renewalDraftOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden text-slate-900 font-sans max-h-[90vh] flex flex-col">
+            <div className="bg-slate-900 text-white p-6 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Mariana AI · Borrador de Renovación
+                </span>
+                <button
+                  onClick={() => setRenewalDraftOpen(false)}
+                  className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
+                  aria-label="Cerrar ventana"
+                >
+                  ✕
+                </button>
+              </div>
+              <h3 className="text-xl font-bold mt-2">260 Grill & Bar · Local 10-01</h3>
+              <p className="text-xs text-slate-300 mt-1">
+                Generado a partir de contrato_260_grill_2026_firmado.pdf. Vence 31 Oct 2026 (En 2 meses).
+              </p>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                  <p className="font-bold text-amber-900 text-xs uppercase tracking-wide border-b border-amber-200 pb-2">
+                    Parámetros Actualizados
+                  </p>
+                  <div className="space-y-2.5">
+                    <div>
+                      <p className="text-amber-800 font-semibold text-[11px]">Renta Base Mensual</p>
+                      <p className="font-bold text-slate-900">$76,800 → $80,256 MXN</p>
+                      <p className="text-amber-800 text-[11px]">+4.5% INPC (Cláusula 7.2)</p>
+                    </div>
+                    <div>
+                      <p className="text-amber-800 font-semibold text-[11px]">Vigencia del Contrato</p>
+                      <p className="font-bold text-slate-900">31 Oct 2026 → 31 Oct 2031</p>
+                      <p className="text-amber-800 text-[11px]">Nuevo periodo: 5 años</p>
+                    </div>
+                    <div>
+                      <p className="text-amber-800 font-semibold text-[11px]">Depósito en Garantía</p>
+                      <p className="font-bold text-slate-900">$153,600 → $160,512 MXN</p>
+                      <p className="text-amber-800 text-[11px]">2 meses de la nueva renta base</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                  <p className="font-bold text-slate-700 text-xs uppercase tracking-wide border-b border-slate-200 pb-2">
+                    Parámetros Sin Cambios
+                  </p>
+                  <div className="space-y-2.5">
+                    <div>
+                      <p className="text-slate-500 font-semibold text-[11px]">Superficie & Ubicación</p>
+                      <p className="font-bold text-slate-900">320 m² · Local 10-01</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500 font-semibold text-[11px]">Cláusula 18.1 · Exclusividad</p>
+                      <p className="text-slate-700 leading-relaxed">Steakhouse & Gastro-Pub en bloque 10. No afecta cafeterías ni tiendas retail.</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500 font-semibold text-[11px]">Cláusula 22.4 · Penalización</p>
+                      <p className="text-slate-700 leading-relaxed">Equitativa a 6 meses de Renta Base por rescisión anticipada.</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500 font-semibold text-[11px]">Cláusula 7.2 · Mecanismo de Ajuste</p>
+                      <p className="text-slate-700 leading-relaxed">Incremento anual indexado al INPC publicado por INEGI en Octubre.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-700">
+                <p className="font-bold text-xs text-slate-900">Nota de Mariana AI</p>
+                <p className="text-[11.5px] mt-0.5 leading-relaxed">
+                  Borrador redactado sobre el contrato vigente — solo se modifican los tres parámetros marcados arriba; el resto del clausulado permanece idéntico al documento firmado. Listo para revisión de asesoría legal externa antes de notificar al inquilino.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setRenewalDraftOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+              <button
+                onClick={() => {
+                  setRenewalDraftOpen(false);
+                  if (!renewalSent) setRenewalConfirmOpen(true);
+                }}
+                disabled={renewalSent}
+                className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm ${
+                  renewalSent ? "bg-slate-400 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
+                }`}
+              >
+                {renewalSent ? "Ya Enviado al Abogado ✓" : "Enviar Borrador al Abogado para Revisión →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MARIANA AI · RENEWAL SEND CONFIRMATION MODAL (TIER 3 HUMAN GATE) */}
+      {renewalConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 font-sans">
+            <div className="bg-slate-900 text-white p-6">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Mariana AI · Confirmación de Envío Legal
+                </span>
+                <button
+                  onClick={() => setRenewalConfirmOpen(false)}
+                  className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
+                  aria-label="Cerrar ventana"
+                >
+                  ✕
+                </button>
+              </div>
+              <h3 className="text-xl font-bold mt-2">Confirmar Envío a Asesoría Legal</h3>
+              <p className="text-xs text-slate-300 mt-1">
+                Revisión previa al envío del borrador de renovación de 260 Grill & Bar.
+              </p>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
+                <p className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
+                  Resumen de la Transacción
+                </p>
+                <div className="space-y-2 text-slate-700">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Documento:</span>
+                    <span className="font-bold text-slate-900">Borrador de Renovación · 260 Grill & Bar</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Destinatario:</span>
+                    <span className="font-bold text-slate-900">Asesoría Legal Externa</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Cambio Propuesto:</span>
+                    <span className="font-bold text-slate-900">$76,800 → $80,256 MXN/mes</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Nueva Vigencia:</span>
+                    <span className="font-bold text-slate-900">Hasta 31 Oct 2031</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-amber-900">
+                <p className="font-bold text-xs">Aviso de Responsabilidad Legal</p>
+                <p className="text-[11.5px] mt-0.5 text-amber-800">
+                  Al autorizar, el borrador se enviará a la asesoría legal externa para revisión. El inquilino no será notificado hasta que el abogado apruebe el documento — esta acción no compromete al propietario ni al inquilino por sí sola.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => setRenewalConfirmOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  setRenewalSent(true);
+                  setRenewalConfirmOpen(false);
+                  triggerToast("Mariana AI: Borrador de renovación enviado a la asesoría legal externa para revisión.");
+                }}
+                className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"
+              >
+                Aprobar y Enviar a Abogado →
               </button>
             </div>
           </div>
