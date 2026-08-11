@@ -9,14 +9,14 @@ import { cn } from "@/components/ui";
  * Definition of physical zones in La Gran Vía Mexicali
  */
 const ZONES = [
-  { id: "Zona 1", label: "Zona 1 · Acceso CETYS", category: "prueba", count: 8, x: 250, y: 90, w: 125, h: 120 },
-  { id: "Zona 2", label: "Zona 2 · Restaurantes Central", category: "prueba", count: 11, x: 390, y: 90, w: 145, h: 120 },
-  { id: "Zona 4", label: "Zona 4 · Fast Food & Bistro", category: "prueba", count: 9, x: 250, y: 230, w: 125, h: 140 },
-  { id: "Zona 5", label: "Zona 5 · Servicios & Bancos", category: "servicios", count: 10, x: 390, y: 230, w: 145, h: 140 },
-  { id: "Zona 6", label: "Zona 6 · Moda & Boutiques", category: "visita", count: 12, x: 550, y: 90, w: 130, h: 280 },
-  { id: "Zona 7", label: "Zona 7 · Cine & Entretenimiento", category: "visita", count: 14, x: 700, y: 90, w: 260, h: 280 },
-  { id: "Zona 8", label: "Zona 8 · Hotel & Negocios", category: "servicios", count: 6, x: 390, y: 390, w: 290, h: 100 },
-  { id: "Zona 10", label: "Zona 10 · Lifestyle & Dining", category: "prueba", count: 15, x: 700, y: 390, w: 260, h: 100 },
+  { id: "Zona 1", label: "Zona 1 · Acceso CETYS", category: "prueba", count: 1, x: 250, y: 90, w: 125, h: 120 },
+  { id: "Zona 2", label: "Zona 2 · Restaurantes Central", category: "prueba", count: 3, x: 390, y: 90, w: 145, h: 120 },
+  { id: "Zona 4", label: "Zona 4 · Fast Food & Bistro", category: "prueba", count: 6, x: 250, y: 230, w: 125, h: 140 },
+  { id: "Zona 5", label: "Zona 5 · Servicios & Bancos", category: "servicios", count: 8, x: 390, y: 230, w: 145, h: 140 },
+  { id: "Zona 6", label: "Zona 6 · Moda & Boutiques", category: "visita", count: 10, x: 550, y: 90, w: 130, h: 280 },
+  { id: "Zona 7", label: "Zona 7 · Cine & Entretenimiento", category: "visita", count: 2, x: 700, y: 90, w: 260, h: 280 },
+  { id: "Zona 8", label: "Zona 8 · Hotel & Negocios", category: "servicios", count: 4, x: 390, y: 390, w: 290, h: 100 },
+  { id: "Zona 10", label: "Zona 10 · Lifestyle & Dining", category: "prueba", count: 4, x: 700, y: 390, w: 260, h: 100 },
 ];
 
 /**
