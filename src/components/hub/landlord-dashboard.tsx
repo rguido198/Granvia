@@ -773,7 +773,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   </div>
                   <h2 className="font-sans text-2xl font-bold text-slate-900 mt-1">Torre de Control CFO & Resumen Ejecutivo</h2>
                   <p className="text-xs text-slate-500 font-medium mt-1">
-                    Visión financiera ejecutiva de ingresos por renta, ocupación GLA (35,400 m²), cobranza CAM NNN e inteligencia agregada del portafolio.
+                    Visión financiera ejecutiva de ingresos por renta, ocupación GLA ({plazaTotalGla.toLocaleString("es-MX")} m²), cobranza CAM NNN e inteligencia agregada del portafolio.
                   </p>
                 </div>
               </div>
@@ -1208,7 +1208,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       Rent Roll Maestro · Periodo Fiscal: Agosto 2026
                     </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Padrón contractual en tiempo real (GLA Total: 35,400 m² · Superficie Rentable Bruta). Sincronizado automáticamente con cuentas ERP.
+                      Padrón contractual en tiempo real (GLA Total: {plazaTotalGla.toLocaleString("es-MX")} m² · Superficie Rentable Bruta). Sincronizado automáticamente con cuentas ERP.
                     </p>
                   </div>
                 </div>
@@ -1229,7 +1229,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       <th className="p-3.5 text-right">Superficie</th>
                       <th
                         className="p-3.5 text-right cursor-default select-none"
-                        title="GLA = Gross Leasable Area / Superficie Rentable Bruta (35,400 m² total)"
+                        title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
                       >
                         % Participación GLA
                       </th>
@@ -1468,7 +1468,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           <td className="p-4 font-bold text-slate-900 whitespace-nowrap">CFE Mexicali</td>
                           <td className="p-4 text-slate-600">Energía Eléctrica (Pasillos y Áreas Comunes)</td>
                           <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(250468)}</td>
-                          <td className="p-4 text-slate-500">Prorrateado (m² ÷ 35,400)</td>
+                          <td className="p-4 text-slate-500">Prorrateado (m² ÷ {plazaTotalGla.toLocaleString("es-MX")})</td>
                           <td className="p-4 text-center whitespace-nowrap">
                             <span className="text-slate-800 font-bold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Prorrateado</span>
                           </td>
@@ -1485,7 +1485,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           <td className="p-4 font-bold text-slate-900 whitespace-nowrap">Grupo Securitas</td>
                           <td className="p-4 text-slate-600">Vigilancia & Control de Acceso 24/7</td>
                           <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(65000)}</td>
-                          <td className="p-4 text-slate-500">Prorrateado (m² ÷ 35,400)</td>
+                          <td className="p-4 text-slate-500">Prorrateado (m² ÷ {plazaTotalGla.toLocaleString("es-MX")})</td>
                           <td className="p-4 text-center whitespace-nowrap">
                             <span className="text-slate-800 font-bold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Prorrateado</span>
                           </td>
@@ -1502,7 +1502,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                           <td className="p-4 font-bold text-slate-900 whitespace-nowrap">Climas de Mexicali</td>
                           <td className="p-4 text-slate-600">Mantenimiento Preventivo HVAC Torre Central</td>
                           <td className="p-4 text-right font-bold font-sans tabular-nums text-slate-900 whitespace-nowrap">{formatVal(38500)}</td>
-                          <td className="p-4 text-slate-500">Prorrateado (m² ÷ 35,400)</td>
+                          <td className="p-4 text-slate-500">Prorrateado (m² ÷ {plazaTotalGla.toLocaleString("es-MX")})</td>
                           <td className="p-4 text-center whitespace-nowrap">
                             <span className="text-slate-800 font-bold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Prorrateado</span>
                           </td>
