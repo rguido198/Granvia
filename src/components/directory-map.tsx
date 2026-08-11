@@ -243,7 +243,7 @@ export function DirectoryMap() {
 
       {/* BRAND ARCHITECTURAL VECTOR MAP CANVAS — Dune Palette (#211F1C) */}
       <div className="bg-[#211F1C] rounded-2xl border border-[#3D3830] p-4 sm:p-6 shadow-xl relative overflow-hidden text-sand-100">
-        {/* Map Header */}
+        {/* Map Header with Floor Level Switcher */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-[#3D3830]">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -256,26 +256,65 @@ export function DirectoryMap() {
               Mapa Arquitectónico de la Plaza
             </h2>
             <p className="text-xs text-dune-300 mt-0.5 font-sans">
-              Haz clic en cualquier zona o local para filtrar el directorio en tiempo real.
+              Haz clic en cualquier zona para filtrar. Revisa la insignia <strong className="text-amber-400 font-mono">⬆️ 2DO PISO</strong> para ubicar locales en Planta Alta.
             </p>
           </div>
 
-          {/* Quick Zone Selector Buttons — All Zones */}
-          <div className="flex items-center gap-1.5 flex-wrap font-mono text-[11px]">
-            {ZONES.map((z) => (
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Map Level Switcher Toggle ON MAP CANVAS */}
+            <div className="flex items-center bg-[#1A1816] border border-[#3D3830] p-1 rounded-lg font-mono text-[11px]">
               <button
-                key={z.id}
-                onClick={() => setSelectedZone(selectedZone === z.id ? null : z.id)}
+                onClick={() => setActiveFloor("ALL")}
                 className={cn(
-                  "px-2.5 py-1 rounded transition-all cursor-pointer border",
-                  selectedZone === z.id
-                    ? "bg-sand-100 text-ink font-bold border-sand-100"
-                    : "bg-[#2C2A26] text-dune-200 border-[#3D3830] hover:border-dune-500"
+                  "px-2.5 py-1 rounded transition-all cursor-pointer",
+                  activeFloor === "ALL"
+                    ? "bg-sand-100 text-ink font-bold"
+                    : "text-dune-300 hover:text-white"
                 )}
               >
-                {z.id}
+                Ambas Plantas
               </button>
-            ))}
+              <button
+                onClick={() => setActiveFloor("PB")}
+                className={cn(
+                  "px-2.5 py-1 rounded transition-all cursor-pointer",
+                  activeFloor === "PB"
+                    ? "bg-sand-100 text-ink font-bold"
+                    : "text-dune-300 hover:text-white"
+                )}
+              >
+                Planta Baja
+              </button>
+              <button
+                onClick={() => setActiveFloor("PA")}
+                className={cn(
+                  "px-2.5 py-1 rounded transition-all cursor-pointer flex items-center gap-1",
+                  activeFloor === "PA"
+                    ? "bg-amber-900 text-amber-100 font-bold"
+                    : "text-amber-400 hover:text-amber-300"
+                )}
+              >
+                ⬆️ 2do Piso
+              </button>
+            </div>
+
+            {/* Quick Zone Selector Buttons — All Zones */}
+            <div className="flex items-center gap-1 flex-wrap font-mono text-[10.5px]">
+              {ZONES.map((z) => (
+                <button
+                  key={z.id}
+                  onClick={() => setSelectedZone(selectedZone === z.id ? null : z.id)}
+                  className={cn(
+                    "px-2 py-0.5 rounded transition-all cursor-pointer border",
+                    selectedZone === z.id
+                      ? "bg-sand-100 text-ink font-bold border-sand-100"
+                      : "bg-[#2C2A26] text-dune-200 border-[#3D3830] hover:border-dune-500"
+                  )}
+                >
+                  {z.id}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -316,6 +355,9 @@ export function DirectoryMap() {
             {ZONES.map((z) => {
               const isSelected = selectedZone === z.id;
               const isHovered = hoveredZone === z.id;
+              const hasSecondFloor = z.id === "Zona 3" || z.id === "Zona 6" || z.id === "Zona 9";
+              const isDimmedByFloor = activeFloor === "PA" && !hasSecondFloor;
+              const isHighlightedByFloor = activeFloor === "PA" && hasSecondFloor;
               const subLabel = z.label.split("·")[1]?.trim() || z.label;
 
               return (
@@ -324,7 +366,10 @@ export function DirectoryMap() {
                   onClick={() => setSelectedZone(isSelected ? null : z.id)}
                   onMouseEnter={() => setHoveredZone(z.id)}
                   onMouseLeave={() => setHoveredZone(null)}
-                  className="cursor-pointer transition-all"
+                  className={cn(
+                    "cursor-pointer transition-all",
+                    isDimmedByFloor && "opacity-30"
+                  )}
                 >
                   <rect
                     x={z.x}
@@ -336,14 +381,38 @@ export function DirectoryMap() {
                       "transition-all stroke-2",
                       isSelected || isHovered
                         ? "fill-sand-100/20 stroke-sand-100"
+                        : isHighlightedByFloor
+                        ? "fill-amber-950/40 stroke-amber-500"
                         : "fill-[#2C2A26] stroke-[#474138] hover:fill-[#36332E]"
                     )}
                   />
 
+                  {/* 2ND FLOOR ARCHITECTURAL LEVEL HEADER ON SVG MAP BOX */}
+                  {hasSecondFloor && (
+                    <g>
+                      <rect
+                        x={z.x + 6}
+                        y={z.y + 6}
+                        width={z.w - 12}
+                        height="15"
+                        rx="3"
+                        className="fill-amber-950/90 stroke-amber-700/80 stroke-1"
+                      />
+                      <text
+                        x={z.x + z.w / 2}
+                        y={z.y + 17}
+                        textAnchor="middle"
+                        className="fill-amber-300 font-mono text-[7px] font-bold tracking-wider uppercase"
+                      >
+                        ⬆️ PLANTA BAJA + 2DO PISO
+                      </text>
+                    </g>
+                  )}
+
                   {/* Zone Header Title */}
                   <text
                     x={z.x + z.w / 2}
-                    y={z.y + 22}
+                    y={z.y + (hasSecondFloor ? 33 : 22)}
                     textAnchor="middle"
                     className="fill-sand-100 font-display font-semibold text-xs tracking-wide"
                   >
@@ -353,7 +422,7 @@ export function DirectoryMap() {
                   {/* Zone Subtitle */}
                   <text
                     x={z.x + z.w / 2}
-                    y={z.y + 35}
+                    y={z.y + (hasSecondFloor ? 45 : 35)}
                     textAnchor="middle"
                     className="fill-dune-300 font-mono text-[8.5px] uppercase tracking-wider"
                   >
