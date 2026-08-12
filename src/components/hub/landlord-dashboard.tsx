@@ -1442,7 +1442,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-sm"
                     >
                       <span className="h-2 w-2 rounded-full bg-slate-400" />
-                      <span>Timbrar Recibo SAT ({formatVal(18400)})</span>
+                      <span>Timbrar Recibo SAT ({formatVal(98500)})</span>
                     </button>
                   )}
                   {cfdiIssued && (
