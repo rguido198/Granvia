@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { NAV, HUB_NAV, SITE } from "@/content/site";
+import { NAV, SITE } from "@/content/site";
 import { cn } from "@/components/ui";
 
 function isActive(pathname: string | null, href: string) {
@@ -14,7 +14,6 @@ function isActive(pathname: string | null, href: string) {
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const hubActive = isActive(pathname, HUB_NAV.href);
 
   return (
     <header className="sticky top-0 z-50 border-b border-hairline bg-sand-100/88 backdrop-blur-[10px]">
@@ -48,19 +47,6 @@ export function SiteHeader() {
               </Link>
             );
           })}
-          <Link
-            href={HUB_NAV.href}
-            prefetch={false}
-            aria-current={hubActive ? "page" : undefined}
-            className={cn(
-              "rounded-xs border border-terra px-4.5 py-2.5 text-[13.5px] font-semibold transition-colors",
-              hubActive
-                ? "bg-terra text-sand-100"
-                : "text-terra hover:bg-terra hover:text-sand-100",
-            )}
-          >
-            {HUB_NAV.label}
-          </Link>
         </nav>
 
         {/* Mobile toggle */}
@@ -115,20 +101,6 @@ export function SiteHeader() {
                 </li>
               );
             })}
-            <li className="pt-2">
-              <Link
-                href={HUB_NAV.href}
-                prefetch={false}
-                onClick={() => setOpen(false)}
-                aria-current={hubActive ? "page" : undefined}
-                className={cn(
-                  "block rounded-xs border border-terra px-4 py-2.5 text-center text-sm font-semibold",
-                  hubActive ? "bg-terra text-sand-100" : "text-terra",
-                )}
-              >
-                {HUB_NAV.label}
-              </Link>
-            </li>
           </ul>
         </nav>
       )}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SITE } from "@/content/site";
+import { HUB_NAV, SITE } from "@/content/site";
 
 export function SiteFooter() {
   return (
@@ -56,8 +56,8 @@ export function SiteFooter() {
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-sans">Plataforma & Soporte</h3>
             <ul className="space-y-2.5 text-sm font-medium">
               <li>
-                <Link href="/consola" className="hover:text-white transition-colors text-slate-300 flex items-center gap-2">
-                  <span>Consola Asset Management</span>
+                <Link href={HUB_NAV.href} className="hover:text-white transition-colors text-slate-300 flex items-center gap-2">
+                  <span>{HUB_NAV.label}</span>
                   <span className="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-700">Admin</span>
                 </Link>
               </li>
