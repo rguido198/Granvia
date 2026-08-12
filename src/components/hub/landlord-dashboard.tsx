@@ -406,8 +406,8 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
   const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
   const [approvalConfirmEventId, setApprovalConfirmEventId] = useState<string | null>(null);
 
-  // Accessibility Font Scale State (default: large font size for enhanced legibility)
-  const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("large");
+  // Accessibility Font Scale State
+  const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
 
   // Governance Policy Edit States
   const [editingPolicyCard, setEditingPolicyCard] = useState<null | "diego" | "renata" | "sso">(null);
@@ -853,9 +853,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       {formatVal(contractedRent)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100 gap-2">
-                    <span className="font-display truncate">{tenantsAlDia} de {rentRoll.length} locales al día</span>
-                    <span className="font-bold font-display text-slate-900 group-hover:underline shrink-0 whitespace-nowrap">
+                  <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100">
+                    <span className="font-display">{tenantsAlDia} de {rentRoll.length} locales al día</span>
+                    <span className="font-bold font-display text-slate-900 group-hover:underline">
                       Ver Rent Roll &rarr;
                     </span>
                   </div>
@@ -882,9 +882,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       {occupancyRate.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100 gap-2">
-                    <span className="font-display truncate">{leasedSqm.toLocaleString("es-MX")} m² de {plazaTotalGla.toLocaleString("es-MX")} m²</span>
-                    <span className="font-bold font-display text-slate-900 group-hover:underline shrink-0 whitespace-nowrap">
+                  <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100">
+                    <span className="font-display">{leasedSqm.toLocaleString("es-MX")} m² de {plazaTotalGla.toLocaleString("es-MX")} m²</span>
+                    <span className="font-bold font-display text-slate-900 group-hover:underline">
                       Ver Locales &rarr;
                     </span>
                   </div>
@@ -911,9 +911,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       {formatVal(camMonthlyPool)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100 gap-2">
-                    <span className="font-display truncate">Renata AI: Prorrateado</span>
-                    <span className="font-bold font-display text-slate-900 group-hover:underline shrink-0 whitespace-nowrap">
+                  <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100">
+                    <span className="font-display">Renata AI: Prorrateado</span>
+                    <span className="font-bold font-display text-slate-900 group-hover:underline">
                       Ver CAM &rarr;
                     </span>
                   </div>
@@ -942,9 +942,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       {collectionRate.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100 gap-2">
-                    <span className="font-display truncate">260 Grill & Bar CFDI</span>
-                    <span className="font-bold font-display text-slate-900 group-hover:underline shrink-0 whitespace-nowrap">
+                  <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100">
+                    <span className="font-display">260 Grill & Bar CFDI</span>
+                    <span className="font-bold font-display text-slate-900 group-hover:underline">
                       Consultar Agente &rarr;
                     </span>
                   </div>
@@ -971,9 +971,9 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                       {formatVal(diegoProtectedCapex)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100 gap-2">
-                    <span className="font-display truncate">Rechazo + Garantía, fuera del P&amp;L</span>
-                    <span className="font-bold font-display text-slate-900 group-hover:underline shrink-0 whitespace-nowrap">
+                  <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100">
+                    <span className="font-display">Rechazo + Garantía, fuera del P&amp;L</span>
+                    <span className="font-bold font-display text-slate-900 group-hover:underline">
                       Ver Diego AI &rarr;
                     </span>
                   </div>

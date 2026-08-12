@@ -15,7 +15,7 @@ type ConsoleView = "propietario" | "inquilino";
  */
 export function ConsoleShell({ data }: { data: ConsoleData }) {
   const [view, setView] = useState<ConsoleView>("propietario");
-  const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("large");
+  const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
   const isOwner = view === "propietario";
 
   return (
