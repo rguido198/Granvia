@@ -900,7 +900,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 >
                   <div className="flex items-start justify-between gap-3 min-h-[44px]">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-900 transition-colors">
-                      Fondo CAM NNN Mensual
+                      Fondo CAM NNN Mensual · Renata AI
                     </span>
                     <span className="text-xs font-bold font-display text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 shrink-0 whitespace-nowrap">
                       100% Bal.
@@ -912,7 +912,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                     </span>
                   </div>
                   <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100">
-                    <span className="font-display">Renata AI: Prorrateado</span>
+                    <span className="font-display">Prorrateado automáticamente</span>
                     <span className="font-bold font-display text-slate-900 group-hover:underline">
                       Ver CAM &rarr;
                     </span>
@@ -931,7 +931,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                 >
                   <div className="flex items-start justify-between gap-3 min-h-[44px]">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-900 transition-colors">
-                      Eficiencia de Cobranza
+                      Eficiencia de Cobranza · Renata AI
                     </span>
                     <span className="text-xs font-bold font-display text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-300 shrink-0 whitespace-nowrap">
                       {tenantsWithAlert} Alerta{tenantsWithAlert === 1 ? "" : "s"} SAT
@@ -945,7 +945,7 @@ export function LandlordDashboard({ data }: { data: ConsoleData }) {
                   <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium font-display pt-2 border-t border-slate-100">
                     <span className="font-display">260 Grill & Bar CFDI</span>
                     <span className="font-bold font-display text-slate-900 group-hover:underline">
-                      Consultar Agente &rarr;
+                      Consultar Renata AI &rarr;
                     </span>
                   </div>
                 </div>
