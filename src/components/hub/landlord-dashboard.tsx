@@ -5,6 +5,7 @@ import type {
   ConsoleData,
 } from "@/lib/console-data";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
+import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
@@ -30,10 +31,12 @@ export function LandlordDashboard({
   data,
   diegoTickets,
   diegoKpis,
+  localeOptions,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
   diegoKpis: DiegoKPIs;
+  localeOptions: LocaleOption[];
 }) {
   const {
     rentRoll,
@@ -644,7 +647,7 @@ export function LandlordDashboard({
                   and the dynamic jurisdiction watermark. Sits above the scheduled
                   calendar per the "operational conveyor belt" ordering: triage/approve
                   first, scheduled/dispatched execution below. */}
-              <DiegoTriageQueue tickets={diegoTickets} kpis={diegoKpis} />
+              <DiegoTriageQueue tickets={diegoTickets} kpis={diegoKpis} localeOptions={localeOptions} />
 
               {/* CALENDARIO DE PRÓXIMOS EVENTOS & APROBACIONES (LANDLORD-FIRST: WHAT NEEDS A DECISION NOW) */}
               <div className="space-y-4">

@@ -1,9 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { AcTicketSimulator } from "@/components/hub/ac-ticket-chat";
 import { CamLedger } from "@/components/hub/cam-ledger";
+import { NewTicketForm } from "@/components/hub/new-ticket-form";
 import { PORTAL_TENANT } from "@/content/hub";
+import type { DiegoTicket } from "@/lib/data/diego-tickets.server";
+import type { PortalLocale } from "@/lib/data/tenant-portal.server";
+
+const STATUS_LABEL: Record<DiegoTicket["status"], string> = {
+  pending_triage: "Pendiente de Triage",
+  pending_diagnosis: "En Diagnóstico",
+  pending_warranty_check: "Verificando Garantía",
+  pending_cost_attribution: "Atribuyendo Costo",
+  pending_skeptic: "En Auditoría",
+  needs_approval: "En Revisión del Propietario",
+  dispatched: "Técnico Asignado",
+  pending_confirmation: "Pendiente de Confirmación",
+  closed: "Cerrado",
+  closed_administrative: "Cerrado",
+};
 
 /**
  * A single tenant's own view: their lease, their tickets, their CAM ledger.
@@ -11,9 +26,27 @@ import { PORTAL_TENANT } from "@/content/hub";
  * Scoped deliberately. This is what `/inquilinos` serves, and a tenant opening
  * it must not be able to see another tenant's rent or pro-rata share — the
  * plaza-wide rent roll lives behind auth on `/consola` instead.
+ *
+ * `locale`/`tickets` are real Supabase data (src/lib/data/tenant-portal.server.ts).
+ * No per-tenant auth exists yet, so this always resolves to the one seeded
+ * locale — see that file's note on the invite-based auth this is a bridge to.
  */
-export function TenantPortal() {
+export function TenantPortal({
+  locale,
+  tickets,
+}: {
+  locale: PortalLocale | null;
+  tickets: DiegoTicket[];
+}) {
   const [salesSubmitted, setSalesSubmitted] = useState(false);
+
+  if (!locale) {
+    return (
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs font-sans text-sm text-slate-600">
+        No hay ningún local registrado todavía.
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-xs space-y-6 font-sans">
@@ -25,15 +58,17 @@ export function TenantPortal() {
               Renta al día (Agosto 2026)
             </span>
             <span className="text-xs sm:text-sm text-slate-600 font-semibold">
-              {`${PORTAL_TENANT.unit} · ${PORTAL_TENANT.zone}`}
+              {`${locale.unitNumber} · ${locale.propertyName}`}
             </span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900">{PORTAL_TENANT.name}</h2>
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900">{locale.tenantEntity}</h2>
           <p className="mt-1 text-sm sm:text-base text-slate-600 font-medium">
             Portal Arrendatario. Envío de ventas mensuales, reporte de incidencias y reglamentos internos.
           </p>
         </div>
 
+        {/* Lease terms are still PORTAL_TENANT mock data — Mariana's lease
+            schema/query isn't built yet, unlike the ticket data below. */}
         <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5 text-xs sm:text-sm text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
           <span>
             <strong>Contrato Activo:</strong> Hasta {PORTAL_TENANT.leaseEnds}
@@ -76,7 +111,7 @@ export function TenantPortal() {
             El Agente de IA atiende 24/7 vía WhatsApp y asigna al técnico de plaza en minutos.
           </p>
 
-          <AcTicketSimulator />
+          <NewTicketForm fixedLocaleId={locale.id} sourceChannel="consola_inquilino" />
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
@@ -94,25 +129,40 @@ export function TenantPortal() {
         </div>
       </div>
 
-      {/* Store Active Tickets Section */}
+      {/* Store Active Tickets Section — real Supabase data, not illustrative */}
       <div className="pt-4 border-t border-slate-200">
         <h3 className="font-display text-lg font-bold text-slate-900 mb-3">
-          Mis Solicitudes &amp; Incidencias ({PORTAL_TENANT.unit})
+          Mis Solicitudes &amp; Incidencias ({locale.unitNumber})
         </h3>
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
-            <div>
-              <span className="text-sm font-bold text-slate-900">#INC-402 · Compresor HVAC Terraza</span>
-              <span className="ml-2.5 rounded-full bg-slate-100 border border-slate-300 px-2.5 py-0.5 text-xs font-bold text-slate-900">
-                EN PROGRESO
-              </span>
-            </div>
-            <span className="text-xs sm:text-sm text-slate-600 font-semibold">Asignado: Carlos R. (Climas)</span>
+        {tickets.length === 0 ? (
+          <p className="text-xs sm:text-sm text-slate-500">Sin solicitudes registradas todavía.</p>
+        ) : (
+          <div className="space-y-3">
+            {tickets.map((t) => (
+              <div key={t.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
+                  <div>
+                    <span className="text-sm font-bold text-slate-900">{t.ticketNumber}</span>
+                    <span className="ml-2.5 rounded-full bg-slate-100 border border-slate-300 px-2.5 py-0.5 text-xs font-bold text-slate-900">
+                      {STATUS_LABEL[t.status]}
+                    </span>
+                  </div>
+                  {t.contractorName && (
+                    <span className="text-xs sm:text-sm text-slate-600 font-semibold">Asignado: {t.contractorName}</span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
+                  <strong>Reporte:</strong> &ldquo;{t.rawReport}&rdquo;
+                </p>
+                {t.diagnosis && (
+                  <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mt-1">
+                    <strong>Diagnóstico:</strong> {t.diagnosis}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
-          <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
-            Diagnóstico: El Agente de IA detectó falla en el compresor secundario. El técnico llegará a las 11:30 AM con el repuesto.
-          </p>
-        </div>
+        )}
       </div>
 
       {/* NNN / CAM Ledger — this tenant's own share only */}

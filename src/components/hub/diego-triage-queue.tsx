@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
+import type { LocaleOption } from "@/lib/data/tenant-portal.server";
+import { NewTicketForm } from "@/components/hub/new-ticket-form";
 
 function formatMxn(val: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(val);
@@ -138,7 +140,15 @@ function TicketCard({ ticket }: { ticket: DiegoTicket }) {
   );
 }
 
-export function DiegoTriageQueue({ tickets, kpis }: { tickets: DiegoTicket[]; kpis: DiegoKPIs }) {
+export function DiegoTriageQueue({
+  tickets,
+  kpis,
+  localeOptions,
+}: {
+  tickets: DiegoTicket[];
+  kpis: DiegoKPIs;
+  localeOptions: LocaleOption[];
+}) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -158,6 +168,8 @@ export function DiegoTriageQueue({ tickets, kpis }: { tickets: DiegoTicket[]; kp
           </span>
         </div>
       </div>
+
+      <NewTicketForm localeOptions={localeOptions} sourceChannel="consola_propietario" />
 
       {tickets.length === 0 ? (
         <p className="text-xs text-slate-500">Sin tickets registrados todavía.</p>

@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
   const kind = formData.get("kind");
   const sourceChannel = formData.get("source_channel");
   const localeId = formData.get("locale_id");
+  const description = formData.get("description");
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file is required" }, { status: 400 });
@@ -97,7 +98,13 @@ export async function POST(request: NextRequest) {
   // that a frozen serverless invocation could drop.
   after(async () => {
     try {
-      const rawText = await extractText(bytes, file.type);
+      // A photo carries no extractable text (extractText correctly returns
+      // null for image/*) — but a tenant who attaches one usually also typed
+      // what's wrong. Prefer that description over losing it silently.
+      const rawText =
+        file.type.startsWith("image/") && typeof description === "string" && description.trim()
+          ? description.trim()
+          : await extractText(bytes, file.type);
       await supabase
         .from("documents")
         .update({

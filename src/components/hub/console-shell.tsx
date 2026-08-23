@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
 import { TenantPortal } from "@/components/hub/tenant-portal";
-import { PORTAL_TENANT } from "@/content/hub";
 import type { ConsoleData } from "@/lib/console-data";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
+import type { LocaleOption, PortalLocale } from "@/lib/data/tenant-portal.server";
 import { signOut } from "@/app/consola/actions";
 
 type ConsoleView = "propietario" | "inquilino";
@@ -18,10 +18,16 @@ export function ConsoleShell({
   data,
   diegoTickets,
   diegoKpis,
+  localeOptions,
+  tenantPortalLocale,
+  tenantPortalTickets,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
   diegoKpis: DiegoKPIs;
+  localeOptions: LocaleOption[];
+  tenantPortalLocale: PortalLocale | null;
+  tenantPortalTickets: DiegoTicket[];
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -40,7 +46,9 @@ export function ConsoleShell({
           <span className="h-2.5 w-2.5 rounded-full bg-slate-900" aria-hidden="true" />
           <span className="font-bold text-slate-900 uppercase tracking-wide">Consola de Asset Management · Sesión Autenticada</span>
           <span className="text-slate-600 font-semibold">
-            {isOwner ? "Vista Propietario (Plaza Completa)" : `Vista Arrendatario (${PORTAL_TENANT.unit})`}
+            {isOwner
+              ? "Vista Propietario (Plaza Completa)"
+              : `Vista Arrendatario (${tenantPortalLocale?.unitNumber ?? "?"})`}
           </span>
         </p>
 
@@ -122,10 +130,15 @@ export function ConsoleShell({
 
       {/* Main View Render */}
       {isOwner ? (
-        <LandlordDashboard data={data} diegoTickets={diegoTickets} diegoKpis={diegoKpis} />
+        <LandlordDashboard
+          data={data}
+          diegoTickets={diegoTickets}
+          diegoKpis={diegoKpis}
+          localeOptions={localeOptions}
+        />
       ) : (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-          <TenantPortal />
+          <TenantPortal locale={tenantPortalLocale} tickets={tenantPortalTickets} />
         </div>
       )}
 
