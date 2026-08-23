@@ -17,20 +17,16 @@ export type LocaleOption = {
 };
 
 /**
- * No real tenant auth exists yet (deferred to the landlord-invite flow) — for
- * now this always resolves to the first locale on file, matching the single
- * seeded unit every other real query in this build has been tested against.
- * Once invite-based auth lands, the locale comes from the session instead of
- * this lookup.
+ * With a localeId (the real tenant's own session), resolves that exact
+ * locale. Without one — the landlord's "Vista Inquilino" preview inside
+ * /consola, which isn't scoped to any one tenant — falls back to the first
+ * locale on file, same as before real auth existed.
  */
-async function resolvePortalLocale(): Promise<PortalLocale | null> {
+async function resolvePortalLocale(localeId?: string): Promise<PortalLocale | null> {
   const supabase = getSupabaseServiceClient();
-  const { data, error } = await supabase
-    .from("locales")
-    .select("id, unit_number, tenant_entity, properties ( name )")
-    .order("unit_number", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  let query = supabase.from("locales").select("id, unit_number, tenant_entity, properties ( name )");
+  query = localeId ? query.eq("id", localeId) : query.order("unit_number", { ascending: true }).limit(1);
+  const { data, error } = await query.maybeSingle();
 
   if (error || !data) return null;
   const row = data as unknown as {
@@ -47,11 +43,11 @@ async function resolvePortalLocale(): Promise<PortalLocale | null> {
   };
 }
 
-export async function fetchTenantPortalData(): Promise<{
+export async function fetchTenantPortalData(localeId?: string): Promise<{
   locale: PortalLocale | null;
   tickets: DiegoTicket[];
 }> {
-  const locale = await resolvePortalLocale();
+  const locale = await resolvePortalLocale(localeId);
   if (!locale) return { locale: null, tickets: [] };
 
   const supabase = getSupabaseServiceClient();

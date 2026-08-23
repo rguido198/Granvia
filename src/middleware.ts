@@ -1,11 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  CONSOLE_LOGIN_PATH,
-  SESSION_COOKIE,
-  readConsoleCredentials,
-  verifySessionToken,
-} from "@/lib/console-session";
+import { CONSOLE_LOGIN_PATH } from "@/lib/console-session";
 import { PRIVATE_GATE_PATH, SITE_ACCESS_COOKIE } from "@/lib/site-session";
+import { createSupabaseMiddlewareClient } from "@/lib/auth/middleware-client";
+
+const TENANT_LOGIN_PATH = "/inquilinos/acceso";
 
 export const config = {
   matcher: [
@@ -36,6 +34,8 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith(PRIVATE_GATE_PATH) ||
     pathname.startsWith(CONSOLE_LOGIN_PATH) ||
+    pathname.startsWith(TENANT_LOGIN_PATH) ||
+    pathname.startsWith("/auth/") ||
     pathname.startsWith("/api/")
   ) {
     return NextResponse.next();
@@ -53,37 +53,44 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(gateUrl);
   }
 
-  // 3. Secondary Landlord Console Gate for /consola routes
+  // 3. Landlord console gate — real Supabase Auth session + role='landlord'.
+  // CONSOLE_LOGIN_PATH itself is already handled in block 1.
   if (pathname.startsWith("/consola")) {
-    if (pathname.startsWith(CONSOLE_LOGIN_PATH)) {
-      return NextResponse.next();
-    }
+    return requireRole(request, "landlord", CONSOLE_LOGIN_PATH);
+  }
 
-    const credentials = readConsoleCredentials();
-    if (!credentials) {
-      return new NextResponse(
-        "Consola no configurada: faltan CONSOLA_USER, CONSOLA_PASSWORD o CONSOLA_SESSION_SECRET.",
-        { status: 503, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-
-    const token = request.cookies.get(SESSION_COOKIE)?.value;
-    if (await verifySessionToken(token, credentials.secret)) {
-      const response = NextResponse.next();
-      response.headers.set("Cache-Control", "no-store");
-      return response;
-    }
-
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = CONSOLE_LOGIN_PATH;
-    loginUrl.search = "";
-
-    const response = NextResponse.rewrite(loginUrl);
-    response.headers.set("Cache-Control", "no-store");
-    if (token) response.cookies.delete({ name: SESSION_COOKIE, path: "/" });
-    return response;
+  // 3b. Tenant portal gate — real Supabase Auth session + role='tenant'.
+  // TENANT_LOGIN_PATH itself is already handled in block 1.
+  if (pathname.startsWith("/inquilinos")) {
+    return requireRole(request, "tenant", TENANT_LOGIN_PATH);
   }
 
   // 4. Serve requested page
   return NextResponse.next();
+}
+
+async function requireRole(request: NextRequest, role: "landlord" | "tenant", loginPath: string) {
+  const { supabase, getResponse } = createSupabaseMiddlewareClient(request);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return redirectTo(request, loginPath);
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || profile.role !== role) return redirectTo(request, loginPath);
+
+  const response = getResponse();
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
+function redirectTo(request: NextRequest, path: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = path;
+  url.search = "";
+  const response = NextResponse.rewrite(url);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
 }

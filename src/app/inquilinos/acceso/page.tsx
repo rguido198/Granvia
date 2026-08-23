@@ -1,7 +1,7 @@
 import { PageFade } from "@/components/ui";
-import { LoginForm } from "@/app/consola/acceso/login-form";
+import { TenantLoginForm } from "@/app/inquilinos/acceso/login-form";
 
-export default function ConsoleLoginPage() {
+export default function TenantLoginPage() {
   return (
     <PageFade>
       <div className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-12">
@@ -17,25 +17,21 @@ export default function ConsoleLoginPage() {
 
           <p className="mt-5 text-center">
             <span className="inline-block rounded-full border border-pine/30 bg-pine/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-pine">
-              Acceso restringido
+              Portal Arrendatario
             </span>
           </p>
 
           <h1 className="mt-3 text-center font-display text-2xl font-bold leading-tight text-ink">
-            Consola de Asset Management
+            Tu operación, en orden.
           </h1>
           <p className="mt-2 text-center text-xs leading-relaxed text-ink-500">
-            Rent roll consolidado, prorrateo CAM NNN y auditoría fiscal de la plaza. Uso exclusivo del personal
-            autorizado de La Gran Vía Mexicali.
+            Reporta incidencias, revisa el estatus de tus solicitudes y tu ledger CAM en un solo lugar.
           </p>
 
-          <LoginForm />
+          <TenantLoginForm />
 
           <p className="mt-5 border-t border-hairline pt-4 text-center font-mono text-[10px] leading-relaxed text-ink-500">
-            La sesión caduca a las 8 horas. ¿Sin acceso? Escribe a{" "}
-            <a className="underline hover:text-ink" href="mailto:contact@technologyconsultants.ventures">
-              contact@technologyconsultants.ventures
-            </a>
+            ¿No tienes cuenta? Tu administrador de plaza te envía una invitación por correo.
           </p>
         </div>
       </div>

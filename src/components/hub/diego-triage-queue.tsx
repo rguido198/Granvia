@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import { NewTicketForm } from "@/components/hub/new-ticket-form";
+import { InviteTenantForm } from "@/components/hub/invite-tenant-form";
 
 function formatMxn(val: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(val);
@@ -169,7 +170,10 @@ export function DiegoTriageQueue({
         </div>
       </div>
 
-      <NewTicketForm localeOptions={localeOptions} sourceChannel="consola_propietario" />
+      <div className="flex flex-wrap items-center gap-4">
+        <NewTicketForm localeOptions={localeOptions} sourceChannel="consola_propietario" />
+        <InviteTenantForm localeOptions={localeOptions} />
+      </div>
 
       {tickets.length === 0 ? (
         <p className="text-xs text-slate-500">Sin tickets registrados todavía.</p>

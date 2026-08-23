@@ -1,11 +1,7 @@
 import { resumeHook } from "workflow/api";
 import { NextResponse, type NextRequest } from "next/server";
 
-import {
-  SESSION_COOKIE,
-  readConsoleCredentials,
-  verifySessionToken,
-} from "@/lib/console-session";
+import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 /**
@@ -13,19 +9,13 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
  * needs_approval — the Tier 3 human gate created by createHook() in
  * src/workflows/diego-triage.ts.
  *
- * Gated by the existing /consola session cookie (the same check
- * middleware.ts already runs) rather than new auth infrastructure — the
- * pragmatic bridge until real per-landlord Supabase Auth exists. This is a
- * shared credential, not a per-user one, so there is no landlord identity to
- * attribute the approval to yet; see the note on approved_by below.
+ * Gated by a real Supabase Auth session with role='landlord' — the shared
+ * CONSOLA cookie this used to check is gone. approved_by is a real
+ * auth.users id now, not permanently null.
  */
 export async function POST(request: NextRequest) {
-  const credentials = readConsoleCredentials();
-  if (!credentials) {
-    return NextResponse.json({ error: "console not configured" }, { status: 503 });
-  }
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!(await verifySessionToken(token, credentials.secret))) {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "landlord") {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -55,18 +45,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  await supabase
+    .from("tickets")
+    .update({ approved_by: profile.id, approved_at: new Date().toISOString() })
+    .eq("id", ticketId);
+
   // Audit trail: this table row, not a hardcoded log line, is the durable
-  // record of who resolved the Tier 3 gate and when. approved_by stays null
-  // until real per-landlord auth exists — the /consola cookie identifies a
-  // shared credential, not an individual, so there's no auth.users id to
-  // attribute this to honestly.
+  // record of who resolved the Tier 3 gate and when.
   await supabase.from("ticket_status_history").insert({
     ticket_id: ticketId,
     from_status: "needs_approval",
     to_status: approved ? "dispatched" : "closed_administrative",
-    note: approved
-      ? "Aprobado vía /consola (sesión compartida)"
-      : "Rechazado vía /consola (sesión compartida)",
+    note: `${approved ? "Aprobado" : "Rechazado"} por ${profile.fullName ?? profile.email}`,
   });
 
   try {

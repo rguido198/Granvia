@@ -5,8 +5,8 @@ import { signInWithRole, type SignInState } from "@/lib/auth/actions";
 
 const INITIAL: SignInState = {};
 
-export function LoginForm() {
-  const boundAction = signInWithRole.bind(null, "landlord", "/consola");
+export function TenantLoginForm() {
+  const boundAction = signInWithRole.bind(null, "tenant", "/inquilinos");
   const [state, formAction, pending] = useActionState<SignInState, FormData>(boundAction, INITIAL);
 
   return (
@@ -58,7 +58,7 @@ export function LoginForm() {
         disabled={pending}
         className="w-full cursor-pointer rounded-sm bg-ink py-3 text-sm font-bold text-sand-100 transition-colors hover:bg-ink-700 disabled:cursor-wait disabled:opacity-60"
       >
-        {pending ? "Verificando…" : "Entrar a la consola →"}
+        {pending ? "Verificando…" : "Entrar al portal →"}
       </button>
     </form>
   );
