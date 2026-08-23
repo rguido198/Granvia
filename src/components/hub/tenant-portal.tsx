@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { CamLedger } from "@/components/hub/cam-ledger";
 import { NewTicketForm } from "@/components/hub/new-ticket-form";
 import { PORTAL_TENANT } from "@/content/hub";
 import type { DiegoTicket } from "@/lib/data/diego-tickets.server";
@@ -21,7 +20,10 @@ const STATUS_LABEL: Record<DiegoTicket["status"], string> = {
 };
 
 /**
- * A single tenant's own view: their lease, their tickets, their CAM ledger.
+ * A single tenant's own view: their lease, their tickets. No CAM ledger —
+ * this engagement contracted Diego + Mariana only, not Renata/cam-allocator,
+ * so there's no real proration to show (see maintenance-dispatcher/SKILL.md's
+ * CAM-without-Renata rule).
  *
  * Scoped deliberately. This is what `/inquilinos` serves, and a tenant opening
  * it must not be able to see another tenant's rent or pro-rata share — the
@@ -163,11 +165,6 @@ export function TenantPortal({
             ))}
           </div>
         )}
-      </div>
-
-      {/* NNN / CAM Ledger — this tenant's own share only */}
-      <div className="pt-4 border-t border-hairline">
-        <CamLedger />
       </div>
     </section>
   );
