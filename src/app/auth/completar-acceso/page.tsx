@@ -1,60 +1,55 @@
 "use client";
 
 import { useState, useEffect, useActionState } from "react";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/auth/browser";
 import { PageFade } from "@/components/ui";
 import { resendInviteAction, type ResendState } from "@/lib/auth/actions";
 
+type Stage = "confirm" | "verifying" | "ready" | "expired";
+
 /**
- * Where every invite email's link lands. inviteUserByEmail's link carries
- * the session in a URL hash fragment (#access_token=...) — createBrowserClient
- * auto-detects and exchanges it on load, which is why this page must be a
- * client component; a server component never sees the fragment at all (it's
- * stripped before the request reaches the server).
- *
- * A single getSession() call right after creating the client raced the
- * client's own internal hash-parsing — detectSessionInUrl processes the
- * fragment asynchronously, and getSession() could resolve with null before
- * that finished, showing "expired" on a link that was actually fine.
- * onAuthStateChange fires once the session is genuinely established instead.
+ * Where every invite email's link lands. The link carries a raw
+ * `token_hash` + `type` in the query string (not the Supabase-hosted
+ * ConfirmationURL, and not a hash fragment) — see the "Invite user" email
+ * template in the Supabase dashboard. Loading this page does nothing on its
+ * own; verifyOtp() only fires from the "Aceptar invitación" button's click
+ * handler. That's deliberate: email security scanners (Gmail, Microsoft
+ * Safe Links) GET every link in an email to check it, and a page that
+ * auto-verifies on load hands the one-time token to the scanner instead of
+ * the user — confirmed live on this exact flow (token consumed, session
+ * created, but the real click a minute later hit an already-used token).
+ * Deferring verification to an explicit click means a prefetch only ever
+ * loads inert HTML.
  */
 export default function CompleteInvitePage() {
-  const [ready, setReady] = useState(false);
-  const [expired, setExpired] = useState(false);
+  const [stage, setStage] = useState<Stage>("confirm");
+  const [tokenHash, setTokenHash] = useState<string | null>(null);
+  const [otpType, setOtpType] = useState<EmailOtpType | null>(null);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) setReady(true);
-    });
-
-    // The URL itself carries an explicit error (e.g. otp_expired) when the
-    // link was already consumed or genuinely expired — no need to wait out
-    // the timeout below for that case.
-    const hashParams = new URLSearchParams(window.location.hash.slice(1));
-    if (hashParams.get("error")) {
-      setExpired(true);
+    const params = new URLSearchParams(window.location.search);
+    const hash = params.get("token_hash");
+    const type = params.get("type") as EmailOtpType | null;
+    if (!hash || !type) {
+      setStage("expired");
+      return;
     }
-
-    const timeout = setTimeout(() => {
-      setReady((alreadyReady) => {
-        if (!alreadyReady) setExpired(true);
-        return alreadyReady;
-      });
-    }, 5000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
+    setTokenHash(hash);
+    setOtpType(type);
   }, []);
+
+  async function acceptInvite() {
+    if (!tokenHash || !otpType) return;
+    setStage("verifying");
+    const supabase = createSupabaseBrowserClient();
+    const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: otpType });
+    setStage(verifyError ? "expired" : "ready");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,9 +84,18 @@ export default function CompleteInvitePage() {
           <h1 className="text-center font-display text-2xl font-bold text-ink">Crea tu contraseña</h1>
           <p className="mt-2 text-center text-xs text-ink-500">Un solo paso más para entrar.</p>
 
-          {!ready && !expired && <p className="mt-6 text-center text-sm text-ink-500">Verificando invitación…</p>}
+          {stage === "confirm" && (
+            <button
+              onClick={acceptInvite}
+              className="mt-6 w-full cursor-pointer rounded-sm bg-ink py-3 text-sm font-bold text-sand-100 transition-colors hover:bg-ink-700"
+            >
+              Aceptar invitación →
+            </button>
+          )}
 
-          {ready && (
+          {stage === "verifying" && <p className="mt-6 text-center text-sm text-ink-500">Verificando invitación…</p>}
+
+          {stage === "ready" && (
             <form onSubmit={submit} className="mt-6 space-y-4">
               <div>
                 <label htmlFor="password" className="block font-mono text-[11px] font-bold uppercase text-ink-700 mb-1">
@@ -124,7 +128,7 @@ export default function CompleteInvitePage() {
             </p>
           )}
 
-          {expired && <ResendInviteForm />}
+          {stage === "expired" && <ResendInviteForm />}
         </div>
       </div>
     </PageFade>
