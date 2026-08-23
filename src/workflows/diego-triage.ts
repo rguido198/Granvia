@@ -107,7 +107,7 @@ const DiegoDraftSchema = z.object({
   diagnosis_source: z.enum(["manual", "asset_register", "photo", "tenant_report"]),
   diagnostic_question_asked: z.string().nullable(),
   matched_asset_id: z.string().nullable(),
-  cost_bucket: z.enum(["ARRENDADOR", "INQUILINO", "CAM", "PENDIENTE"]),
+  cost_bucket: z.enum(["ARRENDADOR", "INQUILINO", "PENDIENTE"]),
   lease_clause_citation: z.string().nullable(),
   jd05_applied: z.boolean(),
   unresolved_jd_keys: z.array(z.string()),
@@ -129,7 +129,7 @@ DIAGNOSIS: ask only the one or two questions whose answer changes which trade ge
 COST ATTRIBUTION — cite the lease's maintenance clause verbatim if the fault is covered. If the clause is silent, you may apply JD-05 (the jurisdictional default for maintenance responsibility when the lease doesn't address it) — set jd05_applied true and still name the resulting bucket. If neither the clause nor JD-05 resolves it, set cost_bucket to PENDIENTE and list the unresolved key. Never guess a bucket without a cited source.
 - ARRENDADOR: structure, roof, foundation, building envelope, base building systems.
 - INQUILINO: interior finishes, tenant's own equipment, tenant-caused damage.
-- CAM: shared systems — common HVAC, common lighting, parking, shared security.
+- This client has not engaged cam-allocator (Renata) — there is no proration mechanism, so CAM is not a valid bucket here. A fault that would normally be CAM (common-area repairs, shared systems — common HVAC, common lighting, parking, shared security) attributes to ARRENDADOR instead: the landlord absorbs it directly, uncharged to tenants. Note in lease_clause_citation that this would be CAM if a CAM program existed, so the landlord can tell the two cases apart.
 - Capital replacement of an asset at end-of-life is landlord capital, not CAM-chargeable, even when that asset's routine repair would be.
 
 WARRANTY: if you can match the reported fault to one of the assets provided, say so via matched_asset_id — the caller checks its warranty/service-contract status independently; you are not asked to judge dates yourself.
@@ -197,7 +197,7 @@ async function checkWarranty(
 const SkepticVerdictSchema = z.object({
   flagged: z.boolean(),
   concerns: z.array(z.string()),
-  revised_cost_bucket: z.enum(["ARRENDADOR", "INQUILINO", "CAM", "PENDIENTE"]).nullable(),
+  revised_cost_bucket: z.enum(["ARRENDADOR", "INQUILINO", "PENDIENTE"]).nullable(),
 });
 type SkepticVerdict = z.infer<typeof SkepticVerdictSchema>;
 
