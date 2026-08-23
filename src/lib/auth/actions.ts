@@ -75,13 +75,58 @@ export async function inviteUserAction(
   if (role === "tenant" && !localeId) return { error: "Selecciona un local" };
 
   const admin = getSupabaseServiceClient();
+  const { error } = await sendInvite(admin, email, role, localeId, fullName);
+  if (error) return { error };
+
+  revalidatePath("/consola");
+  return { success: `Invitación enviada a ${email}` };
+}
+
+async function sendInvite(
+  admin: ReturnType<typeof getSupabaseServiceClient>,
+  email: string,
+  role: "landlord" | "tenant",
+  localeId: string | null,
+  fullName: string | null,
+): Promise<{ error?: string }> {
   const { error } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { role, locale_id: localeId, full_name: fullName },
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/auth/completar-acceso`,
   });
+  return { error: error?.message };
+}
 
-  if (error) return { error: error.message };
+export type ResendState = { done?: boolean };
 
-  revalidatePath("/consola");
-  return { success: `Invitación enviada a ${email}` };
+/**
+ * Public — reachable from the expired-link page with no session at all, so
+ * it can't be landlord-gated like inviteUserAction. Kept safe by doing
+ * nothing observable: same generic response whether the email has no
+ * account, an already-confirmed account, or a genuinely pending invite —
+ * only the last case actually triggers a resend. inviteUserByEmail refuses
+ * to resend for an account that already exists unconfirmed (confirmed live
+ * on this exact flow), so a stale pending account is deleted and recreated
+ * with its original role/locale_id carried forward.
+ */
+export async function resendInviteAction(_prev: ResendState, formData: FormData): Promise<ResendState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email) return { done: true };
+
+  const admin = getSupabaseServiceClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id, role, locale_id, full_name")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (profile) {
+    const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
+    const alreadyConfirmed = !!authUser?.user?.confirmed_at;
+    if (!alreadyConfirmed) {
+      await admin.auth.admin.deleteUser(profile.id);
+      await sendInvite(admin, email, profile.role, profile.locale_id, profile.full_name);
+    }
+  }
+
+  return { done: true };
 }
