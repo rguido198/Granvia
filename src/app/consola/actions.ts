@@ -15,29 +15,19 @@ import {
 
 export async function signIn(_prev: SignInState, formData: FormData): Promise<SignInState> {
   const credentials = readConsoleCredentials();
-
   const submittedUser = String(formData.get("usuario") ?? "").trim().toLowerCase();
+
+  if (!credentials) {
+    return {
+      error: "Consola no configurada: faltan CONSOLA_USER, CONSOLA_PASSWORD o CONSOLA_SESSION_SECRET.",
+      usuario: submittedUser,
+    };
+  }
+
   const submittedPassword = String(formData.get("password") ?? "").trim();
 
-  const validUsers = [
-    (credentials.user || "granvia").toLowerCase(),
-    "granvia",
-    "admin",
-    "propietario",
-    "client",
-    "lagranvia",
-  ];
-
-  const validPasswords = [
-    credentials.password,
-    "granvia2026",
-    "granvia",
-    "local-dev-only-not-a-real-secret",
-    "admin",
-  ].filter(Boolean);
-
-  const userMatches = validUsers.includes(submittedUser);
-  const passwordMatches = validPasswords.includes(submittedPassword);
+  const userMatches = submittedUser === credentials.user.toLowerCase();
+  const passwordMatches = safeEqual(submittedPassword, credentials.password);
 
   if (!userMatches || !passwordMatches) {
     return { error: "Usuario o contraseña incorrectos.", usuario: submittedUser };

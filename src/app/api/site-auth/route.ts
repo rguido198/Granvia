@@ -12,9 +12,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Introduce la contraseña" }, { status: 400 });
     }
 
-    // Check against configured password (or default fallback granvia2026 / granvia)
-    const validPasswords = [SITE_PASSWORD, "granvia2026", "granvia", "local-dev-only-not-a-real-secret"];
-    const isValid = validPasswords.includes(password.trim());
+    const isValid = password.trim() === SITE_PASSWORD;
 
     if (!isValid) {
       return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 401 });

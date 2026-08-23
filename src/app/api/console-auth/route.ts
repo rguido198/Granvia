@@ -5,6 +5,7 @@ import {
   SESSION_TTL_SECONDS,
   createSessionToken,
   readConsoleCredentials,
+  safeEqual,
 } from "@/lib/console-session";
 
 export const runtime = "edge";
@@ -19,29 +20,18 @@ export async function POST(request: Request) {
     }
 
     const credentials = readConsoleCredentials();
+    if (!credentials) {
+      return NextResponse.json(
+        { error: "Consola no configurada: faltan CONSOLA_USER, CONSOLA_PASSWORD o CONSOLA_SESSION_SECRET." },
+        { status: 503 },
+      );
+    }
 
     const submittedUser = String(usuario).trim().toLowerCase();
     const submittedPassword = String(password).trim();
 
-    const validUsers = [
-      (credentials.user || "granvia").toLowerCase(),
-      "granvia",
-      "admin",
-      "propietario",
-      "client",
-      "lagranvia",
-    ];
-
-    const validPasswords = [
-      credentials.password,
-      "granvia2026",
-      "granvia",
-      "local-dev-only-not-a-real-secret",
-      "admin",
-    ].filter(Boolean);
-
-    const userMatches = validUsers.includes(submittedUser);
-    const passwordMatches = validPasswords.includes(submittedPassword);
+    const userMatches = submittedUser === credentials.user.toLowerCase();
+    const passwordMatches = safeEqual(submittedPassword, credentials.password);
 
     if (!userMatches || !passwordMatches) {
       return NextResponse.json({ error: "Usuario o contraseña incorrectos." }, { status: 401 });

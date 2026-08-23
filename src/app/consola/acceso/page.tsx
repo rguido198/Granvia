@@ -116,10 +116,6 @@ export default function ConsoleLoginPage() {
             >
               {loading ? "Verificando…" : "Entrar a la consola →"}
             </button>
-
-            <p className="text-[11px] font-mono text-center text-ink-400 pt-1">
-              Usuario: <code className="bg-sand-200 px-1 py-0.5 rounded text-ink font-bold">granvia</code> · Clave: <code className="bg-sand-200 px-1 py-0.5 rounded text-ink font-bold">granvia2026</code>
-            </p>
           </form>
 
           <p className="mt-5 border-t border-hairline pt-4 text-center font-mono text-[10px] leading-relaxed text-ink-500">

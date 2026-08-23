@@ -21,6 +21,9 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
  */
 export async function POST(request: NextRequest) {
   const credentials = readConsoleCredentials();
+  if (!credentials) {
+    return NextResponse.json({ error: "console not configured" }, { status: 503 });
+  }
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   if (!(await verifySessionToken(token, credentials.secret))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

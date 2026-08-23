@@ -106,11 +106,22 @@ export type ConsoleCredentials = { user: string; password: string; secret: strin
 /**
  * Reads the three required secrets. Returns null when any is missing so every
  * caller fails closed rather than falling back to an open console.
+ *
+ * A prior version of this function fell back to hardcoded values
+ * ("local-dev-only-not-a-real-secret", "granvia-session-secret-key-2026")
+ * when the real env vars weren't set, to avoid a 503 on misconfigured
+ * deployments. That traded away the fail-closed guarantee: any deployment
+ * that forgot to set the three env vars was silently gated by a password
+ * sitting in this file's own git history instead of refusing to serve.
+ * Restored fail-closed here; fix a missing-env deployment by setting the
+ * three vars (`vercel env add CONSOLA_USER production`, etc.), not by
+ * reintroducing a fallback.
  */
-export function readConsoleCredentials(): ConsoleCredentials {
-  const user = process.env.CONSOLA_USER || "granvia";
-  const password = process.env.CONSOLA_PASSWORD || "local-dev-only-not-a-real-secret";
-  const secret = process.env.CONSOLA_SESSION_SECRET || "granvia-session-secret-key-2026";
+export function readConsoleCredentials(): ConsoleCredentials | null {
+  const user = process.env.CONSOLA_USER;
+  const password = process.env.CONSOLA_PASSWORD;
+  const secret = process.env.CONSOLA_SESSION_SECRET;
+  if (!user || !password || !secret) return null;
   return { user, password, secret };
 }
 
