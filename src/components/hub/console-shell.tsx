@@ -5,6 +5,7 @@ import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
 import { TenantPortal } from "@/components/hub/tenant-portal";
 import { PORTAL_TENANT } from "@/content/hub";
 import type { ConsoleData } from "@/lib/console-data";
+import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import { signOut } from "@/app/consola/actions";
 
 type ConsoleView = "propietario" | "inquilino";
@@ -13,7 +14,15 @@ type ConsoleView = "propietario" | "inquilino";
  * The landlord console, reached only after middleware.ts verifies the signed
  * session cookie set by the login form at /consola/acceso.
  */
-export function ConsoleShell({ data }: { data: ConsoleData }) {
+export function ConsoleShell({
+  data,
+  diegoTickets,
+  diegoKpis,
+}: {
+  data: ConsoleData;
+  diegoTickets: DiegoTicket[];
+  diegoKpis: DiegoKPIs;
+}) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
   const isOwner = view === "propietario";
@@ -113,7 +122,7 @@ export function ConsoleShell({ data }: { data: ConsoleData }) {
 
       {/* Main View Render */}
       {isOwner ? (
-        <LandlordDashboard data={data} />
+        <LandlordDashboard data={data} diegoTickets={diegoTickets} diegoKpis={diegoKpis} />
       ) : (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
           <TenantPortal />

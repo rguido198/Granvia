@@ -20,8 +20,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Cloudflare Pages build output — not source, shouldn't be linted.
-    ".wrangler/**",
     ".vercel/**",
   ]),
 ]);

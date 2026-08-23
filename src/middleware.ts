@@ -14,19 +14,29 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, images, logos
+     * - .well-known/workflow (Workflow SDK's internal resume requests —
+     *   intercepting these breaks workflow suspend/resume, see
+     *   node_modules/workflow/docs/getting-started/next.mdx)
      */
-    "/((?!_next/static|_next/image|brand|tenants|photos|favicon.ico|file.svg|globe.svg|window.svg).*)",
+    "/((?!_next/static|_next/image|brand|tenants|photos|favicon.ico|file.svg|globe.svg|window.svg|\\.well-known/workflow/).*)",
   ],
 };
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // 1. Bypass static assets, private gate form, console login, and site auth API
+  // 1. Bypass static assets, private gate form, console login, and API routes.
+  // API routes own their own auth (or are deliberately open, like /api/ingest —
+  // meant to be called by systems with no browser session at all, e.g. a
+  // WhatsApp bridge per maintenance-dispatcher/SKILL.md §1's intake channels).
+  // Rewriting them to an HTML gate page broke every one of them outright: a
+  // POST with no site-access cookie landed on /acceso-privado's own
+  // Server Action dispatcher instead of the API handler, which is a 404, not
+  // a 401 — found live, not by any static check.
   if (
     pathname.startsWith(PRIVATE_GATE_PATH) ||
     pathname.startsWith(CONSOLE_LOGIN_PATH) ||
-    pathname.startsWith("/api/site-auth")
+    pathname.startsWith("/api/")
   ) {
     return NextResponse.next();
   }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageFade } from "@/components/ui";
 import { ConsoleShell } from "@/components/hub/console-shell";
 import { buildConsoleData } from "@/lib/console-data.server";
+import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -24,15 +25,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ConsolaPage() {
+export default async function ConsolaPage() {
   // Computed here, on the server, once per authenticated request. The result
   // travels to the browser on the RSC payload — which middleware gates — instead
   // of being compiled into a chunk that /_next/static/ serves to anyone.
   const data = buildConsoleData();
 
+  // Diego's ticket queue is real Supabase data, not part of the illustrative
+  // ConsoleData mock object — kept as a sibling fetch/prop rather than merged
+  // into buildConsoleData() so the existing mock arrays stay untouched.
+  const { tickets: diegoTickets, kpis: diegoKpis } = await fetchDiegoTickets();
+
   return (
     <PageFade>
-      <ConsoleShell data={data} />
+      <ConsoleShell data={data} diegoTickets={diegoTickets} diegoKpis={diegoKpis} />
     </PageFade>
   );
 }
