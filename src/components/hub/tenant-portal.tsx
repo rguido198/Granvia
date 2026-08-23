@@ -84,50 +84,58 @@ export function TenantPortal({
         </div>
       </div>
 
-      {/* Tenant Quick Action Tools */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
-          <h3 className="font-display text-base font-bold text-slate-900">Reportar Ventas Mensuales</h3>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-            Sube tu comprobante de cierre de caja en PDF o fotografía antes del día 5 del mes.
-          </p>
-
-          {salesSubmitted ? (
-            <p className="rounded-xl bg-slate-100 border border-slate-300 p-3 text-center text-xs sm:text-sm font-bold text-slate-900" role="status">
-              Reporte de Agosto Enviado Correctamente
+      {/* Tenant Quick Action Tools — ticket reporting is the primary reason a
+          tenant opens this portal (it replaces the landlord's WhatsApp), so
+          it leads, full-width, with more visual weight than the other two. */}
+      <div className="space-y-4">
+        <div className="rounded-xl border-2 border-slate-900 bg-white p-6 sm:p-7 space-y-4">
+          <div>
+            <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
+              Reportar Incidencia HVAC / Mantenimiento
+            </h3>
+            <p className="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">
+              El Agente de IA atiende 24/7 vía WhatsApp y asigna al técnico de plaza en minutos.
             </p>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setSalesSubmitted(true)}
-              className="w-full cursor-pointer rounded-xl bg-slate-900 py-3 text-xs sm:text-sm font-bold text-white hover:bg-slate-800 transition-colors shadow-xs"
-            >
-              Subir Reporte POS (Agosto 2026)
-            </button>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
-          <h3 className="font-display text-base font-bold text-slate-900">Reportar Incidencia HVAC / Mantenimiento</h3>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-            El Agente de IA atiende 24/7 vía WhatsApp y asigna al técnico de plaza en minutos.
-          </p>
+          </div>
 
           <NewTicketForm fixedLocaleId={locale.id} sourceChannel="consola_inquilino" />
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
-          <h3 className="font-display text-base font-bold text-slate-900">Reglamento &amp; Horarios</h3>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-            Horarios de carga y descarga de proveedores, música ambiental y permisos de modificación.
-          </p>
-          <button
-            type="button"
-            disabled
-            className="w-full rounded-xl bg-slate-200 py-3 text-xs sm:text-sm font-bold text-slate-600 cursor-not-allowed"
-          >
-            Reglamento (.PDF) — próximamente
-          </button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
+            <h3 className="font-display text-base font-bold text-slate-900">Reportar Ventas Mensuales</h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+              Sube tu comprobante de cierre de caja en PDF o fotografía antes del día 5 del mes.
+            </p>
+
+            {salesSubmitted ? (
+              <p className="rounded-xl bg-slate-100 border border-slate-300 p-3 text-center text-xs sm:text-sm font-bold text-slate-900" role="status">
+                Reporte de Agosto Enviado Correctamente
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSalesSubmitted(true)}
+                className="w-full cursor-pointer rounded-xl bg-slate-900 py-3 text-xs sm:text-sm font-bold text-white hover:bg-slate-800 transition-colors shadow-xs"
+              >
+                Subir Reporte POS (Agosto 2026)
+              </button>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
+            <h3 className="font-display text-base font-bold text-slate-900">Reglamento &amp; Horarios</h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+              Horarios de carga y descarga de proveedores, música ambiental y permisos de modificación.
+            </p>
+            <button
+              type="button"
+              disabled
+              className="w-full rounded-xl bg-slate-200 py-3 text-xs sm:text-sm font-bold text-slate-600 cursor-not-allowed"
+            >
+              Reglamento (.PDF) — próximamente
+            </button>
+          </div>
         </div>
       </div>
 
