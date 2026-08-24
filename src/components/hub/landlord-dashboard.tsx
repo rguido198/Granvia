@@ -177,7 +177,6 @@ export function LandlordDashboard({
 
   // Interactive AI Action States & Simulations
   const [attorneyNotified, setAttorneyNotified] = useState(false);
-  const [hvacDispatched, setHvacDispatched] = useState(false);
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
 
   // Diego IA Maintenance Calendar States
@@ -723,15 +722,6 @@ export function LandlordDashboard({
                     className="bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                   >
                     + Cargar Garantía o Manual (PDF)
-                  </button>
-                  <button
-                    onClick={() => {
-                      setHvacDispatched(true);
-                      triggerToast("Técnico de Climas de Mexicali despachado bajo orden de garantía #HVAC-884.");
-                    }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
-                  >
-                    {hvacDispatched ? "Técnico Despachado ✓" : "Despachar Técnico HVAC"}
                   </button>
                 </div>
               </div>
