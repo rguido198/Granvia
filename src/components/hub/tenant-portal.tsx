@@ -94,7 +94,7 @@ export function TenantPortal({
               Reportar Incidencia de Mantenimiento
             </h3>
             <p className="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">
-              Diego AI diagnostica tu reporte al instante y determina responsabilidad de costo. Casos claros se despachan directo a un técnico; los demás pasan a revisión del propietario.
+              Diego IA diagnostica tu reporte al instante y determina responsabilidad de costo. Casos claros se despachan directo a un técnico; los demás pasan a revisión del propietario.
             </p>
           </div>
 

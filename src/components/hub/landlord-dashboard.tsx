@@ -154,7 +154,7 @@ export function LandlordDashboard({
   const [hvacDispatched, setHvacDispatched] = useState(false);
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
 
-  // Diego AI Maintenance Calendar States
+  // Diego IA Maintenance Calendar States
   const [eventApprovals, setEventApprovals] = useState<Record<string, boolean>>({});
   const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
   const [approvalConfirmEventId, setApprovalConfirmEventId] = useState<string | null>(null);
@@ -184,7 +184,10 @@ export function LandlordDashboard({
   const [ssoEnforcedMode, setSsoEnforcedMode] = useState<boolean>(true);
   const [killSwitchActive, setKillSwitchActive] = useState<boolean>(false);
 
-  // Mariana AI Legal Engine States
+  // Diego IA Maintenance Sub-Navigation State
+  const [maintSubTab, setMaintSubTab] = useState<"triage" | "autonoma" | "capex" | "contratistas">("triage");
+
+  // Mariana IA Legal Engine States
   const [legalSubTab, setLegalSubTab] = useState<"expedientes" | "consultas" | "prospectos" | "marco_legal">("expedientes");
   const [lastLawScanDate, setLastLawScanDate] = useState("Hoy, 10 Ago 2026 · 06:00 hrs");
   const [selectedProspectIndex, setSelectedProspectIndex] = useState<number>(0);
@@ -194,7 +197,7 @@ export function LandlordDashboard({
   const [activeRagQueryResult, setActiveRagQueryResult] = useState<string | null>(null);
   const [inspectedContractId, setInspectedContractId] = useState<string | null>(null);
 
-  // Mariana AI Renewal Draft States — 260 Grill & Bar (Local 10-01)
+  // Mariana IA Renewal Draft States — 260 Grill & Bar (Local 10-01)
   const [renewalDraftOpen, setRenewalDraftOpen] = useState(false);
   const [renewalConfirmOpen, setRenewalConfirmOpen] = useState(false);
   const [renewalSent, setRenewalSent] = useState(false);
@@ -310,7 +313,7 @@ export function LandlordDashboard({
                   : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Diego AI · Mantenimiento</span>
+              <span>Diego IA · Mantenimiento</span>
             </button>
 
             <button
@@ -321,7 +324,7 @@ export function LandlordDashboard({
                   : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Mariana AI · Legal</span>
+              <span>Mariana IA · Legal</span>
             </button>
 
             <p className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mt-6 mb-2">
@@ -472,13 +475,6 @@ export function LandlordDashboard({
             </select>
 
             <button
-              onClick={() => triggerToast("Generando reporte ejecutivo en PDF...")}
-              className="hidden sm:flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200/80 transition-colors cursor-pointer shadow-2xs"
-            >
-              Exportar PDF
-            </button>
-
-            <button
               onClick={() => setCopilotOpen(!copilotOpen)}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 copilotOpen
@@ -487,7 +483,7 @@ export function LandlordDashboard({
               }`}
             >
               <span className="h-2 w-2 rounded-full bg-slate-400" />
-              <span>Copilot Sidebar</span>
+              <span>Copiloto IA</span>
             </button>
           </div>
         </header>
@@ -670,7 +666,7 @@ export function LandlordDashboard({
                               <button
                                 onClick={() => {
                                   setRenewalDraftOpen(true);
-                                  triggerToast("Mariana AI generó el borrador de renovación de 260 Grill & Bar.");
+                                  triggerToast("Mariana IA generó el borrador de renovación de 260 Grill & Bar.");
                                 }}
                                 title="Ver borrador de renovación generado por Mariana (Gerente de Contratos)"
                                 className={`px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1.5 mx-auto ${
@@ -680,7 +676,7 @@ export function LandlordDashboard({
                                 }`}
                               >
                                 {!renewalSent && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
-                                {renewalSent ? "Borrador Enviado a Abogado ✓" : "Renovación Próxima · Mariana AI →"}
+                                {renewalSent ? "Borrador Enviado a Abogado ✓" : "Renovación Próxima · Mariana IA →"}
                               </button>
                             ) : isBlueLuna ? (
                               <button
@@ -688,14 +684,14 @@ export function LandlordDashboard({
                                   setActiveAgent("mariana");
                                   setCopilotOpen(true);
                                   setQueryResult(
-                                    "Mariana AI (Contratos & Arrendamientos): Blue Luna Café (Local 4-16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
+                                    "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 4-16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
                                   );
-                                  triggerToast("Mariana AI (Contratos): Expediente Blue Luna Café abierto.");
+                                  triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                                 }}
-                                title="Ver auditoría de póliza asignada a Mariana AI"
+                                title="Ver auditoría de póliza asignada a Mariana IA"
                                 className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
                               >
-                                Revisar Seguro · Mariana AI →
+                                Revisar Seguro · Mariana IA →
                               </button>
                             ) : (
                               <span className="bg-slate-100 text-slate-800 border border-slate-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
@@ -720,10 +716,10 @@ export function LandlordDashboard({
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Agente de Mantenimiento & CapEx · Diego AI
+                      Agente de Mantenimiento & CapEx · Diego IA
                     </span>
                   </div>
-                  <h2 className="font-sans text-xl font-bold text-slate-900 mt-1">Diego AI · CapEx, Mantenimiento & Expediente Digital</h2>
+                  <h2 className="font-sans text-xl font-bold text-slate-900 mt-1">Diego IA · CapEx, Mantenimiento & Expediente Digital</h2>
                   <p className="text-xs text-slate-500 font-medium mt-1">
                     Control de pólizas de equipos pesados (HVAC, Elevadores, Subestaciones), bitácora preventiva y reclamación automática de garantías a proveedores.
                   </p>
@@ -731,7 +727,7 @@ export function LandlordDashboard({
 
                 <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                   <button
-                    onClick={() => triggerToast("Selecciona la Garantía, Póliza o Manual de Equipo (PDF/XML) para indexar en Diego AI...")}
+                    onClick={() => triggerToast("Selecciona la Garantía, Póliza o Manual de Equipo (PDF/XML) para indexar en Diego IA...")}
                     className="bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                   >
                     + Cargar Garantía o Manual (PDF)
@@ -748,7 +744,54 @@ export function LandlordDashboard({
                 </div>
               </div>
 
-              {/* DIEGO AI · LIVE TRIAGE QUEUE — real Supabase rows, the Tier 3 gate,
+              {/* SUB-NAVIGATION PILLS BAR */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4">
+                <button
+                  onClick={() => setMaintSubTab("triage")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    maintSubTab === "triage"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                  }`}
+                >
+                  Triage & Calendario
+                </button>
+                <button
+                  onClick={() => setMaintSubTab("autonoma")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    maintSubTab === "autonoma"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                  }`}
+                >
+                  Consola Autónoma
+                </button>
+                <button
+                  onClick={() => setMaintSubTab("capex")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    maintSubTab === "capex"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                  }`}
+                >
+                  CapEx & Costos
+                </button>
+                <button
+                  onClick={() => setMaintSubTab("contratistas")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    maintSubTab === "contratistas"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                  }`}
+                >
+                  Contratistas & Garantías
+                </button>
+              </div>
+
+              {/* SUB-TAB 1: TRIAGE & CALENDARIO */}
+              {maintSubTab === "triage" && (
+              <div className="space-y-6 animate-fadeIn">
+              {/* DIEGO IA · LIVE TRIAGE QUEUE — real Supabase rows, the Tier 3 gate,
                   and the dynamic jurisdiction watermark. Sits above the scheduled
                   calendar per the "operational conveyor belt" ordering: triage/approve
                   first, scheduled/dispatched execution below. */}
@@ -762,7 +805,7 @@ export function LandlordDashboard({
                       Calendario de Próximos Eventos
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Mantenimiento preventivo y calibraciones programadas. Diego AI despacha automáticamente hasta {formatVal(diegoThresholdVal)}; por encima requiere tu aprobación.
+                      Mantenimiento preventivo y calibraciones programadas. Diego IA despacha automáticamente hasta {formatVal(diegoThresholdVal)}; por encima requiere tu aprobación.
                     </p>
                   </div>
                   <span className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0">
@@ -833,14 +876,19 @@ export function LandlordDashboard({
                   })}
                 </div>
               </div>
+              </div>
+              )}
 
-              {/* DIEGO AI AGENTIC AUTONOMOUS ACTIONS CONSOLE */}
+              {/* SUB-TAB 2: CONSOLA AUTÓNOMA */}
+              {maintSubTab === "autonoma" && (
+              <div className="space-y-6 animate-fadeIn">
+              {/* DIEGO IA AGENTIC AUTONOMOUS ACTIONS CONSOLE */}
               <div className="bg-slate-900 text-white rounded-2xl p-5 space-y-4 shadow-sm border border-slate-800">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                     <h3 className="font-sans text-sm font-bold text-white">
-                      Consola de Acciones Autónomas del Agente Diego AI
+                      Consola de Acciones Autónomas del Agente Diego IA
                     </h3>
                   </div>
                   <span className="text-[11px] font-mono text-slate-400">
@@ -874,7 +922,12 @@ export function LandlordDashboard({
                   </div>
                 </div>
               </div>
+              </div>
+              )}
 
+              {/* SUB-TAB 3: CAPEX & COSTOS */}
+              {maintSubTab === "capex" && (
+              <div className="space-y-6 animate-fadeIn">
               {/* CAPEX COST-RESPONSIBILITY LEDGER (TIES DIEGO'S ACTIVITY TO A REAL $ FIGURE FOR FINANZAS) */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -883,7 +936,7 @@ export function LandlordDashboard({
                       Registro de Casos CapEx & Responsabilidad de Costo
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Cada solicitud de gasto mayor resuelta por Diego AI: quién paga y por qué. Alimenta la tarjeta &ldquo;CapEx Protegido&rdquo; en la Torre de Control CFO.
+                      Cada solicitud de gasto mayor resuelta por Diego IA: quién paga y por qué. Alimenta la tarjeta &ldquo;CapEx Protegido&rdquo; en la Torre de Control CFO.
                     </p>
                   </div>
                   <span className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0">
@@ -898,7 +951,7 @@ export function LandlordDashboard({
                         <th className="p-3.5">Caso / Inquilino</th>
                         <th className="p-3.5">Tipo de Gasto & Equipo</th>
                         <th className="p-3.5 text-right">Monto</th>
-                        <th className="p-3.5">Veredicto Diego AI</th>
+                        <th className="p-3.5">Veredicto Diego IA</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
@@ -935,7 +988,12 @@ export function LandlordDashboard({
                   </table>
                 </div>
               </div>
+              </div>
+              )}
 
+              {/* SUB-TAB 4: CONTRATISTAS & GARANTÍAS */}
+              {maintSubTab === "contratistas" && (
+              <div className="space-y-6 animate-fadeIn">
               {/* PREAPPROVED CONTRACTOR ROSTER — real contractors table, wired to
                   matchContractorAndTier()'s exact-match dispatch lookup. */}
               <ContractorRoster contractors={contractors} />
@@ -948,11 +1006,11 @@ export function LandlordDashboard({
                       Expediente Digital de Garantías & Pólizas de Equipos
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Diego AI monitorea la vigencia de pólizas de mantenimiento, reclamaciones a fabricantes e historial técnico.
+                      Diego IA monitorea la vigencia de pólizas de mantenimiento, reclamaciones a fabricantes e historial técnico.
                     </p>
                   </div>
                   <span className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0">
-                    8 Garantías Indexadas en Diego AI
+                    8 Garantías Indexadas en Diego IA
                   </span>
                 </div>
 
@@ -1012,7 +1070,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI generó carta de reclamo de garantía para Climas de Mexicali.")}
+                          onClick={() => triggerToast("Diego IA generó carta de reclamo de garantía para Climas de Mexicali.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Generar Reclamo de Garantía →
@@ -1049,7 +1107,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI solicitó inspección de rutina a TK Elevator México.")}
+                          onClick={() => triggerToast("Diego IA solicitó inspección de rutina a TK Elevator México.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Solicitar Inspección Técnica →
@@ -1086,7 +1144,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI descargó el certificado de garantía de Schneider Electric.")}
+                          onClick={() => triggerToast("Diego IA descargó el certificado de garantía de Schneider Electric.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Ver Póliza de Garantía →
@@ -1123,7 +1181,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI programó la inspección anual previa a la temporada de lluvias.")}
+                          onClick={() => triggerToast("Diego IA programó la inspección anual previa a la temporada de lluvias.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Programar Inspección Anual →
@@ -1160,7 +1218,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI confirmó la prueba de presión trimestral del sistema contra incendio.")}
+                          onClick={() => triggerToast("Diego IA confirmó la prueba de presión trimestral del sistema contra incendio.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Ver Dictamen Bomberos →
@@ -1197,7 +1255,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI generó el reporte de generación limpia del arreglo solar.")}
+                          onClick={() => triggerToast("Diego IA generó el reporte de generación limpia del arreglo solar.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Ver Eficiencia Inversores →
@@ -1234,7 +1292,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI solicitó calibración de la cámara LPR del carril 2.")}
+                          onClick={() => triggerToast("Diego IA solicitó calibración de la cámara LPR del carril 2.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Calibrar Cámaras LPR →
@@ -1271,7 +1329,7 @@ export function LandlordDashboard({
 
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
                         <button
-                          onClick={() => triggerToast("Diego AI verificó la calidad de agua tratada para riego de áreas verdes.")}
+                          onClick={() => triggerToast("Diego IA verificó la calidad de agua tratada para riego de áreas verdes.")}
                           className="text-slate-900 hover:text-slate-800 font-bold underline cursor-pointer text-xs"
                         >
                           Ver Reporte Calidad Agua →
@@ -1282,6 +1340,8 @@ export function LandlordDashboard({
                   )}
                 </div>
               </div>
+              </div>
+              )}
             </div>
           )}
 
@@ -1293,11 +1353,11 @@ export function LandlordDashboard({
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Agente Legal IA · Mariana AI
+                      Agente Legal IA · Mariana IA
                     </span>
                   </div>
                   <h2 className="font-sans text-2xl font-bold text-slate-900 mt-1">
-                    Mariana AI · Inteligencia Multi-Contrato & Exclusividades
+                    Mariana IA · Inteligencia Multi-Contrato & Exclusividades
                   </h2>
                   <p className="text-xs text-slate-500 mt-1">
                     Supervisión activa de {rentRoll.length} contratos de arrendamiento, consultas legales en tiempo real y dictamen de exclusividades para prospectos.
@@ -1310,12 +1370,12 @@ export function LandlordDashboard({
                     onClick={() => {
                       setCopilotOpen(true);
                       setActiveAgent("mariana");
-                      triggerToast("Abriendo Copilot Sidebar con Mariana AI (Agente Legal)...");
+                      triggerToast("Abriendo Copiloto IA con Mariana IA (Agente Legal)...");
                     }}
                     className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-xs"
                   >
                     <span className="h-2 w-2 rounded-full bg-slate-400" />
-                    <span>Copilot Mariana AI</span>
+                    <span>Copiloto Mariana IA</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1349,7 +1409,7 @@ export function LandlordDashboard({
                       : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
                   }`}
                 >
-                  Consola Legal Mariana AI
+                  Consola Legal Mariana IA
                 </button>
                 <button
                   onClick={() => setLegalSubTab("prospectos")}
@@ -1616,7 +1676,7 @@ export function LandlordDashboard({
                             <tr
                               onClick={() => {
                                 setInspectedContractId(inspectedContractId === c.id ? null : c.id);
-                                triggerToast(`Mariana AI mostró extracto RAG de ${c.pdf}`);
+                                triggerToast(`Mariana IA mostró extracto RAG de ${c.pdf}`);
                               }}
                               className="hover:bg-slate-50/90 transition-colors cursor-pointer"
                             >
@@ -1673,7 +1733,7 @@ export function LandlordDashboard({
                                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
                                     <div>
                                       <h4 className="font-bold text-sm text-slate-900">
-                                        Reconciliación Mariana AI: Contrato Base SSOT vs Póliza de Seguro
+                                        Reconciliación Mariana IA: Contrato Base SSOT vs Póliza de Seguro
                                       </h4>
                                       <p className="text-xs text-slate-500 font-mono mt-0.5">Firma Digital SHA-256: {c.hash}</p>
                                     </div>
@@ -1681,12 +1741,12 @@ export function LandlordDashboard({
                                       onClick={() => {
                                         setCopilotOpen(true);
                                         setActiveAgent("mariana");
-                                        setQueryResult(`Mariana AI (Legal Agent): Expediente RAG ${c.pdf} cargado. ¿Qué cláusula deseas auditar sobre ${c.brand}?`);
-                                        triggerToast(`Expediente ${c.brand} cargado en Copilot Sidebar.`);
+                                        setQueryResult(`Mariana IA (Legal Agent): Expediente RAG ${c.pdf} cargado. ¿Qué cláusula deseas auditar sobre ${c.brand}?`);
+                                        triggerToast(`Expediente ${c.brand} cargado en Copiloto IA.`);
                                       }}
                                       className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs self-start sm:self-auto shrink-0"
                                     >
-                                      Consultar expediente en Copilot →
+                                      Consultar expediente en Copiloto →
                                     </button>
                                   </div>
 
@@ -1726,13 +1786,13 @@ export function LandlordDashboard({
                                       <div>
                                         <p className="text-white font-bold text-xs">Vence {c.expirationDate} ({c.timeRemaining})</p>
                                         <p className="text-slate-300 text-[11px] mt-0.5">
-                                          Mariana AI puede redactar el borrador de renovación a partir de {c.pdf}, actualizando solo los parámetros que corresponde.
+                                          Mariana IA puede redactar el borrador de renovación a partir de {c.pdf}, actualizando solo los parámetros que corresponde.
                                         </p>
                                       </div>
                                       <button
                                         onClick={() => {
                                           setRenewalDraftOpen(true);
-                                          triggerToast(`Mariana AI generó el borrador de renovación de ${c.brand}.`);
+                                          triggerToast(`Mariana IA generó el borrador de renovación de ${c.brand}.`);
                                         }}
                                         className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                                       >
@@ -1782,7 +1842,7 @@ export function LandlordDashboard({
                         <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded">2 por renovar</span>
                       </div>
                       <p className="text-xl font-extrabold text-slate-900 tracking-tight">97.5%</p>
-                      <p className="text-xs text-slate-600 font-medium">260 Grill & Blue Luna Café notificados por Mariana AI.</p>
+                      <p className="text-xs text-slate-600 font-medium">260 Grill & Blue Luna Café notificados por Mariana IA.</p>
                     </div>
 
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1 shadow-2xs">
@@ -1801,7 +1861,7 @@ export function LandlordDashboard({
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full bg-slate-900" />
                         <h3 className="font-sans text-lg sm:text-xl font-extrabold text-slate-900">
-                          Preguntar a Mariana AI sobre los {rentRoll.length} Contratos
+                          Preguntar a Mariana IA sobre los {rentRoll.length} Contratos
                         </h3>
                       </div>
                       <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
@@ -1822,9 +1882,9 @@ export function LandlordDashboard({
                         onClick={() => {
                           if (!ragQueryText) return;
                           setActiveRagQueryResult(
-                            `Dictamen Mariana AI: Para la consulta "${ragQueryText}", se analizaron simultáneamente los ${rentRoll.length} expedientes contractuales. Se identificaron 3 contratos con derecho de preferencia explícito (260 Grill & Bar, Cinemex Premium y Ashley), sujetos a notificación escrita con 90 días de anticipación al vencimiento.`
+                            `Dictamen Mariana IA: Para la consulta "${ragQueryText}", se analizaron simultáneamente los ${rentRoll.length} expedientes contractuales. Se identificaron 3 contratos con derecho de preferencia explícito (260 Grill & Bar, Cinemex Premium y Ashley), sujetos a notificación escrita con 90 días de anticipación al vencimiento.`
                           );
-                          triggerToast("Mariana AI procesó la consulta legal.");
+                          triggerToast("Mariana IA procesó la consulta legal.");
                         }}
                         className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all cursor-pointer shrink-0 shadow-md flex items-center justify-center gap-2"
                       >
@@ -1845,9 +1905,9 @@ export function LandlordDashboard({
                             const q = "¿Cuáles contratos se ajustan con el incremento de inflación INPC en Q4 2026?";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Ajuste INPC Q4): El 96.2% de los ${rentRoll.length} contratos contemplan incremento anual indexado al INPC + 1.8%. En Q4 2026 (1 de Octubre), aplica el ajuste proyectado para Holiday Inn Express (contrato_holiday_inn_express_2028.pdf, Cláusula 7.1) y Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 6.1). Las notificaciones de cobro están pre-generadas.`
+                              `Dictamen Mariana IA (Ajuste INPC Q4): El 96.2% de los ${rentRoll.length} contratos contemplan incremento anual indexado al INPC + 1.8%. En Q4 2026 (1 de Octubre), aplica el ajuste proyectado para Holiday Inn Express (contrato_holiday_inn_express_2028.pdf, Cláusula 7.1) y Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 6.1). Las notificaciones de cobro están pre-generadas.`
                             );
-                            triggerToast("Mariana AI analizó los ajustes INPC.");
+                            triggerToast("Mariana IA analizó los ajustes INPC.");
                           }}
                           className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
                         >
@@ -1871,9 +1931,9 @@ export function LandlordDashboard({
                             const q = "¿Qué inquilinos tienen penalización por término anticipado mayores a 3 meses de renta?";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Penalizaciones): De los ${rentRoll.length} contratos, únicamente 2 contemplan retención y pena convencional superior a 3 meses: Cinemex Premium (retención total de fianza + 6 meses) y 260 Grill & Bar (6 meses de renta fija). El 97% restante prevé la pena estándar de 3 meses conforme al Código Civil de BC.`
+                              `Dictamen Mariana IA (Penalizaciones): De los ${rentRoll.length} contratos, únicamente 2 contemplan retención y pena convencional superior a 3 meses: Cinemex Premium (retención total de fianza + 6 meses) y 260 Grill & Bar (6 meses de renta fija). El 97% restante prevé la pena estándar de 3 meses conforme al Código Civil de BC.`
                             );
-                            triggerToast("Mariana AI analizó penalizaciones por rescisión.");
+                            triggerToast("Mariana IA analizó penalizaciones por rescisión.");
                           }}
                           className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
                         >
@@ -1897,9 +1957,9 @@ export function LandlordDashboard({
                             const q = "Compara los depósitos en garantía de Cinemex Premium vs 260 Grill & Bar";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Comparativa de Garantías): Cinemex Premium mantiene en resguardo un depósito equivalente a 3 meses de renta ($849,600 MXN en fideicomiso), mientras que 260 Grill & Bar mantiene 2 meses de renta ($153,600 MXN). Ambos expedientes tienen sus pólizas de fianza respaldadas al 100%.`
+                              `Dictamen Mariana IA (Comparativa de Garantías): Cinemex Premium mantiene en resguardo un depósito equivalente a 3 meses de renta ($849,600 MXN en fideicomiso), mientras que 260 Grill & Bar mantiene 2 meses de renta ($153,600 MXN). Ambos expedientes tienen sus pólizas de fianza respaldadas al 100%.`
                             );
-                            triggerToast("Mariana AI ejecutó comparativa de garantias.");
+                            triggerToast("Mariana IA ejecutó comparativa de garantias.");
                           }}
                           className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
                         >
@@ -1923,9 +1983,9 @@ export function LandlordDashboard({
                             const q = "¿Cuáles contratos tienen opción a prórroga automática y derecho del tanto?";
                             setRagQueryText(q);
                             setActiveRagQueryResult(
-                              `Dictamen Mariana AI (Opción a Prórroga): Se identificaron 3 contratos con opción preferencial a prórroga quinquenal: Blue Luna Café (vence Nov 2027, ventana de ejercicio en Ago 2027), Ashley (vence Mar 2029) y Cinemex Premium (vence Jun 2028). Todos exigen aviso formal escrito con 90 días de anticipación.`
+                              `Dictamen Mariana IA (Opción a Prórroga): Se identificaron 3 contratos con opción preferencial a prórroga quinquenal: Blue Luna Café (vence Nov 2027, ventana de ejercicio en Ago 2027), Ashley (vence Mar 2029) y Cinemex Premium (vence Jun 2028). Todos exigen aviso formal escrito con 90 días de anticipación.`
                             );
-                            triggerToast("Mariana AI verificó cláusulas de prórroga.");
+                            triggerToast("Mariana IA verificó cláusulas de prórroga.");
                           }}
                           className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
                         >
@@ -1952,7 +2012,7 @@ export function LandlordDashboard({
                           <div className="flex items-center gap-2">
                             <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
                             <span className="font-extrabold text-slate-900 text-sm sm:text-base">
-                              Dictamen Emitido por Mariana AI (Agente Legal SSOT)
+                              Dictamen Emitido por Mariana IA (Agente Legal SSOT)
                             </span>
                           </div>
                           <button
@@ -1995,7 +2055,7 @@ export function LandlordDashboard({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Hallazgos Automatizados por Análisis Continuo de Mariana AI
+                        Hallazgos Automatizados por Análisis Continuo de Mariana IA
                       </h4>
                       <span className="text-xs font-bold text-slate-500">Actualizado hoy a las 06:00 hrs</span>
                     </div>
@@ -2010,7 +2070,7 @@ export function LandlordDashboard({
                         </div>
                         <h5 className="font-bold text-xs sm:text-sm text-slate-900">Aumento Programado Holiday Inn & Blue Luna</h5>
                         <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                          Mariana AI identificó que el 1 de Octubre de 2026 aplica el ajuste INPC (Cláusula 7.1) en Holiday Inn Express y Blue Luna Café. Las notificaciones legales ya están listas.
+                          Mariana IA identificó que el 1 de Octubre de 2026 aplica el ajuste INPC (Cláusula 7.1) en Holiday Inn Express y Blue Luna Café. Las notificaciones legales ya están listas.
                         </p>
                       </div>
 
@@ -2023,7 +2083,7 @@ export function LandlordDashboard({
                         </div>
                         <h5 className="font-bold text-xs sm:text-sm text-slate-900">Póliza Seguro 260 Grill & Bar</h5>
                         <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                          La póliza de seguro de responsabilidad civil por $5.0M MXN vence en 21 días. Mariana AI envió recordatorio automático a la gerencia del restaurante.
+                          La póliza de seguro de responsabilidad civil por $5.0M MXN vence en 21 días. Mariana IA envió recordatorio automático a la gerencia del restaurante.
                         </p>
                       </div>
 
@@ -2058,7 +2118,7 @@ export function LandlordDashboard({
                         </h3>
                       </div>
                       <p className="text-xs text-slate-600 mt-1">
-                        Mariana AI cruza el giro y ubicación del prospecto contra los {rentRoll.length} contratos vigentes para prevenir violaciones de exclusividad.
+                        Mariana IA cruza el giro y ubicación del prospecto contra los {rentRoll.length} contratos vigentes para prevenir violaciones de exclusividad.
                       </p>
                     </div>
                     <span className="text-xs font-bold text-slate-700 bg-white px-3 py-1 rounded-lg border border-slate-200 shrink-0">
@@ -2085,7 +2145,7 @@ export function LandlordDashboard({
                             onClick={() => {
                               setSelectedProspectIndex(idx);
                               setCustomProspectBrand("");
-                              triggerToast(`Mariana AI ejecutó auditoría RAG para ${p.brand}...`);
+                              triggerToast(`Mariana IA ejecutó auditoría RAG para ${p.brand}...`);
                             }}
                             className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                               isSelected
@@ -2133,11 +2193,11 @@ export function LandlordDashboard({
                             triggerToast("Por favor escribe el nombre de la marca comercial.");
                             return;
                           }
-                          triggerToast(`Mariana AI ejecutó auditoría RAG cruzada para ${customProspectBrand}...`);
+                          triggerToast(`Mariana IA ejecutó auditoría RAG cruzada para ${customProspectBrand}...`);
                         }}
                         className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2 rounded-xl text-xs transition-all cursor-pointer shrink-0 shadow-2xs"
                       >
-                        Auditar con Mariana AI
+                        Auditar con Mariana IA
                       </button>
                     </div>
                   </div>
@@ -2151,7 +2211,7 @@ export function LandlordDashboard({
                           requestedUnit: "Local Disponible Solicitado",
                           zone: "Zona General",
                           viable: true,
-                          reasoning: `Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO. Tras auditar la marca ${customProspectBrand} (${customProspectCategory}) contra el índice vectorial de los ${rentRoll.length} contratos de La Gran Vía, Mariana AI confirma que no se detectaron cláusulas de exclusividad ni radio restrictivo en su categoría comercial.`,
+                          reasoning: `Dictamen Mariana IA (RAG Legal Audit): VIABLE SIN CONFLICTO. Tras auditar la marca ${customProspectBrand} (${customProspectCategory}) contra el índice vectorial de los ${rentRoll.length} contratos de La Gran Vía, Mariana IA confirma que no se detectaron cláusulas de exclusividad ni radio restrictivo en su categoría comercial.`,
                           conflictingContract: "Ninguno (0 Conflictos RAG)",
                           snippet: `Bóveda Legal RAG: 'La marca ${customProspectBrand} cumple con todos los requisitos de compatibilidad comercial sin colisión de exclusividad.'`,
                         }
@@ -2162,7 +2222,7 @@ export function LandlordDashboard({
                             requestedUnit: "Local B-14 (320 m²)",
                             zone: "Zona B (Exterior)",
                             viable: true,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona 4 (Local 4-16). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con 260 Grill & Bar ni Cinemex Premium.",
+                            reasoning: "Dictamen Mariana IA (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona 4 (Local 4-16). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con 260 Grill & Bar ni Cinemex Premium.",
                             conflictingContract: "Ninguno (Local B-14 fuera de Zona 4)",
                             snippet: "Cláusula 14.2 de Blue Luna Café: 'El derecho de exclusividad para expendio de café de especialidad comprende única y exclusivamente la crujía de Zona 4 del inmueble comercial.'",
                           },
@@ -2172,7 +2232,7 @@ export function LandlordDashboard({
                             requestedUnit: "Local A-08 (140 m²)",
                             zone: "Zona A",
                             viable: false,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El Local A-08 colinda directamente con el pasillo central de Zona 4. El contrato vigente de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) otorga exclusividad sobre conceptos de café preparado y repostería en toda la Zona 4. El arrendamiento a Krispy Kreme en esta ubicación provocaría una demanda por rescisión con penalización a favor de Blue Luna Café.",
+                            reasoning: "Dictamen Mariana IA (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El Local A-08 colinda directamente con el pasillo central de Zona 4. El contrato vigente de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) otorga exclusividad sobre conceptos de café preparado y repostería en toda la Zona 4. El arrendamiento a Krispy Kreme en esta ubicación provocaría una demanda por rescisión con penalización a favor de Blue Luna Café.",
                             conflictingContract: "contrato_blue_luna_cafe_2027.pdf (Cláusula 14.2)",
                             snippet: "Cláusula 14.2 de Blue Luna Café: 'El Arrendador se obliga expresamente a no arrendar ni subarrendar ningún local comercial de la Zona 4 a empresas cuyo giro principal sea el expendio de café o donas.'",
                           },
@@ -2182,7 +2242,7 @@ export function LandlordDashboard({
                             requestedUnit: "Local 10-04 (450 m²)",
                             zone: "Zona 10",
                             viable: false,
-                            reasoning: "Dictamen Mariana AI (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El contrato firmado con 260 Grill & Bar (contrato_260_grill_2026_firmado.pdf, Cláusula 18.1) estipula un radio de exclusividad de 50 metros para conceptos de Sports Bar gastronómico con transmisión deportiva en pantallas gigantes. El Local 10-04 se encuentra a sólo 15 metros del Local 10-01.",
+                            reasoning: "Dictamen Mariana IA (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El contrato firmado con 260 Grill & Bar (contrato_260_grill_2026_firmado.pdf, Cláusula 18.1) estipula un radio de exclusividad de 50 metros para conceptos de Sports Bar gastronómico con transmisión deportiva en pantallas gigantes. El Local 10-04 se encuentra a sólo 15 metros del Local 10-01.",
                             conflictingContract: "contrato_260_grill_2026_firmado.pdf (Cláusula 18.1)",
                             snippet: "Cláusula 18.1 de 260 Grill: 'Queda prohibida la instalación de Sports Bar u hostelería con pantalla gigante dentro de los locales contiguos del mismo bloque 10.'",
                           },
@@ -2192,7 +2252,7 @@ export function LandlordDashboard({
                             requestedUnit: "Local C-02 (850 m²)",
                             zone: "Zona C",
                             viable: true,
-                            reasoning: `Dictamen Mariana AI (RAG Legal Audit): VIABLE SIN CONFLICTO. Ningún contrato vigente en el índice RAG de los ${rentRoll.length} inquilinos de La Gran Vía contempla cláusulas de exclusividad en giros de acondicionamiento físico o gimnasios. Operación 100% procedente.`,
+                            reasoning: `Dictamen Mariana IA (RAG Legal Audit): VIABLE SIN CONFLICTO. Ningún contrato vigente en el índice RAG de los ${rentRoll.length} inquilinos de La Gran Vía contempla cláusulas de exclusividad en giros de acondicionamiento físico o gimnasios. Operación 100% procedente.`,
                             conflictingContract: `Ninguno (0 Conflictos en ${rentRoll.length} contratos SSOT)`,
                             snippet: "Bóveda Legal RAG: 'No existen cláusulas restrictivas relativas a centros de salud, fitness o gimnasios en la plaza.'",
                           },
@@ -2257,12 +2317,12 @@ export function LandlordDashboard({
                           </h3>
                         </div>
                         <p className="text-xs text-slate-600 mt-1">
-                          Mariana AI monitorea continuamente las publicaciones del Diario Oficial de la Federación (DOF) y del Periódico Oficial de Baja California (POE) para verificar automáticamente los {rentRoll.length} contratos vigentes ante cambios legales.
+                          Mariana IA monitorea continuamente las publicaciones del Diario Oficial de la Federación (DOF) y del Periódico Oficial de Baja California (POE) para verificar automáticamente los {rentRoll.length} contratos vigentes ante cambios legales.
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
-                          onClick={() => triggerToast("Selecciona el archivo PDF o XML del Código o Reforma Legal para indexar en Mariana AI...")}
+                          onClick={() => triggerToast("Selecciona el archivo PDF o XML del Código o Reforma Legal para indexar en Mariana IA...")}
                           className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                         >
                           + Cargar Nueva Ley (PDF/XML)
@@ -2271,7 +2331,7 @@ export function LandlordDashboard({
                           onClick={() => {
                             const nowStr = `Hoy, 10 Ago 2026 · ${new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} hrs`;
                             setLastLawScanDate(nowStr);
-                            triggerToast(`Mariana AI consultó DOF y POE Baja California. 0 reformas recientes afectan los ${rentRoll.length} contratos.`);
+                            triggerToast(`Mariana IA consultó DOF y POE Baja California. 0 reformas recientes afectan los ${rentRoll.length} contratos.`);
                           }}
                           className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                         >
@@ -2574,8 +2634,8 @@ export function LandlordDashboard({
                   </div>
                   <p className={`text-sm font-medium leading-relaxed ${killSwitchActive ? "text-slate-200" : "text-slate-700"}`}>
                     {killSwitchActive
-                      ? "Todas las ejecuciones autónomas de Diego AI y accesos automatizados han sido suspendidos por instrucción del Administrador General."
-                      : "Permite al Administrador General congelar de forma inmediata la ejecución autónoma de Diego AI en caso de mantenimiento o auditoría."}
+                      ? "Todas las ejecuciones autónomas de Diego IA y accesos automatizados han sido suspendidos por instrucción del Administrador General."
+                      : "Permite al Administrador General congelar de forma inmediata la ejecución autónoma de Diego IA en caso de mantenimiento o auditoría."}
                   </p>
                 </div>
 
@@ -2612,13 +2672,13 @@ export function LandlordDashboard({
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       <div className="space-y-1 max-w-2xl">
                         <div className="flex items-center gap-3">
-                          <span className="font-bold text-slate-900 text-base">Diego AI · Umbral CapEx</span>
+                          <span className="font-bold text-slate-900 text-base">Diego IA · Umbral CapEx</span>
                           <span className="bg-slate-900 text-white text-xs font-bold px-2.5 py-0.5 rounded">
                             ${diegoThresholdVal.toLocaleString()} MXN Max
                           </span>
                         </div>
                         <p className="text-slate-700 text-sm leading-relaxed font-medium">
-                          Diego AI puede despachar proveedores de mantenimiento automáticamente en órdenes de hasta ${diegoThresholdVal.toLocaleString()} MXN. Montos mayores requieren firma dual Admin.
+                          Diego IA puede despachar proveedores de mantenimiento automáticamente en órdenes de hasta ${diegoThresholdVal.toLocaleString()} MXN. Montos mayores requieren firma dual Admin.
                         </p>
                       </div>
 
@@ -2669,7 +2729,7 @@ export function LandlordDashboard({
                           <button
                             onClick={() => {
                               setEditingPolicyCard(null);
-                              triggerToast(`Umbral de Diego AI actualizado a $${diegoThresholdVal.toLocaleString()} MXN.`);
+                              triggerToast(`Umbral de Diego IA actualizado a $${diegoThresholdVal.toLocaleString()} MXN.`);
                             }}
                             className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
                           >
@@ -2905,7 +2965,7 @@ export function LandlordDashboard({
           <div className="p-4 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
-              <h3 className="font-sans font-bold text-sm">Copilot Sidebar</h3>
+              <h3 className="font-sans font-bold text-sm">Copiloto IA</h3>
             </div>
             <button
               onClick={() => setCopilotOpen(false)}
@@ -2992,7 +3052,7 @@ export function LandlordDashboard({
             <div className="bg-slate-900 text-white p-6 shrink-0">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Mariana AI · Borrador de Renovación
+                  Mariana IA · Borrador de Renovación
                 </span>
                 <button
                   onClick={() => setRenewalDraftOpen(false)}
@@ -3059,7 +3119,7 @@ export function LandlordDashboard({
               </div>
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-700">
-                <p className="font-bold text-xs text-slate-900">Nota de Mariana AI</p>
+                <p className="font-bold text-xs text-slate-900">Nota de Mariana IA</p>
                 <p className="text-[11.5px] mt-0.5 leading-relaxed">
                   Borrador redactado sobre el contrato vigente — solo se modifican los tres parámetros marcados arriba; el resto del clausulado permanece idéntico al documento firmado. Listo para revisión de asesoría legal externa antes de notificar al inquilino.
                 </p>
@@ -3097,7 +3157,7 @@ export function LandlordDashboard({
             <div className="bg-slate-900 text-white p-6">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Mariana AI · Confirmación de Envío Legal
+                  Mariana IA · Confirmación de Envío Legal
                 </span>
                 <button
                   onClick={() => setRenewalConfirmOpen(false)}
@@ -3157,7 +3217,7 @@ export function LandlordDashboard({
                 onClick={() => {
                   setRenewalSent(true);
                   setRenewalConfirmOpen(false);
-                  triggerToast("Mariana AI: Borrador de renovación enviado a la asesoría legal externa para revisión.");
+                  triggerToast("Mariana IA: Borrador de renovación enviado a la asesoría legal externa para revisión.");
                   appendAuditLog("user", "m.hage@lagranvia.com.mx", "Aprobó envío de borrador de renovación (260 Grill & Bar) a asesoría legal externa");
                 }}
                 className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"
@@ -3179,7 +3239,7 @@ export function LandlordDashboard({
               <div className="bg-slate-900 text-white p-6">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Diego AI · Confirmación de Despacho
+                    Diego IA · Confirmación de Despacho
                   </span>
                   <button
                     onClick={() => setApprovalConfirmEventId(null)}
@@ -3227,7 +3287,7 @@ export function LandlordDashboard({
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-amber-900">
                   <p className="font-bold text-xs">Aviso de Autorización de Gasto</p>
                   <p className="text-[11.5px] mt-0.5 text-amber-800">
-                    Al aprobar, Diego AI despachará a {event.vendor} bajo el umbral vigente de Firma Dual Admin. El gasto quedará registrado en el Registro de Casos CapEx.
+                    Al aprobar, Diego IA despachará a {event.vendor} bajo el umbral vigente de Firma Dual Admin. El gasto quedará registrado en el Registro de Casos CapEx.
                   </p>
                 </div>
               </div>
@@ -3243,7 +3303,7 @@ export function LandlordDashboard({
                   onClick={() => {
                     setEventApprovals((prev) => ({ ...prev, [event.id]: true }));
                     setApprovalConfirmEventId(null);
-                    triggerToast(`Diego AI: Despacho aprobado — ${event.vendor} programado para ${event.date}.`);
+                    triggerToast(`Diego IA: Despacho aprobado — ${event.vendor} programado para ${event.date}.`);
                     appendAuditLog("user", "m.hage@lagranvia.com.mx", `Aprobó despacho de ${formatVal(event.costEstimate)} a ${event.vendor} (${event.title})`);
                   }}
                   className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"

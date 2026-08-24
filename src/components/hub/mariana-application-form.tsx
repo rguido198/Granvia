@@ -107,7 +107,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
         <div className="bg-slate-900 text-white p-6 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Mariana AI · Nueva Solicitud de Arrendamiento
+              Mariana IA · Nueva Solicitud de Arrendamiento
             </span>
             <button
               onClick={() => setOpen(false)}

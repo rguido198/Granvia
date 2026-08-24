@@ -149,7 +149,7 @@ export function ConsolePrototype({ data }: { data: ConsoleData }) {
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-[14px] leading-relaxed text-console-ash">
             Operación consolidada de La Gran Vía Mexicali — {rentRoll.length} locales activos, mantenimiento vía Diego
-            AI y expedientes de arrendamiento vía Mariana AI en una sola vista.
+            AI y expedientes de arrendamiento vía Mariana IA en una sola vista.
           </p>
           <p className="mt-4 text-[11px] text-console-slate">
             Periodo <span className="font-mono text-console-ash">{periodLabel}</span>
