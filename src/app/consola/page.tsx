@@ -4,6 +4,7 @@ import { ConsoleShell } from "@/components/hub/console-shell";
 import { buildConsoleData } from "@/lib/console-data.server";
 import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
 import { fetchLocaleOptions, fetchTenantPortalData } from "@/lib/data/tenant-portal.server";
+import { fetchContractors } from "@/lib/data/contractors.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -37,6 +38,7 @@ export default async function ConsolaPage() {
   // into buildConsoleData() so the existing mock arrays stay untouched.
   const { tickets: diegoTickets, kpis: diegoKpis } = await fetchDiegoTickets();
   const localeOptions = await fetchLocaleOptions();
+  const contractors = await fetchContractors();
   // "Vista Inquilino" inside the console previews the same real portal a
   // tenant would see — same data, same fetch, not a separate mock.
   const tenantPortal = await fetchTenantPortalData();
@@ -48,6 +50,7 @@ export default async function ConsolaPage() {
         diegoTickets={diegoTickets}
         diegoKpis={diegoKpis}
         localeOptions={localeOptions}
+        contractors={contractors}
         tenantPortalLocale={tenantPortal.locale}
         tenantPortalTickets={tenantPortal.tickets}
       />

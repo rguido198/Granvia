@@ -6,6 +6,7 @@ import { TenantPortal } from "@/components/hub/tenant-portal";
 import type { ConsoleData } from "@/lib/console-data";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { LocaleOption, PortalLocale } from "@/lib/data/tenant-portal.server";
+import type { Contractor } from "@/lib/data/contractors.server";
 import { signOut } from "@/app/consola/actions";
 
 type ConsoleView = "propietario" | "inquilino";
@@ -19,6 +20,7 @@ export function ConsoleShell({
   diegoTickets,
   diegoKpis,
   localeOptions,
+  contractors,
   tenantPortalLocale,
   tenantPortalTickets,
 }: {
@@ -26,6 +28,7 @@ export function ConsoleShell({
   diegoTickets: DiegoTicket[];
   diegoKpis: DiegoKPIs;
   localeOptions: LocaleOption[];
+  contractors: Contractor[];
   tenantPortalLocale: PortalLocale | null;
   tenantPortalTickets: DiegoTicket[];
 }) {
@@ -135,6 +138,7 @@ export function ConsoleShell({
           diegoTickets={diegoTickets}
           diegoKpis={diegoKpis}
           localeOptions={localeOptions}
+          contractors={contractors}
         />
       ) : (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">

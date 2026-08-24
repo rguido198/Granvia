@@ -51,15 +51,6 @@ export type CriticalEquipment = {
   doc: string;
 };
 
-/** One preapproved contractor Diego can dispatch, by trade. */
-export type TechnicianRosterRow = {
-  trade: string;
-  contractor: string;
-  contact: string;
-  coverage: string;
-  slaOnSite: string;
-};
-
 /** One scheduled maintenance/warranty event on Diego's calendar. */
 export type MaintenanceEvent = {
   id: string;
@@ -148,7 +139,6 @@ export type ConsoleData = {
   leasingApplicants: ApplicantCase[];
   capexCases: CapexCase[];
   criticalEquipment: CriticalEquipment[];
-  technicianRoster: TechnicianRosterRow[];
   maintenanceEvents: MaintenanceEvent[];
   rentProtectedAnnual: number;
   capexRejected: number;
