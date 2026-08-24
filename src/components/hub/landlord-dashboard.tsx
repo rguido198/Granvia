@@ -521,14 +521,6 @@ export function LandlordDashboard({
                 <div className="flex flex-wrap items-center gap-3 shrink-0">
                   <button
                     onClick={() => {
-                      triggerToast("Sincronización forzada con el plano interactivo /directorio y portal /inquilinos.");
-                    }}
-                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  >
-                    Sincronizar SSOT
-                  </button>
-                  <button
-                    onClick={() => {
                       const nextState = !isEditingRentRoll;
                       setIsEditingRentRoll(nextState);
                       triggerToast(
@@ -573,24 +565,15 @@ export function LandlordDashboard({
                 </div>
               </div>
 
-              {/* SINGLE SOURCE OF TRUTH BANNER WITH ELEGANT SUBTITLE */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-800 font-medium">
-                <div className="flex items-center gap-2.5">
-                  <div>
-                    <span className="font-bold text-slate-900 text-xs">
-                      Rent Roll Maestro · Periodo Fiscal: Agosto 2026
-                    </span>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Padrón contractual en tiempo real (GLA Total: {plazaTotalGla.toLocaleString("es-MX")} m² · Superficie Rentable Bruta). Sincronizado automáticamente con cuentas ERP.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg font-bold text-[11px] border border-slate-200 shadow-2xs">
-                    <span className="h-2 w-2 rounded-full bg-slate-800" />
-                    <span>Sincronizado: 10 Ago 2026 · 14:45 hrs</span>
-                  </span>
-                </div>
+              {/* Master rent roll banner — no ERP claim, no fake sync
+                  timestamp. This engagement has no accounting/ERP
+                  connection and per explicit scope decision isn't getting
+                  one; "Sincronizado con ERP" was never true. */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-800 font-medium">
+                <span className="font-bold text-slate-900 text-xs">Rent Roll Maestro · Periodo Fiscal: Agosto 2026</span>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Padrón contractual del portafolio (GLA Total: {plazaTotalGla.toLocaleString("es-MX")} m² · Superficie Rentable Bruta).
+                </p>
               </div>
 
               {/* RENT ROLL MASTER TABLE (CLEAN 5-COLUMN EXECUTIVE LEASE LEDGER) */}
