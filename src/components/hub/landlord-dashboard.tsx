@@ -7,9 +7,11 @@ import type {
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import type { Contractor } from "@/lib/data/contractors.server";
+import type { AutonomyState } from "@/lib/platform/settings.server";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
+import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
 
@@ -73,12 +75,14 @@ export function LandlordDashboard({
   diegoKpis,
   localeOptions,
   contractors,
+  autonomyState,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
   diegoKpis: DiegoKPIs;
   localeOptions: LocaleOption[];
   contractors: Contractor[];
+  autonomyState: AutonomyState;
 }) {
   const {
     rentRoll,
@@ -182,7 +186,8 @@ export function LandlordDashboard({
   const [diegoThresholdVal, setDiegoThresholdVal] = useState<number>(50000);
   const [diegoAutoMode, setDiegoAutoMode] = useState<boolean>(true);
   const [ssoEnforcedMode, setSsoEnforcedMode] = useState<boolean>(true);
-  const [killSwitchActive, setKillSwitchActive] = useState<boolean>(false);
+  const [killSwitchActive, setKillSwitchActive] = useState<boolean>(autonomyState.frozen);
+  const [killSwitchPending, setKillSwitchPending] = useState(false);
 
   // Diego IA Maintenance Sub-Navigation State
   const [maintSubTab, setMaintSubTab] = useState<"triage" | "autonoma" | "capex" | "contratistas">("triage");
@@ -2640,18 +2645,27 @@ export function LandlordDashboard({
                 </div>
 
                 <button
-                  onClick={() => {
+                  disabled={killSwitchPending}
+                  onClick={async () => {
                     const nextState = !killSwitchActive;
+                    setKillSwitchPending(true);
                     setKillSwitchActive(nextState);
+                    const result = await toggleAutonomyKillSwitchAction(nextState);
+                    setKillSwitchPending(false);
+                    if (result.error) {
+                      setKillSwitchActive(!nextState);
+                      triggerToast(`No se pudo actualizar el kill-switch: ${result.error}`);
+                      return;
+                    }
                     triggerToast(nextState ? "INTERRUPTOR DE EMERGENCIA ACTIVADO: Automatizaciones congeladas." : "Modo de emergencia desactivado: Operaciones autónomas reanudadas.");
                   }}
-                  className={`px-6 py-3.5 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md shrink-0 whitespace-nowrap ${
+                  className={`px-6 py-3.5 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md shrink-0 whitespace-nowrap disabled:opacity-60 disabled:cursor-wait ${
                     killSwitchActive
                       ? "bg-white text-slate-900 hover:bg-slate-100"
                       : "bg-red-600 hover:bg-red-700 text-white"
                   }`}
                 >
-                  {killSwitchActive ? "RESTABLECER OPERACIONES AUTÓNOMAS" : "ACTIVAR KILL-SWITCH DE EMERGENCIA"}
+                  {killSwitchPending ? "Actualizando…" : killSwitchActive ? "RESTABLECER OPERACIONES AUTÓNOMAS" : "ACTIVAR KILL-SWITCH DE EMERGENCIA"}
                 </button>
               </div>
 

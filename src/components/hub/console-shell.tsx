@@ -7,6 +7,7 @@ import type { ConsoleData } from "@/lib/console-data";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { LocaleOption, PortalLocale } from "@/lib/data/tenant-portal.server";
 import type { Contractor } from "@/lib/data/contractors.server";
+import type { AutonomyState } from "@/lib/platform/settings.server";
 import { signOut } from "@/app/consola/actions";
 
 type ConsoleView = "propietario" | "inquilino";
@@ -23,6 +24,7 @@ export function ConsoleShell({
   contractors,
   tenantPortalLocale,
   tenantPortalTickets,
+  autonomyState,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -31,6 +33,7 @@ export function ConsoleShell({
   contractors: Contractor[];
   tenantPortalLocale: PortalLocale | null;
   tenantPortalTickets: DiegoTicket[];
+  autonomyState: AutonomyState;
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -139,6 +142,7 @@ export function ConsoleShell({
           diegoKpis={diegoKpis}
           localeOptions={localeOptions}
           contractors={contractors}
+          autonomyState={autonomyState}
         />
       ) : (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">

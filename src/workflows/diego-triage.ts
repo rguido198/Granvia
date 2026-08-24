@@ -18,7 +18,7 @@ type TicketContext = {
   documentKind: string;
   rawText: string | null;
   locale: { id: string; unit_number: string; tenant_entity: string | null };
-  property: { id: string; jurisdiction_id: string };
+  property: { id: string; jurisdiction_id: string; autonomy_frozen: boolean };
   lease: {
     maintenance_clause: string | null;
     exclusive_use_clause: string | null;
@@ -63,7 +63,7 @@ async function loadTicketContextForLocale(
 
   const { data: property, error: propertyError } = await supabase
     .from("properties")
-    .select("id, jurisdiction_id")
+    .select("id, jurisdiction_id, autonomy_frozen")
     .eq("id", locale.property_id)
     .single();
   if (propertyError || !property) {
@@ -92,7 +92,7 @@ async function loadTicketContextForLocale(
       unit_number: locale.unit_number,
       tenant_entity: locale.tenant_entity,
     },
-    property: { id: property.id, jurisdiction_id: property.jurisdiction_id },
+    property: { id: property.id, jurisdiction_id: property.jurisdiction_id, autonomy_frozen: property.autonomy_frozen },
     lease: lease ?? null,
     assets: assets ?? [],
   };
@@ -379,7 +379,14 @@ export async function diegoTriageWorkflow(documentId: string, localeId: string) 
   );
 
   const { workflowRunId } = getWorkflowMetadata();
-  const status = warranty.covered || approvalLevel === "AUTO" ? "dispatched" : "needs_approval";
+  // The RBAC tab's emergency kill-switch (properties.autonomy_frozen) overrides
+  // every auto-dispatch path, warranty claims included — while it's active, every
+  // ticket lands in needs_approval regardless of tier or warranty coverage.
+  const status = context.property.autonomy_frozen
+    ? "needs_approval"
+    : warranty.covered || approvalLevel === "AUTO"
+      ? "dispatched"
+      : "needs_approval";
 
   const ticketId = await writeTicket({
     context,
