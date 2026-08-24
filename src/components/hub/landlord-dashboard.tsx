@@ -1404,7 +1404,7 @@ export function LandlordDashboard({
                           </th>
                           <th className="p-3.5">Vencimiento Contrato</th>
                           <th className="p-3.5">Garantía / Fianza</th>
-                          <th className="p-3.5">Estatus Legal & Fiscal SAT</th>
+                          <th className="p-3.5">Estatus Legal & Contractual</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 font-medium">
@@ -1424,7 +1424,7 @@ export function LandlordDashboard({
                             inpcClause: "Cláusula 7.2: Incremento anual de Renta Base indexado al INPC publicado por INEGI en Octubre.",
                             penaltyClause: "Cláusula 22.4: Penalización equitativa a 6 meses de Renta Base por rescisión anticipada.",
                             deposit: "$153,600 MXN (2 Meses)",
-                            anomaly: "Alerta SAT: Pendiente timbrado CFDI 4.0",
+                            anomaly: "Sin anomalías. Contrato al día.",
                             status: "Renovación Próxima",
                             statusBadge: "bg-slate-900 text-white",
                             insuranceStatus: "ok",
@@ -1504,7 +1504,7 @@ export function LandlordDashboard({
                             inpcClause: "Cláusula 5.2: Ajuste anual INPC INEGI en Enero.",
                             penaltyClause: "Cláusula 16.1: Rescisión anticipada con penalización de 4 meses.",
                             deposit: "$408,000 MXN (Fianza BBVA)",
-                            anomaly: "Sin anomalías. Timbrado SAT verificado.",
+                            anomaly: "Sin anomalías. Contrato al día.",
                             status: "Renovación Próxima",
                             statusBadge: "bg-slate-900 text-white",
                             insuranceStatus: "ok",
@@ -1524,9 +1524,9 @@ export function LandlordDashboard({
                             inpcClause: "Cláusula 7.1: Ajuste anual INPC en Octubre.",
                             penaltyClause: "Cláusula 21.2: Penalización de 3 meses de renta base.",
                             deposit: "$408,000 MXN (Depósito Scotia)",
-                            anomaly: "Alerta SAT: Pendiente timbrado parcial Jul 2026",
-                            status: "Alerta SAT",
-                            statusBadge: "bg-slate-900 text-white",
+                            anomaly: "Sin anomalías. Contrato al día.",
+                            status: "Vigente SSOT",
+                            statusBadge: "bg-slate-100 text-slate-800 border border-slate-200",
                             insuranceStatus: "ok",
                           },
                           {
@@ -2378,7 +2378,10 @@ export function LandlordDashboard({
                       </div>
                     </div>
 
-                    {/* LAW CARD 4: CÓDIGO FISCAL SAT CFDI 4.0 */}
+                    {/* LAW CARD 4: CÓDIGO FISCAL SAT CFDI 4.0 — explains the
+                        legal obligation only; no live compliance status,
+                        since that requires an ERP/accounting connection
+                        this engagement doesn't have. */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-2xs hover:border-slate-400 transition-all">
                       <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
                         <div>
@@ -2392,19 +2395,11 @@ export function LandlordDashboard({
                             Código Fiscal de la Federación (SAT Arrendamiento)
                           </h4>
                         </div>
-                        <span className="bg-slate-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          1 Alerta Timbrado
-                        </span>
                       </div>
 
                       <p className="text-xs text-slate-600 leading-relaxed font-medium">
                         Regula la obligación fiscal de expedir y timbrar comprobantes fiscales digitales por internet (CFDI 4.0) por rentas cobradas dentro de las 72 horas posteriores a la recolección.
                       </p>
-
-                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs font-bold text-slate-800">
-                        <span>Estatus Fiscal SAT:</span>
-                        <span className="text-slate-900 font-extrabold">78 al día · 1 Timbrado Pendiente</span>
-                      </div>
                     </div>
                   </div>
                 </div>
