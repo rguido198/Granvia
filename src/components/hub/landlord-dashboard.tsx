@@ -9,6 +9,7 @@ import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import type { Contractor } from "@/lib/data/contractors.server";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
+import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
 
@@ -1304,6 +1305,7 @@ export function LandlordDashboard({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <MarianaApplicationForm localeOptions={localeOptions} />
                   <button
                     onClick={() => {
                       setCopilotOpen(true);

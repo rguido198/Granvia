@@ -48,12 +48,13 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  if (kind === "maintenance_ticket" && typeof localeId !== "string") {
-    // Mariana's lease_application uploads don't have a locale yet — they're
-    // the applicant's request for one. Diego's do: a ticket is always about
-    // an existing, occupied unit.
+  if (typeof localeId !== "string") {
+    // Both kinds need one: Diego's ticket is about an existing occupied
+    // unit, and Mariana's application names a target local too —
+    // lease-screener/SKILL.md §2A lists "target local" as a required
+    // intake field, not something resolved later.
     return NextResponse.json(
-      { error: "locale_id is required when kind is maintenance_ticket" },
+      { error: "locale_id is required" },
       { status: 400 },
     );
   }
