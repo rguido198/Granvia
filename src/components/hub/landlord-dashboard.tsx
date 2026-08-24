@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, Fragment } from "react";
+import { useRouter } from "next/navigation";
 import type {
   ConsoleData,
 } from "@/lib/console-data";
@@ -16,6 +17,7 @@ import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
+import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
 
@@ -148,6 +150,31 @@ export function LandlordDashboard({
   };
 
   const [isEditingRentRoll, setIsEditingRentRoll] = useState(false);
+  const router = useRouter();
+  // Keyed `${localeId}:${field}` — lets each cell show its own saving state
+  // independently instead of locking the whole table while one field saves.
+  const [savingField, setSavingField] = useState<string | null>(null);
+
+  async function saveRentRollField(localeId: string, field: "sqm" | "rent", rawValue: string, currentValue: number, label: string) {
+    const value = Number(rawValue);
+    if (!Number.isFinite(value) || value < 0) {
+      triggerToast(`Valor inválido para ${label}.`);
+      return;
+    }
+    if (value === currentValue) return;
+
+    const key = `${localeId}:${field}`;
+    setSavingField(key);
+    const result = await updateRentRollFieldAction(localeId, field, value);
+    setSavingField(null);
+
+    if (result.error) {
+      triggerToast(`No se pudo actualizar ${label}: ${result.error}`);
+      return;
+    }
+    triggerToast(`${label} actualizado.`);
+    router.refresh();
+  }
 
   // Rent Roll table sort/filter
   const [rentRollFilter, setRentRollFilter] = useState("");
@@ -521,7 +548,7 @@ export function LandlordDashboard({
                     Rent Roll & Directorio Unificado de Locales
                   </h2>
                   <p className="text-sm text-ink-500 mt-1">
-                    Registro maestro de {rentRoll.length} locales comerciales. Los cambios aplicados aquí actualizan en tiempo real el Plano Interactivo (<code className="bg-sand-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/directorio</code>) y el Portal del Arrendatario (<code className="bg-sand-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/inquilinos</code>).
+                    Registro maestro de {rentRoll.length} locales comerciales. Los cambios aplicados aquí actualizan en tiempo real el Portal del Arrendatario (<code className="bg-sand-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/inquilinos</code>). El Plano Interactivo público (<code className="bg-sand-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/directorio</code>) usa su propio contenido de marketing y no se actualiza desde aquí.
                   </p>
                 </div>
 
@@ -530,15 +557,13 @@ export function LandlordDashboard({
                     onClick={() => {
                       const nextState = !isEditingRentRoll;
                       setIsEditingRentRoll(nextState);
-                      triggerToast(
-                        nextState
-                          ? "Modo edición activado. Puedes ajustar la renta mensual y superficie de los locales."
-                          : "Cambios en Rent Roll guardados y sincronizados con /directorio."
-                      );
+                      if (nextState) {
+                        triggerToast("Modo edición activado. Cada cambio se guarda al salir del campo (Tab o Enter).");
+                      }
                     }}
                     className="bg-terra hover:bg-terra-dark text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
                   >
-                    {isEditingRentRoll ? "Guardar Cambios" : "Modo Edición"}
+                    {isEditingRentRoll ? "Terminar Edición" : "Modo Edición"}
                   </button>
                 </div>
               </div>
@@ -650,8 +675,10 @@ export function LandlordDashboard({
                                 type="number"
                                 defaultValue={r.sqm}
                                 aria-label={`Superficie m² para ${r.name}`}
-                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-terra focus:outline-none"
-                                onChange={() => triggerToast(`Superficie actualizada para ${r.name}`)}
+                                disabled={savingField === `${r.slug}:sqm`}
+                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-terra focus:outline-none disabled:opacity-50"
+                                onBlur={(e) => saveRentRollField(r.slug, "sqm", e.target.value, r.sqm, `Superficie de ${r.name}`)}
+                                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
                             ) : (
                               `${r.sqm} m²`
@@ -664,8 +691,10 @@ export function LandlordDashboard({
                                 type="number"
                                 defaultValue={r.rent}
                                 aria-label={`Renta mensual para ${r.name}`}
-                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-terra focus:outline-none"
-                                onChange={() => triggerToast(`Renta actualizada para ${r.name}`)}
+                                disabled={savingField === `${r.slug}:rent`}
+                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-terra focus:outline-none disabled:opacity-50"
+                                onBlur={(e) => saveRentRollField(r.slug, "rent", e.target.value, r.rent, `Renta de ${r.name}`)}
+                                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
                             ) : (
                               <div>
