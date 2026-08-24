@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, useMemo, Fragment } from "react";
 import type {
   ConsoleData,
 } from "@/lib/console-data";
@@ -11,6 +11,43 @@ import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
+
+type RentRollSortKey = "name" | "sqm" | "sharePct" | "rent";
+type RentRollSort = { key: RentRollSortKey; dir: "asc" | "desc" };
+
+function SortableHeader({
+  label,
+  sortKey,
+  current,
+  onSort,
+  align = "left",
+  title,
+  className = "",
+}: {
+  label: string;
+  sortKey: RentRollSortKey;
+  current: RentRollSort;
+  onSort: (key: RentRollSortKey) => void;
+  align?: "left" | "right";
+  title?: string;
+  className?: string;
+}) {
+  const active = current.key === sortKey;
+  return (
+    <th className={`p-3.5 ${align === "right" ? "text-right" : "text-left"}`} title={title}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`inline-flex items-center gap-1 cursor-pointer hover:text-slate-900 ${
+          align === "right" ? "flex-row-reverse" : ""
+        } ${active ? "text-slate-900" : "text-slate-700"} ${className}`}
+      >
+        <span>{label}</span>
+        <span className="text-[10px] leading-none">{active ? (current.dir === "asc" ? "▲" : "▼") : "↕"}</span>
+      </button>
+    </th>
+  );
+}
 
 /**
  * Format currency in MXN with optional decimals
@@ -83,6 +120,31 @@ export function LandlordDashboard({
   };
 
   const [isEditingRentRoll, setIsEditingRentRoll] = useState(false);
+
+  // Rent Roll table sort/filter
+  const [rentRollFilter, setRentRollFilter] = useState("");
+  const [rentRollSort, setRentRollSort] = useState<RentRollSort>({ key: "name", dir: "asc" });
+
+  const toggleRentRollSort = (key: RentRollSortKey) => {
+    setRentRollSort((prev) =>
+      prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
+    );
+  };
+
+  const visibleRentRoll = useMemo(() => {
+    const needle = rentRollFilter.trim().toLowerCase();
+    const filtered = needle
+      ? rentRoll.filter((r) => r.name.toLowerCase().includes(needle) || r.unitCode.toLowerCase().includes(needle))
+      : rentRoll;
+
+    const sorted = [...filtered].sort((a, b) => {
+      const { key, dir } = rentRollSort;
+      const mult = dir === "asc" ? 1 : -1;
+      if (key === "name") return a.name.localeCompare(b.name) * mult;
+      return (a[key] - b[key]) * mult;
+    });
+    return sorted;
+  }, [rentRoll, rentRollFilter, rentRollSort]);
 
   // AI Copilot Drawer State
   const [copilotOpen, setCopilotOpen] = useState(false);
@@ -254,7 +316,7 @@ export function LandlordDashboard({
                   : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Mantenimiento & CapEx</span>
+              <span>Diego AI · Mantenimiento</span>
             </button>
 
             <button
@@ -265,7 +327,7 @@ export function LandlordDashboard({
                   : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span>Legal, RAG & Exclusividades</span>
+              <span>Mariana AI · Legal</span>
             </button>
 
             <p className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mt-6 mb-2">
@@ -531,19 +593,41 @@ export function LandlordDashboard({
               </div>
 
               {/* RENT ROLL MASTER TABLE (CLEAN 5-COLUMN EXECUTIVE LEASE LEDGER) */}
+              <div className="flex items-center justify-between gap-3">
+                <input
+                  type="text"
+                  value={rentRollFilter}
+                  onChange={(e) => setRentRollFilter(e.target.value)}
+                  placeholder="Filtrar por inquilino o local…"
+                  className="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-xs bg-white focus:border-slate-500 focus:outline-none"
+                />
+                <p className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                  {visibleRentRoll.length} de {rentRoll.length} locales
+                </p>
+              </div>
+
               <div className="border border-slate-200 rounded-xl bg-white shadow-2xs overflow-hidden">
                 <table className="w-full text-left text-xs font-sans">
                   <thead className="bg-slate-50 text-[11px] font-bold uppercase text-slate-700 border-b border-slate-200 tracking-wider">
                     <tr>
-                      <th className="p-3.5">Inquilino & Local</th>
-                      <th className="p-3.5 text-right">Superficie</th>
-                      <th
-                        className="p-3.5 text-right cursor-default select-none"
+                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} />
+                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" />
+                      <SortableHeader
+                        label="% Participación GLA"
+                        sortKey="sharePct"
+                        current={rentRollSort}
+                        onSort={toggleRentRollSort}
+                        align="right"
                         title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
-                      >
-                        % Participación GLA
-                      </th>
-                      <th className="p-3.5 text-right font-extrabold">Renta Mensual Contratada</th>
+                      />
+                      <SortableHeader
+                        label="Renta Mensual Contratada"
+                        sortKey="rent"
+                        current={rentRollSort}
+                        onSort={toggleRentRollSort}
+                        align="right"
+                        className="font-extrabold"
+                      />
                       <th
                         className="p-3.5 text-center cursor-default select-none"
                         title="SSOT = Single Source of Truth / Fuente Única de Verdad (Información sincronizada en tiempo real)"
@@ -553,7 +637,14 @@ export function LandlordDashboard({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                    {rentRoll.map((r) => {
+                    {visibleRentRoll.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-6 text-center text-slate-500">
+                          Sin resultados para &ldquo;{rentRollFilter}&rdquo;.
+                        </td>
+                      </tr>
+                    )}
+                    {visibleRentRoll.map((r) => {
                       const is260Grill = r.name.includes("260 Grill");
                       const isBlueLuna = r.name.includes("Blue Luna");
 
