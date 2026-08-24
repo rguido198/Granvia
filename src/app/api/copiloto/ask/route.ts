@@ -85,7 +85,14 @@ export async function POST(request: NextRequest) {
   const client = new Anthropic();
   const response = await client.messages.create({
     model: "claude-opus-5",
-    max_tokens: 1024,
+    // claude-opus-5's extended thinking counts against max_tokens. Reasoning
+    // over the real ~83-lease dataset (~10.7k input tokens) can spend
+    // 1000-2500+ tokens on thinking alone before any answer text — 1024 was
+    // hit as the *entire* budget, so every question returned stop_reason
+    // "max_tokens" with zero text blocks and an empty answer. 8192 leaves
+    // real headroom past the ~2900 tokens a synthesis-heavy question
+    // (e.g. "how many tenants") measured at in testing.
+    max_tokens: 8192,
     system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
     messages: [
       {
@@ -96,5 +103,14 @@ export async function POST(request: NextRequest) {
   });
 
   const answer = response.content.find((block) => block.type === "text")?.text ?? "";
+  if (!answer) {
+    // Fail loudly rather than return {"answer": ""} — a blank box in the
+    // Copiloto looked like the app silently doing nothing, when a real
+    // token-budget or model failure was happening underneath it.
+    return NextResponse.json(
+      { error: `El agente no generó una respuesta (stop_reason: ${response.stop_reason}). Intenta de nuevo o reformula la pregunta.` },
+      { status: 502 },
+    );
+  }
   return NextResponse.json({ answer });
 }
