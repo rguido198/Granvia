@@ -7,6 +7,9 @@ export type PortalLocale = {
   unitNumber: string;
   tenantEntity: string;
   propertyName: string;
+  areaSqm: number;
+  monthlyRent: number | null;
+  leaseEndDate: string | null;
 };
 
 export type LocaleOption = {
@@ -21,10 +24,15 @@ export type LocaleOption = {
  * locale. Without one — the landlord's "Vista Inquilino" preview inside
  * /consola, which isn't scoped to any one tenant — falls back to the first
  * locale on file, same as before real auth existed.
+ *
+ * Two plain queries rather than an embedded locales->leases join — this
+ * codebase hit a real bug earlier with PostgREST embedded-resource joins
+ * silently dropping a joined column (mariana-screening.ts), so sequential
+ * queries are the established pattern here.
  */
 async function resolvePortalLocale(localeId?: string): Promise<PortalLocale | null> {
   const supabase = getSupabaseServiceClient();
-  let query = supabase.from("locales").select("id, unit_number, tenant_entity, properties ( name )");
+  let query = supabase.from("locales").select("id, unit_number, area_sqm, tenant_entity, properties ( name )");
   query = localeId ? query.eq("id", localeId) : query.order("unit_number", { ascending: true }).limit(1);
   const { data, error } = await query.maybeSingle();
 
@@ -32,14 +40,25 @@ async function resolvePortalLocale(localeId?: string): Promise<PortalLocale | nu
   const row = data as unknown as {
     id: string;
     unit_number: string;
+    area_sqm: number;
     tenant_entity: string | null;
     properties: { name: string } | null;
   };
+
+  const { data: lease } = await supabase
+    .from("leases")
+    .select("base_rent_monthly, end_date")
+    .eq("locale_id", row.id)
+    .maybeSingle();
+
   return {
     id: row.id,
     unitNumber: row.unit_number,
     tenantEntity: row.tenant_entity ?? "Inquilino",
     propertyName: row.properties?.name ?? "?",
+    areaSqm: Number(row.area_sqm),
+    monthlyRent: lease ? Number(lease.base_rent_monthly) : null,
+    leaseEndDate: lease?.end_date ?? null,
   };
 }
 

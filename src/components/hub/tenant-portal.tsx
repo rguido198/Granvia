@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { NewTicketForm } from "@/components/hub/new-ticket-form";
-import { PORTAL_TENANT } from "@/content/hub";
 import type { DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { PortalLocale } from "@/lib/data/tenant-portal.server";
+
+function formatContractDate(iso: string) {
+  return new Date(iso).toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+}
 
 const STATUS_LABEL: Record<DiegoTicket["status"], string> = {
   pending_triage: "Pendiente de Triage",
@@ -40,8 +42,6 @@ export function TenantPortal({
   locale: PortalLocale | null;
   tickets: DiegoTicket[];
 }) {
-  const [salesSubmitted, setSalesSubmitted] = useState(false);
-
   if (!locale) {
     return (
       <section className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs font-sans text-sm text-slate-600">
@@ -55,33 +55,35 @@ export function TenantPortal({
       {/* Store Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="rounded-full bg-slate-100 border border-slate-300 px-3.5 py-1 text-xs sm:text-sm font-bold text-slate-900">
-              Renta al día (Agosto 2026)
-            </span>
-            <span className="text-xs sm:text-sm text-slate-600 font-semibold">
-              {`${locale.unitNumber} · ${locale.propertyName}`}
-            </span>
-          </div>
+          <span className="text-xs sm:text-sm text-slate-600 font-semibold">
+            {`${locale.unitNumber} · ${locale.propertyName}`}
+          </span>
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900">{locale.tenantEntity}</h2>
           <p className="mt-1 text-sm sm:text-base text-slate-600 font-medium">
-            Portal Arrendatario. Envío de ventas mensuales, reporte de incidencias y reglamentos internos.
+            Portal Arrendatario. Reporte de incidencias y reglamentos internos.
           </p>
         </div>
 
-        {/* Lease terms are still PORTAL_TENANT mock data — Mariana's lease
-            schema/query isn't built yet, unlike the ticket data below. */}
-        <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5 text-xs sm:text-sm text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
-          <span>
-            <strong>Contrato Activo:</strong> Hasta {PORTAL_TENANT.leaseEnds}
-          </span>
-          <span>
-            <strong>Superficie:</strong> {PORTAL_TENANT.sqm} m²
-          </span>
-          <span>
-            <strong>Renta Base:</strong> ${PORTAL_TENANT.monthlyRent.toLocaleString()} MXN / mes
-          </span>
-        </div>
+        {/* Real leases row for this locale (src/lib/data/tenant-portal.server.ts) —
+            no payment-status claim here, since no ERP/payment tracking exists to
+            back one. */}
+        {locale.monthlyRent !== null && locale.leaseEndDate ? (
+          <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5 text-xs sm:text-sm text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
+            <span>
+              <strong>Contrato Activo:</strong> Hasta {formatContractDate(locale.leaseEndDate)}
+            </span>
+            <span>
+              <strong>Superficie:</strong> {locale.areaSqm} m²
+            </span>
+            <span>
+              <strong>Renta Base:</strong> ${locale.monthlyRent.toLocaleString("es-MX")} MXN / mes
+            </span>
+          </div>
+        ) : (
+          <div className="text-xs sm:text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
+            Sin contrato activo registrado para este local.
+          </div>
+        )}
       </div>
 
       {/* Tenant Quick Action Tools — ticket reporting is the primary reason a
@@ -108,19 +110,13 @@ export function TenantPortal({
               Sube tu comprobante de cierre de caja en PDF o fotografía antes del día 5 del mes.
             </p>
 
-            {salesSubmitted ? (
-              <p className="rounded-xl bg-slate-100 border border-slate-300 p-3 text-center text-xs sm:text-sm font-bold text-slate-900" role="status">
-                Reporte de Agosto Enviado Correctamente
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setSalesSubmitted(true)}
-                className="w-full cursor-pointer rounded-xl bg-slate-900 py-3 text-xs sm:text-sm font-bold text-white hover:bg-slate-800 transition-colors shadow-xs"
-              >
-                Subir Reporte POS (Agosto 2026)
-              </button>
-            )}
+            <button
+              type="button"
+              disabled
+              className="w-full rounded-xl bg-slate-200 py-3 text-xs sm:text-sm font-bold text-slate-600 cursor-not-allowed"
+            >
+              Subir Reporte POS — próximamente
+            </button>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
