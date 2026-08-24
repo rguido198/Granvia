@@ -85,14 +85,15 @@ export async function POST(request: NextRequest) {
   const client = new Anthropic();
   const response = await client.messages.create({
     model: "claude-opus-5",
-    // claude-opus-5's extended thinking counts against max_tokens. Reasoning
-    // over the real ~83-lease dataset (~10.7k input tokens) can spend
-    // 1000-2500+ tokens on thinking alone before any answer text — 1024 was
-    // hit as the *entire* budget, so every question returned stop_reason
-    // "max_tokens" with zero text blocks and an empty answer. 8192 leaves
-    // real headroom past the ~2900 tokens a synthesis-heavy question
-    // (e.g. "how many tenants") measured at in testing.
-    max_tokens: 8192,
+    // claude-opus-5's extended thinking counts against max_tokens, and has no
+    // separate hard cap on this model (budget_tokens is rejected). Two levers
+    // instead of one: max_tokens raised to the SDK's own non-streaming default
+    // (16000, well past the ~2900 tokens a synthesis-heavy question measured
+    // at), and effort held to "medium" since this endpoint is data lookup +
+    // summary, not deep multi-step reasoning — cuts thinking spend at the
+    // source rather than just raising the ceiling it can hit.
+    max_tokens: 16000,
+    output_config: { effort: "medium" },
     system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
     messages: [
       {
