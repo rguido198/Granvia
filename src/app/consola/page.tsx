@@ -6,6 +6,7 @@ import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
 import { fetchLocaleOptions, fetchTenantPortalData } from "@/lib/data/tenant-portal.server";
 import { fetchContractors } from "@/lib/data/contractors.server";
 import { fetchAutonomyState } from "@/lib/platform/settings.server";
+import { fetchAuditLog } from "@/lib/platform/audit-log.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -44,6 +45,7 @@ export default async function ConsolaPage() {
   // tenant would see — same data, same fetch, not a separate mock.
   const tenantPortal = await fetchTenantPortalData();
   const autonomyState = await fetchAutonomyState();
+  const auditLog = await fetchAuditLog();
 
   return (
     <PageFade>
@@ -56,6 +58,7 @@ export default async function ConsolaPage() {
         tenantPortalLocale={tenantPortal.locale}
         tenantPortalTickets={tenantPortal.tickets}
         autonomyState={autonomyState}
+        auditLog={auditLog}
       />
     </PageFade>
   );

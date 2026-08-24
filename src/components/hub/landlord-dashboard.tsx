@@ -8,6 +8,7 @@ import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import type { Contractor } from "@/lib/data/contractors.server";
 import type { AutonomyState } from "@/lib/platform/settings.server";
+import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
@@ -53,6 +54,21 @@ function SortableHeader({
 }
 
 /**
+ * Format an audit entry's ISO timestamp for display — real entries span days,
+ * not just "today," so the date rides along instead of being dropped.
+ */
+function formatAuditTimestamp(iso: string) {
+  return new Date(iso).toLocaleString("es-MX", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
+/**
  * Format currency in MXN with optional decimals
  */
 function formatMxn(val: number, decimals = 0) {
@@ -76,6 +92,7 @@ export function LandlordDashboard({
   localeOptions,
   contractors,
   autonomyState,
+  initialAuditLog,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -83,6 +100,7 @@ export function LandlordDashboard({
   localeOptions: LocaleOption[];
   contractors: Contractor[];
   autonomyState: AutonomyState;
+  initialAuditLog: AuditEntry[];
 }) {
   const {
     rentRoll,
@@ -159,9 +177,7 @@ export function LandlordDashboard({
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
 
   // Diego IA Maintenance Calendar States
-  const [eventApprovals, setEventApprovals] = useState<Record<string, boolean>>({});
   const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
-  const [approvalConfirmEventId, setApprovalConfirmEventId] = useState<string | null>(null);
 
   // Accessibility Font Scale State
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -214,20 +230,16 @@ export function LandlordDashboard({
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Immutable Audit Trail — every Tier 3 human-authorized action appends here live,
-  // instead of the log being 5 static lines that never reflect what actually happened
-  // in the session. Stored oldest-first; rendered newest-first.
-  const [auditLog, setAuditLog] = useState(() => [
-    { id: "seed-5", timestamp: "14:02:44", actorType: "user" as const, actor: "a.lopez@lagranvia.com.mx", action: "Carga de póliza de mantenimiento ThyssenKrupp 2026.pdf", hash: "sha256_a10984ee29" },
-    { id: "seed-3", timestamp: "16:45:19", actorType: "agent" as const, actor: "mariana_ai_agent", action: "Consulta RAG multi-contrato de exclusividades de giro (Cafeterías)", hash: "sha256_f9012a44b8" },
-    { id: "seed-2", timestamp: "17:58:02", actorType: "agent" as const, actor: "diego_ai_agent", action: "Reclamo autónomo expedido a Climas de Mexicali (#HVAC-884)", hash: "sha256_b31289fe12" },
-    { id: "seed-1", timestamp: "18:28:12", actorType: "user" as const, actor: "m.hage@lagranvia.com.mx", action: "Cambió permiso 'Diego CapEx' para a.lopez@lagranvia.com.mx", hash: "sha256_e84a92c10f" },
-  ]);
+  // Immutable Audit Trail — seeded from the real events each Tier 2/3 action
+  // actually writes to (ticket_status_history, agent_decisions, lease_applications
+  // reviews, the autonomy kill-switch — see src/lib/platform/audit-log.server.ts),
+  // not a hardcoded array. Stored oldest-first; rendered newest-first.
+  const [auditLog, setAuditLog] = useState<AuditEntry[]>(initialAuditLog);
   const [auditLogFilter, setAuditLogFilter] = useState("");
 
   const appendAuditLog = (actorType: "user" | "agent", actor: string, action: string) => {
     const now = new Date();
-    const timestamp = now.toLocaleTimeString("es-MX", { hour12: false });
+    const timestamp = now.toISOString();
     const hash = "sha256_" + Math.random().toString(16).slice(2, 12);
     setAuditLog((prev) => [...prev, { id: `evt-${prev.length}-${now.getTime()}`, timestamp, actorType, actor, action, hash }]);
   };
@@ -802,7 +814,11 @@ export function LandlordDashboard({
                   first, scheduled/dispatched execution below. */}
               <DiegoTriageQueue tickets={diegoTickets} kpis={diegoKpis} localeOptions={localeOptions} />
 
-              {/* CALENDARIO DE PRÓXIMOS EVENTOS & APROBACIONES (LANDLORD-FIRST: WHAT NEEDS A DECISION NOW) */}
+              {/* CALENDARIO DE PRÓXIMOS EVENTOS — informational schedule of preventive
+                  maintenance/calibrations; the real Tier 3 dispatch-approval gate lives
+                  in DiegoTriageQueue above, against actual tickets. This calendar has no
+                  Supabase table behind it, so it never pretended to gate a real dispatch
+                  here — the approval affordance that used to imply it did was removed. */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                   <div>
@@ -810,25 +826,18 @@ export function LandlordDashboard({
                       Calendario de Próximos Eventos
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Mantenimiento preventivo y calibraciones programadas. Diego IA despacha automáticamente hasta {formatVal(diegoThresholdVal)}; por encima requiere tu aprobación.
+                      Mantenimiento preventivo y calibraciones programadas.
                     </p>
                   </div>
-                  <span className="text-xs font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 shrink-0">
-                    {maintenanceEvents.filter((e) => e.costEstimate > diegoThresholdVal && !eventApprovals[e.id]).length} Pendientes de Aprobación
-                  </span>
                 </div>
 
                 <div className="space-y-2.5">
                   {maintenanceEvents.map((event) => {
-                    const needsApproval = event.costEstimate > diegoThresholdVal;
-                    const isApproved = eventApprovals[event.id];
                     const isNotified = eventNotified[event.id];
                     return (
                       <div
                         key={event.id}
-                        className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border ${
-                          needsApproval && !isApproved ? "bg-amber-50 border-amber-300" : "bg-white border-slate-200"
-                        }`}
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border bg-white border-slate-200"
                       >
                         <div className="text-center shrink-0 w-16">
                           <p className="text-xs font-extrabold text-slate-900">{event.date.split(" ")[0]}</p>
@@ -840,27 +849,11 @@ export function LandlordDashboard({
                         </div>
                         <div className="text-right shrink-0">
                           <p className="font-bold text-slate-900 text-xs font-sans tabular-nums">{formatVal(event.costEstimate)}</p>
-                          <span
-                            className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${
-                              !needsApproval
-                                ? "bg-slate-100 text-slate-700 border border-slate-200"
-                                : isApproved
-                                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                                  : "bg-amber-100 text-amber-900 border border-amber-300"
-                            }`}
-                          >
-                            {!needsApproval ? "Auto-Aprobado" : isApproved ? "Aprobado" : "Requiere Aprobación"}
+                          <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 bg-slate-100 text-slate-700 border border-slate-200">
+                            Programado
                           </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {needsApproval && !isApproved && (
-                            <button
-                              onClick={() => setApprovalConfirmEventId(event.id)}
-                              className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition-all cursor-pointer shadow-2xs whitespace-nowrap"
-                            >
-                              Aprobar Despacho
-                            </button>
-                          )}
                           <button
                             onClick={() => {
                               setEventNotified((prev) => ({ ...prev, [event.id]: true }));
@@ -2516,8 +2509,8 @@ export function LandlordDashboard({
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Integridad de Auditoría</p>
-                  <p className="text-3xl font-bold text-slate-900">SHA-256 100%</p>
-                  <p className="text-sm text-slate-600 font-medium">Sin alteración de registros</p>
+                  <p className="text-3xl font-bold text-slate-900">{auditLog.length} Registros</p>
+                  <p className="text-sm text-slate-600 font-medium">Huella SHA-256 por entrada</p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Sesiones Activas</p>
@@ -2849,7 +2842,7 @@ export function LandlordDashboard({
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Cada aprobación Tier 3 en esta sesión (CAM, renovaciones, despachos CapEx) se añade aquí — verificado con hash SHA-256 por entrada.
+                        Cada aprobación Tier 3 (despachos CapEx de Diego IA, solicitudes de arrendamiento de Mariana IA) se registra aquí — huella SHA-256 por entrada.
                       </p>
                     </div>
                   </div>
@@ -2942,7 +2935,7 @@ export function LandlordDashboard({
                                 </div>
                                 <div className="min-w-0">
                                   <p className="text-xs font-bold text-slate-100 truncate">{e.actor}</p>
-                                  <p className="text-[10.5px] text-slate-500 font-mono">{e.timestamp}{e.actorType === "user" ? " · 189.210.42.10" : ""}</p>
+                                  <p className="text-[10.5px] text-slate-500 font-mono">{formatAuditTimestamp(e.timestamp)}</p>
                                 </div>
                               </div>
                               <p className="text-xs text-slate-300 leading-relaxed self-center">{e.action}</p>
@@ -3243,92 +3236,6 @@ export function LandlordDashboard({
         </div>
       )}
 
-      {/* DIEGO AI · MAINTENANCE EVENT APPROVAL MODAL (TIER 3 HUMAN GATE — SPEND ABOVE AUTO-APPROVE THRESHOLD) */}
-      {approvalConfirmEventId !== null && (() => {
-        const event = maintenanceEvents.find((e) => e.id === approvalConfirmEventId);
-        if (!event) return null;
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 font-sans">
-              <div className="bg-slate-900 text-white p-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Diego IA · Confirmación de Despacho
-                  </span>
-                  <button
-                    onClick={() => setApprovalConfirmEventId(null)}
-                    className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
-                    aria-label="Cerrar ventana"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <h3 className="text-xl font-bold mt-2">{event.title}</h3>
-                <p className="text-xs text-slate-300 mt-1">
-                  {formatVal(event.costEstimate)} excede el umbral de auto-aprobación ({formatVal(diegoThresholdVal)}) — requiere tu firma.
-                </p>
-              </div>
-
-              <div className="p-6 space-y-4 text-xs">
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
-                  <p className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
-                    Resumen del Despacho
-                  </p>
-                  <div className="space-y-2 text-slate-700">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Contratista:</span>
-                      <span className="font-bold text-slate-900">{event.vendor}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Categoría:</span>
-                      <span className="font-bold text-slate-900">{event.category}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Fecha Programada:</span>
-                      <span className="font-bold text-slate-900">{event.date}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Costo Estimado:</span>
-                      <span className="font-bold text-slate-900">{formatVal(event.costEstimate)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Responsable:</span>
-                      <span className="font-bold text-slate-900">{event.responsible}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-amber-900">
-                  <p className="font-bold text-xs">Aviso de Autorización de Gasto</p>
-                  <p className="text-[11.5px] mt-0.5 text-amber-800">
-                    Al aprobar, Diego IA despachará a {event.vendor} bajo el umbral vigente de Firma Dual Admin. El gasto quedará registrado en el Registro de Casos CapEx.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-                <button
-                  onClick={() => setApprovalConfirmEventId(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    setEventApprovals((prev) => ({ ...prev, [event.id]: true }));
-                    setApprovalConfirmEventId(null);
-                    triggerToast(`Diego IA: Despacho aprobado — ${event.vendor} programado para ${event.date}.`);
-                    appendAuditLog("user", "m.hage@lagranvia.com.mx", `Aprobó despacho de ${formatVal(event.costEstimate)} a ${event.vendor} (${event.title})`);
-                  }}
-                  className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"
-                >
-                  Aprobar y Programar Despacho →
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
