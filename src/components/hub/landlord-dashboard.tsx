@@ -2269,6 +2269,7 @@ export function LandlordDashboard({
                 setQueryResult(null);
                 setCopilotError(null);
                 setCopilotLoading(false);
+                setCopilotQuestion("");
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeAgent === "mariana" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
@@ -2284,6 +2285,7 @@ export function LandlordDashboard({
                 setQueryResult(null);
                 setCopilotError(null);
                 setCopilotLoading(false);
+                setCopilotQuestion("");
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeAgent === "diego" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
