@@ -146,6 +146,10 @@ export function LandlordDashboard({
     return sorted;
   }, [rentRoll, rentRollFilter, rentRollSort]);
 
+  // Whole-portfolio, independent of the table filter above — the KPI card
+  // reflects every fiscal alert regardless of what's currently searched for.
+  const fiscalAlertRows = rentRoll.filter((r) => r.fiscalAlert);
+
   // AI Copilot Drawer State
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [activeAgent, setActiveAgent] = useState<"renata" | "mariana" | "diego">("renata");
@@ -545,8 +549,12 @@ export function LandlordDashboard({
                 </div>
               </div>
 
-              {/* EXPECTED VS ACTUAL REVENUE KPI SUMMARY */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-display">
+              {/* EXPECTED VS ACTUAL REVENUE KPI SUMMARY — three real, derived
+                  numbers. Dropped the fourth "Sincronización SSOT" card:
+                  84 Locales was metadata already shown in the banner below,
+                  not a KPI, and it was the only card with nothing to compare
+                  against. */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-display">
                 <div className="bg-slate-50 border border-slate-200/90 border-t-2 border-t-slate-900 rounded-xl p-4.5 space-y-1">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wide font-display">Renta Contratada (Esperada)</p>
                   <p className="text-2xl font-bold font-display text-slate-900">{formatMxn(contractedRent)}</p>
@@ -562,13 +570,11 @@ export function LandlordDashboard({
                 <div className="bg-slate-50 border border-slate-300 border-t-2 border-t-slate-900 rounded-xl p-4.5 space-y-1">
                   <p className="text-xs font-bold text-slate-700 uppercase tracking-wide font-display">Variación / Pendiente</p>
                   <p className="text-2xl font-bold font-display text-slate-900">-{formatVal(fiscalAlertRent)}</p>
-                  <p className="text-xs text-slate-600 font-medium font-display">1 Alerta CFDI SAT (260 Grill & Bar)</p>
-                </div>
-
-                <div className="bg-slate-50 border border-slate-200/90 border-t-2 border-t-slate-900 rounded-xl p-4.5 space-y-1">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide font-display">Sincronización SSOT</p>
-                  <p className="text-2xl font-bold font-display text-slate-900">{rentRoll.length} Locales</p>
-                  <p className="text-xs text-slate-500 font-medium font-display">/directorio | /inquilinos</p>
+                  <p className="text-xs text-slate-600 font-medium font-display">
+                    {fiscalAlertRows.length === 0
+                      ? "Sin alertas CFDI SAT"
+                      : `${fiscalAlertRows.length} Alerta${fiscalAlertRows.length === 1 ? "" : "s"} CFDI SAT (${fiscalAlertRows[0].name})`}
+                  </p>
                 </div>
               </div>
 
