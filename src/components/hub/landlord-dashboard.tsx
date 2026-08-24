@@ -176,7 +176,6 @@ export function LandlordDashboard({
   const [queryResult, setQueryResult] = useState<string | null>(null);
 
   // Interactive AI Action States & Simulations
-  const [attorneyNotified, setAttorneyNotified] = useState(false);
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
 
   // Diego IA Maintenance Calendar States
@@ -209,16 +208,14 @@ export function LandlordDashboard({
   const [killSwitchPending, setKillSwitchPending] = useState(false);
 
   // Diego IA Maintenance Sub-Navigation State
-  const [maintSubTab, setMaintSubTab] = useState<"triage" | "autonoma" | "capex" | "contratistas">("triage");
+  const [maintSubTab, setMaintSubTab] = useState<"triage" | "capex" | "contratistas">("triage");
 
   // Mariana IA Legal Engine States
-  const [legalSubTab, setLegalSubTab] = useState<"expedientes" | "consultas" | "prospectos" | "marco_legal">("expedientes");
+  const [legalSubTab, setLegalSubTab] = useState<"expedientes" | "prospectos" | "marco_legal">("expedientes");
   const [lastLawScanDate, setLastLawScanDate] = useState("Hoy, 10 Ago 2026 · 06:00 hrs");
   const [selectedProspectIndex, setSelectedProspectIndex] = useState<number>(0);
   const [customProspectBrand, setCustomProspectBrand] = useState("");
   const [customProspectCategory, setCustomProspectCategory] = useState("Cafetería & Repostería");
-  const [ragQueryText, setRagQueryText] = useState("");
-  const [activeRagQueryResult, setActiveRagQueryResult] = useState<string | null>(null);
   const [inspectedContractId, setInspectedContractId] = useState<string | null>(null);
 
   // Toast Notification State
@@ -739,16 +736,6 @@ export function LandlordDashboard({
                   Triage & Calendario
                 </button>
                 <button
-                  onClick={() => setMaintSubTab("autonoma")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    maintSubTab === "autonoma"
-                      ? "bg-slate-900 text-white shadow-xs"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
-                  }`}
-                >
-                  Consola Autónoma
-                </button>
-                <button
                   onClick={() => setMaintSubTab("capex")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     maintSubTab === "capex"
@@ -842,53 +829,7 @@ export function LandlordDashboard({
               </div>
               )}
 
-              {/* SUB-TAB 2: CONSOLA AUTÓNOMA */}
-              {maintSubTab === "autonoma" && (
-              <div className="space-y-6 animate-fadeIn">
-              {/* DIEGO IA AGENTIC AUTONOMOUS ACTIONS CONSOLE */}
-              <div className="bg-slate-900 text-white rounded-2xl p-5 space-y-4 shadow-sm border border-slate-800">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <h3 className="font-sans text-sm font-bold text-white">
-                      Consola de Acciones Autónomas del Agente Diego IA
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    CapEx & Infrastructure Guard · 24/7 Active
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                  <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 space-y-1">
-                    <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Reclamo Autónomo</p>
-                    <p className="font-bold text-white">Ejecución de Garantía HVAC</p>
-                    <p className="text-[11px] text-slate-300">Carta enviada a Climas de Mexicali sin costo CAM ($0 MXN).</p>
-                  </div>
-
-                  <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 space-y-1">
-                    <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Monitoreo IoT</p>
-                    <p className="font-bold text-white">Telemetría Chiller Trane</p>
-                    <p className="text-[11px] text-slate-300">Presión de freón al 98.4%. 0 anomalías de refrigeración.</p>
-                  </div>
-
-                  <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 space-y-1">
-                    <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Auditoría CapEx vs CAM</p>
-                    <p className="font-bold text-white">Clasificación de Facturas</p>
-                    <p className="text-[11px] text-slate-300">Protegió $38,500 MXN de cobro indebido a inquilinos.</p>
-                  </div>
-
-                  <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 space-y-1">
-                    <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Radar Normativo</p>
-                    <p className="font-bold text-white">Certificación NFPA 25</p>
-                    <p className="text-[11px] text-slate-300">Prueba de aspersores contra incendio programada.</p>
-                  </div>
-                </div>
-              </div>
-              </div>
-              )}
-
-              {/* SUB-TAB 3: CAPEX & COSTOS */}
+              {/* SUB-TAB 2: CAPEX & COSTOS */}
               {maintSubTab === "capex" && (
               <div className="space-y-6 animate-fadeIn">
               {/* CAPEX COST-RESPONSIBILITY LEDGER (TIES DIEGO'S ACTIVITY TO A REAL $ FIGURE FOR FINANZAS) */}
@@ -954,7 +895,7 @@ export function LandlordDashboard({
               </div>
               )}
 
-              {/* SUB-TAB 4: CONTRATISTAS & GARANTÍAS */}
+              {/* SUB-TAB 3: CONTRATISTAS & GARANTÍAS */}
               {maintSubTab === "contratistas" && (
               <div className="space-y-6 animate-fadeIn">
               {/* PREAPPROVED CONTRACTOR ROSTER — real contractors table, wired to
@@ -1340,15 +1281,6 @@ export function LandlordDashboard({
                     <span className="h-2 w-2 rounded-full bg-slate-400" />
                     <span>Copiloto Mariana IA</span>
                   </button>
-                  <button
-                    onClick={() => {
-                      setAttorneyNotified(true);
-                      triggerToast("Notificación legal y expediente enviado a despacho de abogados.");
-                    }}
-                    className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  >
-                    {attorneyNotified ? "Notificación Enviada ✓" : "Enviar a Despacho Legal"}
-                  </button>
                 </div>
               </div>
 
@@ -1363,16 +1295,6 @@ export function LandlordDashboard({
                   }`}
                 >
                   Expedientes & Anomalías (4)
-                </button>
-                <button
-                  onClick={() => setLegalSubTab("consultas")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    legalSubTab === "consultas"
-                      ? "bg-slate-900 text-white shadow-xs"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
-                  }`}
-                >
-                  Consola Legal Mariana IA
                 </button>
                 <button
                   onClick={() => setLegalSubTab("prospectos")}
@@ -1755,300 +1677,7 @@ export function LandlordDashboard({
                 </div>
               )}
 
-              {/* SUB-TAB 2: CONSOLA DE CONSULTA LEGAL ESTILO CHATGPT CON TARJETAS GRANDES */}
-              {legalSubTab === "consultas" && (
-                <div className="space-y-6 animate-fadeIn font-sans">
-                  {/* CONTINUOUS CONTRACT ANALYTICS KPI CARDS GRID */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1 shadow-2xs">
-                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Cobertura Indexación INPC</span>
-                        <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200">81 / {rentRoll.length} Contratos</span>
-                      </div>
-                      <p className="text-xl font-extrabold text-slate-900 tracking-tight">96.4%</p>
-                      <p className="text-xs text-slate-600 font-medium">Promedio: INPC + 1.8% · 3 contratos antiguos a renta fija.</p>
-                    </div>
-
-                    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1 shadow-2xs">
-                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Fianzas & Garantías SSOT</span>
-                        <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200">Resguardo 100%</span>
-                      </div>
-                      <p className="text-xl font-extrabold text-slate-900 tracking-tight">
-                        {currency === "USD" ? "$1.05M USD" : "$18.4M MXN"}
-                      </p>
-                      <p className="text-xs text-slate-600 font-medium">Equivalente a 2.4 meses promedio de renta por local.</p>
-                    </div>
-
-                    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1 shadow-2xs">
-                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Pólizas RC Vigentes</span>
-                        <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded">2 por renovar</span>
-                      </div>
-                      <p className="text-xl font-extrabold text-slate-900 tracking-tight">97.5%</p>
-                      <p className="text-xs text-slate-600 font-medium">260 Grill & Blue Luna Café notificados por Mariana IA.</p>
-                    </div>
-
-                    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-1 shadow-2xs">
-                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Exclusividades Protegidas</span>
-                        <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200">0 Colisiones</span>
-                      </div>
-                      <p className="text-xl font-extrabold text-slate-900 tracking-tight">14 Giros</p>
-                      <p className="text-xs text-slate-600 font-medium">Zonas A, B y C monitoreadas en tiempo real.</p>
-                    </div>
-                  </div>
-
-                  {/* CHATGPT-STYLE MAIN HERO PROMPT COMPOSER */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xs">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-full bg-slate-900" />
-                        <h3 className="font-sans text-lg sm:text-xl font-extrabold text-slate-900">
-                          Preguntar a Mariana IA sobre los {rentRoll.length} Contratos
-                        </h3>
-                      </div>
-                      <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
-                        Haz clic en cualquier pregunta frecuente abajo o escribe tu consulta legal sobre rentas, depósitos, exclusividades o penalizaciones:
-                      </p>
-                    </div>
-
-                    {/* PROMPT COMPOSER INPUT BOX */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      <input
-                        type="text"
-                        value={ragQueryText}
-                        onChange={(e) => setRagQueryText(e.target.value)}
-                        placeholder="Ej: ¿Qué contratos contemplan derecho de preferencia para renovación en 2026?..."
-                        className="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl px-5 py-3.5 text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-900 font-semibold shadow-inner transition-all"
-                      />
-                      <button
-                        onClick={() => {
-                          if (!ragQueryText) return;
-                          setActiveRagQueryResult(
-                            `Dictamen Mariana IA: Para la consulta "${ragQueryText}", se analizaron simultáneamente los ${rentRoll.length} expedientes contractuales. Se identificaron 3 contratos con derecho de preferencia explícito (260 Grill & Bar, Cinemex Premium y Ashley), sujetos a notificación escrita con 90 días de anticipación al vencimiento.`
-                          );
-                          triggerToast("Mariana IA procesó la consulta legal.");
-                        }}
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all cursor-pointer shrink-0 shadow-md flex items-center justify-center gap-2"
-                      >
-                        <span>Consultar Contratos →</span>
-                      </button>
-                    </div>
-
-                    {/* CHATGPT-STYLE LARGE FAQ PROMPT CARDS GRID (4 LARGE INTERACTIVE CARDS) */}
-                    <div className="space-y-3 pt-2">
-                      <p className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
-                        Preguntas Frecuentes Reconciliadas (Haz Clic para Probar):
-                      </p>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                        {/* FAQ CARD 1: INPC */}
-                        <div
-                          onClick={() => {
-                            const q = "¿Cuáles contratos se ajustan con el incremento de inflación INPC en Q4 2026?";
-                            setRagQueryText(q);
-                            setActiveRagQueryResult(
-                              `Dictamen Mariana IA (Ajuste INPC Q4): El 96.2% de los ${rentRoll.length} contratos contemplan incremento anual indexado al INPC + 1.8%. En Q4 2026 (1 de Octubre), aplica el ajuste proyectado para Holiday Inn Express (contrato_holiday_inn_express_2028.pdf, Cláusula 7.1) y Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 6.1). Las notificaciones de cobro están pre-generadas.`
-                            );
-                            triggerToast("Mariana IA analizó los ajustes INPC.");
-                          }}
-                          className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                              Ajuste INPC
-                            </span>
-                            <span className="text-xs text-slate-400 font-bold group-hover:text-slate-900 transition-colors">Probar →</span>
-                          </div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                            ¿Cuáles contratos se ajustan con la inflación en Octubre 2026?
-                          </h4>
-                          <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            Consulta incrementos anuales INPC programados en Q4 para Holiday Inn Express y Blue Luna Café.
-                          </p>
-                        </div>
-
-                        {/* FAQ CARD 2: PENALIZACIONES */}
-                        <div
-                          onClick={() => {
-                            const q = "¿Qué inquilinos tienen penalización por término anticipado mayores a 3 meses de renta?";
-                            setRagQueryText(q);
-                            setActiveRagQueryResult(
-                              `Dictamen Mariana IA (Penalizaciones): De los ${rentRoll.length} contratos, únicamente 2 contemplan retención y pena convencional superior a 3 meses: Cinemex Premium (retención total de fianza + 6 meses) y 260 Grill & Bar (6 meses de renta fija). El 97% restante prevé la pena estándar de 3 meses conforme al Código Civil de BC.`
-                            );
-                            triggerToast("Mariana IA analizó penalizaciones por rescisión.");
-                          }}
-                          className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                              Rescisión & Penalización
-                            </span>
-                            <span className="text-xs text-slate-400 font-bold group-hover:text-slate-900 transition-colors">Probar →</span>
-                          </div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                            ¿Qué inquilinos tienen penalización por término anticipado mayores a 3 meses?
-                          </h4>
-                          <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            Audita cláusulas de retención de fianza y penalizaciones de salida voluntaria.
-                          </p>
-                        </div>
-
-                        {/* FAQ CARD 3: FIANZAS */}
-                        <div
-                          onClick={() => {
-                            const q = "Compara los depósitos en garantía de Cinemex Premium vs 260 Grill & Bar";
-                            setRagQueryText(q);
-                            setActiveRagQueryResult(
-                              `Dictamen Mariana IA (Comparativa de Garantías): Cinemex Premium mantiene en resguardo un depósito equivalente a 3 meses de renta ($849,600 MXN en fideicomiso), mientras que 260 Grill & Bar mantiene 2 meses de renta ($153,600 MXN). Ambos expedientes tienen sus pólizas de fianza respaldadas al 100%.`
-                            );
-                            triggerToast("Mariana IA ejecutó comparativa de garantias.");
-                          }}
-                          className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                              Garantías SSOT
-                            </span>
-                            <span className="text-xs text-slate-400 font-bold group-hover:text-slate-900 transition-colors">Probar →</span>
-                          </div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                            Compara depósitos en garantía de Cinemex Premium vs 260 Grill & Bar
-                          </h4>
-                          <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            Desglose de montos en resguardo y meses de renta en fideicomiso administrado.
-                          </p>
-                        </div>
-
-                        {/* FAQ CARD 4: PRÓRROGAS */}
-                        <div
-                          onClick={() => {
-                            const q = "¿Cuáles contratos tienen opción a prórroga automática y derecho del tanto?";
-                            setRagQueryText(q);
-                            setActiveRagQueryResult(
-                              `Dictamen Mariana IA (Opción a Prórroga): Se identificaron 3 contratos con opción preferencial a prórroga quinquenal: Blue Luna Café (vence Nov 2027, ventana de ejercicio en Ago 2027), Ashley (vence Mar 2029) y Cinemex Premium (vence Jun 2028). Todos exigen aviso formal escrito con 90 días de anticipación.`
-                            );
-                            triggerToast("Mariana IA verificó cláusulas de prórroga.");
-                          }}
-                          className="bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-2xl p-4 cursor-pointer transition-all hover:border-slate-400 space-y-1.5 group shadow-2xs"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                              Prórrogas & Derecho del Tanto
-                            </span>
-                            <span className="text-xs text-slate-400 font-bold group-hover:text-slate-900 transition-colors">Probar →</span>
-                          </div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                            ¿Cuáles contratos tienen opción a prórroga automática y derecho del tanto?
-                          </h4>
-                          <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            Revisa los 90 días de notificación obligatoria previa al vencimiento del arrendamiento.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* ACTIVE CHATGPT RESPONSE CONTAINER (HIGH LEGIBILITY) */}
-                    {activeRagQueryResult && (
-                      <div className="bg-slate-50 border-2 border-slate-900 p-6 rounded-2xl space-y-4 shadow-md animate-fadeIn mt-4 font-sans">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="h-2.5 w-2.5 rounded-full bg-slate-900" />
-                            <span className="font-extrabold text-slate-900 text-sm sm:text-base">
-                              Dictamen Emitido por Mariana IA (Agente Legal SSOT)
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => setActiveRagQueryResult(null)}
-                            className="text-slate-600 hover:text-slate-900 font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-slate-300 cursor-pointer shadow-2xs"
-                          >
-                            Cerrar Dictamen ✕
-                          </button>
-                        </div>
-
-                        <p className="leading-relaxed text-slate-900 font-semibold text-sm sm:text-base bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
-                          {activeRagQueryResult}
-                        </p>
-
-                        <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
-                          <span className="text-slate-500 font-mono">Verificación SHA-256: 8f4a9b2c | {rentRoll.length} Contratos Auditados</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => triggerToast("Dictamen legal copiado al portapapeles.")}
-                              className="bg-white hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-1.5 rounded-lg border border-slate-300 transition-all cursor-pointer shadow-2xs text-xs"
-                            >
-                              Copiar Respuesta
-                            </button>
-                            <button
-                              onClick={() => {
-                                setAttorneyNotified(true);
-                                triggerToast("Dictamen y expediente enviado al despacho de abogados.");
-                              }}
-                              className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs text-xs"
-                            >
-                              Enviar a Despacho Legal →
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* AUTOMATED LEGAL INSIGHTS & RISK FEED */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Hallazgos Automatizados por Análisis Continuo de Mariana IA
-                      </h4>
-                      <span className="text-xs font-bold text-slate-500">Actualizado hoy a las 06:00 hrs</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-2 shadow-2xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-                            Ajuste de Renta INPC
-                          </span>
-                          <span className="text-xs font-bold text-slate-500">Q4 2026</span>
-                        </div>
-                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Aumento Programado Holiday Inn & Blue Luna</h5>
-                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                          Mariana IA identificó que el 1 de Octubre de 2026 aplica el ajuste INPC (Cláusula 7.1) en Holiday Inn Express y Blue Luna Café. Las notificaciones legales ya están listas.
-                        </p>
-                      </div>
-
-                      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-2 shadow-2xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-                            Renovación Póliza RC
-                          </span>
-                          <span className="text-xs font-bold text-slate-500">Vence 31 Ago</span>
-                        </div>
-                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Póliza Seguro 260 Grill & Bar</h5>
-                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                          La póliza de seguro de responsabilidad civil por $5.0M MXN vence en 21 días. Mariana IA envió recordatorio automático a la gerencia del restaurante.
-                        </p>
-                      </div>
-
-                      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-2 shadow-2xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-                            Prórroga Contractual
-                          </span>
-                          <span className="text-xs font-bold text-slate-500">Ago 2027</span>
-                        </div>
-                        <h5 className="font-bold text-xs sm:text-sm text-slate-900">Derecho del Tanto Blue Luna Café</h5>
-                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                          Blue Luna Café cuenta con ventana de notificación previa de 90 días (Ago 2027) para ejercer su opción a prórroga quinquenal en Zona 4.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SUB-TAB 3: EVALUADOR DE VIABILIDAD DE NUEVOS INQUILINOS (EXCLUSIVIDADES) */}
+              {/* SUB-TAB 2: EVALUADOR DE VIABILIDAD DE NUEVOS INQUILINOS (EXCLUSIVIDADES) */}
               {legalSubTab === "prospectos" && (
                 <div className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-6 space-y-6 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/70 pb-4">
@@ -2245,7 +1874,7 @@ export function LandlordDashboard({
                 </div>
               )}
 
-              {/* SUB-TAB 4: MARCO JURÍDICO & RADAR DE LEYES (LEYES FEDERALES & BAJA CALIFORNIA) */}
+              {/* SUB-TAB 3: MARCO JURÍDICO & RADAR DE LEYES (LEYES FEDERALES & BAJA CALIFORNIA) */}
               {legalSubTab === "marco_legal" && (
                 <div className="space-y-6 animate-fadeIn font-sans">
                   {/* RADAR HEADER BANNER */}
