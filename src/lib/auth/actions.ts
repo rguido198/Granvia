@@ -108,6 +108,31 @@ export type ResendState = { done?: boolean };
  * on this exact flow), so a stale pending account is deleted and recreated
  * with its original role/locale_id carried forward.
  */
+export type PasswordResetRequestState = { done?: boolean };
+
+/**
+ * Public — anyone can request a reset for any email, so the response is
+ * identical (`{ done: true }`) whether or not an account exists, same
+ * anti-enumeration shape as resendInviteAction below. The actual email uses
+ * the same token_hash + explicit-click pattern as the invite template (type
+ * "recovery" instead of "invite") — completar-acceso/page.tsx already reads
+ * `type` from the URL generically, so no page-side change was needed for
+ * this to work, only the Supabase "Reset Password" template edit.
+ */
+export async function requestPasswordResetAction(
+  _prev: PasswordResetRequestState,
+  formData: FormData,
+): Promise<PasswordResetRequestState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (email) {
+    const supabase = await createSupabaseServerClient();
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/auth/completar-acceso`,
+    });
+  }
+  return { done: true };
+}
+
 export async function resendInviteAction(_prev: ResendState, formData: FormData): Promise<ResendState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!email) return { done: true };

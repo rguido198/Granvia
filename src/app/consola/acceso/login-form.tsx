@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { signInWithRole, type SignInState } from "@/lib/auth/actions";
 
@@ -60,6 +61,12 @@ export function LoginForm() {
       >
         {pending ? "Verificando…" : "Entrar a la consola →"}
       </button>
+
+      <p className="text-center">
+        <Link href="/auth/recuperar-password" className="font-mono text-[11px] text-ink-500 underline hover:text-ink">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </p>
     </form>
   );
 }
