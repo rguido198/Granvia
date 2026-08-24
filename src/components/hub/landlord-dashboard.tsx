@@ -218,11 +218,6 @@ export function LandlordDashboard({
   const [activeRagQueryResult, setActiveRagQueryResult] = useState<string | null>(null);
   const [inspectedContractId, setInspectedContractId] = useState<string | null>(null);
 
-  // Mariana IA Renewal Draft States — 260 Grill & Bar (Local 10-01)
-  const [renewalDraftOpen, setRenewalDraftOpen] = useState(false);
-  const [renewalConfirmOpen, setRenewalConfirmOpen] = useState(false);
-  const [renewalSent, setRenewalSent] = useState(false);
-
   // Toast Notification State
   const [toast, setToast] = useState<string | null>(null);
   const triggerToast = (msg: string) => {
@@ -230,19 +225,12 @@ export function LandlordDashboard({
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Immutable Audit Trail — seeded from the real events each Tier 2/3 action
-  // actually writes to (ticket_status_history, agent_decisions, lease_applications
+  // Immutable Audit Trail — the real events each Tier 2/3 action actually
+  // writes to (ticket_status_history, agent_decisions, lease_applications
   // reviews, the autonomy kill-switch — see src/lib/platform/audit-log.server.ts),
-  // not a hardcoded array. Stored oldest-first; rendered newest-first.
-  const [auditLog, setAuditLog] = useState<AuditEntry[]>(initialAuditLog);
+  // not a hardcoded array. Fetched server-side; rendered newest-first.
+  const auditLog = initialAuditLog;
   const [auditLogFilter, setAuditLogFilter] = useState("");
-
-  const appendAuditLog = (actorType: "user" | "agent", actor: string, action: string) => {
-    const now = new Date();
-    const timestamp = now.toISOString();
-    const hash = "sha256_" + Math.random().toString(16).slice(2, 12);
-    setAuditLog((prev) => [...prev, { id: `evt-${prev.length}-${now.getTime()}`, timestamp, actorType, actor, action, hash }]);
-  };
 
   return (
     <div
@@ -637,7 +625,6 @@ export function LandlordDashboard({
                       </tr>
                     )}
                     {visibleRentRoll.map((r) => {
-                      const is260Grill = r.name.includes("260 Grill");
                       const isBlueLuna = r.name.includes("Blue Luna");
 
                       return (
@@ -679,23 +666,7 @@ export function LandlordDashboard({
                             )}
                           </td>
                           <td className="p-3.5 text-center whitespace-nowrap">
-                            {is260Grill ? (
-                              <button
-                                onClick={() => {
-                                  setRenewalDraftOpen(true);
-                                  triggerToast("Mariana IA generó el borrador de renovación de 260 Grill & Bar.");
-                                }}
-                                title="Ver borrador de renovación generado por Mariana (Gerente de Contratos)"
-                                className={`px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1.5 mx-auto ${
-                                  renewalSent
-                                    ? "bg-slate-100 text-slate-800 border border-slate-200"
-                                    : "bg-slate-900 hover:bg-slate-800 text-white"
-                                }`}
-                              >
-                                {!renewalSent && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
-                                {renewalSent ? "Borrador Enviado a Abogado ✓" : "Renovación Próxima · Mariana IA →"}
-                              </button>
-                            ) : isBlueLuna ? (
+                            {isBlueLuna ? (
                               <button
                                 onClick={() => {
                                   setActiveAgent("mariana");
@@ -1779,25 +1750,6 @@ export function LandlordDashboard({
                                     </div>
                                   </div>
 
-                                  {c.id === "c-260" && (
-                                    <div className="bg-slate-900 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                      <div>
-                                        <p className="text-white font-bold text-xs">Vence {c.expirationDate} ({c.timeRemaining})</p>
-                                        <p className="text-slate-300 text-[11px] mt-0.5">
-                                          Mariana IA puede redactar el borrador de renovación a partir de {c.pdf}, actualizando solo los parámetros que corresponde.
-                                        </p>
-                                      </div>
-                                      <button
-                                        onClick={() => {
-                                          setRenewalDraftOpen(true);
-                                          triggerToast(`Mariana IA generó el borrador de renovación de ${c.brand}.`);
-                                        }}
-                                        className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
-                                      >
-                                        {renewalSent ? "Ver Borrador Enviado ✓" : "Generar Borrador de Renovación →"}
-                                      </button>
-                                    </div>
-                                  )}
                                 </td>
                               </tr>
                             )}
@@ -3048,190 +3000,6 @@ export function LandlordDashboard({
                 Enviar
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* MARIANA AI · RENEWAL DRAFT MODAL (260 GRILL & BAR / LOCAL 10-01) */}
-      {renewalDraftOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden text-slate-900 font-sans max-h-[90vh] flex flex-col">
-            <div className="bg-slate-900 text-white p-6 shrink-0">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Mariana IA · Borrador de Renovación
-                </span>
-                <button
-                  onClick={() => setRenewalDraftOpen(false)}
-                  className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
-                  aria-label="Cerrar ventana"
-                >
-                  ✕
-                </button>
-              </div>
-              <h3 className="text-xl font-bold mt-2">260 Grill & Bar · Local 10-01</h3>
-              <p className="text-xs text-slate-300 mt-1">
-                Generado a partir de contrato_260_grill_2026_firmado.pdf. Vence 31 Oct 2026 (En 2 meses).
-              </p>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
-                  <p className="font-bold text-amber-900 text-xs uppercase tracking-wide border-b border-amber-200 pb-2">
-                    Parámetros Actualizados
-                  </p>
-                  <div className="space-y-2.5">
-                    <div>
-                      <p className="text-amber-800 font-semibold text-[11px]">Renta Base Mensual</p>
-                      <p className="font-bold text-slate-900">$76,800 → $80,256 MXN</p>
-                      <p className="text-amber-800 text-[11px]">+4.5% INPC (Cláusula 7.2)</p>
-                    </div>
-                    <div>
-                      <p className="text-amber-800 font-semibold text-[11px]">Vigencia del Contrato</p>
-                      <p className="font-bold text-slate-900">31 Oct 2026 → 31 Oct 2031</p>
-                      <p className="text-amber-800 text-[11px]">Nuevo periodo: 5 años</p>
-                    </div>
-                    <div>
-                      <p className="text-amber-800 font-semibold text-[11px]">Depósito en Garantía</p>
-                      <p className="font-bold text-slate-900">$153,600 → $160,512 MXN</p>
-                      <p className="text-amber-800 text-[11px]">2 meses de la nueva renta base</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                  <p className="font-bold text-slate-700 text-xs uppercase tracking-wide border-b border-slate-200 pb-2">
-                    Parámetros Sin Cambios
-                  </p>
-                  <div className="space-y-2.5">
-                    <div>
-                      <p className="text-slate-500 font-semibold text-[11px]">Superficie & Ubicación</p>
-                      <p className="font-bold text-slate-900">320 m² · Local 10-01</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 font-semibold text-[11px]">Cláusula 18.1 · Exclusividad</p>
-                      <p className="text-slate-700 leading-relaxed">Steakhouse & Gastro-Pub en bloque 10. No afecta cafeterías ni tiendas retail.</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 font-semibold text-[11px]">Cláusula 22.4 · Penalización</p>
-                      <p className="text-slate-700 leading-relaxed">Equitativa a 6 meses de Renta Base por rescisión anticipada.</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 font-semibold text-[11px]">Cláusula 7.2 · Mecanismo de Ajuste</p>
-                      <p className="text-slate-700 leading-relaxed">Incremento anual indexado al INPC publicado por INEGI en Octubre.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-700">
-                <p className="font-bold text-xs text-slate-900">Nota de Mariana IA</p>
-                <p className="text-[11.5px] mt-0.5 leading-relaxed">
-                  Borrador redactado sobre el contrato vigente — solo se modifican los tres parámetros marcados arriba; el resto del clausulado permanece idéntico al documento firmado. Listo para revisión de asesoría legal externa antes de notificar al inquilino.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3 shrink-0">
-              <button
-                onClick={() => setRenewalDraftOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cerrar
-              </button>
-              <button
-                onClick={() => {
-                  setRenewalDraftOpen(false);
-                  if (!renewalSent) setRenewalConfirmOpen(true);
-                }}
-                disabled={renewalSent}
-                className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm ${
-                  renewalSent ? "bg-slate-400 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
-                }`}
-              >
-                {renewalSent ? "Ya Enviado al Abogado ✓" : "Enviar Borrador al Abogado para Revisión →"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MARIANA AI · RENEWAL SEND CONFIRMATION MODAL (TIER 3 HUMAN GATE) */}
-      {renewalConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 font-sans">
-            <div className="bg-slate-900 text-white p-6">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Mariana IA · Confirmación de Envío Legal
-                </span>
-                <button
-                  onClick={() => setRenewalConfirmOpen(false)}
-                  className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
-                  aria-label="Cerrar ventana"
-                >
-                  ✕
-                </button>
-              </div>
-              <h3 className="text-xl font-bold mt-2">Confirmar Envío a Asesoría Legal</h3>
-              <p className="text-xs text-slate-300 mt-1">
-                Revisión previa al envío del borrador de renovación de 260 Grill & Bar.
-              </p>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs">
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
-                <p className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
-                  Resumen de la Transacción
-                </p>
-                <div className="space-y-2 text-slate-700">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Documento:</span>
-                    <span className="font-bold text-slate-900">Borrador de Renovación · 260 Grill & Bar</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Destinatario:</span>
-                    <span className="font-bold text-slate-900">Asesoría Legal Externa</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Cambio Propuesto:</span>
-                    <span className="font-bold text-slate-900">$76,800 → $80,256 MXN/mes</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Nueva Vigencia:</span>
-                    <span className="font-bold text-slate-900">Hasta 31 Oct 2031</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-amber-900">
-                <p className="font-bold text-xs">Aviso de Responsabilidad Legal</p>
-                <p className="text-[11.5px] mt-0.5 text-amber-800">
-                  Al autorizar, el borrador se enviará a la asesoría legal externa para revisión. El inquilino no será notificado hasta que el abogado apruebe el documento — esta acción no compromete al propietario ni al inquilino por sí sola.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-              <button
-                onClick={() => setRenewalConfirmOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  setRenewalSent(true);
-                  setRenewalConfirmOpen(false);
-                  triggerToast("Mariana IA: Borrador de renovación enviado a la asesoría legal externa para revisión.");
-                  appendAuditLog("user", "m.hage@lagranvia.com.mx", "Aprobó envío de borrador de renovación (260 Grill & Bar) a asesoría legal externa");
-                }}
-                className="px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm bg-emerald-700 hover:bg-emerald-800"
-              >
-                Aprobar y Enviar a Abogado →
-              </button>
-            </div>
           </div>
         </div>
       )}
