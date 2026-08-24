@@ -421,32 +421,6 @@ const DIEGO_REPLIES: AgentReply[] = [
   },
 ];
 
-function buildRenataReplies(fiscalAlertRent: number, plazaTotalGla: number, leasedSqm: number, vacantSqm: number): AgentReply[] {
-  return [
-    {
-      chip: "Alerta MINT Boutique (PPD vs PUE)",
-      query: "¿Por qué MINT Boutique registró una alerta fiscal SAT CFDI 4.0?",
-      answer: `MINT Boutique pagó $${fiscalAlertRent.toLocaleString()} MXN mediante transferencia registrando el método PUE (Pago en una sola exhibición), pero la factura original se emitió bajo el régimen PPD (Pago en parcialidades). Renata detectó la discrepancia antes de la declaración mensual del SAT para auto-emitir el Complemento de Recepción de Pagos sin sanción.`,
-      docName: "CFDI_4.0_Complemento_Pago_SAT_MINT.xml",
-      docRef: "Anexo 20 RMF SAT §2.7.1.35",
-    },
-    {
-      chip: "Invariante Matemática Prorrateo CAM 1.0000",
-      query: "¿Cómo funciona la Invariante Matemática del Prorrateo CAM 1.0000?",
-      answer: `La cuota CAM de cada inquilino se calcula dividiendo su superficie arrendada individual entre los ${plazaTotalGla.toLocaleString()} m² GLA de la plaza (${leasedSqm.toLocaleString()} m² arrendados + ${vacantSqm} m² de vacancia absorbida por el propietario). La sumatoria de participaciones pro-rata es exactamente 1.0000 (100.00%): el residual de redondeo se asigna al local de mayor superficie, por lo que la columna cuadra al peso contra la bolsa mensual de $${CAM_MONTHLY_POOL.toLocaleString()} MXN.`,
-      docName: "Matriz_Prorrateo_NNN_GranVia.xml",
-      docRef: "Invariante 1.0000 Cuadrada",
-    },
-    {
-      chip: "Requisitos CFDI 4.0 para Deducción NNN",
-      query: "¿Cuáles son los requisitos CFDI 4.0 obligatorios para deducir gastos NNN?",
-      answer:
-        "Conforme al Anexo 20 RMF SAT, se requiere RFC receptor válido, Régimen Fiscal 601, Código Postal del domicilio fiscal del inquilino y la clave de producto/servicio SAT 80131502 (Arrendamiento de centros comerciales).",
-      docName: "Guia_Timbrado_SAT_CFDI40.xml",
-      docRef: "Anexo 20 SAT §4.0",
-    },
-  ];
-}
 
 /**
  * Assembles the console payload. Called from the server component that renders
@@ -531,6 +505,5 @@ export function buildConsoleData(): ConsoleData {
 
     marianaReplies: MARIANA_REPLIES,
     diegoReplies: DIEGO_REPLIES,
-    renataReplies: buildRenataReplies(FISCAL_ALERT_ROW?.rent ?? 0, plazaTotalGla, leasedSqm, VACANT_UNIT.sqm),
   };
 }

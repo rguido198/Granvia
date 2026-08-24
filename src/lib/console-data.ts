@@ -154,5 +154,4 @@ export type ConsoleData = {
 
   marianaReplies: AgentReply[];
   diegoReplies: AgentReply[];
-  renataReplies: AgentReply[];
 };

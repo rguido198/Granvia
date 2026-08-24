@@ -106,7 +106,6 @@ export function SiteFooter() {
           <div className="flex items-center gap-6 text-slate-400">
             <span className="hover:text-slate-200 cursor-pointer">Privacidad & Datos</span>
             <span className="hover:text-slate-200 cursor-pointer">Términos de Servicio</span>
-            <span className="hover:text-slate-200 cursor-pointer">Cumplimiento SAT CFDI 4.0</span>
           </div>
         </div>
       </div>

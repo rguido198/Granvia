@@ -123,15 +123,17 @@ export const AC_TICKET_SCRIPT: AcTicketMessage[] = [
 /** Rotating pool for the Landlord Command Center's live activity feed — demo data. */
 export type ActivityEntry = { agent: string; text: string; accent: "terra" | "pine" | "gold" };
 
+// Diego (Mantenimiento) and Mariana (Arrendamiento) only — the two agents
+// actually contracted for this engagement. Previously included "Agente
+// Financiero" (CFDI invoice automation) and "Agente de Asset Management"
+// (CAM proration) entries; neither exists here — no ERP/accounting
+// connection for the first, and Renata/cam-allocator isn't contracted for
+// the second (same rule applied throughout the console this session).
 export const AI_ACTIVITY_POOL: ActivityEntry[] = [
   { agent: "Agente de Arrendamiento", text: "Evaluó una solicitud entrante para Local C-08 — sin conflicto de exclusividad.", accent: "pine" },
   { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local 10-01 (falla de AC, código E4).", accent: "terra" },
-  { agent: "Agente Financiero", text: "Procesó el reporte de ventas de Bodega 8 con OCR y emitió el CFDI correspondiente.", accent: "pine" },
-  { agent: "Agente de Asset Management", text: "Detectó un incremento del 14% en ventas para Buffalo Wild Wings — excelente desempeño.", accent: "pine" },
   { agent: "Agente de Arrendamiento", text: "Generó lineamientos de Islas Comerciales para un giro con cláusula de exclusividad activa.", accent: "terra" },
-  { agent: "Agente Financiero", text: "Envió recordatorio automático de reporte de ventas a 3 locales pendientes.", accent: "pine" },
   { agent: "Agente de Mantenimiento", text: "Cerró el ticket #INC-401 (trampa de grasa) — confirmado por Alma Verde.", accent: "pine" },
-  { agent: "Agente de Asset Management", text: "Actualizó el prorrateo de CAM de julio para los 84 locales activos.", accent: "gold" },
 ];
 
 /** CAM allocation demo — one plaza invoice divided proportionally by tenant m². */
