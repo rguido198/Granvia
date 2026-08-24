@@ -5,6 +5,7 @@ import { start } from "workflow/api";
 import { extractText } from "@/lib/ingest/extract-text";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { diegoTriageWorkflow } from "@/workflows/diego-triage";
+import { marianaScreeningWorkflow } from "@/workflows/mariana-screening";
 
 export const runtime = "nodejs"; // pdf-parse needs Node's Buffer, not the Edge runtime
 
@@ -127,15 +128,16 @@ export async function POST(request: NextRequest) {
       return;
     }
 
-    if (kind === "maintenance_ticket" && typeof localeId === "string") {
-      const run = await start(diegoTriageWorkflow, [documentId, localeId]);
+    if (typeof localeId === "string") {
+      const run =
+        kind === "maintenance_ticket"
+          ? await start(diegoTriageWorkflow, [documentId, localeId])
+          : await start(marianaScreeningWorkflow, [documentId, localeId]);
       await supabase
         .from("documents")
         .update({ workflow_run_id: run.runId })
         .eq("id", documentId);
     }
-    // Mariana's lease_application path has no workflow yet — the document
-    // sits at 'ready_for_triage' until that flow is built.
   });
 
   return NextResponse.json({ documentId }, { status: 202 });
