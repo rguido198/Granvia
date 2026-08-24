@@ -18,6 +18,7 @@
     "react-dom": "19.2.4",
     "server-only": "^0.0.1",
     "workflow": "^4.8.4",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {

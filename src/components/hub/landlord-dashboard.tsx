@@ -18,6 +18,7 @@ import { MarianaApplicationForm } from "@/components/hub/mariana-application-for
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
+import { RentRollAdminTools, TerminateTenantButton } from "@/components/hub/rent-roll-tools";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
 
@@ -124,7 +125,7 @@ export function LandlordDashboard({
     periodLabel,
   } = data;
 
-  const { rentRoll, leases, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
+  const { rentRoll, leases, formerTenants, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
 
   // View & Filter States
   const [activeTab, setActiveTab] = useState<SidebarTab>("rentroll");
@@ -219,8 +220,11 @@ export function LandlordDashboard({
   // Diego IA Maintenance Calendar States
   const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
 
-  // Accessibility Font Scale State
-  const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
+  // Accessibility font scale lives once now, in ConsoleShell's outer bar — it
+  // wraps this whole component's render tree, so its zoom/scale-font-* already
+  // reaches everything below. A second, independently-stateful "Texto:" control
+  // used to live here too, which meant its own zoom could silently compound with
+  // ConsoleShell's; removed instead of kept as a second source of truth.
 
   // Sidebar nav is a full-screen drawer on mobile (closed by default) so the
   // console content is reachable without scrolling past the entire nav first —
@@ -271,15 +275,10 @@ export function LandlordDashboard({
   const [auditLogFilter, setAuditLogFilter] = useState("");
 
   return (
-    <div
-      style={{ zoom: fontSizeLevel === "large" ? 1.12 : fontSizeLevel === "xlarge" ? 1.25 : 1 }}
-      className={`min-h-screen bg-sand-50 text-ink-700 flex flex-col lg:flex-row font-sans antialiased transition-all ${
-        fontSizeLevel === "large" ? "scale-font-large" : fontSizeLevel === "xlarge" ? "scale-font-xlarge" : "scale-font-normal"
-      }`}
-    >
+    <div className="min-h-screen bg-slate-50 text-ink-700 flex flex-col lg:flex-row antialiased">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-terra text-white px-5 py-3.5 rounded-xl shadow-2xl border border-ink-700 flex items-center gap-3 text-xs font-semibold animate-slideUp">
+        <div className="fixed bottom-5 right-5 z-50 bg-[var(--console-accent)] text-white px-5 py-3.5 rounded-xl shadow-2xl border border-ink-700 flex items-center gap-3 text-xs font-semibold animate-slideUp">
           <span className="h-2.5 w-2.5 rounded-full bg-ink-300" />
           <span>{toast}</span>
           <button onClick={() => setToast(null)} className="text-ink-400 hover:text-white text-xs ml-2 cursor-pointer font-bold">
@@ -308,7 +307,7 @@ export function LandlordDashboard({
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="-mt-1 -mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 hover:bg-sand-100"
+              className="-mt-1 -mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 hover:bg-slate-100"
               aria-label="Cerrar menú"
             >
               ✕
@@ -316,7 +315,7 @@ export function LandlordDashboard({
           </div>
           {/* Brand Header */}
           <div className="px-1 py-1 space-y-2">
-            <div className="inline-block bg-sand-50 px-3 py-2 rounded-xl border border-hairline shadow-2xs">
+            <div className="inline-block bg-slate-50 px-3 py-2 rounded-xl border border-hairline shadow-2xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/la-gran-via-logo-horizontal.png"
@@ -337,8 +336,8 @@ export function LandlordDashboard({
               onClick={() => selectTab("rentroll")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "rentroll"
-                  ? "bg-terra text-white shadow-xs"
-                  : "text-ink-700 hover:bg-sand-100 hover:text-ink"
+                  ? "bg-[var(--console-accent)] text-white shadow-xs"
+                  : "text-ink-700 hover:bg-slate-100 hover:text-ink"
               }`}
             >
               <span>Rent Roll & Locales</span>
@@ -352,8 +351,8 @@ export function LandlordDashboard({
               onClick={() => selectTab("maint")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "maint"
-                  ? "bg-terra text-white shadow-xs"
-                  : "text-ink-700 hover:bg-sand-100 hover:text-ink"
+                  ? "bg-[var(--console-accent)] text-white shadow-xs"
+                  : "text-ink-700 hover:bg-slate-100 hover:text-ink"
               }`}
             >
               <span>Diego IA · Mantenimiento</span>
@@ -363,8 +362,8 @@ export function LandlordDashboard({
               onClick={() => selectTab("legal")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "legal"
-                  ? "bg-terra text-white shadow-xs"
-                  : "text-ink-700 hover:bg-sand-100 hover:text-ink"
+                  ? "bg-[var(--console-accent)] text-white shadow-xs"
+                  : "text-ink-700 hover:bg-slate-100 hover:text-ink"
               }`}
             >
               <span>Mariana IA · Legal</span>
@@ -378,12 +377,12 @@ export function LandlordDashboard({
               onClick={() => selectTab("rbac")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "rbac"
-                  ? "bg-terra text-white shadow-xs"
-                  : "text-ink-700 hover:bg-sand-100 hover:text-ink"
+                  ? "bg-[var(--console-accent)] text-white shadow-xs"
+                  : "text-ink-700 hover:bg-slate-100 hover:text-ink"
               }`}
             >
               <span>Control de Acceso RBAC</span>
-              <span className="text-xs font-bold bg-sand-200 text-ink px-2 py-0.5 rounded shrink-0 ml-2">Admin</span>
+              <span className="text-xs font-bold bg-slate-200 text-ink px-2 py-0.5 rounded shrink-0 ml-2">Admin</span>
             </button>
           </nav>
         </div>
@@ -395,11 +394,11 @@ export function LandlordDashboard({
               selectTab("rbac");
               triggerToast("Abriendo Consola de Control de Acceso & Permisos RBAC...");
             }}
-            className="rounded-xl bg-sand-50 hover:bg-sand-100 p-3.5 space-y-1.5 border border-hairline transition-all cursor-pointer group text-left"
+            className="rounded-xl bg-slate-50 hover:bg-slate-100 p-3.5 space-y-1.5 border border-hairline transition-all cursor-pointer group text-left"
           >
             <div className="flex items-center justify-between text-ink font-bold">
               <span className="group-hover:underline font-mono text-xs truncate">m.hage@lagranvia.com.mx</span>
-              <span className="h-2.5 w-2.5 rounded-full bg-terra shrink-0 ml-1" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)] shrink-0 ml-1" />
             </div>
             <p className="text-xs text-ink-500 font-semibold truncate">Administrador General · RBAC →</p>
           </div>
@@ -409,75 +408,31 @@ export function LandlordDashboard({
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* TOP HEADER BAR */}
-        <header className="h-auto min-h-16 bg-white border-b border-hairline/80 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 font-sans shadow-2xs">
+        <header className="h-auto min-h-16 bg-white border-b border-hairline/80 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 shadow-2xs">
           {/* Top Header Title or Left Spacer */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-ink-700 hover:bg-sand-100 lg:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-ink-700 hover:bg-slate-100 lg:hidden"
               aria-label="Abrir menú"
             >
               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span className="text-xs sm:text-sm font-bold tracking-wider text-ink-500 font-sans">
+            <span className="text-xs sm:text-sm font-bold tracking-wider text-ink-500">
               La Gran Vía · Consola de Control
             </span>
           </div>
 
-          {/* Controls, Currency Toggle, Accessibility Font Switcher & AI Copilot Drawer Toggle */}
+          {/* Controls, Currency Toggle & AI Copilot Drawer Toggle — the
+              accessibility font switcher lives once now, in ConsoleShell's
+              outer bar, not duplicated here (see the note by fontSizeLevel's
+              old declaration above). */}
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* ACCESSIBILITY FONT SIZE CONTROLLER */}
-            <div className="flex items-center bg-sand-100 p-1 rounded-xl border border-hairline text-xs font-bold shrink-0">
-              <span className="px-2 text-ink-500 text-xs font-semibold hidden md:inline">Texto:</span>
-              <button
-                onClick={() => {
-                  setFontSizeLevel("normal");
-                  triggerToast("Tamaño de texto: Normal");
-                }}
-                title="Texto Normal"
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-xs ${
-                  fontSizeLevel === "normal"
-                    ? "bg-terra text-white shadow-2xs font-bold"
-                    : "text-ink-500 hover:text-ink"
-                }`}
-              >
-                A
-              </button>
-              <button
-                onClick={() => {
-                  setFontSizeLevel("large");
-                  triggerToast("Tamaño de texto: Grande (+15%)");
-                }}
-                title="Texto Grande"
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-sm ${
-                  fontSizeLevel === "large"
-                    ? "bg-terra text-white shadow-2xs font-bold"
-                    : "text-ink-500 hover:text-ink"
-                }`}
-              >
-                A+
-              </button>
-              <button
-                onClick={() => {
-                  setFontSizeLevel("xlarge");
-                  triggerToast("Tamaño de texto: Extra Grande (+30%)");
-                }}
-                title="Texto Extra Grande"
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-base ${
-                  fontSizeLevel === "xlarge"
-                    ? "bg-terra text-white shadow-2xs font-bold"
-                    : "text-ink-500 hover:text-ink"
-                }`}
-              >
-                A++
-              </button>
-            </div>
-
             {/* CURRENCY TRANSLATION TOGGLE (MXN DEFAULT / USD AT 17.50 RATE) */}
-            <div className="flex items-center bg-sand-100 p-1 rounded-xl border border-hairline/80 text-xs font-bold shrink-0">
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-hairline/80 text-xs font-bold shrink-0">
               <button
                 onClick={() => {
                   setCurrency("MXN");
@@ -485,7 +440,7 @@ export function LandlordDashboard({
                 }}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   currency === "MXN"
-                    ? "bg-terra text-white shadow-2xs"
+                    ? "bg-[var(--console-accent)] text-white shadow-2xs"
                     : "text-ink-500 hover:text-ink"
                 }`}
               >
@@ -498,7 +453,7 @@ export function LandlordDashboard({
                 }}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   currency === "USD"
-                    ? "bg-terra text-white shadow-2xs"
+                    ? "bg-[var(--console-accent)] text-white shadow-2xs"
                     : "text-ink-500 hover:text-ink"
                 }`}
               >
@@ -508,7 +463,7 @@ export function LandlordDashboard({
 
             <select
               aria-label="Periodo de reporte"
-              className="bg-sand-100/80 border border-hairline/80 rounded-xl px-3 py-2 text-xs font-semibold text-ink-700 focus:outline-none cursor-pointer"
+              className="bg-slate-100/80 border border-hairline/80 rounded-xl px-3 py-2 text-xs font-semibold text-ink-700 focus:outline-none cursor-pointer"
             >
               <option value="ago-2026">Agosto 2026 (Actual)</option>
               <option value="jul-2026">Julio 2026</option>
@@ -521,8 +476,8 @@ export function LandlordDashboard({
               onClick={() => setCopilotOpen(!copilotOpen)}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 copilotOpen
-                  ? "bg-terra-dark text-white"
-                  : "bg-terra hover:bg-terra-dark text-white"
+                  ? "bg-[var(--console-accent-dark)] text-white"
+                  : "bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white"
               }`}
             >
               <span className="h-2 w-2 rounded-full bg-ink-400" />
@@ -532,23 +487,24 @@ export function LandlordDashboard({
         </header>
 
         {/* MAIN BODY AREA */}
-        <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto font-sans">
+        <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
           {activeTab === "rentroll" && (
-            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs font-sans">
+            <Fragment>
+            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs">
               {/* TOP HEADER & ACTION BAR */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-terra" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)]" />
                     <span className="text-xs font-semibold tracking-wider text-ink-500">
                       Single Source of Truth (SSOT) · Base de Datos Maestra
                     </span>
                   </div>
-                  <h2 className="font-sans text-2xl font-bold text-ink mt-1">
+                  <h2 className="text-2xl font-bold text-ink mt-1">
                     Rent Roll & Directorio Unificado de Locales
                   </h2>
                   <p className="text-sm text-ink-500 mt-1">
-                    Registro maestro de {rentRoll.length} locales comerciales. Los cambios aplicados aquí actualizan en tiempo real el Portal del Arrendatario (<code className="bg-sand-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/inquilinos</code>). El Plano Interactivo público (<code className="bg-sand-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/directorio</code>) usa su propio contenido de marketing y no se actualiza desde aquí.
+                    Registro maestro de {rentRoll.length} locales comerciales. Los cambios aplicados aquí actualizan en tiempo real el Portal del Arrendatario (<code className="bg-slate-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/inquilinos</code>). El Plano Interactivo público (<code className="bg-slate-100 px-1.5 py-0.5 rounded text-ink-700 font-medium">/directorio</code>) usa su propio contenido de marketing y no se actualiza desde aquí.
                   </p>
                 </div>
 
@@ -561,12 +517,19 @@ export function LandlordDashboard({
                         triggerToast("Modo edición activado. Cada cambio se guarda al salir del campo (Tab o Enter).");
                       }
                     }}
-                    className="bg-terra hover:bg-terra-dark text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                    className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
                   >
                     {isEditingRentRoll ? "Terminar Edición" : "Modo Edición"}
                   </button>
                 </div>
               </div>
+
+              {/* Add / bulk-import tenants — Tier 3 actions, real Supabase
+                  writes against the same locales/leases tables the rent roll
+                  below reads from. Kept next to the SSOT banner rather than
+                  the sort/filter bar so they read as rent-roll-wide
+                  operations, not a per-row table control. */}
+              <RentRollAdminTools />
 
               {/* PORTFOLIO KPI SUMMARY — three numbers derivable from lease
                   terms alone. The previous two cards (Renta Recibida / Real
@@ -575,23 +538,23 @@ export function LandlordDashboard({
                   mismatches — that requires a bank feed or ERP/accounting
                   connection this engagement doesn't have and isn't getting.
                   Nothing here implies knowledge this system doesn't have. */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-display">
-                <div className="bg-sand-50 border border-hairline/90 border-t-2 border-t-terra rounded-xl p-4.5 space-y-1">
-                  <p className="text-xs font-bold text-ink-500 tracking-wide font-display">Renta Contratada (Portafolio)</p>
-                  <p className="text-2xl font-bold font-display text-ink">{formatMxn(contractedRent)}</p>
-                  <p className="text-xs text-ink-500 font-medium font-display">{rentRoll.length} locales bajo contrato</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 space-y-1">
+                  <p className="text-xs font-bold text-ink-500 tracking-wide">Renta Contratada (Portafolio)</p>
+                  <p className="text-2xl font-bold text-ink">{formatMxn(contractedRent)}</p>
+                  <p className="text-xs text-ink-500 font-medium">{rentRoll.length} locales bajo contrato</p>
                 </div>
 
-                <div className="bg-sand-50 border border-hairline/90 border-t-2 border-t-terra rounded-xl p-4.5 space-y-1">
-                  <p className="text-xs font-bold text-ink-500 tracking-wide font-display">Renta Promedio / m²</p>
-                  <p className="text-2xl font-bold font-display text-ink">{formatVal(Math.round(contractedRent / leasedSqm))}</p>
-                  <p className="text-xs text-ink-500 font-medium font-display">Sobre {leasedSqm.toLocaleString("es-MX")} m² arrendados</p>
+                <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 space-y-1">
+                  <p className="text-xs font-bold text-ink-500 tracking-wide">Renta Promedio / m²</p>
+                  <p className="text-2xl font-bold text-ink">{formatVal(Math.round(contractedRent / leasedSqm))}</p>
+                  <p className="text-xs text-ink-500 font-medium">Sobre {leasedSqm.toLocaleString("es-MX")} m² arrendados</p>
                 </div>
 
-                <div className="bg-sand-50 border border-hairline/90 border-t-2 border-t-terra rounded-xl p-4.5 space-y-1">
-                  <p className="text-xs font-bold text-ink-500 tracking-wide font-display">Ocupación GLA</p>
-                  <p className="text-2xl font-bold font-display text-ink">{((leasedSqm / plazaTotalGla) * 100).toFixed(1)}%</p>
-                  <p className="text-xs text-ink-500 font-medium font-display">
+                <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 space-y-1">
+                  <p className="text-xs font-bold text-ink-500 tracking-wide">Ocupación GLA</p>
+                  <p className="text-2xl font-bold text-ink">{((leasedSqm / plazaTotalGla) * 100).toFixed(1)}%</p>
+                  <p className="text-xs text-ink-500 font-medium">
                     {leasedSqm.toLocaleString("es-MX")} de {plazaTotalGla.toLocaleString("es-MX")} m² totales
                   </p>
                 </div>
@@ -601,7 +564,7 @@ export function LandlordDashboard({
                   timestamp. This engagement has no accounting/ERP
                   connection and per explicit scope decision isn't getting
                   one; "Sincronizado con ERP" was never true. */}
-              <div className="bg-sand-50 border border-hairline rounded-xl p-4 text-xs text-ink-700 font-medium">
+              <div className="bg-slate-50 border border-hairline rounded-xl p-4 text-xs text-ink-700 font-medium">
                 <span className="font-bold text-ink text-xs">Rent Roll Maestro · Periodo Fiscal: Agosto 2026</span>
                 <p className="text-[11px] text-ink-500 mt-0.5">
                   Padrón contractual del portafolio (GLA Total: {plazaTotalGla.toLocaleString("es-MX")} m² · Superficie Rentable Bruta).
@@ -615,7 +578,7 @@ export function LandlordDashboard({
                   value={rentRollFilter}
                   onChange={(e) => setRentRollFilter(e.target.value)}
                   placeholder="Filtrar por inquilino o local…"
-                  className="w-full max-w-xs rounded-lg border border-hairline-strong px-3 py-2 text-xs bg-white focus:border-terra focus:outline-none"
+                  className="w-full max-w-xs rounded-lg border border-hairline-strong px-3 py-2 text-xs bg-white focus:border-[var(--console-accent)] focus:outline-none"
                 />
                 <p className="text-[11px] text-ink-500 font-medium whitespace-nowrap">
                   {visibleRentRoll.length} de {rentRoll.length} locales
@@ -623,8 +586,8 @@ export function LandlordDashboard({
               </div>
 
               <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-hidden">
-                <table className="w-full text-left text-xs font-sans">
-                  <thead className="bg-sand-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
                       <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} />
                       <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" />
@@ -664,7 +627,7 @@ export function LandlordDashboard({
                       const isBlueLuna = r.name.includes("Blue Luna");
 
                       return (
-                        <tr key={r.slug} className={`transition-colors ${isEditingRentRoll ? "bg-sand-100/50 hover:bg-sand-100" : "hover:bg-sand-50"}`}>
+                        <tr key={r.slug} className={`transition-colors ${isEditingRentRoll ? "bg-slate-100/50 hover:bg-slate-100" : "hover:bg-slate-50"}`}>
                           <td className="p-3.5">
                             <p className="font-bold text-ink text-xs">{r.name}</p>
                             <p className="text-[11px] text-ink-500 font-medium">{r.unitCode}</p>
@@ -676,7 +639,7 @@ export function LandlordDashboard({
                                 defaultValue={r.sqm}
                                 aria-label={`Superficie m² para ${r.name}`}
                                 disabled={savingField === `${r.slug}:sqm`}
-                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-terra focus:outline-none disabled:opacity-50"
+                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
                                 onBlur={(e) => saveRentRollField(r.slug, "sqm", e.target.value, r.sqm, `Superficie de ${r.name}`)}
                                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
@@ -692,7 +655,7 @@ export function LandlordDashboard({
                                 defaultValue={r.rent}
                                 aria-label={`Renta mensual para ${r.name}`}
                                 disabled={savingField === `${r.slug}:rent`}
-                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-terra focus:outline-none disabled:opacity-50"
+                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
                                 onBlur={(e) => saveRentRollField(r.slug, "rent", e.target.value, r.rent, `Renta de ${r.name}`)}
                                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
@@ -706,26 +669,35 @@ export function LandlordDashboard({
                             )}
                           </td>
                           <td className="p-3.5 text-center whitespace-nowrap">
-                            {isBlueLuna ? (
-                              <button
-                                onClick={() => {
-                                  setActiveAgent("mariana");
-                                  setCopilotOpen(true);
-                                  setQueryResult(
-                                    "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 4-16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
-                                  );
-                                  triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
-                                }}
-                                title="Ver auditoría de póliza asignada a Mariana IA"
-                                className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
-                              >
-                                Revisar Seguro · Mariana IA →
-                              </button>
-                            ) : (
-                              <span className="bg-sand-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                                Vigente SSOT
-                              </span>
-                            )}
+                            <div className="flex flex-col items-center gap-1">
+                              {isBlueLuna ? (
+                                <button
+                                  onClick={() => {
+                                    setActiveAgent("mariana");
+                                    setCopilotOpen(true);
+                                    setQueryResult(
+                                      "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 4-16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
+                                    );
+                                    triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
+                                  }}
+                                  title="Ver auditoría de póliza asignada a Mariana IA"
+                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
+                                >
+                                  Revisar Seguro · Mariana IA →
+                                </button>
+                              ) : r.vacant ? (
+                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                  Vacante
+                                </span>
+                              ) : (
+                                <span className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                  Vigente SSOT
+                                </span>
+                              )}
+                              {!r.vacant && r.leaseId && (
+                                <TerminateTenantButton localeId={r.slug} leaseId={r.leaseId} tenantName={r.name} unitCode={r.unitCode} />
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -734,20 +706,71 @@ export function LandlordDashboard({
                 </table>
               </div>
             </div>
+
+            {/* INQUILINOS ANTERIORES — a "Desocupar" never deletes a locale,
+                it just drops the unit out of the rent roll above (which only
+                shows it as "Vacante"). Without this section that would read
+                as data loss; this is where the history actually lives (see
+                formerTenants in portfolio.server.ts). */}
+            {formerTenants.length > 0 && (
+              <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-4 shadow-xs">
+                <div>
+                  <h3 className="text-base font-bold text-ink">Inquilinos Anteriores</h3>
+                  <p className="text-xs text-ink-500 mt-0.5">
+                    Locales desocupados — el registro se conserva, no se elimina. {formerTenants.length} en historial.
+                  </p>
+                </div>
+                <div className="border border-hairline rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-[11px] font-bold text-ink-500 border-b border-hairline tracking-wider">
+                      <tr>
+                        <th className="p-3">Local</th>
+                        <th className="p-3">Antiguo Inquilino</th>
+                        <th className="p-3 text-right">Superficie</th>
+                        <th className="p-3 text-right">Última Renta</th>
+                        <th className="p-3">Contrato Terminó</th>
+                        <th className="p-3">Estatus</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-hairline">
+                      {formerTenants.map((t) => (
+                        <tr key={t.localeId} className="hover:bg-slate-50">
+                          <td className="p-3 font-semibold text-ink-700 whitespace-nowrap">{t.unitCode}</td>
+                          <td className="p-3 text-ink-700">{t.tenantEntity}</td>
+                          <td className="p-3 text-right text-ink-500 tabular-nums">{t.sqm.toLocaleString("es-MX")} m²</td>
+                          <td className="p-3 text-right text-ink-500 tabular-nums">{formatVal(t.lastRentMonthly)}</td>
+                          <td className="p-3 text-ink-500">
+                            {t.leaseEndDate !== "—"
+                              ? new Date(t.leaseEndDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
+                              : "—"}
+                          </td>
+                          <td className="p-3">
+                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-ink-700 border border-hairline">
+                              Vacante
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            </Fragment>
           )}
 
           {activeTab === "maint" && (
-            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs font-sans">
+            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs">
               {/* HEADER & WARRANTY UPLOAD ACTION BAR */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-terra" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)]" />
                     <span className="text-xs font-semibold tracking-wider text-ink-500">
                       Agente de Mantenimiento & CapEx · Diego IA
                     </span>
                   </div>
-                  <h2 className="font-sans text-xl font-bold text-ink mt-1">Diego IA · CapEx, Mantenimiento & Expediente Digital</h2>
+                  <h2 className="text-xl font-bold text-ink mt-1">Diego IA · CapEx, Mantenimiento & Expediente Digital</h2>
                   <p className="text-xs text-ink-500 font-medium mt-1">
                     Control de pólizas de equipos pesados (HVAC, Elevadores, Subestaciones), bitácora preventiva y reclamación automática de garantías a proveedores.
                   </p>
@@ -756,7 +779,7 @@ export function LandlordDashboard({
                 <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                   <button
                     onClick={() => triggerToast("Selecciona la Garantía, Póliza o Manual de Equipo (PDF/XML) para indexar en Diego IA...")}
-                    className="bg-white hover:bg-sand-100 text-ink border border-hairline-strong font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
+                    className="bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)] font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                   >
                     + Cargar Garantía o Manual (PDF)
                   </button>
@@ -769,8 +792,8 @@ export function LandlordDashboard({
                   onClick={() => setMaintSubTab("triage")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     maintSubTab === "triage"
-                      ? "bg-terra text-white shadow-xs"
-                      : "bg-sand-100 hover:bg-sand-200 text-ink-700 border border-hairline"
+                      ? "bg-[var(--console-accent)] text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                   }`}
                 >
                   Triage & Calendario
@@ -779,8 +802,8 @@ export function LandlordDashboard({
                   onClick={() => setMaintSubTab("capex")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     maintSubTab === "capex"
-                      ? "bg-terra text-white shadow-xs"
-                      : "bg-sand-100 hover:bg-sand-200 text-ink-700 border border-hairline"
+                      ? "bg-[var(--console-accent)] text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                   }`}
                 >
                   CapEx & Costos
@@ -789,8 +812,8 @@ export function LandlordDashboard({
                   onClick={() => setMaintSubTab("contratistas")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     maintSubTab === "contratistas"
-                      ? "bg-terra text-white shadow-xs"
-                      : "bg-sand-100 hover:bg-sand-200 text-ink-700 border border-hairline"
+                      ? "bg-[var(--console-accent)] text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                   }`}
                 >
                   Contratistas & Garantías
@@ -814,7 +837,7 @@ export function LandlordDashboard({
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3">
                   <div>
-                    <h3 className="font-sans text-base font-bold text-ink">
+                    <h3 className="text-base font-bold text-ink">
                       Calendario de Próximos Eventos
                     </h3>
                     <p className="text-xs text-ink-500 mt-0.5">
@@ -840,8 +863,8 @@ export function LandlordDashboard({
                           <p className="text-[11px] text-ink-500">{event.vendor} · {event.category} · Responsable: {event.responsible}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-bold text-ink text-xs font-sans tabular-nums">{formatVal(event.costEstimate)}</p>
-                          <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 bg-sand-100 text-ink-700 border border-hairline">
+                          <p className="font-bold text-ink text-xs tabular-nums">{formatVal(event.costEstimate)}</p>
+                          <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 bg-slate-100 text-ink-700 border border-hairline">
                             Programado
                           </span>
                         </div>
@@ -854,8 +877,8 @@ export function LandlordDashboard({
                             disabled={isNotified}
                             className={`font-bold px-3 py-1.5 rounded-lg text-[11px] transition-all whitespace-nowrap border ${
                               isNotified
-                                ? "bg-sand-50 text-ink-400 border-hairline cursor-default"
-                                : "bg-white hover:bg-sand-100 text-ink-700 border-hairline-strong cursor-pointer"
+                                ? "bg-slate-50 text-ink-400 border-hairline cursor-default"
+                                : "bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border-[var(--console-accent)] cursor-pointer"
                             }`}
                           >
                             {isNotified ? "Notificado ✓" : "Notificar por Correo"}
@@ -876,21 +899,21 @@ export function LandlordDashboard({
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3">
                   <div>
-                    <h3 className="font-sans text-base font-bold text-ink">
+                    <h3 className="text-base font-bold text-ink">
                       Registro de Casos CapEx & Responsabilidad de Costo
                     </h3>
                     <p className="text-xs text-ink-500 mt-0.5">
                       Cada solicitud de gasto mayor resuelta por Diego IA: quién paga y por qué. Alimenta la tarjeta &ldquo;CapEx Protegido&rdquo; en la Torre de Control CFO.
                     </p>
                   </div>
-                  <span className="text-xs font-bold bg-sand-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
+                  <span className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
                     {formatVal(diegoProtectedCapex)} Protegidos del P&amp;L
                   </span>
                 </div>
 
                 <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                  <table className="w-full text-left text-xs font-sans">
-                    <thead className="bg-sand-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                       <tr>
                         <th className="p-3.5">Caso / Inquilino</th>
                         <th className="p-3.5">Tipo de Gasto & Equipo</th>
@@ -902,12 +925,12 @@ export function LandlordDashboard({
                       {capexCases.map((c) => {
                         const verdictMeta =
                           c.verdict === "RECHAZADO_RESPONSABILIDAD_INQUILINO"
-                            ? { label: "Rechazado · Responsabilidad Inquilino", badge: "bg-terra text-white" }
+                            ? { label: "Rechazado · Responsabilidad Inquilino", badge: "bg-[var(--console-accent)] text-white" }
                             : c.verdict === "APROBADO_GARANTIA_COSTO_CERO"
-                              ? { label: "Aprobado · Garantía ($0 MXN)", badge: "bg-sand-100 text-ink-700 border border-hairline" }
+                              ? { label: "Aprobado · Garantía ($0 MXN)", badge: "bg-slate-100 text-ink-700 border border-hairline" }
                               : { label: "Aprobado · Prorrateo CAM", badge: "bg-caution-surface text-caution border border-caution/40" };
                         return (
-                          <tr key={c.id} className="hover:bg-sand-50/90 transition-colors align-top">
+                          <tr key={c.id} className="hover:bg-slate-50/90 transition-colors align-top">
                             <td className="p-3.5">
                               <p className="font-bold text-ink text-xs">{c.tenant}</p>
                               <p className="text-[11px] text-ink-500">{c.id}</p>
@@ -916,7 +939,7 @@ export function LandlordDashboard({
                               <p className="text-ink-700 font-semibold">{c.expenseType}</p>
                               <p className="text-[11px] text-ink-500">{c.equipmentModel} · {c.serialNumber}</p>
                             </td>
-                            <td className="p-3.5 text-right font-bold font-sans tabular-nums text-ink whitespace-nowrap">
+                            <td className="p-3.5 text-right font-bold tabular-nums text-ink whitespace-nowrap">
                               {formatVal(c.amount)}
                             </td>
                             <td className="p-3.5">
@@ -946,14 +969,14 @@ export function LandlordDashboard({
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3">
                   <div>
-                    <h3 className="font-sans text-base font-bold text-ink">
+                    <h3 className="text-base font-bold text-ink">
                       Expediente Digital de Garantías & Pólizas de Equipos
                     </h3>
                     <p className="text-xs text-ink-500 mt-0.5">
                       Diego IA monitorea la vigencia de pólizas de mantenimiento, reclamaciones a fabricantes e historial técnico.
                     </p>
                   </div>
-                  <span className="text-xs font-bold bg-sand-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
+                  <span className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
                     8 Garantías Indexadas en Diego IA
                   </span>
                 </div>
@@ -976,8 +999,8 @@ export function LandlordDashboard({
                       onClick={() => setWarrantyCategoryFilter(cat.id)}
                       className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                         warrantyCategoryFilter === cat.id
-                          ? "bg-terra text-white font-bold shadow-2xs"
-                          : "bg-sand-100 hover:bg-sand-200 text-ink-700 border border-hairline"
+                          ? "bg-[var(--console-accent)] text-white font-bold shadow-2xs"
+                          : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                       }`}
                     >
                       {cat.label}
@@ -993,20 +1016,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               HVAC Climatización
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Serie: TRN-2024-884</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Chiller Centravac Trane 150 Ton (Torre Central)</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía Activa ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_trane_chiller_2024_2029.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_trane_chiller_2024_2029.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>5 Años en Compresor, Condensador & Evaporador</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>Climas de Mexicali S.A. de C.V.</strong></p>
                         <p>📅 Vencimiento de Garantía: <strong>14 de Noviembre de 2029</strong></p>
@@ -1030,20 +1053,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Elevadores & Movilidad
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Serie: TK-MEX-4410</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Elevador Panorámico ThyssenKrupp (Zona A)</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía Activa ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_mantenimiento_thyssenkrupp_2026.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_mantenimiento_thyssenkrupp_2026.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>Atención de Urgencia 24/7 & Repuestos Originales</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>TK Elevator México</strong></p>
                         <p>📅 Vencimiento de Póliza: <strong>31 de Diciembre de 2026</strong></p>
@@ -1067,20 +1090,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Subestación Eléctrica
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Serie: SCH-1500-KVA</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Subestación Eléctrica Schneider 1500 KVA</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía Activa ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_subestacion_schneider_2025.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_subestacion_schneider_2025.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>Transformadores de Potencia & Interruptores de Vacío</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>Schneider Electric México</strong></p>
                         <p>📅 Vencimiento de Garantía: <strong>28 de Febrero de 2028</strong></p>
@@ -1104,20 +1127,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Impermeabilización Techos
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Superficie: 8,400 m²</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Impermeabilización Mapei (Cinemex & Zona B)</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía 10 Años ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_impermeabilizacion_mapei_10a.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_impermeabilizacion_mapei_10a.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>Garantía de 10 Años Libre de Filtraciones en Techos</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>Mapei de México</strong></p>
                         <p>📅 Vencimiento de Garantía: <strong>15 de Junio de 2034</strong></p>
@@ -1141,20 +1164,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Protección Incendio
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Certificación: NFPA 25</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Sistema de Aspersión & Bomba SimplexGrinnell</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía Activa ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_sistema_contra_incendio_2026.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_sistema_contra_incendio_2026.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>Certificación NFPA 25 & Reemplazo de Válvulas de Retención</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>Johnson Controls Fire Protection</strong></p>
                         <p>📅 Vencimiento de Garantía: <strong>30 de Septiembre de 2027</strong></p>
@@ -1178,20 +1201,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Energía Solar Fotovoltaica
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Capacidad: 350 kWp</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Arreglo Fotovoltaico Canadian Solar (Techado C)</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía 25 Años ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_paneles_solares_canadian_25a.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_paneles_solares_canadian_25a.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>25 Años de Rendimiento Fotovoltaico al 85% de Eficiencia</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>Canadian Solar México / Enel X</strong></p>
                         <p>📅 Vencimiento de Garantía: <strong>10 de Enero de 2048</strong></p>
@@ -1215,20 +1238,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Seguridad & Acceso
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">6 Carriles LPR</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Barreras Automatizadas & Cámaras FAAC / Hikvision</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía Activa ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_barreras_estacionamiento_faac.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_barreras_estacionamiento_faac.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>Motores Hidráulicos FAAC & Cámaras de Reconocimiento LPR</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>Hikvision & FAAC México</strong></p>
                         <p>📅 Vencimiento de Póliza: <strong>18 de Mayo de 2027</strong></p>
@@ -1252,20 +1275,20 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Hidráulico & Planta PTAR
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">PTAR 50 m³/día</span>
                           </div>
                           <h4 className="font-bold text-sm text-ink mt-1">Planta de Tratamiento & Bombas Grundfos</h4>
                         </div>
-                        <span className="bg-sand-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Garantía Activa ✓
                         </span>
                       </div>
 
                       <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-sand-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_planta_tratamiento_grundfos.pdf</code></p>
+                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_planta_tratamiento_grundfos.pdf</code></p>
                         <p>🛠️ Cobertura: <strong>Bombas Sumergibles, Membranas Biológicas & Control SBR</strong></p>
                         <p>🏢 Proveedor Autorizado: <strong>Grundfos México</strong></p>
                         <p>📅 Vencimiento de Garantía: <strong>05 de Noviembre de 2027</strong></p>
@@ -1290,17 +1313,17 @@ export function LandlordDashboard({
           )}
 
           {activeTab === "legal" && (
-            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs font-sans">
+            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs">
               {/* MODULE HEADER & ACTION BAR */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-terra" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)]" />
                     <span className="text-xs font-semibold tracking-wider text-ink-500">
                       Agente Legal IA · Mariana IA
                     </span>
                   </div>
-                  <h2 className="font-sans text-2xl font-bold text-ink mt-1">
+                  <h2 className="text-2xl font-bold text-ink mt-1">
                     Mariana IA · Inteligencia Multi-Contrato & Exclusividades
                   </h2>
                   <p className="text-xs text-ink-500 mt-1">
@@ -1316,7 +1339,7 @@ export function LandlordDashboard({
                       setActiveAgent("mariana");
                       triggerToast("Abriendo Copiloto IA con Mariana IA (Agente Legal)...");
                     }}
-                    className="bg-terra hover:bg-terra-dark text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-xs"
+                    className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-xs"
                   >
                     <span className="h-2 w-2 rounded-full bg-ink-400" />
                     <span>Copiloto Mariana IA</span>
@@ -1330,8 +1353,8 @@ export function LandlordDashboard({
                   onClick={() => setLegalSubTab("expedientes")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     legalSubTab === "expedientes"
-                      ? "bg-terra text-white shadow-xs"
-                      : "bg-sand-100 hover:bg-sand-200 text-ink-700 border border-hairline"
+                      ? "bg-[var(--console-accent)] text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                   }`}
                 >
                   Expedientes & Anomalías (4)
@@ -1340,8 +1363,8 @@ export function LandlordDashboard({
                   onClick={() => setLegalSubTab("prospectos")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     legalSubTab === "prospectos"
-                      ? "bg-terra text-white shadow-xs"
-                      : "bg-sand-100 hover:bg-sand-200 text-ink-700 border border-hairline"
+                      ? "bg-[var(--console-accent)] text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                   }`}
                 >
                   Viabilidad de Prospectos (Exclusividades)
@@ -1350,8 +1373,8 @@ export function LandlordDashboard({
                   onClick={() => setLegalSubTab("marco_legal")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     legalSubTab === "marco_legal"
-                      ? "bg-terra text-white shadow-xs"
-                      : "bg-sand-100 hover:bg-sand-200 text-ink-700 border border-hairline"
+                      ? "bg-[var(--console-accent)] text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                   }`}
                 >
                   Marco Jurídico & Radar de Leyes (DOF & BC)
@@ -1363,7 +1386,7 @@ export function LandlordDashboard({
                 <div className="space-y-4 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-sans text-base font-bold text-ink">
+                      <h3 className="text-base font-bold text-ink">
                         Directorio General de Contratos Activos
                       </h3>
                       <p className="text-xs text-ink-500 mt-0.5">
@@ -1371,7 +1394,7 @@ export function LandlordDashboard({
                       </p>
                     </div>
                     <span
-                      className="text-xs font-bold bg-sand-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0 cursor-default select-none"
+                      className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0 cursor-default select-none"
                       title="SSOT = Single Source of Truth / Fuente Única de Verdad"
                     >
                       {leases.length} Contratos Indexados (SSOT)
@@ -1379,8 +1402,8 @@ export function LandlordDashboard({
                   </div>
 
                   <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                    <table className="w-full text-left text-xs font-sans">
-                      <thead className="bg-sand-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
                           <th className="p-3.5">Inquilino & Ubicación</th>
                           <th className="p-3.5">Vencimiento Contrato</th>
@@ -1393,7 +1416,7 @@ export function LandlordDashboard({
                           <Fragment key={c.id}>
                             <tr
                               onClick={() => setInspectedContractId(inspectedContractId === c.id ? null : c.id)}
-                              className="hover:bg-sand-50/90 transition-colors cursor-pointer"
+                              className="hover:bg-slate-50/90 transition-colors cursor-pointer"
                             >
                               <td className="p-3.5">
                                 <div className="flex items-center gap-2">
@@ -1413,7 +1436,7 @@ export function LandlordDashboard({
                               <td className="p-3.5">
                                 <span
                                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                    c.renewalSoon ? "bg-terra text-white" : "bg-sand-100 text-ink-700 border border-hairline"
+                                    c.renewalSoon ? "bg-[var(--console-accent)] text-white" : "bg-slate-100 text-ink-700 border border-hairline"
                                   }`}
                                 >
                                   {c.renewalSoon ? "Renovación Próxima" : "Vigente"}
@@ -1425,8 +1448,8 @@ export function LandlordDashboard({
                                 exclusive_use_clause and permitted_use. No document storage, no per-contract
                                 hash, no INPC/penalty clause columns exist in the schema, so none are shown. */}
                             {inspectedContractId === c.id && (
-                              <tr className="bg-sand-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
-                                <td colSpan={4} className="p-5 space-y-4 font-sans text-xs">
+                              <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
+                                <td colSpan={4} className="p-5 space-y-4 text-xs">
                                   <h4 className="font-bold text-sm text-ink border-b border-hairline pb-3">
                                     {c.tenantEntity} · {c.unitCode}
                                   </h4>
@@ -1459,14 +1482,14 @@ export function LandlordDashboard({
 
               {/* SUB-TAB 2: EVALUADOR DE VIABILIDAD DE NUEVOS INQUILINOS (EXCLUSIVIDADES) */}
               {legalSubTab === "prospectos" && (
-                <div className="bg-sand-50/80 border border-hairline/90 rounded-2xl p-6 space-y-6 animate-fadeIn">
+                <div className="bg-slate-50/80 border border-hairline/90 rounded-2xl p-6 space-y-6 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline/70 pb-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-ink bg-sand-200 px-2.5 py-0.5 rounded-md">
+                        <span className="text-xs font-bold text-ink bg-slate-200 px-2.5 py-0.5 rounded-md">
                           Inteligencia de Arrendamiento
                         </span>
-                        <h3 className="font-sans text-base font-bold text-ink">
+                        <h3 className="text-base font-bold text-ink">
                           Evaluador de Viabilidad Legal de Nuevos Inquilinos (Exclusividades RAG)
                         </h3>
                       </div>
@@ -1502,13 +1525,13 @@ export function LandlordDashboard({
                             }}
                             className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                               isSelected
-                                ? "bg-terra text-white border-terra shadow-md ring-2 ring-terra"
-                                : "bg-white hover:bg-sand-100 text-ink border-hairline shadow-2xs"
+                                ? "bg-[var(--console-accent)] text-white border-[var(--console-accent)] shadow-md ring-2 ring-[var(--console-accent)]"
+                                : "bg-white hover:bg-slate-100 text-ink border-hairline shadow-2xs"
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-bold text-xs">{p.brand}</span>
-                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${isSelected ? "bg-terra-dark text-white" : "bg-sand-100 text-ink-500"}`}>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${isSelected ? "bg-[var(--console-accent-dark)] text-white" : "bg-slate-100 text-ink-500"}`}>
                                 {p.tag}
                               </span>
                             </div>
@@ -1526,7 +1549,7 @@ export function LandlordDashboard({
                           value={customProspectBrand}
                           onChange={(e) => setCustomProspectBrand(e.target.value)}
                           placeholder="Ingresar Marca Comercial Personalizada (ej: Lululemon, Sephora...)"
-                          className="flex-1 bg-white border border-hairline-strong rounded-xl px-3.5 py-2 text-xs text-ink-700 focus:outline-none focus:border-terra font-medium"
+                          className="flex-1 bg-white border border-hairline-strong rounded-xl px-3.5 py-2 text-xs text-ink-700 focus:outline-none focus:border-[var(--console-accent)] font-medium"
                         />
                         <select
                           value={customProspectCategory}
@@ -1548,7 +1571,7 @@ export function LandlordDashboard({
                           }
                           triggerToast(`Mariana IA ejecutó auditoría RAG cruzada para ${customProspectBrand}...`);
                         }}
-                        className="w-full sm:w-auto bg-terra hover:bg-terra-dark text-white font-bold px-5 py-2 rounded-xl text-xs transition-all cursor-pointer shrink-0 shadow-2xs"
+                        className="w-full sm:w-auto bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-5 py-2 rounded-xl text-xs transition-all cursor-pointer shrink-0 shadow-2xs"
                       >
                         Auditar con Mariana IA
                       </button>
@@ -1615,9 +1638,9 @@ export function LandlordDashboard({
                       <div className="bg-white border border-hairline rounded-xl p-5 space-y-4 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3">
                           <div className="flex items-center gap-2.5">
-                            <span className="h-3 w-3 rounded-full bg-terra shrink-0" />
+                            <span className="h-3 w-3 rounded-full bg-[var(--console-accent)] shrink-0" />
                             <div>
-                              <h4 className="font-sans font-bold text-ink text-sm">
+                              <h4 className="font-bold text-ink text-sm">
                                 Dictamen RAG: {prospect.brand} ({prospect.category})
                               </h4>
                               <p className="text-xs text-ink-500 font-medium">Espacio evaluado: {prospect.requestedUnit}</p>
@@ -1627,8 +1650,8 @@ export function LandlordDashboard({
                           <span
                             className={`text-xs font-bold px-3 py-1 rounded-full border shrink-0 ${
                               prospect.viable
-                                ? "bg-sand-100 text-ink border-hairline-strong"
-                                : "bg-terra text-white border-terra"
+                                ? "bg-slate-100 text-ink border-hairline-strong"
+                                : "bg-[var(--console-accent)] text-white border-[var(--console-accent)]"
                             }`}
                           >
                             {prospect.viable ? "VIABLE (SIN CONFLICTOS)" : "CONFLICTO DE EXCLUSIVIDAD"}
@@ -1636,11 +1659,11 @@ export function LandlordDashboard({
                         </div>
 
                         <div className="space-y-3 text-xs">
-                          <p className="text-ink-700 leading-relaxed font-medium bg-sand-50 p-3.5 rounded-xl border border-hairline/80">
+                          <p className="text-ink-700 leading-relaxed font-medium bg-slate-50 p-3.5 rounded-xl border border-hairline/80">
                             {prospect.reasoning}
                           </p>
 
-                          <div className="bg-sand-50 border-l-2 border-terra p-3.5 rounded-r-xl space-y-1.5 font-sans">
+                          <div className="bg-slate-50 border-l-2 border-[var(--console-accent)] p-3.5 rounded-r-xl space-y-1.5">
                             <div className="flex items-center justify-between text-[11px] text-ink-500 font-bold">
                               <span>Evidencia RAG extraída ({prospect.conflictingContract}):</span>
                               <span className="text-ink-400">Páginas de contrato verificadas</span>
@@ -1656,16 +1679,16 @@ export function LandlordDashboard({
 
               {/* SUB-TAB 3: MARCO JURÍDICO & RADAR DE LEYES (LEYES FEDERALES & BAJA CALIFORNIA) */}
               {legalSubTab === "marco_legal" && (
-                <div className="space-y-6 animate-fadeIn font-sans">
+                <div className="space-y-6 animate-fadeIn">
                   {/* RADAR HEADER BANNER */}
-                  <div className="bg-sand-50 border border-hairline rounded-2xl p-6 space-y-4">
+                  <div className="bg-slate-50 border border-hairline rounded-2xl p-6 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-hairline pb-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-ink bg-sand-200 px-2.5 py-0.5 rounded-md">
+                          <span className="text-xs font-bold text-ink bg-slate-200 px-2.5 py-0.5 rounded-md">
                             Supervisión Normativa
                           </span>
-                          <h3 className="font-sans text-base font-bold text-ink">
+                          <h3 className="text-base font-bold text-ink">
                             Radar de Leyes & Reformas Legislativas (DOF & Baja California)
                           </h3>
                         </div>
@@ -1676,7 +1699,7 @@ export function LandlordDashboard({
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
                           onClick={() => triggerToast("Selecciona el archivo PDF o XML del Código o Reforma Legal para indexar en Mariana IA...")}
-                          className="bg-white hover:bg-sand-100 text-ink-700 border border-hairline-strong font-bold px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
+                          className="bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)] font-bold px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                         >
                           + Cargar Nueva Ley (PDF/XML)
                         </button>
@@ -1686,7 +1709,7 @@ export function LandlordDashboard({
                             setLastLawScanDate(nowStr);
                             triggerToast(`Mariana IA consultó DOF y POE Baja California. 0 reformas recientes afectan los ${rentRoll.length} contratos.`);
                           }}
-                          className="bg-terra hover:bg-terra-dark text-white font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
+                          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
                         >
                           Verificar Reformas Ahora
                         </button>
@@ -1695,7 +1718,7 @@ export function LandlordDashboard({
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-ink-700 font-medium pt-1">
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-terra-dark" />
+                        <span className="h-2 w-2 rounded-full bg-[var(--console-accent-dark)]" />
                         <span>Última Verificación de Leyes: <strong>{lastLawScanDate}</strong></span>
                       </div>
                       <span className="bg-white text-ink-700 font-bold px-3 py-1 rounded-lg border border-hairline text-[11px]">
@@ -1711,7 +1734,7 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold tracking-wider bg-sand-100 text-ink-700 px-2 py-0.5 rounded border border-hairline">
+                            <span className="text-[10px] font-bold tracking-wider bg-slate-100 text-ink-700 px-2 py-0.5 rounded border border-hairline">
                               Estatal · Baja California
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Art. 2270 - 2345</span>
@@ -1720,7 +1743,7 @@ export function LandlordDashboard({
                             Código Civil para el Estado de Baja California
                           </h4>
                         </div>
-                        <span className="bg-sand-100 text-ink-700 border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink-700 border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Vigente POE 2026
                         </span>
                       </div>
@@ -1729,7 +1752,7 @@ export function LandlordDashboard({
                         Regula los requisitos formales del arrendamiento comercial en Mexicali y Baja California: plazos de renovación por buena fe, derecho del tanto y reglas de rescisión por mora en el estado.
                       </p>
 
-                      <div className="bg-sand-50 p-3 rounded-xl border border-hairline/80 flex items-center justify-between text-xs font-bold text-ink-700">
+                      <div className="bg-slate-50 p-3 rounded-xl border border-hairline/80 flex items-center justify-between text-xs font-bold text-ink-700">
                         <span>Estado de Contratos en Plaza:</span>
                         <span className="text-ink font-extrabold">{rentRoll.length} de {rentRoll.length} Cumplen 100% ✓</span>
                       </div>
@@ -1740,7 +1763,7 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold tracking-wider bg-sand-100 text-ink-700 px-2 py-0.5 rounded border border-hairline">
+                            <span className="text-[10px] font-bold tracking-wider bg-slate-100 text-ink-700 px-2 py-0.5 rounded border border-hairline">
                               Federal · México
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Art. 2398 - 2499</span>
@@ -1749,7 +1772,7 @@ export function LandlordDashboard({
                             Código Civil Federal (DOF Última Reforma 2026)
                           </h4>
                         </div>
-                        <span className="bg-sand-100 text-ink-700 border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink-700 border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Vigente DOF 2026
                         </span>
                       </div>
@@ -1758,7 +1781,7 @@ export function LandlordDashboard({
                         Normativa supletoria nacional para la interpretación de convenios mercantiles, penas convencionales por rescisión anticipada e incremento anual de rentas indexado al INPC.
                       </p>
 
-                      <div className="bg-sand-50 p-3 rounded-xl border border-hairline/80 flex items-center justify-between text-xs font-bold text-ink-700">
+                      <div className="bg-slate-50 p-3 rounded-xl border border-hairline/80 flex items-center justify-between text-xs font-bold text-ink-700">
                         <span>Estado de Contratos en Plaza:</span>
                         <span className="text-ink font-extrabold">{rentRoll.length} de {rentRoll.length} Cumplen 100% ✓</span>
                       </div>
@@ -1769,7 +1792,7 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold tracking-wider bg-sand-100 text-ink-700 px-2 py-0.5 rounded border border-hairline">
+                            <span className="text-[10px] font-bold tracking-wider bg-slate-100 text-ink-700 px-2 py-0.5 rounded border border-hairline">
                               Federal · Penal / Fiscal
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">Art. 8 Cláusulas</span>
@@ -1778,7 +1801,7 @@ export function LandlordDashboard({
                             Ley Nacional de Extinción de Dominio
                           </h4>
                         </div>
-                        <span className="bg-sand-100 text-ink-700 border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="bg-slate-100 text-ink-700 border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
                           Auditoría 100%
                         </span>
                       </div>
@@ -1787,7 +1810,7 @@ export function LandlordDashboard({
                         Exige la inclusión obligatoria de la cláusula de deslinde de responsabilidad penal y uso exclusivo para actividades lícitas en todos los locales comerciales de La Gran Vía.
                       </p>
 
-                      <div className="bg-sand-50 p-3 rounded-xl border border-hairline/80 flex items-center justify-between text-xs font-bold text-ink-700">
+                      <div className="bg-slate-50 p-3 rounded-xl border border-hairline/80 flex items-center justify-between text-xs font-bold text-ink-700">
                         <span>Cláusula de Deslinde Incluida:</span>
                         <span className="text-ink font-extrabold">{rentRoll.length} de {rentRoll.length} Protegidos ✓</span>
                       </div>
@@ -1801,7 +1824,7 @@ export function LandlordDashboard({
                       <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-terra text-white px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--console-accent)] text-white px-2 py-0.5 rounded">
                               Federal · SAT Fiscal
                             </span>
                             <span className="text-[10px] font-bold text-ink-500">CFDI 4.0</span>
@@ -1824,17 +1847,17 @@ export function LandlordDashboard({
 
           {/* TAB 7: GOBIERNO, PERMISOS RBAC Y BITÁCORA DE AUDITORÍA */}
           {activeTab === "rbac" && (
-            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-7 animate-fadeIn shadow-xs font-sans text-ink">
+            <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-7 animate-fadeIn shadow-xs text-ink">
               {/* HEADER & NEW USER ACTION BAR */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-full bg-terra" />
+                    <span className="h-3 w-3 rounded-full bg-[var(--console-accent)]" />
                     <span className="text-sm font-bold tracking-wider text-ink-500">
                       Gobierno & Seguridad de la Plataforma
                     </span>
                   </div>
-                  <h2 className="font-sans text-2xl font-bold text-ink mt-1">
+                  <h2 className="text-2xl font-bold text-ink mt-1">
                     Control de Accesos RBAC & Bitácora de Auditoría Inmutable
                   </h2>
                   <p className="text-sm text-ink-500 font-medium mt-1">
@@ -1849,20 +1872,20 @@ export function LandlordDashboard({
                   "Sesiones Activas" card was dropped rather than faked, since
                   Supabase Auth doesn't expose active-session tracking without
                   added instrumentation this app doesn't have. */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 font-display">
-                <div className="bg-sand-50 border border-hairline rounded-xl p-5 space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="bg-slate-50 border border-hairline rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-ink-500 tracking-wide">Usuarios Corporativos</p>
                   <p className="text-3xl font-bold text-ink">{corporateUsers.length} {corporateUsers.length === 1 ? "Usuario" : "Usuarios"}</p>
                   <p className="text-sm text-ink-500 font-medium">
                     {corporateUsers.filter((u) => u.status === "active").length} Activos · {corporateUsers.filter((u) => u.status === "pending").length} Invitación Pendiente
                   </p>
                 </div>
-                <div className="bg-sand-50 border border-hairline rounded-xl p-5 space-y-1.5">
+                <div className="bg-slate-50 border border-hairline rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-ink-500 tracking-wide">Perfiles Definidos</p>
                   <p className="text-3xl font-bold text-ink">1 Rol</p>
                   <p className="text-sm text-ink-500 font-medium">Landlord — acceso uniforme, sin niveles</p>
                 </div>
-                <div className="bg-sand-50 border border-hairline rounded-xl p-5 space-y-1.5">
+                <div className="bg-slate-50 border border-hairline rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-ink-500 tracking-wide">Integridad de Auditoría</p>
                   <p className="text-3xl font-bold text-ink">{auditLog.length} Registros</p>
                   <p className="text-sm text-ink-500 font-medium">Huella SHA-256 por entrada</p>
@@ -1876,7 +1899,7 @@ export function LandlordDashboard({
                   a fabricated permission matrix. */}
               <div className="space-y-4 pt-2">
                 <div>
-                  <h3 className="font-sans text-lg font-bold text-ink">
+                  <h3 className="text-lg font-bold text-ink">
                     Usuarios con Acceso a la Consola
                   </h3>
                   <p className="text-sm text-ink-500 font-medium mt-0.5">
@@ -1886,7 +1909,7 @@ export function LandlordDashboard({
 
                 <div className="border border-hairline rounded-xl overflow-hidden shadow-xs">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-sand-100 text-ink-700 font-bold text-[11px] sm:text-xs tracking-wider border-b border-hairline-strong">
+                    <thead className="bg-slate-100 text-ink-700 font-bold text-[11px] sm:text-xs tracking-wider border-b border-hairline-strong">
                       <tr>
                         <th className="py-3 px-3">Usuario</th>
                         <th className="py-3 px-3">Invitado</th>
@@ -1902,7 +1925,7 @@ export function LandlordDashboard({
                         </tr>
                       )}
                       {corporateUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-sand-50 transition-colors">
+                        <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                           <td className="py-3 px-3">
                             <div className="font-bold text-ink font-mono text-xs sm:text-sm">{u.email}</div>
                             {u.fullName && <div className="text-[11px] sm:text-xs text-ink-500 font-medium">{u.fullName}</div>}
@@ -1912,7 +1935,7 @@ export function LandlordDashboard({
                           </td>
                           <td className="py-3 px-3 text-right">
                             {u.status === "active" ? (
-                              <span className="bg-terra text-white font-bold px-2.5 py-1 rounded-md text-xs inline-block">Activo</span>
+                              <span className="bg-[var(--console-accent)] text-white font-bold px-2.5 py-1 rounded-md text-xs inline-block">Activo</span>
                             ) : (
                               <span className="bg-caution-surface text-caution border border-caution/40 font-bold px-2.5 py-1 rounded-md text-xs inline-block">Invitación Pendiente</span>
                             )}
@@ -1925,7 +1948,7 @@ export function LandlordDashboard({
               </div>
 
               {/* PROMINENT EMERGENCY KILL-SWITCH BANNER */}
-              <div className={`p-5 rounded-2xl border-2 transition-all font-sans flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+              <div className={`p-5 rounded-2xl border-2 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                 killSwitchActive
                   ? "bg-ink border-signal text-white shadow-md"
                   : "bg-alert-surface border-alert-edge text-ink"
@@ -1967,7 +1990,7 @@ export function LandlordDashboard({
                   }}
                   className={`px-6 py-3.5 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md shrink-0 whitespace-nowrap disabled:opacity-60 disabled:cursor-wait ${
                     killSwitchActive
-                      ? "bg-white text-ink hover:bg-sand-100"
+                      ? "bg-white text-ink hover:bg-slate-100"
                       : "bg-signal-dark hover:bg-alert text-white"
                   }`}
                 >
@@ -1978,7 +2001,7 @@ export function LandlordDashboard({
               {/* ENTERPRISE AI AUTONOMY & SECURITY GOVERNANCE POLICIES */}
               <div className="space-y-4 pt-2">
                 <div>
-                  <h3 className="font-sans text-lg font-bold text-ink">
+                  <h3 className="text-lg font-bold text-ink">
                     Límites de Autonomía de Agentes IA & Gobernanza de Seguridad
                   </h3>
                   <p className="text-sm text-ink-500 font-medium mt-0.5">
@@ -1986,14 +2009,14 @@ export function LandlordDashboard({
                   </p>
                 </div>
 
-                <div className="space-y-4 text-sm font-sans">
+                <div className="space-y-4 text-sm">
                   {/* POLICY 1: DIEGO AI SPENDING THRESHOLD */}
-                  <div className="border border-hairline rounded-xl p-5 bg-sand-50 space-y-3">
+                  <div className="border border-hairline rounded-xl p-5 bg-slate-50 space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       <div className="space-y-1 max-w-2xl">
                         <div className="flex items-center gap-3">
                           <span className="font-bold text-ink text-base">Diego IA · Umbral CapEx</span>
-                          <span className="bg-terra text-white text-xs font-bold px-2.5 py-0.5 rounded">
+                          <span className="bg-[var(--console-accent)] text-white text-xs font-bold px-2.5 py-0.5 rounded">
                             ${diegoThresholdVal.toLocaleString()} MXN Max
                           </span>
                         </div>
@@ -2010,7 +2033,7 @@ export function LandlordDashboard({
                           </div>
                           <button
                             onClick={() => setEditingPolicyCard("diego")}
-                            className="bg-white border border-hairline-strong hover:bg-sand-100 text-ink font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs"
+                            className="bg-white border border-[var(--console-accent)] hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs"
                           >
                             Editar Configuración →
                           </button>
@@ -2028,7 +2051,7 @@ export function LandlordDashboard({
                               step={5000}
                               value={diegoThresholdVal}
                               onChange={(e) => setDiegoThresholdVal(Number(e.target.value))}
-                              className="mt-1 w-full bg-sand-50 border border-hairline-strong rounded-lg px-3 py-2 text-sm font-bold text-ink focus:outline-none focus:border-terra"
+                              className="mt-1 w-full bg-slate-50 border border-hairline-strong rounded-lg px-3 py-2 text-sm font-bold text-ink focus:outline-none focus:border-[var(--console-accent)]"
                             />
                           </label>
 
@@ -2038,7 +2061,7 @@ export function LandlordDashboard({
                                 type="checkbox"
                                 checked={diegoAutoMode}
                                 onChange={(e) => setDiegoAutoMode(e.target.checked)}
-                                className="h-5 w-5 accent-terra rounded"
+                                className="h-5 w-5 accent-[var(--console-accent)] rounded"
                               />
                               Piloto Automático Activo
                             </label>
@@ -2051,13 +2074,13 @@ export function LandlordDashboard({
                               setEditingPolicyCard(null);
                               triggerToast(`Umbral de Diego IA actualizado a $${diegoThresholdVal.toLocaleString()} MXN.`);
                             }}
-                            className="bg-terra hover:bg-terra-dark text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                            className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
                           >
                             Guardar Cambios
                           </button>
                           <button
                             onClick={() => setEditingPolicyCard(null)}
-                            className="bg-sand-100 hover:bg-sand-200 text-ink-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                            className="bg-slate-100 hover:bg-slate-200 text-ink-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
                           >
                             Cancelar
                           </button>
@@ -2067,12 +2090,12 @@ export function LandlordDashboard({
                   </div>
 
                   {/* POLICY 3: SSO & GEO-FENCING */}
-                  <div className="border border-hairline rounded-xl p-5 bg-sand-50 space-y-3">
+                  <div className="border border-hairline rounded-xl p-5 bg-slate-50 space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       <div className="space-y-1 max-w-2xl">
                         <div className="flex items-center gap-3">
                           <span className="font-bold text-ink text-base">SSO & Geo-Fencing IP</span>
-                          <span className="bg-terra text-white text-xs font-bold px-2.5 py-0.5 rounded">
+                          <span className="bg-[var(--console-accent)] text-white text-xs font-bold px-2.5 py-0.5 rounded">
                             Mexicali & Tijuana
                           </span>
                         </div>
@@ -2089,7 +2112,7 @@ export function LandlordDashboard({
                           </div>
                           <button
                             onClick={() => setEditingPolicyCard("sso")}
-                            className="bg-white border border-hairline-strong hover:bg-sand-100 text-ink font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs"
+                            className="bg-white border border-[var(--console-accent)] hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs"
                           >
                             Editar Configuración →
                           </button>
@@ -2104,7 +2127,7 @@ export function LandlordDashboard({
                             type="checkbox"
                             checked={ssoEnforcedMode}
                             onChange={(e) => setSsoEnforcedMode(e.target.checked)}
-                            className="h-5 w-5 accent-terra rounded"
+                            className="h-5 w-5 accent-[var(--console-accent)] rounded"
                           />
                           SAML 2.0 / 2FA Obligatorio con Passkeys
                         </label>
@@ -2118,13 +2141,13 @@ export function LandlordDashboard({
                               setEditingPolicyCard(null);
                               triggerToast("Política SSO & Geo-Fencing actualizada.");
                             }}
-                            className="bg-terra hover:bg-terra-dark text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                            className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
                           >
                             Guardar Cambios
                           </button>
                           <button
                             onClick={() => setEditingPolicyCard(null)}
-                            className="bg-sand-100 hover:bg-sand-200 text-ink-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                            className="bg-slate-100 hover:bg-slate-200 text-ink-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
                           >
                             Cancelar
                           </button>
@@ -2139,14 +2162,14 @@ export function LandlordDashboard({
               <div className="space-y-3.5 pt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-terra flex items-center justify-center shrink-0 shadow-2xs">
+                    <div className="h-9 w-9 rounded-xl bg-[var(--console-accent)] flex items-center justify-center shrink-0 shadow-2xs">
                       <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                       </svg>
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-sans text-lg font-bold text-ink">
+                        <h3 className="text-lg font-bold text-ink">
                           Bitácora Inmutable de Auditoría
                         </h3>
                         <span className="inline-flex items-center gap-1.5 bg-ok-surface text-ok border border-ok/30 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
@@ -2160,7 +2183,7 @@ export function LandlordDashboard({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 sm:pl-12">
-                    <span className="text-xs text-ink-700 font-bold bg-sand-100 border border-hairline px-2.5 py-1.5 rounded-lg whitespace-nowrap">
+                    <span className="text-xs text-ink-700 font-bold bg-slate-100 border border-hairline px-2.5 py-1.5 rounded-lg whitespace-nowrap">
                       {auditLog.length} Entradas
                     </span>
                     <button
@@ -2183,7 +2206,7 @@ export function LandlordDashboard({
                         URL.revokeObjectURL(url);
                         triggerToast(`Bitácora exportada (${auditLog.length} entradas, CSV).`);
                       }}
-                      className="bg-terra hover:bg-terra-dark text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shadow-2xs"
+                      className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shadow-2xs"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -2202,7 +2225,7 @@ export function LandlordDashboard({
                     value={auditLogFilter}
                     onChange={(e) => setAuditLogFilter(e.target.value)}
                     placeholder="Filtrar por usuario, agente o acción (ej: CFDI, m.hage, diego_ai_agent)..."
-                    className="w-full bg-white border border-hairline-strong rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-ink placeholder-ink-400 focus:outline-none focus:border-terra focus:ring-2 focus:ring-terra/10 font-medium transition-all"
+                    className="w-full bg-white border border-hairline-strong rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-ink placeholder-ink-400 focus:outline-none focus:border-[var(--console-accent)] focus:ring-2 focus:ring-[var(--console-accent)]/10 font-medium transition-all"
                   />
                 </div>
 
@@ -2281,11 +2304,11 @@ export function LandlordDashboard({
 
       {/* AI ASSISTANT DRAWER / SLIDE-OVER PANEL */}
       {copilotOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft font-sans">
-          <div className="p-4 border-b border-hairline bg-terra text-white flex items-center justify-between">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
+          <div className="p-4 border-b border-hairline bg-[var(--console-accent)] text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-ink-400" />
-              <h3 className="font-sans font-bold text-sm">Copiloto IA</h3>
+              <h3 className="font-bold text-sm">Copiloto IA</h3>
             </div>
             <button
               onClick={() => setCopilotOpen(false)}
@@ -2295,7 +2318,7 @@ export function LandlordDashboard({
             </button>
           </div>
 
-          <div className="p-3 bg-sand-100 border-b border-hairline flex gap-1 text-xs font-semibold">
+          <div className="p-3 bg-slate-100 border-b border-hairline flex gap-1 text-xs font-semibold">
             <button
               onClick={() => {
                 copilotAbortRef.current?.abort();
@@ -2307,7 +2330,7 @@ export function LandlordDashboard({
                 setCopilotQuestion("");
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                activeAgent === "mariana" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
+                activeAgent === "mariana" ? "bg-[var(--console-accent)] text-white shadow-xs" : "text-ink-500 hover:text-ink"
               }`}
             >
               Mariana (Legal)
@@ -2323,7 +2346,7 @@ export function LandlordDashboard({
                 setCopilotQuestion("");
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                activeAgent === "diego" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
+                activeAgent === "diego" ? "bg-[var(--console-accent)] text-white shadow-xs" : "text-ink-500 hover:text-ink"
               }`}
             >
               Diego (CapEx)
@@ -2331,7 +2354,7 @@ export function LandlordDashboard({
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-            <div className="bg-sand-50 border border-hairline rounded-xl p-3.5 space-y-2">
+            <div className="bg-slate-50 border border-hairline rounded-xl p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs text-ink-500 font-medium">
                 <span>Consulta al Agente</span>
                 <span className="font-bold text-ink">{activeAgent === "mariana" ? "Mariana IA" : "Diego IA"}</span>
@@ -2352,7 +2375,7 @@ export function LandlordDashboard({
             </div>
           </div>
 
-          <div className="p-3 border-t border-hairline bg-sand-50">
+          <div className="p-3 border-t border-hairline bg-slate-50">
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2394,7 +2417,7 @@ export function LandlordDashboard({
               <button
                 type="submit"
                 disabled={copilotLoading}
-                className="bg-terra text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-terra-dark transition-colors shadow-xs disabled:opacity-60 disabled:cursor-wait"
+                className="bg-[var(--console-accent)] text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-[var(--console-accent-dark)] transition-colors shadow-xs disabled:opacity-60 disabled:cursor-wait"
               >
                 {copilotLoading ? "Consultando…" : "Enviar"}
               </button>

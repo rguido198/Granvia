@@ -110,6 +110,9 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
       priority: t.priority,
       costBucket: t.cost_bucket,
       estimatedCost: t.estimated_cost !== null ? Number(t.estimated_cost) : null,
+      // The tenant portal's own tickets are always this tenant's — reuse the
+      // resolved locale's name rather than adding a redundant select column.
+      tenantEntity: locale.tenantEntity,
       rawReport: t.raw_report,
       diagnosis: t.diagnosis_answer,
       unitNumber: locale.unitNumber,

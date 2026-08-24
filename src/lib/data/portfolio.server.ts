@@ -3,6 +3,11 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export type PortfolioRow = {
   slug: string;
+  /** leases.id of this locale's currently active lease — null when vacant
+   *  (or when a lease somehow has no row at all). Needed to target
+   *  vacateTenantAction at the exact row, since a locale can accumulate
+   *  more than one historical lease row over time (see LeaseDetail below). */
+  leaseId: string | null;
   unitCode: string;
   name: string;
   sqm: number;
@@ -25,9 +30,24 @@ export type LeaseDetail = {
   renewalSoon: boolean;
 };
 
+/** A locale that once had a tenant and no longer does — vacateTenantAction
+ *  never deletes the locale or lease row, it just flips locales.status to
+ *  VACANT and stamps the lease's end_date. This is that history, read back
+ *  out for the "Inquilinos Anteriores" table so a vacated tenant doesn't
+ *  just vanish from the console. */
+export type FormerTenant = {
+  localeId: string;
+  unitCode: string;
+  tenantEntity: string;
+  sqm: number;
+  lastRentMonthly: number;
+  leaseEndDate: string;
+};
+
 export type Portfolio = {
   rentRoll: PortfolioRow[];
   leases: LeaseDetail[];
+  formerTenants: FormerTenant[];
   leasedSqm: number;
   plazaTotalGla: number;
   contractedRent: number;
@@ -54,6 +74,25 @@ function isRenewalSoon(endDate: string): boolean {
  * and only one clause field (exclusive_use_clause) — the mock's "Garantía",
  * "Contrato PDF"/"Póliza RC" buttons, SHA-256 hash and vector-chunk count per
  * contract had nothing real behind them and aren't recreated here.
+ *
+ * A locale can accumulate more than one `leases` row over its life —
+ * vacateTenantAction ends a lease without deleting it, and re-adding a
+ * tenant to a vacant unit (addTenantAction) inserts a fresh lease row rather
+ * than reusing the old one, so the terminated lease survives as history.
+ *
+ * Which lease counts as "active" is read off `locales.status`, not off a
+ * same-day date comparison. vacateTenantAction stamps end_date = today AND
+ * flips status to VACANT in the same action — a date-only check like
+ * `end_date >= today` would still count that lease as active for the rest of
+ * today, so a landlord vacating a unit this morning would see it as both
+ * "Vacante" (per status) and still listed as an active contract in Legal
+ * Expedientes (per date) until midnight. Keying off status instead makes the
+ * two views agree the instant the write lands. Within one locale, the
+ * "current" lease is whichever row has the latest end_date; every other row
+ * for that locale is history, surfaced as `formerTenants` only when the
+ * locale itself is VACANT (an OCCUPIED locale's older, superseded lease rows
+ * — e.g. after a renewal — aren't "former tenants", just past terms of the
+ * same tenancy, so they're dropped rather than shown).
  */
 export async function fetchPortfolio(): Promise<Portfolio> {
   const supabase = getSupabaseServiceClient();
@@ -66,34 +105,48 @@ export async function fetchPortfolio(): Promise<Portfolio> {
 
   const { data: leaseRows, error: leasesError } = await supabase
     .from("leases")
-    .select("locale_id, tenant_entity, permitted_use, exclusive_use_clause, base_rent_monthly, start_date, end_date");
+    .select("id, locale_id, tenant_entity, permitted_use, exclusive_use_clause, base_rent_monthly, start_date, end_date");
   if (leasesError) throw new Error(leasesError.message);
 
-  const leaseByLocale = new Map((leaseRows ?? []).map((l) => [l.locale_id, l]));
+  const allLeases = leaseRows ?? [];
+
+  // Latest (by end_date) lease row per locale — the "current" one regardless
+  // of whether that locale is currently OCCUPIED or VACANT.
+  const latestLeaseByLocale = new Map<string, (typeof allLeases)[number]>();
+  for (const l of allLeases) {
+    const current = latestLeaseByLocale.get(l.locale_id);
+    if (!current || l.end_date > current.end_date) latestLeaseByLocale.set(l.locale_id, l);
+  }
+
+  const localesById = new Map((locales ?? []).map((l) => [l.id, l]));
+  const activeLeaseByLocale = new Map(
+    [...latestLeaseByLocale.entries()].filter(([localeId]) => localesById.get(localeId)?.status === "OCCUPIED"),
+  );
+
   const plazaTotalGla = (locales ?? []).reduce((sum, l) => sum + Number(l.area_sqm), 0);
 
   const rentRoll: PortfolioRow[] = (locales ?? []).map((l) => {
-    const lease = leaseByLocale.get(l.id);
+    const lease = activeLeaseByLocale.get(l.id);
     const vacant = l.status === "VACANT";
     return {
       slug: l.id,
+      leaseId: !vacant && lease ? lease.id : null,
       unitCode: l.unit_number,
       name: vacant ? "Vacante" : (l.tenant_entity ?? "—"),
       sqm: Number(l.area_sqm),
-      rent: lease ? Number(lease.base_rent_monthly ?? 0) : 0,
+      rent: !vacant && lease ? Number(lease.base_rent_monthly ?? 0) : 0,
       sharePct: (Number(l.area_sqm) / plazaTotalGla) * 100,
       vacant,
-      renewalSoon: lease ? isRenewalSoon(lease.end_date) : false,
+      renewalSoon: !vacant && lease ? isRenewalSoon(lease.end_date) : false,
     };
   });
 
   const leasedSqm = rentRoll.filter((r) => !r.vacant).reduce((sum, r) => sum + r.sqm, 0);
   const contractedRent = rentRoll.reduce((sum, r) => sum + r.rent, 0);
 
-  const localeById = new Map((locales ?? []).map((l) => [l.id, l]));
-  const leases: LeaseDetail[] = (leaseRows ?? [])
+  const leases: LeaseDetail[] = [...activeLeaseByLocale.values()]
     .map((l) => {
-      const locale = localeById.get(l.locale_id);
+      const locale = localesById.get(l.locale_id);
       return {
         id: l.locale_id,
         unitCode: locale?.unit_number ?? "?",
@@ -109,5 +162,22 @@ export async function fetchPortfolio(): Promise<Portfolio> {
     })
     .sort((a, b) => a.unitCode.localeCompare(b.unitCode));
 
-  return { rentRoll, leases, leasedSqm, plazaTotalGla, contractedRent };
+  const formerTenants: FormerTenant[] = (locales ?? [])
+    .filter((l) => l.status === "VACANT" && l.tenant_entity)
+    .map((l) => {
+      // Not gated on OCCUPIED like activeLeaseByLocale above — a vacant
+      // locale's latest lease IS its history, by definition.
+      const lastLease = latestLeaseByLocale.get(l.id);
+      return {
+        localeId: l.id,
+        unitCode: l.unit_number,
+        tenantEntity: l.tenant_entity as string,
+        sqm: Number(l.area_sqm),
+        lastRentMonthly: lastLease ? Number(lastLease.base_rent_monthly ?? 0) : 0,
+        leaseEndDate: lastLease?.end_date ?? "—",
+      };
+    })
+    .sort((a, b) => b.leaseEndDate.localeCompare(a.leaseEndDate));
+
+  return { rentRoll, leases, formerTenants, leasedSqm, plazaTotalGla, contractedRent };
 }

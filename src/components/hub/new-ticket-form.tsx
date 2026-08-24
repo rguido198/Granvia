@@ -108,7 +108,7 @@ export function NewTicketForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all cursor-pointer shadow-xs"
+        className="w-full sm:w-auto bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-6 py-3 rounded-xl text-sm transition-all cursor-pointer shadow-xs"
       >
         + Nuevo Ticket
       </button>
@@ -190,7 +190,7 @@ export function NewTicketForm({
             onClick={() => setUrgent(true)}
             className={`flex-1 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition-all cursor-pointer ${
               urgent
-                ? "border-terra bg-terra text-white shadow-xs"
+                ? "border-[var(--console-accent)] bg-[var(--console-accent)] text-white shadow-xs"
                 : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
             }`}
           >
@@ -230,7 +230,7 @@ export function NewTicketForm({
         <button
           type="submit"
           disabled={submitting}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
+          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
         >
           {submitting ? "Enviando…" : "Enviar Reporte"}
         </button>
