@@ -1921,14 +1921,20 @@ export function LandlordDashboard({
                     const nextState = !killSwitchActive;
                     setKillSwitchPending(true);
                     setKillSwitchActive(nextState);
-                    const result = await toggleAutonomyKillSwitchAction(nextState);
-                    setKillSwitchPending(false);
-                    if (result.error) {
+                    try {
+                      const result = await toggleAutonomyKillSwitchAction(nextState);
+                      if (result.error) {
+                        setKillSwitchActive(!nextState);
+                        triggerToast(`No se pudo actualizar el kill-switch: ${result.error}`);
+                        return;
+                      }
+                      triggerToast(nextState ? "INTERRUPTOR DE EMERGENCIA ACTIVADO: Automatizaciones congeladas." : "Modo de emergencia desactivado: Operaciones autónomas reanudadas.");
+                    } catch {
                       setKillSwitchActive(!nextState);
-                      triggerToast(`No se pudo actualizar el kill-switch: ${result.error}`);
-                      return;
+                      triggerToast("No se pudo actualizar el kill-switch: error de conexión.");
+                    } finally {
+                      setKillSwitchPending(false);
                     }
-                    triggerToast(nextState ? "INTERRUPTOR DE EMERGENCIA ACTIVADO: Automatizaciones congeladas." : "Modo de emergencia desactivado: Operaciones autónomas reanudadas.");
                   }}
                   className={`px-6 py-3.5 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md shrink-0 whitespace-nowrap disabled:opacity-60 disabled:cursor-wait ${
                     killSwitchActive
