@@ -81,7 +81,6 @@ export function LandlordDashboard({
 }) {
   const {
     rentRoll,
-    camMonthlyPool,
     plazaTotalGla,
     leasedSqm,
     contractedRent,
@@ -151,7 +150,6 @@ export function LandlordDashboard({
   const [queryResult, setQueryResult] = useState<string | null>(null);
 
   // Interactive AI Action States & Simulations
-  const [cfdiIssued, setCfdiIssued] = useState(false);
   const [attorneyNotified, setAttorneyNotified] = useState(false);
   const [hvacDispatched, setHvacDispatched] = useState(false);
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
@@ -174,8 +172,7 @@ export function LandlordDashboard({
   };
 
   // Governance Policy Edit States
-  const [editingPolicyCard, setEditingPolicyCard] = useState<null | "diego" | "renata" | "sso">(null);
-  const [camConfirmModal, setCamConfirmModal] = useState<null | "notify" | "sat_erp">(null);
+  const [editingPolicyCard, setEditingPolicyCard] = useState<null | "diego" | "sso">(null);
 
   // CapEx cost Diego kept off the landlord's P&L this month (denied to the tenant + warranty-covered).
   // Excludes APROBADO_PRORRATEO_CAM cases — those route to Renata's CAM pool, not here, so this
@@ -184,7 +181,6 @@ export function LandlordDashboard({
 
   const [diegoThresholdVal, setDiegoThresholdVal] = useState<number>(50000);
   const [diegoAutoMode, setDiegoAutoMode] = useState<boolean>(true);
-  const [renataAutoMode, setRenataAutoMode] = useState<boolean>(true);
   const [ssoEnforcedMode, setSsoEnforcedMode] = useState<boolean>(true);
   const [killSwitchActive, setKillSwitchActive] = useState<boolean>(false);
 
@@ -215,7 +211,6 @@ export function LandlordDashboard({
   // in the session. Stored oldest-first; rendered newest-first.
   const [auditLog, setAuditLog] = useState(() => [
     { id: "seed-5", timestamp: "14:02:44", actorType: "user" as const, actor: "a.lopez@lagranvia.com.mx", action: "Carga de póliza de mantenimiento ThyssenKrupp 2026.pdf", hash: "sha256_a10984ee29" },
-    { id: "seed-4", timestamp: "15:12:00", actorType: "user" as const, actor: "contabilidad@lagranvia.com.mx", action: `Timbrado masivo SAT CFDI 4.0 aprobado para ${rentRoll.length} locales`, hash: "sha256_c773109a11" },
     { id: "seed-3", timestamp: "16:45:19", actorType: "agent" as const, actor: "mariana_ai_agent", action: "Consulta RAG multi-contrato de exclusividades de giro (Cafeterías)", hash: "sha256_f9012a44b8" },
     { id: "seed-2", timestamp: "17:58:02", actorType: "agent" as const, actor: "diego_ai_agent", action: "Reclamo autónomo expedido a Climas de Mexicali (#HVAC-884)", hash: "sha256_b31289fe12" },
     { id: "seed-1", timestamp: "18:28:12", actorType: "user" as const, actor: "m.hage@lagranvia.com.mx", action: "Cambió permiso 'Diego CapEx' para a.lopez@lagranvia.com.mx", hash: "sha256_e84a92c10f" },
@@ -2700,73 +2695,6 @@ export function LandlordDashboard({
                     )}
                   </div>
 
-                  {/* POLICY 2: RENATA AI SAT COMPLIANCE */}
-                  <div className="border border-slate-200 rounded-xl p-5 bg-slate-50 space-y-3">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                      <div className="space-y-1 max-w-2xl">
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-slate-900 text-base">Renata AI · Timbrado SAT</span>
-                          <span className="bg-slate-900 text-white text-xs font-bold px-2.5 py-0.5 rounded">
-                            {renataAutoMode ? "CFDI 4.0 Auto" : "Manual"}
-                          </span>
-                        </div>
-                        <p className="text-slate-700 text-sm leading-relaxed font-medium">
-                          Emisión automatizada de complementos de pago PPD/PUE en recolección de rentas dentro de las 72 horas exigidas por el CFF SAT.
-                        </p>
-                      </div>
-
-                      {editingPolicyCard !== "renata" && (
-                        <div className="flex items-center gap-4 shrink-0">
-                          <div className="text-xs font-bold text-slate-900">
-                            <span className="text-slate-500">PAC Autorizado: </span>
-                            <span className="text-slate-900">{renataAutoMode ? "Validado (0 Errores)" : "Revisión Previa"}</span>
-                          </div>
-                          <button
-                            onClick={() => setEditingPolicyCard("renata")}
-                            className="bg-white border border-slate-300 hover:bg-slate-100 text-slate-900 font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs"
-                          >
-                            Editar Configuración →
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {editingPolicyCard === "renata" && (
-                      <div className="p-4 bg-white border border-slate-300 rounded-xl space-y-3 animate-fadeIn">
-                        <label className="flex items-center gap-2.5 text-sm font-bold text-slate-900 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={renataAutoMode}
-                            onChange={(e) => setRenataAutoMode(e.target.checked)}
-                            className="h-5 w-5 accent-slate-900 rounded"
-                          />
-                          Timbrado Automático PAC Directo
-                        </label>
-                        <p className="text-xs text-slate-600 font-medium">
-                          Conecta directamente con el Proveedor Autorizado de Certificación (PAC) del SAT sin requerir validación manual previa.
-                        </p>
-
-                        <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-                          <button
-                            onClick={() => {
-                              setEditingPolicyCard(null);
-                              triggerToast("Política de timbrado de Renata AI actualizada.");
-                            }}
-                            className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                          >
-                            Guardar Cambios
-                          </button>
-                          <button
-                            onClick={() => setEditingPolicyCard(null)}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
                   {/* POLICY 3: SSO & GEO-FENCING */}
                   <div className="border border-slate-200 rounded-xl p-5 bg-slate-50 space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -3073,126 +3001,6 @@ export function LandlordDashboard({
                 Enviar
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* CAM CONFIRMATION MODAL */}
-      {camConfirmModal !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 font-sans">
-            {/* Modal Header */}
-            <div className="bg-slate-900 text-white p-6">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Renata AI · Confirmación de Operación Financiera
-                </span>
-                <button
-                  onClick={() => setCamConfirmModal(null)}
-                  className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg font-bold"
-                  aria-label="Cerrar ventana"
-                >
-                  ✕
-                </button>
-              </div>
-              <h3 className="text-xl font-bold mt-2">
-                {camConfirmModal === "notify"
-                  ? "Confirmar Notificación a Tenants"
-                  : "Confirmar Timbrado SAT & ERP SAP"}
-              </h3>
-              <p className="text-xs text-slate-300 mt-1">
-                {camConfirmModal === "notify"
-                  ? "Revisión previa a la distribución masiva de los Estados de Cuenta CAM NNN (Agosto 2026)."
-                  : "Generación de comprobantes fiscales CFDI 4.0 y registro automático en Cuentas por Cobrar."}
-              </p>
-            </div>
-
-            {/* Modal Content Details */}
-            <div className="p-6 space-y-4 text-xs">
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
-                <p className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
-                  Resumen de la Transacción
-                </p>
-                {camConfirmModal === "notify" ? (
-                  <div className="space-y-2 text-slate-700">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Destinatarios:</span>
-                      <span className="font-bold text-slate-900">84 Arrendatarios (Contactos de Finanzas)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Monto Total Prorrateado:</span>
-                      <span className="font-bold text-slate-900">{formatVal(camMonthlyPool)} MXN</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Canal de Envío:</span>
-                      <span className="font-bold text-slate-900">Correo Directo + Portal Arrendatario (/inquilinos)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Archivos Adjuntos:</span>
-                      <span className="font-bold text-slate-900">Estado de Cuenta PDF + Anexo de Gastos Comunes</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2 text-slate-700">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Lote de Facturación:</span>
-                      <span className="font-bold text-slate-900">84 Facturas Individuales NNN</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Régimen & Timbrado:</span>
-                      <span className="font-bold text-slate-900">SAT CFDI 4.0 (Gastos NNN)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Integración ERP:</span>
-                      <span className="font-bold text-slate-900">Módulo FI-AR (Cuentas por Cobrar SAP)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Monto Total a Timbrar:</span>
-                      <span className="font-bold text-slate-900">{formatVal(camMonthlyPool)} MXN</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-amber-900">
-                <p className="font-bold text-xs">Aviso de Responsabilidad Financiera</p>
-                <p className="text-[11.5px] mt-0.5 text-amber-800">
-                  {camConfirmModal === "notify"
-                    ? "Al autorizar, los 84 arrendatarios recibirán una notificación formal con el cobro de CAM correspondiente al mes en curso."
-                    : "Al autorizar, se generará el timbre fiscal ante el SAT y se afectará la cartera de Cuentas por Cobrar en el sistema ERP."}
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer Actions */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-              <button
-                onClick={() => setCamConfirmModal(null)}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (camConfirmModal === "notify") {
-                    triggerToast("Renata AI: Notificaciones de Estado de Cuenta enviadas a los 84 arrendatarios.");
-                    appendAuditLog("user", "m.hage@lagranvia.com.mx", `Aprobó envío de Estado de Cuenta CAM NNN a ${rentRoll.length} arrendatarios`);
-                  } else {
-                    setCfdiIssued(true);
-                    triggerToast("Renata AI: 84 facturas CFDI 4.0 timbradas en SAT y registradas en ERP SAP.");
-                    appendAuditLog("user", "m.hage@lagranvia.com.mx", `Aprobó timbrado SAT CFDI 4.0 para ${rentRoll.length} facturas y sincronización ERP SAP`);
-                  }
-                  setCamConfirmModal(null);
-                }}
-                className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors cursor-pointer shadow-sm ${
-                  camConfirmModal === "notify" ? "bg-slate-900 hover:bg-slate-800" : "bg-emerald-700 hover:bg-emerald-800"
-                }`}
-              >
-                {camConfirmModal === "notify"
-                  ? "Aprobar y Enviar Notificaciones"
-                  : "Aprobar Timbrado & Sincronizar ERP"}
-              </button>
-            </div>
           </div>
         </div>
       )}
