@@ -91,7 +91,6 @@ export function LandlordDashboard({
     periodLabel,
     marianaReplies,
     diegoReplies,
-    renataReplies,
   } = data;
 
   // View & Filter States
@@ -146,7 +145,7 @@ export function LandlordDashboard({
 
   // AI Copilot Drawer State
   const [copilotOpen, setCopilotOpen] = useState(false);
-  const [activeAgent, setActiveAgent] = useState<"renata" | "mariana" | "diego">("renata");
+  const [activeAgent, setActiveAgent] = useState<"mariana" | "diego">("mariana");
   const [queryResult, setQueryResult] = useState<string | null>(null);
 
   // Interactive AI Action States & Simulations
@@ -2488,7 +2487,6 @@ export function LandlordDashboard({
                         <th className="py-3 px-3">Usuario & Perfil</th>
                         <th className="py-3 px-1 text-center">Torre CFO</th>
                         <th className="py-3 px-1 text-center">Rent Roll</th>
-                        <th className="py-3 px-1 text-center">Renata CAM</th>
                         <th className="py-3 px-1 text-center">Diego CapEx</th>
                         <th className="py-3 px-1 text-center">Mariana Legal</th>
                         <th className="py-3 px-1 text-center">Audit Logs</th>
@@ -2507,7 +2505,6 @@ export function LandlordDashboard({
                         <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-3 text-right">
                           <span className="bg-slate-900 text-white font-bold px-2.5 py-1 rounded-md text-xs inline-block">Acceso Total</span>
                         </td>
@@ -2521,7 +2518,6 @@ export function LandlordDashboard({
                         </td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Rent Roll actualizado para a.lopez@lagranvia.com.mx.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Diego CapEx actualizado para a.lopez@lagranvia.com.mx.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Audit Logs actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
@@ -2538,7 +2534,6 @@ export function LandlordDashboard({
                         </td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Torre CFO actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Rent Roll actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Renata CAM actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Diego CapEx actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Acceso Legal actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Audit Logs actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
@@ -2555,7 +2550,6 @@ export function LandlordDashboard({
                         </td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Mariana Legal actualizado para Jurídico.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Audit Logs actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
@@ -2583,8 +2577,8 @@ export function LandlordDashboard({
                   </div>
                   <p className={`text-sm font-medium leading-relaxed ${killSwitchActive ? "text-slate-200" : "text-slate-700"}`}>
                     {killSwitchActive
-                      ? "Todas las ejecuciones autónomas de Diego AI, timbrados SAT de Renata AI y accesos automatizados han sido suspendidos por instrucción del Administrador General."
-                      : "Permite al Administrador General congelar de forma inmediata la ejecución autónoma de agentes (Diego AI, Renata AI) y timbrados SAT en caso de mantenimiento o auditoría."}
+                      ? "Todas las ejecuciones autónomas de Diego AI y accesos automatizados han sido suspendidos por instrucción del Administrador General."
+                      : "Permite al Administrador General congelar de forma inmediata la ejecución autónoma de Diego AI en caso de mantenimiento o auditoría."}
                   </p>
                 </div>
 
@@ -2926,14 +2920,6 @@ export function LandlordDashboard({
 
           <div className="p-3 bg-slate-100 border-b border-slate-200 flex gap-1 text-xs font-semibold">
             <button
-              onClick={() => setActiveAgent("renata")}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                activeAgent === "renata" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Renata (CAM)
-            </button>
-            <button
               onClick={() => setActiveAgent("mariana")}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeAgent === "mariana" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
@@ -2957,7 +2943,6 @@ export function LandlordDashboard({
                 Alerta Detectada por el Agente
               </span>
               <p className="text-slate-700 leading-relaxed font-medium text-xs">
-                {activeAgent === "renata" && "260 Grill & Bar presenta inconsistencia CFDI 4.0 ($98,500 MXN pagados sin complemento)."}
                 {activeAgent === "mariana" && "Solicitud de Krispy Kreme viola la exclusividad de café de Blue Luna Café (Cláusula 14.2)."}
                 {activeAgent === "diego" && "Equipo HVAC de Mexicali Climas en garantía vigente (Serie: MX-HVAC-9902)."}
               </p>
@@ -2969,12 +2954,10 @@ export function LandlordDashboard({
                 <span className="font-bold text-slate-900">{activeAgent.toUpperCase()} AI</span>
               </div>
               <p className="font-bold text-slate-900 text-xs">
-                {activeAgent === "renata" && renataReplies[0].query}
                 {activeAgent === "mariana" && marianaReplies[0].query}
                 {activeAgent === "diego" && diegoReplies[0].query}
               </p>
               <div className="bg-white p-3 rounded-lg border border-slate-200 text-slate-700 leading-relaxed text-xs font-medium shadow-2xs">
-                {activeAgent === "renata" && renataReplies[0].answer}
                 {activeAgent === "mariana" && marianaReplies[0].answer}
                 {activeAgent === "diego" && diegoReplies[0].answer}
               </div>
