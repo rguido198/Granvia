@@ -1,7 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { HUB_NAV, SITE } from "@/content/site";
+import { isAppShellPath } from "@/components/site-header";
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  if (isAppShellPath(pathname)) return null;
+
   return (
     <footer className="bg-slate-900 text-slate-300 font-sans border-t border-slate-800">
       <div className="mx-auto w-full max-w-7xl px-6 py-12 lg:px-8 space-y-10">

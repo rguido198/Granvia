@@ -91,10 +91,10 @@ export function TenantPortal({
         <div className="rounded-xl border-2 border-slate-900 bg-white p-6 sm:p-7 space-y-4">
           <div>
             <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
-              Reportar Incidencia HVAC / Mantenimiento
+              Reportar Incidencia de Mantenimiento
             </h3>
             <p className="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">
-              El Agente de IA atiende 24/7 vía WhatsApp y asigna al técnico de plaza en minutos.
+              Diego AI diagnostica tu reporte al instante y determina responsabilidad de costo. Casos claros se despachan directo a un técnico; los demás pasan a revisión del propietario.
             </p>
           </div>
 

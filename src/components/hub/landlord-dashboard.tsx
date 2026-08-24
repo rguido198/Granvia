@@ -100,6 +100,15 @@ export function LandlordDashboard({
   // Accessibility Font Scale State
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
 
+  // Sidebar nav is a full-screen drawer on mobile (closed by default) so the
+  // console content is reachable without scrolling past the entire nav first —
+  // on desktop (lg:) it stays permanently visible regardless of this state.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const selectTab = (tab: SidebarTab) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+  };
+
   // Governance Policy Edit States
   const [editingPolicyCard, setEditingPolicyCard] = useState<null | "diego" | "renata" | "sso">(null);
   const [camConfirmModal, setCamConfirmModal] = useState<null | "notify" | "sat_erp">(null);
@@ -184,9 +193,32 @@ export function LandlordDashboard({
         </div>
       )}
 
-      {/* LEFT SIDEBAR NAVIGATION */}
-      <aside className="w-full lg:w-72 bg-white border-r border-slate-200/80 shrink-0 flex flex-col justify-between p-5 space-y-6 text-left">
+      {/* Mobile drawer backdrop — tap outside the sidebar to close it */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* LEFT SIDEBAR NAVIGATION — off-canvas drawer on mobile, permanent column on lg+ */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-slate-200/80 shrink-0 flex flex-col justify-between p-5 space-y-6 text-left transition-transform duration-200 lg:static lg:z-auto lg:w-72 lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="space-y-6">
+          <div className="flex justify-end lg:hidden">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="-mt-1 -mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+              aria-label="Cerrar menú"
+            >
+              ✕
+            </button>
+          </div>
           {/* Brand Header */}
           <div className="px-1 py-1 space-y-2">
             <div className="inline-block bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 shadow-2xs">
@@ -207,7 +239,7 @@ export function LandlordDashboard({
             </p>
 
             <button
-              onClick={() => setActiveTab("rentroll")}
+              onClick={() => selectTab("rentroll")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "rentroll"
                   ? "bg-slate-900 text-white shadow-xs"
@@ -222,7 +254,7 @@ export function LandlordDashboard({
             </p>
 
             <button
-              onClick={() => setActiveTab("maint")}
+              onClick={() => selectTab("maint")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "maint"
                   ? "bg-slate-900 text-white shadow-xs"
@@ -233,7 +265,7 @@ export function LandlordDashboard({
             </button>
 
             <button
-              onClick={() => setActiveTab("legal")}
+              onClick={() => selectTab("legal")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "legal"
                   ? "bg-slate-900 text-white shadow-xs"
@@ -248,7 +280,7 @@ export function LandlordDashboard({
             </p>
 
             <button
-              onClick={() => setActiveTab("rbac")}
+              onClick={() => selectTab("rbac")}
               className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "rbac"
                   ? "bg-slate-900 text-white shadow-xs"
@@ -265,7 +297,7 @@ export function LandlordDashboard({
         <div className="pt-4 border-t border-slate-200 space-y-3 text-left">
           <div
             onClick={() => {
-              setActiveTab("rbac");
+              selectTab("rbac");
               triggerToast("Abriendo Consola de Control de Acceso & Permisos RBAC...");
             }}
             className="rounded-xl bg-slate-50 hover:bg-slate-100 p-3.5 space-y-1.5 border border-slate-200 transition-all cursor-pointer group text-left"
@@ -285,6 +317,16 @@ export function LandlordDashboard({
         <header className="h-auto min-h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 font-sans shadow-2xs">
           {/* Top Header Title or Left Spacer */}
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 lg:hidden"
+              aria-label="Abrir menú"
+            >
+              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 font-sans">
               La Gran Vía · Consola de Control
             </span>

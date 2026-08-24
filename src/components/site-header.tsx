@@ -11,9 +11,20 @@ function isActive(pathname: string | null, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
+/**
+ * /consola and /inquilinos are their own app shell (own header, own nav,
+ * own sign-out) — stacking the marketing site's header above them wasted
+ * most of a phone screen before any real console content appeared.
+ */
+export function isAppShellPath(pathname: string | null) {
+  return !!pathname && (pathname.startsWith("/consola") || pathname.startsWith("/inquilinos"));
+}
+
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  if (isAppShellPath(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-hairline bg-sand-100/88 backdrop-blur-[10px]">
