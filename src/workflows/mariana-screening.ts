@@ -91,17 +91,26 @@ async function loadApplicationContext(
     throw new FatalError(`property for locale ${targetLocaleId} not found`);
   }
 
+  // Two plain queries rather than an embedded-resource filter
+  // (locales!inner(...) + dot-notation .eq on the embed) — that pattern
+  // silently returned null area_sqm for every row in testing (confirmed:
+  // the same data joins fine in raw SQL), so it's not worth the fragility
+  // for what's a small, cacheable lookup either way.
   const today = new Date().toISOString().slice(0, 10);
+  const { data: propertyLocales } = await supabase
+    .from("locales")
+    .select("id, unit_number, area_sqm")
+    .eq("property_id", targetLocale.property_id);
+  const localesById = new Map((propertyLocales ?? []).map((l) => [l.id, l]));
+
   const { data: leaseRows } = await supabase
     .from("leases")
-    .select(
-      "locale_id, tenant_entity, exclusive_use_clause, permitted_use, end_date, base_rent_monthly, locales!inner(unit_number, area_sqm, property_id)",
-    )
-    .eq("locales.property_id", targetLocale.property_id)
+    .select("locale_id, tenant_entity, exclusive_use_clause, permitted_use, end_date, base_rent_monthly")
+    .in("locale_id", [...localesById.keys()])
     .gte("end_date", today);
 
   const activeLeases: ActiveLease[] = (leaseRows ?? []).map((row) => {
-    const locale = Array.isArray(row.locales) ? row.locales[0] : row.locales;
+    const locale = localesById.get(row.locale_id);
     return {
       localeId: row.locale_id as string,
       unitNumber: locale?.unit_number ?? "?",
@@ -251,9 +260,18 @@ async function runSkeptic(
       {
         role: "user",
         content: [
+          // Same full context the draft step received (§2B testing note:
+          // "re-run the tests against the text you just drafted" only
+          // works if the skeptic can check the same facts the draft had —
+          // an earlier version gave it exclusive_use_clause only, which
+          // made it flag genuinely-sourced facts (tenant, permitted_use,
+          // expiry) as unverifiable hallucinations.
           "Contratos activos citables:",
           context.activeLeases
-            .map((l) => `- Local ${l.unitNumber}: exclusiva="${l.exclusiveUseClause ?? "(ninguna)"}"`)
+            .map(
+              (l) =>
+                `- Local ${l.unitNumber} (${l.tenantEntity ?? "?"}): giro="${l.permittedUse ?? "(sin especificar)"}" · exclusiva="${l.exclusiveUseClause ?? "(ninguna)"}" · vence ${l.endDate}`,
+            )
             .join("\n"),
           "",
           `Borrador de Mariana: ${JSON.stringify(draft)}`,
