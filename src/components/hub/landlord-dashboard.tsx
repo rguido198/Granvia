@@ -9,9 +9,11 @@ import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import type { Contractor } from "@/lib/data/contractors.server";
 import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
+import type { CorporateUser } from "@/lib/platform/users.server";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
+import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
@@ -93,6 +95,7 @@ export function LandlordDashboard({
   contractors,
   autonomyState,
   initialAuditLog,
+  corporateUsers,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -101,6 +104,7 @@ export function LandlordDashboard({
   contractors: Contractor[];
   autonomyState: AutonomyState;
   initialAuditLog: AuditEntry[];
+  corporateUsers: CorporateUser[];
 }) {
   const {
     rentRoll,
@@ -2439,131 +2443,83 @@ export function LandlordDashboard({
                   </p>
                 </div>
 
-                <button
-                  onClick={() => triggerToast("Abriendo formulario para invitar nuevo usuario corporativo y asignar perfil RBAC...")}
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-3 rounded-xl text-sm transition-all cursor-pointer shadow-xs shrink-0"
-                >
-                  Invitar Usuario / Asignar Perfil
-                </button>
+                <InviteLandlordForm />
               </div>
 
-              {/* 4 GOVERNANCE SUMMARY METRICS CARDS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 font-display">
+              {/* 3 GOVERNANCE SUMMARY METRICS CARDS — real counts only; a 4th
+                  "Sesiones Activas" card was dropped rather than faked, since
+                  Supabase Auth doesn't expose active-session tracking without
+                  added instrumentation this app doesn't have. */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 font-display">
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Usuarios Corporativos</p>
-                  <p className="text-3xl font-bold text-slate-900">6 Usuarios</p>
-                  <p className="text-sm text-slate-600 font-medium">5 Activos · 1 Restringido</p>
+                  <p className="text-3xl font-bold text-slate-900">{corporateUsers.length} {corporateUsers.length === 1 ? "Usuario" : "Usuarios"}</p>
+                  <p className="text-sm text-slate-600 font-medium">
+                    {corporateUsers.filter((u) => u.status === "active").length} Activos · {corporateUsers.filter((u) => u.status === "pending").length} Invitación Pendiente
+                  </p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Perfiles Definidos</p>
-                  <p className="text-3xl font-bold text-slate-900">5 Roles RBAC</p>
-                  <p className="text-sm text-slate-600 font-medium">Super Admin, CFO, Ops, Legal, Audit</p>
+                  <p className="text-3xl font-bold text-slate-900">1 Rol</p>
+                  <p className="text-sm text-slate-600 font-medium">Landlord — acceso uniforme, sin niveles</p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-1.5">
                   <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Integridad de Auditoría</p>
                   <p className="text-3xl font-bold text-slate-900">{auditLog.length} Registros</p>
                   <p className="text-sm text-slate-600 font-medium">Huella SHA-256 por entrada</p>
                 </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-1.5">
-                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Sesiones Activas</p>
-                  <p className="text-3xl font-bold text-slate-900">2 Sesiones</p>
-                  <p className="text-sm text-slate-600 font-medium">Mexicali HQ & Tijuana Office</p>
-                </div>
               </div>
 
-              {/* USER MANAGEMENT & GRANULAR MODULE PERMISSION MATRIX */}
+              {/* REAL USER ROSTER — role='landlord' is the only tier that has
+                  console access; there is no per-module permission model in
+                  the schema (profiles.role is just landlord|tenant), so this
+                  lists real accounts and their real invite status instead of
+                  a fabricated permission matrix. */}
               <div className="space-y-4 pt-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h3 className="font-sans text-lg font-bold text-slate-900">
-                      Matriz de Usuarios & Permisos por Módulo Operativo
-                    </h3>
-                    <p className="text-sm text-slate-600 font-medium mt-0.5">
-                      Asignación de privilegios de lectura, escritura y ejecución de agentes por cada torre de control.
-                    </p>
-                  </div>
-                  <span className="text-sm font-bold bg-slate-100 text-slate-900 px-3.5 py-1.5 rounded-lg border border-slate-300">
-                    Control de Permisos Activo
-                  </span>
+                <div>
+                  <h3 className="font-sans text-lg font-bold text-slate-900">
+                    Usuarios con Acceso a la Consola
+                  </h3>
+                  <p className="text-sm text-slate-600 font-medium mt-0.5">
+                    Cuentas reales con rol landlord — todas con el mismo acceso completo a Diego IA, Mariana IA y Rent Roll.
+                  </p>
                 </div>
 
                 <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-100 text-slate-800 font-bold uppercase text-[11px] sm:text-xs tracking-wider border-b border-slate-300">
                       <tr>
-                        <th className="py-3 px-3">Usuario & Perfil</th>
-                        <th className="py-3 px-1 text-center">Torre CFO</th>
-                        <th className="py-3 px-1 text-center">Rent Roll</th>
-                        <th className="py-3 px-1 text-center">Diego CapEx</th>
-                        <th className="py-3 px-1 text-center">Mariana Legal</th>
-                        <th className="py-3 px-1 text-center">Audit Logs</th>
+                        <th className="py-3 px-3">Usuario</th>
+                        <th className="py-3 px-3">Invitado</th>
                         <th className="py-3 px-3 text-right">Estatus</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
-                      {/* USER 1: M. HAGE - PROPIETARIO / SUPER ADMIN */}
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-3">
-                          <div className="font-bold text-slate-900 font-mono text-xs sm:text-sm">m.hage@lagranvia.com.mx</div>
-                          <div className="text-[11px] sm:text-xs text-slate-600 font-medium">Propietario / Super Admin</div>
-                        </td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" checked readOnly className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-3 text-right">
-                          <span className="bg-slate-900 text-white font-bold px-2.5 py-1 rounded-md text-xs inline-block">Acceso Total</span>
-                        </td>
-                      </tr>
-
-                      {/* USER 2: A. LOPEZ - DIRECTOR DE OPERACIONES & CAPEX */}
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-3">
-                          <div className="font-bold text-slate-900 font-mono text-xs sm:text-sm">a.lopez@lagranvia.com.mx</div>
-                          <div className="text-[11px] sm:text-xs text-slate-600 font-medium">Dir. Operaciones & CapEx</div>
-                        </td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Rent Roll actualizado para a.lopez@lagranvia.com.mx.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Diego CapEx actualizado para a.lopez@lagranvia.com.mx.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Audit Logs actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-3 text-right">
-                          <span className="bg-slate-100 text-slate-900 border border-slate-300 font-bold px-2.5 py-1 rounded-md text-xs inline-block">Operaciones</span>
-                        </td>
-                      </tr>
-
-                      {/* USER 3: CONTABILIDAD@LAGRANVIA.COM.MX - CFO & FINANZAS */}
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-3">
-                          <div className="font-bold text-slate-900 font-mono text-xs sm:text-sm">contabilidad@lagranvia.com.mx</div>
-                          <div className="text-[11px] sm:text-xs text-slate-600 font-medium">Dir. Finanzas</div>
-                        </td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Torre CFO actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Rent Roll actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Diego CapEx actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Acceso Legal actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Audit Logs actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-3 text-right">
-                          <span className="bg-slate-100 text-slate-900 border border-slate-300 font-bold px-2.5 py-1 rounded-md text-xs inline-block">Finanzas</span>
-                        </td>
-                      </tr>
-
-                      {/* USER 4: JURIDICO@LAGRANVIA.COM.MX - LEGAL COUNSEL */}
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-3">
-                          <div className="font-bold text-slate-900 font-mono text-xs sm:text-sm">juridico@lagranvia.com.mx</div>
-                          <div className="text-[11px] sm:text-xs text-slate-600 font-medium">Dir. Legal & Contratos</div>
-                        </td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" onChange={() => triggerToast("Permiso actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Mariana Legal actualizado para Jurídico.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Audit Logs actualizado.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
-                        <td className="py-3 px-3 text-right">
-                          <span className="bg-slate-100 text-slate-900 border border-slate-300 font-bold px-2.5 py-1 rounded-md text-xs inline-block">Legal</span>
-                        </td>
-                      </tr>
+                      {corporateUsers.length === 0 && (
+                        <tr>
+                          <td colSpan={3} className="py-6 px-3 text-center text-slate-500">
+                            Sin usuarios landlord registrados.
+                          </td>
+                        </tr>
+                      )}
+                      {corporateUsers.map((u) => (
+                        <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3 px-3">
+                            <div className="font-bold text-slate-900 font-mono text-xs sm:text-sm">{u.email}</div>
+                            {u.fullName && <div className="text-[11px] sm:text-xs text-slate-600 font-medium">{u.fullName}</div>}
+                          </td>
+                          <td className="py-3 px-3 text-slate-700 text-xs">
+                            {new Date(u.createdAt).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            {u.status === "active" ? (
+                              <span className="bg-slate-900 text-white font-bold px-2.5 py-1 rounded-md text-xs inline-block">Activo</span>
+                            ) : (
+                              <span className="bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2.5 py-1 rounded-md text-xs inline-block">Invitación Pendiente</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

@@ -7,6 +7,7 @@ import { fetchLocaleOptions, fetchTenantPortalData } from "@/lib/data/tenant-por
 import { fetchContractors } from "@/lib/data/contractors.server";
 import { fetchAutonomyState } from "@/lib/platform/settings.server";
 import { fetchAuditLog } from "@/lib/platform/audit-log.server";
+import { fetchCorporateUsers } from "@/lib/platform/users.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -46,6 +47,7 @@ export default async function ConsolaPage() {
   const tenantPortal = await fetchTenantPortalData();
   const autonomyState = await fetchAutonomyState();
   const auditLog = await fetchAuditLog();
+  const corporateUsers = await fetchCorporateUsers();
 
   return (
     <PageFade>
@@ -59,6 +61,7 @@ export default async function ConsolaPage() {
         tenantPortalTickets={tenantPortal.tickets}
         autonomyState={autonomyState}
         auditLog={auditLog}
+        corporateUsers={corporateUsers}
       />
     </PageFade>
   );

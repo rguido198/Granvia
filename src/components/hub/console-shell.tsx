@@ -9,6 +9,7 @@ import type { LocaleOption, PortalLocale } from "@/lib/data/tenant-portal.server
 import type { Contractor } from "@/lib/data/contractors.server";
 import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
+import type { CorporateUser } from "@/lib/platform/users.server";
 import { signOut } from "@/app/consola/actions";
 
 type ConsoleView = "propietario" | "inquilino";
@@ -27,6 +28,7 @@ export function ConsoleShell({
   tenantPortalTickets,
   autonomyState,
   auditLog,
+  corporateUsers,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -37,6 +39,7 @@ export function ConsoleShell({
   tenantPortalTickets: DiegoTicket[];
   autonomyState: AutonomyState;
   auditLog: AuditEntry[];
+  corporateUsers: CorporateUser[];
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -147,6 +150,7 @@ export function ConsoleShell({
           contractors={contractors}
           autonomyState={autonomyState}
           initialAuditLog={auditLog}
+          corporateUsers={corporateUsers}
         />
       ) : (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
