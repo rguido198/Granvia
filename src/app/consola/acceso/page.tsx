@@ -25,8 +25,8 @@ export default function ConsoleLoginPage() {
             Consola de Asset Management
           </h1>
           <p className="mt-2 text-center text-xs leading-relaxed text-ink-500">
-            Rent roll consolidado, prorrateo CAM NNN y auditoría fiscal de la plaza. Uso exclusivo del personal
-            autorizado de La Gran Vía Mexicali.
+            Rent roll consolidado, mantenimiento y CapEx vía Diego AI, expedientes de arrendamiento vía Mariana AI. Uso
+            exclusivo del personal autorizado de La Gran Vía Mexicali.
           </p>
 
           <LoginForm />

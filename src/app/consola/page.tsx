@@ -22,7 +22,7 @@ export const runtime = "edge";
 
 export const metadata: Metadata = {
   title: "Consola de Asset Management | La Gran Vía Mexicali",
-  description: "Consola privada de control operativo, CAM NNN y auditoría fiscal para La Gran Vía Mexicali.",
+  description: "Consola privada de control operativo, mantenimiento y expedientes de arrendamiento para La Gran Vía Mexicali.",
   robots: { index: false, follow: false },
 };
 

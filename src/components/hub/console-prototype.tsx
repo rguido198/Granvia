@@ -148,8 +148,8 @@ export function ConsolePrototype({ data }: { data: ConsoleData }) {
             {activeTab === "overview" ? "Rent Roll" : TABS.find((t) => t.key === activeTab)?.label}
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-[14px] leading-relaxed text-console-ash">
-            Operación consolidada de La Gran Vía Mexicali — {rentRoll.length} locales activos, prorrateo CAM NNN y
-            auditoría fiscal en una sola vista.
+            Operación consolidada de La Gran Vía Mexicali — {rentRoll.length} locales activos, mantenimiento vía Diego
+            AI y expedientes de arrendamiento vía Mariana AI en una sola vista.
           </p>
           <p className="mt-4 text-[11px] text-console-slate">
             Periodo <span className="font-mono text-console-ash">{periodLabel}</span>
