@@ -120,8 +120,6 @@ export function LandlordDashboard({
     capexWarrantyRecovered,
     maintenanceEvents,
     periodLabel,
-    marianaReplies,
-    diegoReplies,
   } = data;
 
   const { rentRoll, leases, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
@@ -180,6 +178,10 @@ export function LandlordDashboard({
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [activeAgent, setActiveAgent] = useState<"mariana" | "diego">("mariana");
   const [queryResult, setQueryResult] = useState<string | null>(null);
+  const [copilotQuestion, setCopilotQuestion] = useState("");
+  const [copilotAskedQuestion, setCopilotAskedQuestion] = useState<string | null>(null);
+  const [copilotLoading, setCopilotLoading] = useState(false);
+  const [copilotError, setCopilotError] = useState<string | null>(null);
 
   // Interactive AI Action States & Simulations
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
@@ -2257,7 +2259,12 @@ export function LandlordDashboard({
 
           <div className="p-3 bg-sand-100 border-b border-hairline flex gap-1 text-xs font-semibold">
             <button
-              onClick={() => setActiveAgent("mariana")}
+              onClick={() => {
+                setActiveAgent("mariana");
+                setCopilotAskedQuestion(null);
+                setQueryResult(null);
+                setCopilotError(null);
+              }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeAgent === "mariana" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
               }`}
@@ -2265,7 +2272,12 @@ export function LandlordDashboard({
               Mariana (Legal)
             </button>
             <button
-              onClick={() => setActiveAgent("diego")}
+              onClick={() => {
+                setActiveAgent("diego");
+                setCopilotAskedQuestion(null);
+                setQueryResult(null);
+                setCopilotError(null);
+              }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeAgent === "diego" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
               }`}
@@ -2275,50 +2287,68 @@ export function LandlordDashboard({
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-            <div className="bg-sand-50 border border-hairline rounded-xl p-3.5 space-y-1.5">
-              <span className="font-bold text-ink-700 text-xs tracking-wide block">
-                Alerta Detectada por el Agente
-              </span>
-              <p className="text-ink-700 leading-relaxed font-medium text-xs">
-                {activeAgent === "mariana" && "Solicitud de Krispy Kreme viola la exclusividad de café de Blue Luna Café (Cláusula 14.2)."}
-                {activeAgent === "diego" && "Equipo HVAC de Mexicali Climas en garantía vigente (Serie: MX-HVAC-9902)."}
-              </p>
-            </div>
-
             <div className="bg-sand-50 border border-hairline rounded-xl p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs text-ink-500 font-medium">
                 <span>Consulta al Agente</span>
-                <span className="font-bold text-ink">{activeAgent.toUpperCase()} AI</span>
+                <span className="font-bold text-ink">{activeAgent === "mariana" ? "Mariana IA" : "Diego IA"}</span>
               </div>
-              <p className="font-bold text-ink text-xs">
-                {activeAgent === "mariana" && marianaReplies[0].query}
-                {activeAgent === "diego" && diegoReplies[0].query}
-              </p>
-              <div className="bg-white p-3 rounded-lg border border-hairline text-ink-700 leading-relaxed text-xs font-medium shadow-2xs">
-                {activeAgent === "mariana" && marianaReplies[0].answer}
-                {activeAgent === "diego" && diegoReplies[0].answer}
-              </div>
+              {copilotAskedQuestion ? (
+                <>
+                  <p className="font-bold text-ink text-xs">{copilotAskedQuestion}</p>
+                  <div className="bg-white p-3 rounded-lg border border-hairline text-ink-700 leading-relaxed text-xs font-medium shadow-2xs whitespace-pre-wrap">
+                    {queryResult}
+                  </div>
+                </>
+              ) : (
+                <p className="text-ink-500 text-xs leading-relaxed">
+                  Escribe una pregunta abajo sobre {activeAgent === "mariana" ? "los contratos de arrendamiento" : "los tickets de mantenimiento"} reales de la plaza.
+                </p>
+              )}
+              {copilotError && <p className="text-red-600 text-xs font-semibold">{copilotError}</p>}
             </div>
           </div>
 
           <div className="p-3 border-t border-hairline bg-sand-50">
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                triggerToast(`Consulta procesada por ${activeAgent.toUpperCase()} AI`);
+                if (!copilotQuestion.trim() || copilotLoading) return;
+                const asked = copilotQuestion;
+                setCopilotLoading(true);
+                setCopilotError(null);
+                try {
+                  const res = await fetch("/api/copiloto/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ agent: activeAgent, question: asked }),
+                  });
+                  const json = await res.json();
+                  if (!res.ok) throw new Error(json.error ?? "Error desconocido");
+                  setCopilotAskedQuestion(asked);
+                  setQueryResult(json.answer);
+                  setCopilotQuestion("");
+                } catch (err) {
+                  setCopilotError(err instanceof Error ? err.message : "Error de conexión con el agente.");
+                } finally {
+                  setCopilotLoading(false);
+                }
               }}
               className="flex gap-2"
             >
               <input
                 type="text"
+                value={copilotQuestion}
+                onChange={(e) => setCopilotQuestion(e.target.value)}
                 placeholder="Pregunta a la IA sobre la plaza..."
-                className="flex-1 bg-white border border-hairline-strong rounded-xl px-3 py-2 text-xs text-ink-700 font-medium"
+                disabled={copilotLoading}
+                className="flex-1 bg-white border border-hairline-strong rounded-xl px-3 py-2 text-xs text-ink-700 font-medium disabled:opacity-60"
               />
               <button
                 type="submit"
-                className="bg-terra text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-terra-dark transition-colors shadow-xs"
+                disabled={copilotLoading}
+                className="bg-terra text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-terra-dark transition-colors shadow-xs disabled:opacity-60 disabled:cursor-wait"
               >
-                Enviar
+                {copilotLoading ? "Consultando…" : "Enviar"}
               </button>
             </form>
           </div>
