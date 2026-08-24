@@ -2587,7 +2587,7 @@ export function LandlordDashboard({
                       <tr className="hover:bg-slate-50 transition-colors">
                         <td className="py-3 px-3">
                           <div className="font-bold text-slate-900 font-mono text-xs sm:text-sm">contabilidad@lagranvia.com.mx</div>
-                          <div className="text-[11px] sm:text-xs text-slate-600 font-medium">Dir. Finanzas & SAT CFDI</div>
+                          <div className="text-[11px] sm:text-xs text-slate-600 font-medium">Dir. Finanzas</div>
                         </td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Torre CFO actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
                         <td className="py-3 px-1 text-center"><input type="checkbox" defaultChecked onChange={() => triggerToast("Permiso Rent Roll actualizado para Contabilidad.")} className="h-4 w-4 accent-slate-900 rounded" /></td>
