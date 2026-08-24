@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, useRef, Fragment } from "react";
 import type {
   ConsoleData,
 } from "@/lib/console-data";
@@ -182,6 +182,9 @@ export function LandlordDashboard({
   const [copilotAskedQuestion, setCopilotAskedQuestion] = useState<string | null>(null);
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [copilotError, setCopilotError] = useState<string | null>(null);
+  // Cancels an in-flight ask when the agent tab switches mid-question — without
+  // this, a slow Mariana response could land under Diego's tab after the switch.
+  const copilotAbortRef = useRef<AbortController | null>(null);
 
   // Interactive AI Action States & Simulations
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
@@ -2260,10 +2263,12 @@ export function LandlordDashboard({
           <div className="p-3 bg-sand-100 border-b border-hairline flex gap-1 text-xs font-semibold">
             <button
               onClick={() => {
+                copilotAbortRef.current?.abort();
                 setActiveAgent("mariana");
                 setCopilotAskedQuestion(null);
                 setQueryResult(null);
                 setCopilotError(null);
+                setCopilotLoading(false);
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeAgent === "mariana" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
@@ -2273,10 +2278,12 @@ export function LandlordDashboard({
             </button>
             <button
               onClick={() => {
+                copilotAbortRef.current?.abort();
                 setActiveAgent("diego");
                 setCopilotAskedQuestion(null);
                 setQueryResult(null);
                 setCopilotError(null);
+                setCopilotLoading(false);
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeAgent === "diego" ? "bg-terra text-white shadow-xs" : "text-ink-500 hover:text-ink"
@@ -2314,6 +2321,8 @@ export function LandlordDashboard({
                 e.preventDefault();
                 if (!copilotQuestion.trim() || copilotLoading) return;
                 const asked = copilotQuestion;
+                const controller = new AbortController();
+                copilotAbortRef.current = controller;
                 setCopilotLoading(true);
                 setCopilotError(null);
                 try {
@@ -2321,6 +2330,7 @@ export function LandlordDashboard({
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ agent: activeAgent, question: asked }),
+                    signal: controller.signal,
                   });
                   const json = await res.json();
                   if (!res.ok) throw new Error(json.error ?? "Error desconocido");
@@ -2328,9 +2338,10 @@ export function LandlordDashboard({
                   setQueryResult(json.answer);
                   setCopilotQuestion("");
                 } catch (err) {
+                  if (err instanceof DOMException && err.name === "AbortError") return;
                   setCopilotError(err instanceof Error ? err.message : "Error de conexión con el agente.");
                 } finally {
-                  setCopilotLoading(false);
+                  if (copilotAbortRef.current === controller) setCopilotLoading(false);
                 }
               }}
               className="flex gap-2"
