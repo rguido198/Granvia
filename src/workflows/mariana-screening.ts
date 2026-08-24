@@ -190,7 +190,7 @@ CLAUSE BREADTH — for whichever clause you cite as the conflict (only when ALTO
 
 SCORING (only for MEDIO/BAJO, never ALTO) — leave all three score fields null for ALTO:
 - category_fit_score: count active leases sharing the applicant's SUB-CATEGORY specifically (not top category). List which locale units you counted in category_fit_comparison_units, so a human can verify. 0 tenants=100, 1=60, 2=30, 3+=10.
-- yield_score: min(100, proposed_rent_per_sqm / plaza_avg_rent_per_sqm * 100) — you are given the plaza average; also report the uncapped ratio.
+- yield_score: min(100, proposed_rent_per_sqm / plaza_avg_rent_per_sqm * 100). proposed_rent_per_sqm comes from the applicant's own "Renta ofrecida" line in the application text — if it's absent, leave yield_score and uncapped_yield_ratio null rather than inventing a figure. You are given the plaza average separately; also report the uncapped ratio.
 - term_stability_score: 1yr=20, 3yr=60, 5yr+=100, interpolate between.
 
 Respond only with the structured fields requested — no prose outside them.`;
@@ -262,10 +262,15 @@ async function runSkeptic(
         content: [
           // Same full context the draft step received (§2B testing note:
           // "re-run the tests against the text you just drafted" only
-          // works if the skeptic can check the same facts the draft had —
-          // an earlier version gave it exclusive_use_clause only, which
-          // made it flag genuinely-sourced facts (tenant, permitted_use,
-          // expiry) as unverifiable hallucinations.
+          // works if the skeptic can check the same facts the draft had.
+          // Two rounds of this bug already: v1 gave it exclusive_use_clause
+          // only (flagged tenant/permitted_use/expiry as unverified); v2
+          // added those but still omitted target-locale status/area_sqm,
+          // which the draft is also given directly — flagged again on the
+          // second live test. Every field in ApplicationContext the draft
+          // sees now goes to the skeptic too.
+          `Local objetivo: ${context.targetLocale.unitNumber}, ${context.targetLocale.areaSqm ?? "?"} m², estatus ${context.targetLocale.status}.`,
+          "",
           "Contratos activos citables:",
           context.activeLeases
             .map(

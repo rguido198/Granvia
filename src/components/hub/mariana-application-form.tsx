@@ -7,10 +7,9 @@ import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 
 /**
  * Real lease-application intake for Mariana (lease-screener/SKILL.md) —
- * posts to /api/ingest (kind=lease_application), which currently stops at
- * a `documents` row marked ready_for_triage (Phase 1). The screening
- * workflow that reads it and writes lease_applications (Phase 2) isn't
- * built yet.
+ * posts to /api/ingest (kind=lease_application), which starts
+ * marianaScreeningWorkflow: exclusive-use overlap audit, risk
+ * classification, and Match Score (src/workflows/mariana-screening.ts).
  *
  * Structured fields, not one free-text box — SKILL.md §2A is explicit that
  * itemized products are "the critical input for the exclusive-use audit,
@@ -26,6 +25,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
   const [subcategory, setSubcategory] = useState("");
   const [productsText, setProductsText] = useState("");
   const [requestedSqm, setRequestedSqm] = useState("");
+  const [proposedRentPerSqm, setProposedRentPerSqm] = useState("");
   const [desiredTermYears, setDesiredTermYears] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +62,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
       subcategory.trim() ? `Subcategoría: ${subcategory.trim()}.` : null,
       `Productos: ${products.join(", ")}.`,
       requestedSqm ? `Superficie solicitada: ${requestedSqm} m².` : null,
+      proposedRentPerSqm ? `Renta ofrecida: $${proposedRentPerSqm} MXN/m².` : null,
       desiredTermYears ? `Plazo deseado: ${desiredTermYears} años.` : null,
     ]
       .filter(Boolean)
@@ -205,7 +206,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   Superficie solicitada (m²)
@@ -216,6 +217,19 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
                   onChange={(e) => setRequestedSqm(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
                 />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Renta ofrecida ($/m²)
+                </label>
+                <input
+                  type="number"
+                  value={proposedRentPerSqm}
+                  onChange={(e) => setProposedRentPerSqm(e.target.value)}
+                  placeholder="MXN"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
+                />
+                <p className="text-[11px] text-slate-500">Sin esto, Mariana no puede calcular el Yield Score.</p>
               </div>
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
