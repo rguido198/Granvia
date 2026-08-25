@@ -33,6 +33,8 @@ export type LeaseDetail = {
   rentMonthly: number;
   permittedUse: string | null;
   exclusiveUseClause: string | null;
+  responsibilityMatrix: Record<string, string> | null;
+  noticePeriodDays: number | null;
   startDate: string;
   endDate: string;
   renewalSoon: boolean;
@@ -113,7 +115,9 @@ export async function fetchPortfolio(): Promise<Portfolio> {
 
   const { data: leaseRows, error: leasesError } = await supabase
     .from("leases")
-    .select("id, locale_id, tenant_entity, permitted_use, exclusive_use_clause, base_rent_monthly, start_date, end_date");
+    .select(
+      "id, locale_id, tenant_entity, permitted_use, exclusive_use_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date",
+    );
   if (leasesError) throw new Error(leasesError.message);
 
   const allLeases = leaseRows ?? [];
@@ -164,6 +168,8 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         rentMonthly: Number(l.base_rent_monthly ?? 0),
         permittedUse: l.permitted_use,
         exclusiveUseClause: l.exclusive_use_clause,
+        responsibilityMatrix: l.responsibility_matrix,
+        noticePeriodDays: l.notice_period_days,
         startDate: l.start_date,
         endDate: l.end_date,
         renewalSoon: isRenewalSoon(l.end_date),
