@@ -2,7 +2,7 @@ import { createHook, FatalError } from "workflow";
 
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { extractFromText, extractFromVision } from "@/lib/ingest/lease-extraction";
-import { matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
+import { extractTenantNameFromDocumentText, matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
 import type { LeaseExtractedFields } from "@/lib/ingest/lease-extraction-schema";
 
 /**
@@ -20,6 +20,12 @@ import type { LeaseExtractedFields } from "@/lib/ingest/lease-extraction-schema"
  * without a person saying so. The two hook tokens below are the contract with
  * the resume routes — `lease-doc-match:${documentId}` and
  * `lease-doc-extraction:${documentId}`.
+ *
+ * Root CLAUDE.md §3 also requires a record of *who* authorized a Tier 3
+ * action, so each hook payload carries the confirming landlord's
+ * `verifiedById` (the resume routes already hold it from getCurrentProfile())
+ * and the promote steps write it to `documents.match_verified_by_id` /
+ * `documents.extraction_verified_by_id` alongside the matching timestamp.
  */
 
 // ── Step 1: load the document plus every locale it could belong to ──────────
@@ -96,11 +102,13 @@ async function suggestMatch(
   "use step";
   // The extraction's special_clauses/rawText don't carry a clean "tenant name"
   // field by design (the schema is scoped to the fields Diego/Renata/Mariana
-  // need, not document metadata) — pull the likely name from the first line
-  // of the transcription, which every generated and real contract puts the
-  // tenant name on ("ARRENDATARIO: <name>").
-  const nameLine = extraction.rawText.split("\n").find((l) => /ARRENDATARIO/i.test(l));
-  const extractedName = nameLine?.replace(/ARRENDATARIO:?/i, "").trim() ?? "";
+  // need, not document metadata) — pull the likely name from the transcribed
+  // "ARRENDATARIO: <name>" line every generated and real contract carries.
+  //
+  // Shared with the Legal tab's Gate 1 form (via portfolio.server.ts) rather
+  // than inlined here, so the name the landlord is shown is provably the same
+  // string this confidence score was computed from.
+  const extractedName = extractTenantNameFromDocumentText(extraction.rawText) ?? "";
 
   const match = matchTenant(extractedName, context.candidates);
   return { suggestedLocaleId: match?.localeId ?? null, confidence: match?.confidence ?? null };
@@ -128,7 +136,7 @@ async function recordSuggestion(
 
 async function promoteMatch(
   documentId: string,
-  decision: { confirmed: boolean; correctedLocaleId?: string },
+  decision: { confirmed: boolean; correctedLocaleId?: string; verifiedById?: string },
 ): Promise<string | null> {
   "use step";
   const supabase = getSupabaseServiceClient();
@@ -153,6 +161,9 @@ async function promoteMatch(
     .update({
       locale_id: finalLocaleId,
       match_verified_at: new Date().toISOString(),
+      // Tier 3 audit trail (root CLAUDE.md §3) — the landlord profile the
+      // confirm route authenticated, not the service role that writes the row.
+      match_verified_by_id: decision.verifiedById ?? null,
       status: "attached",
       updated_at: new Date().toISOString(),
     })
@@ -166,7 +177,7 @@ async function promoteMatch(
 async function promoteExtraction(
   documentId: string,
   localeId: string,
-  decision: { confirmed: boolean; correctedFields?: LeaseExtractedFields },
+  decision: { confirmed: boolean; correctedFields?: LeaseExtractedFields; verifiedById?: string },
 ): Promise<void> {
   "use step";
   const supabase = getSupabaseServiceClient();
@@ -205,7 +216,32 @@ async function promoteExtraction(
 
   const currentLeaseId = leaseRows?.[0]?.id;
   if (!currentLeaseId) {
-    throw new FatalError(`no leases row found for locale ${localeId} — cannot promote extraction`);
+    // Gate 1's locale picker deliberately offers vacant units too — a scanned
+    // contract can legitimately belong to a unit with no `leases` row yet. So
+    // reaching here is a real, reachable state, not a corrupt one, and it
+    // arrives AFTER Gate 2's single-use hook has already been consumed: a
+    // throw here would kill the run with an opaque error and strand the
+    // document unrecoverably.
+    //
+    // Write a landlord-readable explanation onto the row instead and leave
+    // `status` at 'attached' — the *match* was fine, only the promotion has
+    // nothing to write onto. Creating the missing `leases` row is explicitly
+    // out of scope; that's a human decision, not this workflow's.
+    const { data: locale } = await supabase
+      .from("locales")
+      .select("unit_number")
+      .eq("id", localeId)
+      .maybeSingle();
+    const unitLabel = locale?.unit_number ?? localeId;
+
+    await supabase
+      .from("documents")
+      .update({
+        error_message: `El local ${unitLabel} no tiene un contrato de renta activo — no se puede promover la extracción hasta que exista uno.`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", documentId);
+    return;
   }
 
   await supabase
@@ -221,6 +257,8 @@ async function promoteExtraction(
     .update({
       extracted_fields: finalFields,
       extraction_verified_at: new Date().toISOString(),
+      // Tier 3 audit trail (root CLAUDE.md §3), same rule as promoteMatch.
+      extraction_verified_by_id: decision.verifiedById ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", documentId);
@@ -273,7 +311,11 @@ export async function leaseDigitizationWorkflow(
 
   // Gate 1 (Tier 3) — entity reconciliation. Woken by the confirm-match route
   // calling resumeHook(`lease-doc-match:${documentId}`, ...).
-  const matchHook = createHook<{ confirmed: boolean; correctedLocaleId?: string }>({
+  const matchHook = createHook<{
+    confirmed: boolean;
+    correctedLocaleId?: string;
+    verifiedById?: string;
+  }>({
     token: `lease-doc-match:${documentId}`,
   });
   const matchDecision = await matchHook;
@@ -285,7 +327,11 @@ export async function leaseDigitizationWorkflow(
 
   // Gate 2 (Tier 3) — extraction accuracy. Woken by the confirm-extraction
   // route calling resumeHook(`lease-doc-extraction:${documentId}`, ...).
-  const extractionHook = createHook<{ confirmed: boolean; correctedFields?: LeaseExtractedFields }>({
+  const extractionHook = createHook<{
+    confirmed: boolean;
+    correctedFields?: LeaseExtractedFields;
+    verifiedById?: string;
+  }>({
     token: `lease-doc-extraction:${documentId}`,
   });
   const extractionDecision = await extractionHook;

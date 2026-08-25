@@ -71,7 +71,15 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await resumeHook(`lease-doc-match:${documentId}`, { confirmed, correctedLocaleId });
+    // `verifiedById` is the authenticated landlord from getCurrentProfile()
+    // above — never a client-supplied field. promoteMatch writes it to
+    // documents.match_verified_by_id, the Tier 3 record of who authorized
+    // this gate (root CLAUDE.md §3).
+    const result = await resumeHook(`lease-doc-match:${documentId}`, {
+      confirmed,
+      correctedLocaleId,
+      verifiedById: profile.id,
+    });
     return NextResponse.json({ ok: true, runId: result.runId });
   } catch (error) {
     // Never echo the raw resumeHook error — it embeds the internal hook token.

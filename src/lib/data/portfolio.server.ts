@@ -1,4 +1,5 @@
 import "server-only";
+import { extractTenantNameFromDocumentText } from "@/lib/ingest/fuzzy-match-tenant";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export type LocaleStatus = "OCCUPIED" | "VACANT" | "PENDING_LEASE";
@@ -209,9 +210,24 @@ export type LeaseDocumentRow = {
    *  Gate 1 form shows a human "A-01", and the uuid only ever travels back
    *  as `correctedLocaleId`, which comes from the unit picker instead. */
   suggestedLocaleUnit: string | null;
+  /** The suggested locale's tenant of record. A unit code and a percentage
+   *  are not enough to verify a match against a roster holding both
+   *  "Derma Club" and "Derma Club 2" — the landlord has to see the name. */
+  suggestedLocaleTenant: string | null;
+  /** The tenant name the *document* states for itself, derived from the same
+   *  helper the fuzzy matcher scored on. Shown next to the suggestion so
+   *  Gate 1 is a comparison of two names, not a bare assertion. */
+  documentTenantName: string | null;
   matchConfidence: number | null;
+  /** Unit number / tenant of the locale Gate 1 already confirmed. Gate 2
+   *  writes onto this locale's lease, so its form has to name it. */
+  localeUnit: string | null;
+  localeTenant: string | null;
   extractedFields: Record<string, unknown> | null;
   extractionVerifiedAt: string | null;
+  /** Set by promoteExtraction when the confirmed locale has no `leases` row to
+   *  promote onto — the document is fine, there is just nothing to write to. */
+  errorMessage: string | null;
 };
 
 /**
@@ -226,31 +242,73 @@ export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
   const { data: rows, error } = await supabase
     .from("documents")
     .select(
-      "id, original_filename, status, suggested_locale_id, match_confidence, extracted_fields, extraction_verified_at",
+      "id, original_filename, status, suggested_locale_id, match_confidence, locale_id, extracted_fields, extraction_verified_at, error_message",
     )
     .eq("kind", "active_lease")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
 
+  // `raw_text` is a full 20-50 page contract per row. Only Gate 1's review
+  // form needs anything out of it (the document's own tenant name), and only
+  // `ready_for_triage` rows render that form — so fetch it for those rows
+  // alone rather than dragging every digitized contract's full text through
+  // the Legal tab on every render. In steady state that's the small pending
+  // queue, not all 85.
+  const triageIds = (rows ?? []).filter((r) => r.status === "ready_for_triage").map((r) => r.id);
+  const tenantNameByDocumentId = new Map<string, string | null>();
+  if (triageIds.length > 0) {
+    const { data: texts } = await supabase
+      .from("documents")
+      .select("id, raw_text")
+      .in("id", triageIds);
+    for (const t of texts ?? []) {
+      tenantNameByDocumentId.set(t.id, extractTenantNameFromDocumentText(t.raw_text));
+    }
+  }
+
+  // Both the Gate 1 suggestion and the Gate 2 confirmed target need resolving,
+  // so collect them together and do one lookup rather than two.
   const localeIds = [
-    ...new Set((rows ?? []).map((r) => r.suggested_locale_id).filter((id): id is string => !!id)),
+    ...new Set(
+      (rows ?? [])
+        .flatMap((r) => [r.suggested_locale_id, r.locale_id])
+        .filter((id): id is string => !!id),
+    ),
   ];
 
   // `.in()` with an empty array is a needless round trip — skip it entirely
   // when no document carries a suggestion yet.
-  const unitByLocaleId = new Map<string, string>();
+  const localeById = new Map<string, { unit: string; tenant: string | null }>();
   if (localeIds.length > 0) {
-    const { data: locales } = await supabase.from("locales").select("id, unit_number").in("id", localeIds);
-    for (const l of locales ?? []) unitByLocaleId.set(l.id, l.unit_number);
+    const { data: locales } = await supabase
+      .from("locales")
+      .select("id, unit_number, tenant_entity")
+      .in("id", localeIds);
+    for (const l of locales ?? []) {
+      localeById.set(l.id, { unit: l.unit_number, tenant: l.tenant_entity });
+    }
   }
 
-  return (rows ?? []).map((r) => ({
-    id: r.id,
-    originalFilename: r.original_filename,
-    status: r.status,
-    suggestedLocaleUnit: r.suggested_locale_id ? (unitByLocaleId.get(r.suggested_locale_id) ?? null) : null,
-    matchConfidence: r.match_confidence === null ? null : Number(r.match_confidence),
-    extractedFields: r.extracted_fields as Record<string, unknown> | null,
-    extractionVerifiedAt: r.extraction_verified_at,
-  }));
+  return (rows ?? []).map((r) => {
+    const suggested = r.suggested_locale_id ? localeById.get(r.suggested_locale_id) : undefined;
+    const confirmed = r.locale_id ? localeById.get(r.locale_id) : undefined;
+    return {
+      id: r.id,
+      originalFilename: r.original_filename,
+      status: r.status,
+      suggestedLocaleUnit: suggested?.unit ?? null,
+      suggestedLocaleTenant: suggested?.tenant ?? null,
+      // Derived server-side, deliberately: `raw_text` is a full 20-50 page
+      // contract and has no business crossing to the client — only the one
+      // line the match was scored on does. Null for any row past Gate 1,
+      // which no longer needs it.
+      documentTenantName: tenantNameByDocumentId.get(r.id) ?? null,
+      matchConfidence: r.match_confidence === null ? null : Number(r.match_confidence),
+      localeUnit: confirmed?.unit ?? null,
+      localeTenant: confirmed?.tenant ?? null,
+      extractedFields: r.extracted_fields as Record<string, unknown> | null,
+      extractionVerifiedAt: r.extraction_verified_at,
+      errorMessage: r.error_message,
+    };
+  });
 }

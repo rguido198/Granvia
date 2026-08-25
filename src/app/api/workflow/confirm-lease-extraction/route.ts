@@ -37,7 +37,20 @@ export async function POST(request: NextRequest) {
   if (correctedFields !== undefined) {
     const parsed = LeaseExtractedFieldsSchema.safeParse(correctedFields);
     if (!parsed.success) {
-      return NextResponse.json({ error: "correctedFields failed schema validation" }, { status: 400 });
+      // Same rule as this file's other error strings: the panel renders
+      // `error` verbatim to the landlord, so the body stays Spanish and the
+      // Zod detail stays in the server log.
+      console.warn(
+        `confirm-lease-extraction: correctedFields failed schema validation for document ${documentId}`,
+        parsed.error.issues,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Los datos corregidos no tienen el formato esperado. Revisa la matriz de responsabilidad y los días de aviso.",
+        },
+        { status: 400 },
+      );
     }
     parsedFields = parsed.data;
   }
@@ -65,9 +78,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Same rule as the Gate 1 route: `verifiedById` comes from the
+    // authenticated session, never the request body. promoteExtraction writes
+    // it to documents.extraction_verified_by_id (root CLAUDE.md §3).
     const result = await resumeHook(`lease-doc-extraction:${documentId}`, {
       confirmed,
       correctedFields: parsedFields,
+      verifiedById: profile.id,
     });
     return NextResponse.json({ ok: true, runId: result.runId });
   } catch (error) {

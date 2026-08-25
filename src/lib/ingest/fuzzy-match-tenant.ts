@@ -1,5 +1,30 @@
 const MIN_CONFIDENCE = 0.5;
 
+/**
+ * Pull the tenant name a lease document states for itself out of its
+ * transcribed text — the "ARRENDATARIO: <name>" line every generated and real
+ * contract in this set carries.
+ *
+ * Extracted here rather than inlined in the workflow because Gate 1's review
+ * form needs the *same* string the matcher scored on: a landlord looking at
+ * "Derma Club" vs "Derma Club 2" cannot verify a match from a unit code and a
+ * percentage alone — they need to see what the document actually said. One
+ * function, one regex, so the number and the displayed name can never drift.
+ *
+ * Returns null when no such line exists (a contract phrased differently, or
+ * text that never got transcribed) — the caller shows "no encontrado" rather
+ * than a misleading empty string.
+ */
+export function extractTenantNameFromDocumentText(rawText: string | null): string | null {
+  if (!rawText) return null;
+  const nameLine = rawText.split("\n").find((l) => /ARRENDATARIO/i.test(l));
+  if (!nameLine) return null;
+  // Non-greedy so a line like "EL ARRENDATARIO: X y el ARRENDATARIO sustituto"
+  // cuts at the first label, not the last.
+  const name = nameLine.replace(/^.*?ARRENDATARIO:?/i, "").trim();
+  return name.length > 0 ? name : null;
+}
+
 function normalize(s: string): string {
   return s
     .normalize("NFD")

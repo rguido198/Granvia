@@ -35,6 +35,21 @@ export async function extractFromText(rawText: string): Promise<LeaseExtractedFi
   if (!response.parsed_output) {
     throw new Error("lease extraction (text path) returned no parsed output");
   }
+
+  // The legibility gate is not vision-only. pdf-parse can return a native text
+  // layer that is mojibake or otherwise garbled (broken embedded encoding,
+  // CID fonts with no ToUnicode map) — non-empty, so it passes the
+  // `hasNativeText` word-count test in the workflow, and until now went
+  // straight into extraction with no gate at all. Run the same deterministic
+  // check the vision path runs, on the same kind of input (text already in
+  // hand), and fail the same way: throw, so leaseDigitizationWorkflow marks
+  // the document `failed` with a legible reason instead of promoting
+  // confidently-shaped nonsense onto a `leases` row.
+  const legibility = checkLegibility(rawText);
+  if (!legibility.passed) {
+    throw new Error(`illegible native text layer: ${legibility.reason}`);
+  }
+
   return response.parsed_output;
 }
 

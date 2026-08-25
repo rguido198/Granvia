@@ -26,9 +26,14 @@ export type DocumentRow = {
   originalFilename: string;
   status: string;
   suggestedLocaleUnit: string | null;
+  suggestedLocaleTenant: string | null;
+  documentTenantName: string | null;
   matchConfidence: number | null;
+  localeUnit: string | null;
+  localeTenant: string | null;
   extractedFields: Record<string, unknown> | null;
   extractionVerifiedAt: string | null;
+  errorMessage: string | null;
 };
 
 export type UnitOption = { id: string; unitCode: string; tenantEntity: string };
@@ -119,6 +124,16 @@ export function LegalDocumentsPanel({
               )}
             </div>
 
+            {/* Written by promoteExtraction when the confirmed locale has no
+             *  `leases` row to promote onto (and by the failure paths). The
+             *  whole point of not throwing there is that a human reads this,
+             *  so it has to actually render. */}
+            {doc.errorMessage && (
+              <p className="text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                {doc.errorMessage}
+              </p>
+            )}
+
             <button
               type="button"
               onClick={() => openViewer(doc.id)}
@@ -148,6 +163,8 @@ export function LegalDocumentsPanel({
                   <MatchReviewForm
                     documentId={doc.id}
                     suggestedUnit={doc.suggestedLocaleUnit}
+                    suggestedTenant={doc.suggestedLocaleTenant}
+                    documentTenantName={doc.documentTenantName}
                     confidence={doc.matchConfidence}
                     allUnits={allUnits}
                     onResolved={onResolved}
@@ -164,7 +181,13 @@ export function LegalDocumentsPanel({
             {doc.status === "attached" && !doc.extractionVerifiedAt && (
               <div className="border-t border-hairline pt-2.5">
                 {fields ? (
-                  <ExtractionReviewForm documentId={doc.id} extractedFields={fields} onResolved={onResolved} />
+                  <ExtractionReviewForm
+                    documentId={doc.id}
+                    extractedFields={fields}
+                    targetUnit={doc.localeUnit}
+                    targetTenant={doc.localeTenant}
+                    onResolved={onResolved}
+                  />
                 ) : (
                   <p className="text-xs text-ink-500 font-medium">
                     La extracción está incompleta o no cumple el esquema esperado — revisa el documento antes de validar.
@@ -256,12 +279,19 @@ export function LeaseUploadZone({ onUploaded }: { onUploaded: () => void }) {
 export function MatchReviewForm({
   documentId,
   suggestedUnit,
+  suggestedTenant,
+  documentTenantName,
   confidence,
   allUnits,
   onResolved,
 }: {
   documentId: string;
   suggestedUnit: string | null;
+  suggestedTenant: string | null;
+  /** The tenant name the document itself states, from the same helper the
+   *  matcher scored on. Shown beside the suggestion because a unit code and a
+   *  percentage cannot separate "Derma Club" from "Derma Club 2". */
+  documentTenantName: string | null;
   confidence: number | null;
   allUnits: UnitOption[];
   onResolved: () => void;
@@ -296,10 +326,35 @@ export function MatchReviewForm({
 
   return (
     <div className="space-y-2 text-xs">
-      <p className="text-ink-700 font-medium">
-        Coincidencia sugerida: <strong className="text-ink">{suggestedUnit ?? "(ninguna)"}</strong>{" "}
-        {confidence !== null && `(confianza ${(confidence * 100).toFixed(0)}%)`}
-      </p>
+      {/* Gate 1 is a comparison, not an assertion: the name the document
+       *  states, against the tenant of record on the suggested unit. Both are
+       *  needed to tell "Derma Club" and "Derma Club 2" apart. */}
+      <dl className="space-y-1">
+        <div className="flex gap-2">
+          <dt className="text-ink-500 font-medium shrink-0">Nombre en el documento:</dt>
+          <dd className="text-ink font-bold">
+            {documentTenantName ?? "(no se encontró en el contrato)"}
+          </dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="text-ink-500 font-medium shrink-0">Coincidencia sugerida:</dt>
+          <dd className="text-ink font-bold">
+            {suggestedUnit ? (
+              <>
+                {suggestedTenant ?? "(local sin inquilino registrado)"} — Local {suggestedUnit}
+              </>
+            ) : (
+              "(ninguna)"
+            )}
+            {confidence !== null && (
+              <span className="text-ink-500 font-medium">
+                {" "}
+                (confianza {(confidence * 100).toFixed(0)}%)
+              </span>
+            )}
+          </dd>
+        </div>
+      </dl>
       <select
         value={selectedLocaleId}
         onChange={(e) => setSelectedLocaleId(e.target.value)}
@@ -341,10 +396,16 @@ export function MatchReviewForm({
 export function ExtractionReviewForm({
   documentId,
   extractedFields,
+  targetUnit,
+  targetTenant,
   onResolved,
 }: {
   documentId: string;
   extractedFields: LeaseExtractedFields;
+  /** The locale Gate 1 confirmed — this confirmation writes onto its current
+   *  lease row, so the form has to say which one before asking for a click. */
+  targetUnit: string | null;
+  targetTenant: string | null;
   onResolved: () => void;
 }) {
   const [fields, setFields] = useState<LeaseExtractedFields>(extractedFields);
@@ -373,6 +434,15 @@ export function ExtractionReviewForm({
 
   return (
     <div className="space-y-2 text-xs">
+      <p className="text-ink-700 font-medium">
+        Se escribirá sobre el contrato vigente de:{" "}
+        <strong className="text-ink">
+          {targetUnit
+            ? `${targetTenant ?? "(local sin inquilino registrado)"} — Local ${targetUnit}`
+            : "(local no resuelto)"}
+        </strong>
+      </p>
+
       {RESPONSIBILITY_SYSTEMS.map((system) => (
         <div key={system} className="flex items-center justify-between gap-3">
           <span className="text-ink-700 font-medium">{SYSTEM_LABELS[system]}</span>
@@ -405,6 +475,30 @@ export function ExtractionReviewForm({
           onChange={(e) => setFields({ ...fields, notice_period_days: Number(e.target.value) })}
           className="border border-hairline rounded-lg px-2 py-1 w-24"
         />
+      </div>
+
+      {/* `special_clauses` is submitted as part of `correctedFields` whether or
+       *  not it is shown, so confirming without seeing it means confirming
+       *  something unread. Read-only rather than editable: the five selects and
+       *  the notice-days input are the fields that promote onto `leases`; the
+       *  clauses ride along unchanged, and free-text editing them here would
+       *  invite rewriting the contract's own words. */}
+      <div className="border-t border-hairline pt-2">
+        <p className="text-ink-700 font-bold mb-1">Cláusulas especiales extraídas</p>
+        {fields.special_clauses.length === 0 ? (
+          <p className="text-ink-500 font-medium">
+            La extracción no encontró cláusulas especiales en este contrato.
+          </p>
+        ) : (
+          <ul className="space-y-1.5">
+            {fields.special_clauses.map((clause, index) => (
+              <li key={`${clause.label}-${index}`} className="text-ink-700">
+                <span className="font-bold text-ink">{clause.label}:</span>{" "}
+                <span className="font-medium">{clause.text}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <button
