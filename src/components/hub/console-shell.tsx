@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { Inter } from "next/font/google";
+import { CONSOLE_ROOT_ID } from "@/components/hub/console-root";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
 import { TenantPortal } from "@/components/hub/tenant-portal";
 import type { ConsoleData } from "@/lib/console-data";
@@ -65,6 +66,11 @@ export function ConsoleShell({
 
   return (
     <div
+      // Portal host for console overlays (see diego-ticket-drawer.tsx). Slide-overs
+      // must mount HERE and not on <body>: the three --console-accent tokens below,
+      // the console font var, and the a11y zoom are all scoped to this element, and
+      // an overlay rendered outside it silently loses all three.
+      id={CONSOLE_ROOT_ID}
       style={{
         zoom: fontSizeLevel === "large" ? 1.12 : fontSizeLevel === "xlarge" ? 1.25 : 1,
         // Console-scoped design tokens — the single place the console's accent

@@ -1182,9 +1182,20 @@ export function LandlordDashboard({
                       Diego IA monitorea la vigencia de pólizas de mantenimiento, reclamaciones a fabricantes e historial técnico.
                     </p>
                   </div>
-                  <span className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
-                    8 Garantías Indexadas en Diego IA
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <span className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
+                      8 Garantías Indexadas en Diego IA
+                    </span>
+                    {/* Second entry point for the same upload action that lives at the top of
+                        the Diego tab — this is where a landlord is actually browsing the
+                        expediente, so the action has to be reachable from here too. */}
+                    <button
+                      onClick={() => triggerToast("Selecciona la Garantía, Póliza o Manual de Equipo (PDF/XML) para indexar en Diego IA...")}
+                      className="bg-ink hover:bg-ink-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0"
+                    >
+                      + Cargar Garantía o Manual (PDF)
+                    </button>
+                  </div>
                 </div>
 
                 {/* WARRANTY SYSTEM CATEGORY FILTER PILLS */}
