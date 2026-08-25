@@ -173,13 +173,25 @@ async function promoteExtraction(
 
   if (!decision.confirmed) return; // client rejected — leave attached, unverified, for a human to redo later
 
-  const { data: document } = await supabase
+  // Unlike promoteMatch's lookup — which degrades safely to null and just
+  // declines to promote — this row is the only fallback source for the fields
+  // written onto the lease, and Gate 2's hook has already been consumed by the
+  // time we get here (it cannot be re-fired). A silent null would surface as a
+  // plain TypeError on finalFields below, the step would retry, and the
+  // document would strand in `attached` with no extraction_verified_at. Fail
+  // fatally and legibly instead, the same way loadDocumentContext does.
+  const { data: document, error: documentError } = await supabase
     .from("documents")
     .select("extracted_fields")
     .eq("id", documentId)
     .single();
+  if (documentError || !document) {
+    throw new FatalError(
+      `could not load document ${documentId} to promote extraction: ${documentError?.message ?? "no row returned"}`,
+    );
+  }
 
-  const finalFields = decision.correctedFields ?? (document?.extracted_fields as LeaseExtractedFields);
+  const finalFields = decision.correctedFields ?? (document.extracted_fields as LeaseExtractedFields);
 
   // "Current" lease for the locale is resolved the same way
   // portfolio.server.ts already does it — latest end_date among that locale's
