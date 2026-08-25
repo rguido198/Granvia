@@ -287,6 +287,47 @@ async function markExtractionFailed(documentId: string, message: string): Promis
     .eq("id", documentId);
 }
 
+/**
+ * Extracts a step failure's message without relying on `instanceof Error`.
+ *
+ * `"use workflow"` bodies run inside a Node `vm.Context` (see
+ * `node_modules/@workflow/core/dist/vm/index.js`'s `createContext`, which
+ * calls `vmCreateContext()` and does NOT inject the host's `Error` global).
+ * When a step exhausts its retries, `dist/runtime/step-handler.js` bubbles
+ * the failure up as a `step_failed` event; on replay,
+ * `dist/step.js` turns that into `new FatalError(errorMessage)` —
+ * constructed with the *host*-realm `FatalError` class (imported from
+ * `@workflow/errors` into a host module) — and rejects the step's promise
+ * with it. That rejection is awaited as-is (by reference, not cloned) inside
+ * the sandboxed workflow code, so the `catch` here receives a real
+ * `FatalError` object whose prototype chain is rooted in the *host's*
+ * `Error.prototype` — not this sandbox's own `Error.prototype`. `instanceof
+ * Error` inside the sandbox resolves `Error` to the sandbox's own
+ * constructor, so it evaluates to `false` for that object and the real
+ * message was being discarded in favor of the generic fallback below.
+ *
+ * The library's own code hits this exact problem and works around it the
+ * same way twice: `dist/types.js`'s `normalizeSyncError` checks
+ * `types.isNativeError(v)` (from `node:util`, which is realm-safe) instead
+ * of `instanceof Error`; and `dist/workflow.js` explicitly throws
+ * `new vmGlobalThis.Error(...)` — the *sandbox's* Error constructor — when it
+ * wants a thrown error to satisfy `instanceof Error` from inside the vm.
+ * `node:util` isn't available in here (no Node.js access inside `"use
+ * workflow"`), so this duck-types on the `message` property instead, which
+ * survives across realms since it's a plain string data property.
+ */
+function getStepFailureMessage(error: unknown): string {
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof (error as { message: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+  return "extraction failed";
+}
+
 // ── The workflow ────────────────────────────────────────────────────────────
 
 export async function leaseDigitizationWorkflow(
@@ -300,10 +341,7 @@ export async function leaseDigitizationWorkflow(
   try {
     extraction = await extractDocument(context);
   } catch (error) {
-    await markExtractionFailed(
-      documentId,
-      error instanceof Error ? error.message : "extraction failed",
-    );
+    await markExtractionFailed(documentId, getStepFailureMessage(error));
     return { documentId, status: "failed" };
   }
 
