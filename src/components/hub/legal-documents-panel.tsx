@@ -129,13 +129,35 @@ export function LegalDocumentsPanel({
 
             {doc.status === "ready_for_triage" && (
               <div className="border-t border-hairline pt-2.5">
-                <MatchReviewForm
-                  documentId={doc.id}
-                  suggestedUnit={doc.suggestedLocaleUnit}
-                  confidence={doc.matchConfidence}
-                  allUnits={allUnits}
-                  onResolved={onResolved}
-                />
+                {/* `ready_for_triage` is written twice on the way here: once by the
+                 *  ingest route's after() callback the moment raw text lands, and
+                 *  again by the workflow's recordSuggestion step. Only the second
+                 *  one means Gate 1's hook exists — resuming it before then 404s.
+                 *
+                 *  `extracted_fields` is the discriminator: it stays at its `{}`
+                 *  column default (which fails the schema parse) until
+                 *  recordSuggestion writes the real extraction, and both extraction
+                 *  paths already validate against this exact schema before
+                 *  returning, so a successful parse here means the workflow reached
+                 *  the point of having a suggestion recorded.
+                 *
+                 *  Deliberately NOT keyed off `suggestedLocaleUnit` — a document
+                 *  whose tenant name matched nothing has a null suggestion and is
+                 *  still a legitimate thing to review, just with no unit to show. */}
+                {fields ? (
+                  <MatchReviewForm
+                    documentId={doc.id}
+                    suggestedUnit={doc.suggestedLocaleUnit}
+                    confidence={doc.matchConfidence}
+                    allUnits={allUnits}
+                    onResolved={onResolved}
+                  />
+                ) : (
+                  <p className="text-xs text-ink-500 font-medium">
+                    Procesando el contrato — la sugerencia de local todavía no está lista. Vuelve a
+                    cargar la vista en unos momentos.
+                  </p>
+                )}
               </div>
             )}
 
@@ -291,15 +313,26 @@ export function MatchReviewForm({
         ))}
       </select>
       <div className="flex gap-2">
+        {/* With neither a suggestion nor a correction there is no locale to
+         *  promote: the route would still pass its status guard and consume
+         *  Gate 1's single-use hook, then promoteMatch would resolve
+         *  finalLocaleId to null and write nothing — stranding the document at
+         *  `ready_for_triage` with its hook already spent, unrecoverable short
+         *  of re-uploading. Block the click instead. */}
         <button
           type="button"
-          disabled={submitting}
+          disabled={submitting || (!suggestedUnit && !selectedLocaleId)}
           onClick={() => confirm(true)}
-          className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
+          className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? "Confirmando..." : "Confirmar"}
         </button>
       </div>
+      {!suggestedUnit && !selectedLocaleId && (
+        <p className="text-ink-500 font-medium">
+          No hubo coincidencia automática — elige el local correcto arriba para poder confirmar.
+        </p>
+      )}
       {error && <p className="font-bold text-red-700">{error}</p>}
     </div>
   );

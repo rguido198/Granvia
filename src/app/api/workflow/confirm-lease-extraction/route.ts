@@ -53,8 +53,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "document not found" }, { status: 404 });
   }
   if (document.status !== "attached") {
+    // Same rule as the Gate 1 route: the panel renders `error` verbatim to the
+    // landlord, so the row status stays in the log and the body stays Spanish.
+    console.warn(
+      `confirm-lease-extraction: document ${documentId} is '${document.status}', not 'attached'`,
+    );
     return NextResponse.json(
-      { error: `document is '${document.status}', not 'attached' — already resolved` },
+      { error: "Esta extracción ya fue validada o el contrato cambió de estado. Actualiza la vista." },
       { status: 409 },
     );
   }
@@ -66,8 +71,10 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, runId: result.runId });
   } catch (error) {
+    // Never echo the raw resumeHook error — it embeds the internal hook token.
+    console.error(`confirm-lease-extraction: resumeHook failed for document ${documentId}`, error);
     return NextResponse.json(
-      { error: `workflow hook not found or already resolved: ${error instanceof Error ? error.message : error}` },
+      { error: "Esta validación ya se registró o el contrato aún se está procesando. Actualiza la vista." },
       { status: 404 },
     );
   }

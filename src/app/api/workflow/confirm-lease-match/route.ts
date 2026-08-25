@@ -58,8 +58,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "document not found" }, { status: 404 });
   }
   if (document.status !== "ready_for_triage") {
+    // The panel renders `error` verbatim to the landlord, so the body carries a
+    // Spanish sentence they can act on; the row status that produced it is a
+    // debugging detail and stays in the server log.
+    console.warn(
+      `confirm-lease-match: document ${documentId} is '${document.status}', not 'ready_for_triage'`,
+    );
     return NextResponse.json(
-      { error: `document is '${document.status}', not 'ready_for_triage' — already resolved` },
+      { error: "Este contrato ya fue resuelto o cambió de estado. Actualiza la vista." },
       { status: 409 },
     );
   }
@@ -68,8 +74,10 @@ export async function POST(request: NextRequest) {
     const result = await resumeHook(`lease-doc-match:${documentId}`, { confirmed, correctedLocaleId });
     return NextResponse.json({ ok: true, runId: result.runId });
   } catch (error) {
+    // Never echo the raw resumeHook error — it embeds the internal hook token.
+    console.error(`confirm-lease-match: resumeHook failed for document ${documentId}`, error);
     return NextResponse.json(
-      { error: `workflow hook not found or already resolved: ${error instanceof Error ? error.message : error}` },
+      { error: "El contrato aún se está procesando o esta confirmación ya se registró. Actualiza la vista." },
       { status: 404 },
     );
   }
