@@ -5,11 +5,12 @@ import { start } from "workflow/api";
 import { extractText } from "@/lib/ingest/extract-text";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { diegoTriageWorkflow } from "@/workflows/diego-triage";
+import { leaseDigitizationWorkflow } from "@/workflows/lease-digitization";
 import { marianaScreeningWorkflow } from "@/workflows/mariana-screening";
 
 export const runtime = "nodejs"; // pdf-parse needs Node's Buffer, not the Edge runtime
 
-const ALLOWED_KINDS = ["maintenance_ticket", "lease_application"] as const;
+const ALLOWED_KINDS = ["maintenance_ticket", "lease_application", "active_lease"] as const;
 type IngestKind = (typeof ALLOWED_KINDS)[number];
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -49,11 +50,22 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  if (typeof localeId !== "string") {
-    // Both kinds need one: Diego's ticket is about an existing occupied
-    // unit, and Mariana's application names a target local too —
-    // lease-screener/SKILL.md §2A lists "target local" as a required
-    // intake field, not something resolved later.
+  if (kind === "active_lease" && file.type !== "application/pdf") {
+    // The shared ALLOWED_MIME_TYPES allow-list above stays permissive for
+    // Diego's and Mariana's photo uploads, but the lease-digitization
+    // workflow's extractFromVision only accepts application/pdf (this
+    // plan's Global Constraint: PDF only, no Word/.docx). Reject early
+    // instead of letting a non-PDF active_lease upload fail later inside
+    // the workflow.
+    return NextResponse.json(
+      { error: "active_lease documents must be application/pdf" },
+      { status: 400 },
+    );
+  }
+  if (kind !== "active_lease" && typeof localeId !== "string") {
+    // Diego's ticket and Mariana's application both name a target local up
+    // front. A lease document doesn't — bulk-drop matches it via fuzzy
+    // tenant-name match inside leaseDigitizationWorkflow instead.
     return NextResponse.json(
       { error: "locale_id is required" },
       { status: 400 },
@@ -128,7 +140,13 @@ export async function POST(request: NextRequest) {
       return;
     }
 
-    if (typeof localeId === "string") {
+    if (kind === "active_lease") {
+      const run = await start(leaseDigitizationWorkflow, [documentId]);
+      await supabase
+        .from("documents")
+        .update({ workflow_run_id: run.runId })
+        .eq("id", documentId);
+    } else if (typeof localeId === "string") {
       const run =
         kind === "maintenance_ticket"
           ? await start(diegoTriageWorkflow, [documentId, localeId])
