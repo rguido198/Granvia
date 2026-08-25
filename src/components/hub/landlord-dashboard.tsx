@@ -250,7 +250,7 @@ export function LandlordDashboard({
   const [killSwitchPending, setKillSwitchPending] = useState(false);
 
   // Diego IA Maintenance Sub-Navigation State
-  const [maintSubTab, setMaintSubTab] = useState<"triage" | "capex" | "contratistas">("triage");
+  const [maintSubTab, setMaintSubTab] = useState<"triage" | "calendario" | "capex" | "contratistas">("triage");
 
   // Mariana IA Legal Engine States
   const [legalSubTab, setLegalSubTab] = useState<"expedientes" | "prospectos" | "marco_legal">("expedientes");
@@ -796,7 +796,17 @@ export function LandlordDashboard({
                       : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
                   }`}
                 >
-                  Triage & Calendario
+                  Triage
+                </button>
+                <button
+                  onClick={() => setMaintSubTab("calendario")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    maintSubTab === "calendario"
+                      ? "bg-[var(--console-accent)] text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-ink-700 border border-hairline"
+                  }`}
+                >
+                  Calendario
                 </button>
                 <button
                   onClick={() => setMaintSubTab("capex")}
@@ -820,21 +830,22 @@ export function LandlordDashboard({
                 </button>
               </div>
 
-              {/* SUB-TAB 1: TRIAGE & CALENDARIO */}
+              {/* SUB-TAB 1: TRIAGE */}
               {maintSubTab === "triage" && (
               <div className="space-y-6 animate-fadeIn">
               {/* DIEGO IA · LIVE TRIAGE QUEUE — real Supabase rows, the Tier 3 gate,
-                  and the dynamic jurisdiction watermark. Sits above the scheduled
-                  calendar per the "operational conveyor belt" ordering: triage/approve
-                  first, scheduled/dispatched execution below. */}
+                  and the dynamic jurisdiction watermark. */}
               <DiegoTriageQueue tickets={diegoTickets} kpis={diegoKpis} localeOptions={localeOptions} />
+              </div>
+              )}
 
-              {/* CALENDARIO DE PRÓXIMOS EVENTOS — informational schedule of preventive
-                  maintenance/calibrations; the real Tier 3 dispatch-approval gate lives
-                  in DiegoTriageQueue above, against actual tickets. This calendar has no
-                  Supabase table behind it, so it never pretended to gate a real dispatch
-                  here — the approval affordance that used to imply it did was removed. */}
-              <div className="space-y-4">
+              {/* SUB-TAB 1B: CALENDARIO — split out from Triage so the live approval
+                  queue and the informational preventive-maintenance schedule don't
+                  compete for the same screen. This calendar has no Supabase table
+                  behind it, so it never pretended to gate a real dispatch — the
+                  approval affordance that used to imply it did was removed. */}
+              {maintSubTab === "calendario" && (
+              <div className="space-y-4 animate-fadeIn">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3">
                   <div>
                     <h3 className="text-base font-bold text-ink">
@@ -888,7 +899,6 @@ export function LandlordDashboard({
                     );
                   })}
                 </div>
-              </div>
               </div>
               )}
 
