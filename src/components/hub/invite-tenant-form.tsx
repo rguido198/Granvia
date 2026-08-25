@@ -58,7 +58,7 @@ export function InviteTenantForm({ localeOptions }: { localeOptions: LocaleOptio
         <button
           type="submit"
           disabled={pending}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
+          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
         >
           {pending ? "Enviando…" : "Enviar Invitación"}
         </button>

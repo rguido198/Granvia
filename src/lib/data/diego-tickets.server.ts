@@ -18,6 +18,7 @@ export type DiegoTicket = {
   priority: "P1" | "P2" | "P3" | "P4" | null;
   costBucket: "ARRENDADOR" | "INQUILINO" | "CAM" | "PENDIENTE" | null;
   estimatedCost: number | null;
+  tenantEntity: string | null;
   rawReport: string;
   diagnosis: string | null;
   unitNumber: string;
@@ -46,7 +47,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     .select(
       `
       id, ticket_number, status, priority, cost_bucket, estimated_cost,
-      raw_report, diagnosis_answer, created_at, unresolved_jd_keys,
+      tenant_entity, raw_report, diagnosis_answer, created_at, unresolved_jd_keys,
       skeptic_flagged, skeptic_concerns,
       locales ( unit_number, properties ( name ) ),
       contractors ( name )
@@ -63,6 +64,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     priority: DiegoTicket["priority"];
     cost_bucket: DiegoTicket["costBucket"];
     estimated_cost: string | number | null;
+    tenant_entity: string | null;
     raw_report: string;
     diagnosis_answer: string | null;
     created_at: string;
@@ -82,6 +84,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       priority: t.priority,
       costBucket: t.cost_bucket,
       estimatedCost: t.estimated_cost !== null ? Number(t.estimated_cost) : null,
+      tenantEntity: t.tenant_entity,
       rawReport: t.raw_report,
       diagnosis: t.diagnosis_answer,
       unitNumber: t.locales?.unit_number ?? "?",

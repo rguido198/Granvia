@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
+import { Inter } from "next/font/google";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
 import { TenantPortal } from "@/components/hub/tenant-portal";
 import type { ConsoleData } from "@/lib/console-data";
@@ -14,6 +15,18 @@ import type { Portfolio } from "@/lib/data/portfolio.server";
 import { signOut } from "@/app/consola/actions";
 
 type ConsoleView = "propietario" | "inquilino";
+
+/**
+ * Console-scoped typeface. Deliberately NOT the marketing site's Cormorant/Work Sans
+ * pairing (src/app/layout.tsx, src/app/globals.css @theme) — the console is a distinct
+ * modern SaaS admin product per its own design direction, so it gets its own font
+ * loaded and applied only inside this wrapper, never touching --font-display/--font-sans.
+ */
+const consoleFont = Inter({
+  subsets: ["latin"],
+  variable: "--font-console",
+  display: "swap",
+});
 
 /**
  * The landlord console, reached only after middleware.ts verifies the signed
@@ -50,8 +63,21 @@ export function ConsoleShell({
 
   return (
     <div
-      style={{ zoom: fontSizeLevel === "large" ? 1.12 : fontSizeLevel === "xlarge" ? 1.25 : 1 }}
-      className={`space-y-4 min-h-screen bg-slate-100 p-3 sm:p-6 font-sans transition-all ${
+      style={{
+        zoom: fontSizeLevel === "large" ? 1.12 : fontSizeLevel === "xlarge" ? 1.25 : 1,
+        // Console-scoped design tokens — the single place the console's accent
+        // is defined. Every hub/*.tsx file below references these three
+        // via Tailwind arbitrary values (e.g. bg-[var(--console-accent)])
+        // instead of hardcoding "indigo-600" per class, so swapping the
+        // console's accent later is a one-line change here, not a grep across
+        // the whole module. Deliberately NOT touched: globals.css's @theme
+        // block (--color-terra, --color-sand-*, --color-signal, --color-alert)
+        // which the marketing site still depends on.
+        ["--console-accent" as string]: "#4f46e5", // indigo-600
+        ["--console-accent-dark" as string]: "#4338ca", // indigo-700
+        ["--console-accent-soft" as string]: "#eef2ff", // indigo-50, for secondary-button hover fills
+      } as CSSProperties}
+      className={`${consoleFont.variable} space-y-4 min-h-screen bg-slate-100 p-3 sm:p-6 font-[family-name:var(--font-console)] transition-all ${
         fontSizeLevel === "large" ? "scale-font-large" : fontSizeLevel === "xlarge" ? "scale-font-xlarge" : "scale-font-normal"
       }`}
     >

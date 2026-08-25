@@ -138,7 +138,7 @@ function ContractorForm({ contractor, onDone }: { contractor: Contractor | null;
         <button
           type="submit"
           disabled={pending}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
+          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
         >
           {pending ? "Guardando…" : contractor ? "Guardar Cambios" : "Agregar Contratista"}
         </button>
@@ -160,7 +160,7 @@ export function ContractorRoster({ contractors }: { contractors: Contractor[] })
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div>
-          <h3 className="font-sans text-base font-bold text-slate-900">Directorio de Contratistas Preaprobados</h3>
+          <h3 className="text-base font-bold text-slate-900">Directorio de Contratistas Preaprobados</h3>
           <p className="text-xs text-slate-500 mt-0.5">
             Contratistas reales dados de alta en Supabase — Diego solo puede despachar automáticamente a los que
             aparecen aquí, con licencia y póliza vigentes.
@@ -171,7 +171,7 @@ export function ContractorRoster({ contractors }: { contractors: Contractor[] })
             setAddingNew(true);
             setEditingId(null);
           }}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0"
+          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0"
         >
           + Agregar Contratista
         </button>
@@ -186,7 +186,7 @@ export function ContractorRoster({ contractors }: { contractors: Contractor[] })
         </p>
       ) : (
         <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
-          <table className="w-full text-left text-xs font-sans">
+          <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px] tracking-wider">
               <tr>
                 <th className="p-3.5">Especialidad</th>

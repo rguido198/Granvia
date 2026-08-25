@@ -94,7 +94,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
     return (
       <button
         onClick={() => setOpen(true)}
-        className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+        className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
       >
         + Nueva Solicitud de Arrendamiento
       </button>
@@ -103,7 +103,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 font-sans max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 max-h-[90vh] flex flex-col">
         <div className="bg-slate-900 text-white p-6 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -129,7 +129,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
             </p>
             <button
               onClick={() => setOpen(false)}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-all cursor-pointer"
+              className="w-full bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold py-2.5 rounded-xl text-xs transition-all cursor-pointer"
             >
               Cerrar
             </button>
@@ -250,7 +250,7 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
+                className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? "Enviando…" : "Enviar Solicitud"}
               </button>

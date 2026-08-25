@@ -44,21 +44,21 @@ export function TenantPortal({
 }) {
   if (!locale) {
     return (
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs font-sans text-sm text-slate-600">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs text-sm text-slate-600">
         No hay ningún local registrado todavía.
       </section>
     );
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-xs space-y-6 font-sans">
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-xs space-y-6">
       {/* Store Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <span className="text-xs sm:text-sm text-slate-600 font-semibold">
             {`${locale.unitNumber} · ${locale.propertyName}`}
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900">{locale.tenantEntity}</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{locale.tenantEntity}</h2>
           <p className="mt-1 text-sm sm:text-base text-slate-600 font-medium">
             Portal Arrendatario. Reporte de incidencias y reglamentos internos.
           </p>
@@ -92,7 +92,7 @@ export function TenantPortal({
       <div className="space-y-4">
         <div className="rounded-xl border-2 border-slate-900 bg-white p-6 sm:p-7 space-y-4">
           <div>
-            <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
               Reportar Incidencia de Mantenimiento
             </h3>
             <p className="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">
@@ -105,7 +105,7 @@ export function TenantPortal({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
-            <h3 className="font-display text-base font-bold text-slate-900">Reportar Ventas Mensuales</h3>
+            <h3 className="text-base font-bold text-slate-900">Reportar Ventas Mensuales</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
               Sube tu comprobante de cierre de caja en PDF o fotografía antes del día 5 del mes.
             </p>
@@ -120,7 +120,7 @@ export function TenantPortal({
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-3">
-            <h3 className="font-display text-base font-bold text-slate-900">Reglamento &amp; Horarios</h3>
+            <h3 className="text-base font-bold text-slate-900">Reglamento &amp; Horarios</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
               Horarios de carga y descarga de proveedores, música ambiental y permisos de modificación.
             </p>
@@ -137,7 +137,7 @@ export function TenantPortal({
 
       {/* Store Active Tickets Section — real Supabase data, not illustrative */}
       <div className="pt-4 border-t border-slate-200">
-        <h3 className="font-display text-lg font-bold text-slate-900 mb-3">
+        <h3 className="text-lg font-bold text-slate-900 mb-3">
           Mis Solicitudes &amp; Incidencias ({locale.unitNumber})
         </h3>
         {tickets.length === 0 ? (

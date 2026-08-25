@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { Inter } from "next/font/google";
 import type { ConsoleData } from "@/lib/console-data";
+
+// Console-scoped typeface, matching console-shell.tsx's choice — this route
+// renders standalone (fixed over the marketing chrome, not nested under
+// ConsoleShell), so it loads its own copy rather than sharing that file's
+// module-scoped font instance. Never touches the marketing site's
+// --font-display/--font-sans (Cormorant/Work Sans) in globals.css.
+const consoleFont = Inter({
+  subsets: ["latin"],
+  variable: "--font-console-prototype",
+  display: "swap",
+});
 
 /**
  * DARK CONSOLE PROTOTYPE — overview tab only.
@@ -114,7 +126,9 @@ export function ConsolePrototype({ data }: { data: ConsoleData }) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-console-canvas font-sans text-console-bone">
+    <div
+      className={`${consoleFont.variable} fixed inset-0 z-50 overflow-y-auto bg-console-canvas font-[family-name:var(--font-console-prototype)] text-console-bone`}
+    >
       <div className="mx-auto max-w-[1180px] px-5 py-10 sm:px-8 sm:py-14">
         {/* Centred pill nav, per the reference */}
         <nav
