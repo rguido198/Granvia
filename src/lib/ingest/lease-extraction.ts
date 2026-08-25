@@ -51,6 +51,10 @@ export async function extractFromVision(
   bytes: Uint8Array,
   mimeType: string,
 ): Promise<{ rawText: string; extractedFields: LeaseExtractedFields }> {
+  if (mimeType !== "application/pdf") {
+    throw new Error(`extractFromVision only supports application/pdf, got ${mimeType}`);
+  }
+
   const client = new Anthropic();
   const base64 = Buffer.from(bytes).toString("base64");
 
