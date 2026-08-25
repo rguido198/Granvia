@@ -11,10 +11,11 @@ import type { Contractor } from "@/lib/data/contractors.server";
 import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
-import type { Portfolio, LocaleStatus } from "@/lib/data/portfolio.server";
+import type { Portfolio, LocaleStatus, LeaseDocumentRow } from "@/lib/data/portfolio.server";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
+import { LegalDocumentsPanel, LeaseUploadZone } from "@/components/hub/legal-documents-panel";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
@@ -284,6 +285,7 @@ export function LandlordDashboard({
   initialAuditLog,
   corporateUsers,
   portfolio,
+  activeLeaseDocuments,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -294,6 +296,7 @@ export function LandlordDashboard({
   initialAuditLog: AuditEntry[];
   corporateUsers: CorporateUser[];
   portfolio: Portfolio;
+  activeLeaseDocuments: LeaseDocumentRow[];
 }) {
   const {
     capexCases,
@@ -304,6 +307,21 @@ export function LandlordDashboard({
   } = data;
 
   const { rentRoll, leases, formerTenants, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
+
+  // Unit picker for the Legal tab's Gate 1 (entity reconciliation) form.
+  // Sourced from `localeOptions` rather than `leases` so a vacant or
+  // pending locale is still selectable — a scanned contract can perfectly
+  // well belong to a unit that has no active lease row yet, which is
+  // exactly the case a landlord needs to correct a bad match toward.
+  const leaseDocumentUnits = useMemo(
+    () =>
+      localeOptions.map((l) => ({
+        id: l.id,
+        unitCode: l.unitNumber,
+        tenantEntity: l.tenantEntity ?? "Vacante",
+      })),
+    [localeOptions],
+  );
 
   // View & Filter States
   const [activeTab, setActiveTab] = useState<SidebarTab>("rentroll");
@@ -1640,6 +1658,27 @@ export function LandlordDashboard({
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* DIGITALIZACIÓN DE CONTRATOS — lease-document pipeline.
+                      Additive to the SSOT table above: that table reads the
+                      `leases` rows, this panel is the intake that produces
+                      and corrects them (two human gates, per document). */}
+                  <div className="border border-hairline rounded-xl bg-white shadow-2xs p-4 space-y-3.5">
+                    <div>
+                      <h3 className="text-base font-bold text-ink">Digitalización de Contratos</h3>
+                      <p className="text-xs text-ink-500 mt-0.5">
+                        Sube contratos escaneados. Cada documento requiere dos confirmaciones humanas: el local al
+                        que corresponde, y la exactitud de las cláusulas extraídas.
+                      </p>
+                    </div>
+
+                    <LeaseUploadZone onUploaded={() => router.refresh()} />
+                    <LegalDocumentsPanel
+                      documents={activeLeaseDocuments}
+                      allUnits={leaseDocumentUnits}
+                      onResolved={() => router.refresh()}
+                    />
                   </div>
                 </div>
               )}

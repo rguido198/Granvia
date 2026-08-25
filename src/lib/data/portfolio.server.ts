@@ -196,3 +196,61 @@ export async function fetchPortfolio(): Promise<Portfolio> {
 
   return { rentRoll, leases, formerTenants, leasedSqm, plazaTotalGla, contractedRent };
 }
+
+/** One row of the Legal tab's document pipeline — a scanned active lease
+ *  moving through leaseDigitizationWorkflow's two human gates. Distinct from
+ *  `LeaseDetail` above, which is the *result* (the leases table row); this is
+ *  the document that produced it, plus the gate state the UI acts on. */
+export type LeaseDocumentRow = {
+  id: string;
+  originalFilename: string;
+  status: string;
+  /** The suggested locale rendered as its unit number, not its uuid — the
+   *  Gate 1 form shows a human "A-01", and the uuid only ever travels back
+   *  as `correctedLocaleId`, which comes from the unit picker instead. */
+  suggestedLocaleUnit: string | null;
+  matchConfidence: number | null;
+  extractedFields: Record<string, unknown> | null;
+  extractionVerifiedAt: string | null;
+};
+
+/**
+ * Every `kind = 'active_lease'` document, newest first, for the Legal tab's
+ * pipeline panel. Kept as its own fetch rather than folded into
+ * fetchPortfolio() — the portfolio is the rent roll / lease ledger, and this
+ * is intake state that a document can hold without ever producing a lease row.
+ */
+export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
+  const supabase = getSupabaseServiceClient();
+
+  const { data: rows, error } = await supabase
+    .from("documents")
+    .select(
+      "id, original_filename, status, suggested_locale_id, match_confidence, extracted_fields, extraction_verified_at",
+    )
+    .eq("kind", "active_lease")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+
+  const localeIds = [
+    ...new Set((rows ?? []).map((r) => r.suggested_locale_id).filter((id): id is string => !!id)),
+  ];
+
+  // `.in()` with an empty array is a needless round trip — skip it entirely
+  // when no document carries a suggestion yet.
+  const unitByLocaleId = new Map<string, string>();
+  if (localeIds.length > 0) {
+    const { data: locales } = await supabase.from("locales").select("id, unit_number").in("id", localeIds);
+    for (const l of locales ?? []) unitByLocaleId.set(l.id, l.unit_number);
+  }
+
+  return (rows ?? []).map((r) => ({
+    id: r.id,
+    originalFilename: r.original_filename,
+    status: r.status,
+    suggestedLocaleUnit: r.suggested_locale_id ? (unitByLocaleId.get(r.suggested_locale_id) ?? null) : null,
+    matchConfidence: r.match_confidence === null ? null : Number(r.match_confidence),
+    extractedFields: r.extracted_fields as Record<string, unknown> | null,
+    extractionVerifiedAt: r.extraction_verified_at,
+  }));
+}
