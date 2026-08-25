@@ -148,7 +148,7 @@ function AddTenantForm({ onDone }: { onDone: () => void }) {
             type="button"
             disabled={!canReview}
             onClick={() => setStep("confirm")}
-            className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer"
+            className="bg-ink hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer"
           >
             Revisar →
           </button>
@@ -241,7 +241,7 @@ export function TerminateTenantButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-[10px] font-bold text-red-700 underline cursor-pointer hover:text-red-900"
+        className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700 cursor-pointer hover:bg-red-100 hover:border-red-300 transition-colors"
       >
         Desocupar
       </button>
@@ -440,7 +440,7 @@ function BulkImportPanel({ onDone }: { onDone: () => void }) {
               const file = e.target.files?.[0];
               if (file) void handleFile(file);
             }}
-            className="block w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--console-accent)] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white file:cursor-pointer cursor-pointer"
+            className="block w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-2 file:text-xs file:font-bold file:text-white file:cursor-pointer cursor-pointer"
           />
           {parsing && <p className="text-[11px] text-slate-500">Leyendo archivo…</p>}
           {parseError && <p className="text-[11px] text-red-600 font-semibold">{parseError}</p>}

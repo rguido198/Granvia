@@ -14,7 +14,7 @@ export function InviteLandlordForm() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-5 py-3 rounded-xl text-sm transition-all cursor-pointer shadow-xs shrink-0"
+        className="bg-ink hover:bg-ink-700 text-white font-bold px-5 py-3 rounded-xl text-sm transition-all cursor-pointer shadow-xs shrink-0"
       >
         Invitar Usuario / Asignar Perfil
       </button>
@@ -52,7 +52,7 @@ export function InviteLandlordForm() {
         <button
           type="submit"
           disabled={pending}
-          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
+          className="bg-ink hover:bg-ink-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
         >
           {pending ? "Enviando…" : "Enviar Invitación"}
         </button>
