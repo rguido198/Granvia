@@ -227,17 +227,18 @@ async function promoteExtraction(
     // `status` at 'attached' — the *match* was fine, only the promotion has
     // nothing to write onto. Creating the missing `leases` row is explicitly
     // out of scope; that's a human decision, not this workflow's.
-    const { data: locale } = await supabase
-      .from("locales")
-      .select("unit_number")
-      .eq("id", localeId)
-      .maybeSingle();
-    const unitLabel = locale?.unit_number ?? localeId;
-
+    //
+    // finalFields is the landlord's confirmed/edited Gate 2 answer — the only
+    // copy of it in existence once this hook resolves. Save it onto the
+    // `documents` row as a safe-deposit even though there's no `leases` row to
+    // promote onto, so it's never lost with no recovery path short of
+    // re-upload + redoing both gates. This is NOT a promotion: no
+    // extraction_verified_at is set, and nothing is written to `leases`.
     await supabase
       .from("documents")
       .update({
-        error_message: `El local ${unitLabel} no tiene un contrato de renta activo — no se puede promover la extracción hasta que exista uno.`,
+        extracted_fields: finalFields,
+        error_message: "Local sin contrato activo — agrega el arrendatario primero",
         updated_at: new Date().toISOString(),
       })
       .eq("id", documentId);
