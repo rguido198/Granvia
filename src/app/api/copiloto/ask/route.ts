@@ -13,22 +13,20 @@ import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
  * agentic (one retrieval, one generation, no tool-use loop). See the session
  * discussion this route follows from: at 83 leases, a single well-scoped
  * query beats either architecture on accuracy, latency, and cost.
+ *
+ * One agent, not two. Both datasets are small enough to pass in full on
+ * every question, so there's no real reason to make the landlord pick
+ * "Mariana" or "Diego" before asking — the model just has both leases and
+ * tickets in context and answers whatever's actually asked.
  */
 
-const MARIANA_SYSTEM_PROMPT = `Eres Mariana, la agente legal de arrendamiento de La Gran Vía Mexicali. Respondes preguntas del propietario sobre los contratos de arrendamiento reales de la plaza, usando únicamente los datos que se te proporcionan a continuación.
+const SYSTEM_PROMPT = `Eres el Copiloto IA de La Gran Vía Mexicali — cubres tanto los contratos de arrendamiento (antes "Mariana") como los tickets de mantenimiento y CapEx (antes "Diego"). Respondes preguntas del propietario usando únicamente los datos reales que se te proporcionan a continuación.
 
 Reglas:
 - Responde en español, de forma directa y ejecutiva.
-- Cita el inquilino y el local (ej. "Ashley Furniture, Local A-01") cuando refieras un contrato específico.
-- Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas o fechas que no aparezcan en los datos.
+- Cita el inquilino y el local (ej. "Ashley Furniture, Local A-01") cuando refieras un contrato, y el número de ticket y el local (ej. "INC-006, Local LOC-12") cuando refieras un caso de mantenimiento.
+- Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
 - No tienes acceso a pólizas de seguro, garantías en depósito, ni documentos PDF — esos datos no existen en este sistema. Si te preguntan por ellos, acláralo.`;
-
-const DIEGO_SYSTEM_PROMPT = `Eres Diego, el agente de mantenimiento y CapEx de La Gran Vía Mexicali. Respondes preguntas del propietario sobre los tickets de mantenimiento reales de la plaza, usando únicamente los datos que se te proporcionan a continuación.
-
-Reglas:
-- Responde en español, de forma directa y ejecutiva.
-- Cita el número de ticket y el local cuando refieras un caso específico.
-- Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes diagnósticos, costos o fechas que no aparezcan en los datos.`;
 
 export async function POST(request: NextRequest) {
   const profile = await getCurrentProfile();
@@ -37,50 +35,38 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { agent, question } = body as { agent?: string; question?: string };
-  if (agent !== "diego" && agent !== "mariana") {
-    return NextResponse.json({ error: "agent must be 'diego' or 'mariana'" }, { status: 400 });
-  }
+  const { question } = body as { question?: string };
   if (typeof question !== "string" || !question.trim()) {
     return NextResponse.json({ error: "question is required" }, { status: 400 });
   }
 
-  let systemPrompt: string;
-  let dataBlock: string;
+  const [{ leases }, { tickets }] = await Promise.all([fetchPortfolio(), fetchDiegoTickets()]);
 
-  if (agent === "mariana") {
-    const { leases } = await fetchPortfolio();
-    systemPrompt = MARIANA_SYSTEM_PROMPT;
-    dataBlock = JSON.stringify(
-      leases.map((l) => ({
-        inquilino: l.tenantEntity,
-        local: l.unitCode,
-        m2: l.sqm,
-        renta_mensual_mxn: l.rentMonthly,
-        uso_permitido: l.permittedUse,
-        clausula_exclusividad: l.exclusiveUseClause,
-        inicio: l.startDate,
-        vencimiento: l.endDate,
-      })),
-    );
-  } else {
-    const { tickets } = await fetchDiegoTickets();
-    systemPrompt = DIEGO_SYSTEM_PROMPT;
-    dataBlock = JSON.stringify(
-      tickets.map((t) => ({
-        ticket: t.ticketNumber,
-        local: t.unitNumber,
-        estatus: t.status,
-        prioridad: t.priority,
-        responsable_costo: t.costBucket,
-        costo_estimado_mxn: t.estimatedCost,
-        reporte: t.rawReport,
-        diagnostico: t.diagnosis,
-        contratista: t.contractorName,
-        creado: t.createdAt,
-      })),
-    );
-  }
+  const leasesBlock = leases.map((l) => ({
+    inquilino: l.tenantEntity,
+    local: l.unitCode,
+    m2: l.sqm,
+    renta_mensual_mxn: l.rentMonthly,
+    uso_permitido: l.permittedUse,
+    clausula_exclusividad: l.exclusiveUseClause,
+    inicio: l.startDate,
+    vencimiento: l.endDate,
+  }));
+
+  const ticketsBlock = tickets.map((t) => ({
+    ticket: t.ticketNumber,
+    local: t.unitNumber,
+    estatus: t.status,
+    prioridad: t.priority,
+    responsable_costo: t.costBucket,
+    costo_estimado_mxn: t.estimatedCost,
+    reporte: t.rawReport,
+    diagnostico: t.diagnosis,
+    contratista: t.contractorName,
+    creado: t.createdAt,
+  }));
+
+  const dataBlock = JSON.stringify({ contratos_de_arrendamiento: leasesBlock, tickets_de_mantenimiento: ticketsBlock });
 
   const client = new Anthropic();
   const response = await client.messages.create({
@@ -94,7 +80,7 @@ export async function POST(request: NextRequest) {
     // source rather than just raising the ceiling it can hit.
     max_tokens: 16000,
     output_config: { effort: "medium" },
-    system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
+    system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
     messages: [
       {
         role: "user",

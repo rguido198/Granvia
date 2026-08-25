@@ -388,16 +388,16 @@ export function LandlordDashboard({
     return sorted;
   }, [rentRoll, rentRollFilter, rentRollStatusFilter, rentRollSort]);
 
-  // AI Copilot Drawer State
+  // AI Copilot Drawer State — one Copiloto, not a per-agent picker: it has both
+  // leases and tickets in context on every question (see the ask-endpoint).
   const [copilotOpen, setCopilotOpen] = useState(false);
-  const [activeAgent, setActiveAgent] = useState<"mariana" | "diego">("mariana");
   const [queryResult, setQueryResult] = useState<string | null>(null);
   const [copilotQuestion, setCopilotQuestion] = useState("");
   const [copilotAskedQuestion, setCopilotAskedQuestion] = useState<string | null>(null);
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [copilotError, setCopilotError] = useState<string | null>(null);
-  // Cancels an in-flight ask when the agent tab switches mid-question — without
-  // this, a slow Mariana response could land under Diego's tab after the switch.
+  // Cancels an in-flight ask if a new one is submitted before the previous
+  // one resolves, so a slow response can't land after a newer question's.
   const copilotAbortRef = useRef<AbortController | null>(null);
 
   // Interactive AI Action States & Simulations
@@ -884,7 +884,6 @@ export function LandlordDashboard({
                               {isBlueLuna ? (
                                 <button
                                   onClick={() => {
-                                    setActiveAgent("mariana");
                                     setCopilotOpen(true);
                                     setQueryResult(
                                       "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 4-16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
@@ -1525,13 +1524,12 @@ export function LandlordDashboard({
                   <button
                     onClick={() => {
                       setCopilotOpen(true);
-                      setActiveAgent("mariana");
-                      triggerToast("Abriendo Copiloto IA con Mariana IA (Agente Legal)...");
+                      triggerToast("Abriendo Copiloto IA...");
                     }}
                     className="bg-ink hover:bg-ink-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-xs"
                   >
                     <span className="h-2 w-2 rounded-full bg-ink-400" />
-                    <span>Copiloto Mariana IA</span>
+                    <span>Copiloto IA</span>
                   </button>
                 </div>
               </div>
@@ -2484,42 +2482,8 @@ export function LandlordDashboard({
             </button>
           </div>
 
-          <div className="px-3 bg-slate-50 border-b border-hairline flex gap-5 text-xs font-semibold">
-            {(
-              [
-                { key: "mariana", label: "Mariana (Legal)" },
-                { key: "diego", label: "Diego (CapEx)" },
-              ] as const
-            ).map((agent) => (
-              <button
-                key={agent.key}
-                type="button"
-                onClick={() => {
-                  copilotAbortRef.current?.abort();
-                  setActiveAgent(agent.key);
-                  setCopilotAskedQuestion(null);
-                  setQueryResult(null);
-                  setCopilotError(null);
-                  setCopilotLoading(false);
-                  setCopilotQuestion("");
-                }}
-                className={`py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
-                  activeAgent === agent.key
-                    ? "border-[var(--console-accent)] text-[var(--console-accent)]"
-                    : "border-transparent text-ink-500 hover:text-ink"
-                }`}
-              >
-                {agent.label}
-              </button>
-            ))}
-          </div>
-
           <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
             <div className="bg-slate-50 border border-hairline rounded-xl p-3.5 space-y-2">
-              <div className="flex items-center justify-between text-xs text-ink-500 font-medium">
-                <span>Consulta al Agente</span>
-                <span className="font-bold text-ink">{activeAgent === "mariana" ? "Mariana IA" : "Diego IA"}</span>
-              </div>
               {copilotAskedQuestion ? (
                 <>
                   <p className="font-bold text-ink text-xs">{copilotAskedQuestion}</p>
@@ -2529,7 +2493,7 @@ export function LandlordDashboard({
                 </>
               ) : (
                 <p className="text-ink-500 text-xs leading-relaxed">
-                  Escribe una pregunta abajo sobre {activeAgent === "mariana" ? "los contratos de arrendamiento" : "los tickets de mantenimiento"} reales de la plaza.
+                  Escribe una pregunta abajo sobre los contratos de arrendamiento o los tickets de mantenimiento reales de la plaza.
                 </p>
               )}
               {copilotError && <p className="text-red-600 text-xs font-semibold">{copilotError}</p>}
@@ -2550,7 +2514,7 @@ export function LandlordDashboard({
                   const res = await fetch("/api/copiloto/ask", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ agent: activeAgent, question: asked }),
+                    body: JSON.stringify({ question: asked }),
                     signal: controller.signal,
                   });
                   const json = await res.json();
