@@ -3,6 +3,7 @@ import { resumeHook } from "workflow/api";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { LeaseExtractedFieldsSchema } from "@/lib/ingest/lease-extraction-schema";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 /**
  * Wakes leaseDigitizationWorkflow's Gate 2 (extraction accuracy) —
@@ -41,6 +42,33 @@ export async function POST(request: NextRequest) {
     parsedFields = parsed.data;
   }
 
-  await resumeHook(`lease-doc-extraction:${documentId}`, { confirmed, correctedFields: parsedFields });
-  return NextResponse.json({ ok: true });
+  const supabase = getSupabaseServiceClient();
+  const { data: document, error: fetchError } = await supabase
+    .from("documents")
+    .select("id, status")
+    .eq("id", documentId)
+    .single();
+
+  if (fetchError || !document) {
+    return NextResponse.json({ error: "document not found" }, { status: 404 });
+  }
+  if (document.status !== "attached") {
+    return NextResponse.json(
+      { error: `document is '${document.status}', not 'attached' — already resolved` },
+      { status: 409 },
+    );
+  }
+
+  try {
+    const result = await resumeHook(`lease-doc-extraction:${documentId}`, {
+      confirmed,
+      correctedFields: parsedFields,
+    });
+    return NextResponse.json({ ok: true, runId: result.runId });
+  } catch (error) {
+    return NextResponse.json(
+      { error: `workflow hook not found or already resolved: ${error instanceof Error ? error.message : error}` },
+      { status: 404 },
+    );
+  }
 }

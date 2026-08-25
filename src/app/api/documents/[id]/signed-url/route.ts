@@ -7,7 +7,7 @@ const SIGNED_URL_TTL_SECONDS = 300; // 5 minutes — long enough to open and vie
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const profile = await getCurrentProfile();
-  if (!profile) {
+  if (!profile || profile.role !== "landlord") {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

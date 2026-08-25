@@ -47,6 +47,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  await resumeHook(`lease-doc-match:${documentId}`, { confirmed, correctedLocaleId });
-  return NextResponse.json({ ok: true });
+  const supabase = getSupabaseServiceClient();
+  const { data: document, error: fetchError } = await supabase
+    .from("documents")
+    .select("id, status")
+    .eq("id", documentId)
+    .single();
+
+  if (fetchError || !document) {
+    return NextResponse.json({ error: "document not found" }, { status: 404 });
+  }
+  if (document.status !== "ready_for_triage") {
+    return NextResponse.json(
+      { error: `document is '${document.status}', not 'ready_for_triage' — already resolved` },
+      { status: 409 },
+    );
+  }
+
+  try {
+    const result = await resumeHook(`lease-doc-match:${documentId}`, { confirmed, correctedLocaleId });
+    return NextResponse.json({ ok: true, runId: result.runId });
+  } catch (error) {
+    return NextResponse.json(
+      { error: `workflow hook not found or already resolved: ${error instanceof Error ? error.message : error}` },
+      { status: 404 },
+    );
+  }
 }
