@@ -35,4 +35,37 @@ describe("checkLegibility", () => {
     const result = checkLegibility("Artículo 5 y también § 3 se aplican a este caso con suficiente texto alrededor.");
     expect(result.clauseAnchors.length).toBe(2);
   });
+
+  it("passes real-world Mexican lease style: spelled ordinals, no per-clause 'Cláusula' prefix", () => {
+    // Matches the exact heading style found in a real (non-synthetic) Mexican
+    // commercial lease: a single "CLÁUSULAS" heading, then each clause opens
+    // with a capitalized spelled-out ordinal + period, never repeating the
+    // word "Cláusula".
+    const realDocStyle = `CLÁUSULAS
+PRIMERA. OBJETO Y LOCALIZACIÓN. El Arrendador otorga en arrendamiento al Arrendatario el Local A-01 ubicado en la planta baja.
+SEGUNDA. IMPORTE DE LA RENTA. El Arrendatario pagará una renta mensual conforme a lo establecido en el presente contrato.
+TERCERA. PLAZO Y VIGENCIA. El plazo del presente contrato será de cinco años contados a partir de la fecha de firma.`;
+    const result = checkLegibility(realDocStyle);
+    expect(result.passed).toBe(true);
+    expect(result.clauseAnchors).toEqual(["PRIMERA.", "SEGUNDA.", "TERCERA."]);
+  });
+
+  it("still passes a digit-numbered document (existing behavior preserved)", () => {
+    const digitDoc =
+      "Cláusula 1. Objeto del Contrato. El Arrendador otorga en arrendamiento al Arrendatario el Local A-01. " +
+      "Cláusula 2. Renta. El Arrendatario pagará puntualmente la renta mensual pactada.";
+    const result = checkLegibility(digitDoc);
+    expect(result.passed).toBe(true);
+    expect(result.clauseAnchors.length).toBe(2);
+  });
+
+  it("does not treat a bare ordinal word mid-sentence as a clause anchor", () => {
+    // "primera" appears in ordinary prose, not at the start of a line
+    // followed by a period like a clause heading — should not count.
+    const midSentence =
+      "Esta es la primera vez que las partes celebran un contrato similar, sin que ello implique relación previa.";
+    const result = checkLegibility(midSentence);
+    expect(result.clauseAnchors.length).toBe(0);
+    expect(result.passed).toBe(false);
+  });
 });
