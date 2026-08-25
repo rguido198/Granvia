@@ -28,14 +28,18 @@ The Legal ("Expedientes & Anomalías") tab shows 85 indexed contracts, but there
 [documents row created, status='uploaded']
         |
         v
-[OCR / legibility gate]  --reuses ocr_legibility_check.py's checks as-is--
-        |  FAIL --> status='failed', error_message = check's own verdict string. Stop. No LLM call.
-        v  PASS
-[status='extracting']
+[status='extracting']  --pdf-parse first (existing extractText, free/instant)--
         |
         v
-[LLM extraction pass]  -->  raw_text (full) + extracted_fields (strict schema, see below)
-        |                    + fuzzy tenant-name match against locales.tenant_entity
+[text present & non-trivial?] --yes--> raw_text = pdf-parse output, skip vision call
+        |  no (empty/near-empty — a scan, not native text)
+        v
+[Claude vision legibility + extraction, one multimodal call]
+        |  illegible (model reports the scan can't be reliably read)
+        |  --> status='failed', error_message = model's stated reason. Stop.
+        v  legible
+[extracted_fields populated]  -->  raw_text (full) + extracted_fields (Zod-validated, see below)
+        |                          + fuzzy tenant-name match against locales.tenant_entity
         v
 [status='ready_for_triage']  (suggested_locale_id + match_confidence populated)
         |
@@ -102,7 +106,9 @@ alter table leases
 
 On Gate 2 confirm, the pipeline writes `extracted_fields.responsibility_matrix` and `extracted_fields.notice_period_days` onto whichever `leases` row `portfolio.server.ts`'s existing `activeLeaseByLocale` map already resolves as current for that `locale_id`. No new versioning/history mechanism — a corrected or renewed contract's document just updates whatever `leases` row is current at that time, the same way every other lease field already works. `documents` stays the immutable audit trail (what was uploaded, what the LLM saw, who verified it, when); `leases` stays the single operational ground truth Copiloto and (later) Diego read — neither has to know the other exists.
 
-### `extracted_fields` — strict schema (Pydantic/JSON-Schema enforced, not free-form LLM output)
+### `extracted_fields` — strict schema (Zod-validated, not free-form LLM output)
+
+`zod` is already a dependency (`package.json`). Define the schema once in `src/lib/ingest/lease-extraction-schema.ts`, use it both to validate the model's structured output and as the TypeScript type for every consumer.
 
 ```json
 {
@@ -122,15 +128,18 @@ On Gate 2 confirm, the pipeline writes `extracted_fields.responsibility_matrix` 
 
 Universal five-field matrix (`hvac`, `roof`, `plumbing`, `electrical`, `storefront_glass`) applies to every lease regardless of tenant category — a furniture store and a taquería both have HVAC and a roof. Category-specific items (grease trap, hood suppression, walk-in cooler) are not forced into the universal matrix; they land in `special_clauses` when the extraction encounters them, gated on the tenant's actual business category rather than assumed present for everyone.
 
-## OCR legibility gate
+## OCR legibility gate — revised: Claude vision, not tesseract subprocess
 
-`ocr_legibility_check.py` already computes `overall_verdict` (PASS/REVIEW/FAIL) from native-text-layer presence, DPI floor, alpha-character ratio, and clause-anchor recovery — confirmed working against the synthetic noisy test set (control/faded/noisy_fax → PASS, skewed → FAIL, 0 words, fully garbled). The pipeline must **gate on this verdict**, not just log it:
+**This section originally specified reusing `ocr_legibility_check.py` (Python + tesseract) directly inside the pipeline. Revised after checking the actual ingest code** (`api/ingest/route.ts`, `lib/ingest/extract-text.ts`): this app is pure Node/TypeScript — `pdf-parse` for text extraction, Vercel's `workflow` package for durable background steps, no Python anywhere. Shipping a tesseract/poppler binary into a Vercel Function means a custom build layer or Vercel Sandbox — real infra weight the rest of the codebase doesn't carry. Also discovered in the process: **the live pipeline today has no legibility gate at all** — `extractText` calls `pdf-parse` on every PDF regardless of whether it has a native text layer, and a scanned/image-only PDF silently returns empty text with no error, no `FAIL`, nothing. That's a pre-existing gap in the already-shipped maintenance-ticket/lease-application intake, not something new to this feature.
 
-- **FAIL** → `status='failed'`, `error_message` = the check's verdict string, verbatim. No LLM extraction call — don't spend tokens on a document that's already known unreadable.
-- **REVIEW** → proceeds to extraction, but the check's verdict string is surfaced to the client during Gate 1/2 review so a borderline scan doesn't look identical to a clean PASS.
-- **PASS** → proceeds normally.
+Revised approach, fitting the stack that's actually here:
 
-Known gap surfaced during test-set validation: skew alone defeats tesseract completely (0 words) because the pipeline has no deskew preprocessing step. Real landlord-scanned contracts are plausibly tilted (phone photo, not a flatbed scanner). Flagging as a follow-up — a deskew pass (OpenCV or tesseract's own OSD) before the OCR step — not blocking this spec, since the legibility gate correctly catches and rejects a skewed scan rather than silently producing garbage data.
+1. **Try `pdf-parse` first** (already in the codebase, free, instant) — correct and sufficient for the ~77 clean native-text leases.
+2. **If the result is empty or near-empty** (a scan, not native text), fall back to **one Claude vision call** that does legibility judgment and field extraction together — pass the document, the model reports whether it's reliably readable and, if so, returns the structured fields in the same response. No new binary dependency; reuses the `@anthropic-ai/sdk` already wired for Copiloto.
+3. **Deterministic post-check, not model self-report.** `mariana-screening.ts` states the operative principle already: *"a model shouldn't be trusted on [facts] it wasn't given full context for"* — applied there to dates, applies here to a model's own confidence about its reading. Don't ask Claude "were you able to read this reliably?" and trust the answer. Instead: have the vision call return the transcribed `raw_text` alongside `extracted_fields`, then run the same deterministic check `ocr_legibility_check.py` already does — alpha-character ratio, clause-anchor recovery (`Cláusula`/`Artículo`/`§` + number) — on that returned text, ported to TypeScript (`src/lib/ingest/legibility-check.ts`). The math stays identical to the validated Python version; only the input source changes (Claude's transcription instead of tesseract's).
+4. **Illegible verdict** (deterministic check fails) → `status='failed'`, `error_message` = which check failed and why (alpha ratio, no clause anchors found). No further processing.
+
+`ocr_legibility_check.py` isn't wasted work — it stays valuable as the **fixture-validation tool** (already used to confirm the synthetic test set behaves as intended: control/faded/noisy_fax legible, skewed genuinely broken). The production gate is now a Claude call instead of a tesseract subprocess, but the same synthetic fixtures (including the skewed one) are exactly what should be used to validate the Claude-vision gate's behavior before this ships — see Testing below. Claude vision is a plausible improvement on the tesseract skew failure specifically (tesseract had no deskew preprocessing at all), but that's a hypothesis to confirm against the fixture, not an assumption to ship on.
 
 ## UI changes (Legal tab)
 
@@ -149,7 +158,19 @@ Build and test against Gran Via's Supabase **preview branch**, not the productio
 
 ## Testing
 
-The 82-lease synthetic set (`gran_via_test_leases/` — 77 clean native-text PDFs + 5 defected noisy scans, generated and validated against `ocr_legibility_check.py`) becomes the pipeline's eval fixture: run all 82 through the real pipeline end-to-end, check `extracted_fields` output against `ground_truth.json`'s known answers per lease. The skewed test file's correct FAIL result is itself a passing test case for the legibility gate, not a fixture bug.
+The 82-lease synthetic set (`gran_via_test_leases/` — 77 clean native-text PDFs + 5 defected noisy scans, generated and validated against `ocr_legibility_check.py`) becomes the pipeline's eval fixture: run all 82 through the real pipeline end-to-end, check `extracted_fields` output against `ground_truth.json`'s known answers per lease. For the 5 noisy scans specifically, confirm the Claude-vision gate's PASS/FAIL calls against what `ocr_legibility_check.py` already established as ground truth for that set (control/faded/noisy_fax legible, skewed broken) — a FAIL on skewed is a passing test result for the gate, not a fixture bug; if Claude vision reads the skewed scan successfully where tesseract couldn't, that's a welcome upgrade to note, not a test failure, but it should be an observed result, not assumed going in.
+
+## Background execution and the two human gates
+
+The extraction step (`pdf-parse` → conditional Claude vision fallback → deterministic legibility post-check → fuzzy match) runs as a Vercel `workflow` function, mirroring `diegoTriageWorkflow` / `marianaScreeningWorkflow` in `src/workflows/` — not a bare `after()` callback. `api/ingest/route.ts` already has the wiring for this (kind-based dispatch to a workflow, `run.runId` stored back onto the document row); the lease pipeline adds a third workflow, `leaseDigitizationWorkflow`, following the same shape.
+
+The two human gates are implemented as **two sequential `createHook`/`resumeHook` suspensions** within that workflow — the exact mechanism `marianaScreeningWorkflow` already uses for its single landlord-approval gate (`createHook<{approved: boolean}>({token: \`lease-application-review:${applicationId}\`})`, resumed by a dedicated API route). This workflow needs two, not one:
+
+1. After the extraction step, suspend on `createHook<{confirmed: boolean; correctedLocaleId?: string}>({token: \`lease-doc-match:${documentId}\`})`. A new route (`api/workflow/confirm-lease-match`) writes `locale_id`, `match_verified_at`, `match_verified_by_id`, then calls `resumeHook`.
+2. After the workflow resumes, suspend again on `createHook<{confirmed: boolean; correctedFields?: ExtractedFields}>({token: \`lease-doc-extraction:${documentId}\`})`. A second route (`api/workflow/confirm-lease-extraction`) writes `extracted_fields` (using the client's corrections if any were made), `extraction_verified_at`, `extraction_verified_by_id`, then calls `resumeHook`.
+3. Only after both resolve does the workflow's final step write `responsibility_matrix`/`notice_period_days` onto the resolved `leases` row and set `documents.status='attached'`.
+
+This gets the "durable, survives a serverless cold start between upload and a landlord getting around to reviewing it days later" property for free — the same property `marianaScreeningWorkflow` already relies on for its own review gate.
 
 ## Explicitly deferred (raised and cut during design, for the record)
 
