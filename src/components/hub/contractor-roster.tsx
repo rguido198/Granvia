@@ -138,7 +138,7 @@ function ContractorForm({ contractor, onDone }: { contractor: Contractor | null;
         <button
           type="submit"
           disabled={pending}
-          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
+          className="bg-ink hover:bg-ink-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50"
         >
           {pending ? "Guardando…" : contractor ? "Guardar Cambios" : "Agregar Contratista"}
         </button>
@@ -171,7 +171,7 @@ export function ContractorRoster({ contractors }: { contractors: Contractor[] })
             setAddingNew(true);
             setEditingId(null);
           }}
-          className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0"
+          className="bg-ink hover:bg-ink-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0"
         >
           + Agregar Contratista
         </button>

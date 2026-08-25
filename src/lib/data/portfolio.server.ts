@@ -1,6 +1,8 @@
 import "server-only";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
+export type LocaleStatus = "OCCUPIED" | "VACANT" | "PENDING_LEASE";
+
 export type PortfolioRow = {
   slug: string;
   /** leases.id of this locale's currently active lease — null when vacant
@@ -15,6 +17,12 @@ export type PortfolioRow = {
   sharePct: number;
   vacant: boolean;
   renewalSoon: boolean;
+  /** Real locales.status enum value — kept alongside the derived `vacant`
+   *  boolean so the Rent Roll's Estado filter can facet on all three real
+   *  states (a PENDING_LEASE locale is neither occupied nor "Vacante" the
+   *  way the console currently labels a unit) instead of just the binary
+   *  the rest of this row's fields were built around. */
+  status: LocaleStatus;
 };
 
 export type LeaseDetail = {
@@ -138,6 +146,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       sharePct: (Number(l.area_sqm) / plazaTotalGla) * 100,
       vacant,
       renewalSoon: !vacant && lease ? isRenewalSoon(lease.end_date) : false,
+      status: l.status as LocaleStatus,
     };
   });
 

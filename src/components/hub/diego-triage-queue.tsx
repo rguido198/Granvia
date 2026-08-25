@@ -145,7 +145,7 @@ function TicketRow({ ticket }: { ticket: DiegoTicket }) {
                 onClick={() => resolve(true)}
                 disabled={submitting !== null}
                 title="Aprobar y Despachar"
-                className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white font-bold w-7 h-7 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-default"
+                className="bg-ink hover:bg-ink-700 text-white font-bold w-7 h-7 rounded-lg text-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-default"
               >
                 {submitting === "approve" ? "…" : "✓"}
               </button>
