@@ -80,4 +80,40 @@ describe("extractTenantNameFromDocumentText", () => {
     expect(match?.localeId).toBe("loc-3");
     expect(match?.confidence).toBe(1);
   });
+
+  it("ignores a narrative clause that merely mentions the label mid-sentence", () => {
+    // Found live on contrato-arrendamiento-b10-mint-boutique.pdf: this line
+    // has a colon after ARRENDATARIO too, but the label doesn't open the
+    // line, so it must never be read as the name.
+    const text =
+      "DECLARACIONES\n\n" +
+      "II. Declara el ARRENDATARIO: Que es una persona moral debidamente " +
+      "constituida, con capacidad legal y financiera suficiente.";
+    expect(extractTenantNameFromDocumentText(text)).toBeNull();
+  });
+
+  it("falls through a preamble's parenthetical defined-term mention to the signature block", () => {
+    // The exact failure mode this regression guards: a realistic contract's
+    // preamble names the party BEFORE defining ARRENDATARIO as a term for
+    // them, so the first mention of the word has no name after it at all.
+    const text =
+      "CONTRATO DE ARRENDAMIENTO COMERCIAL QUE CELEBRAN, POR UNA PARTE, " +
+      "INMOBILIARIA LA GRAN VÍA DE MEXICALI, S.A. DE C.V. (EN LO SUCESIVO " +
+      "DENOMINADO COMO EL 'ARRENDADOR'), Y POR LA OTRA PARTE, LA SOCIEDAD " +
+      "MERCANTIL DENOMINADA MINT BOUTIQUE, S.A. DE C.V., REPRESENTADA POR SU " +
+      "APODERADO LEGAL (EN LO SUCESIVO DENOMINADA COMO EL 'ARRENDATARIO'), AL " +
+      "TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:\n\n" +
+      "DECLARACIONES\n\n" +
+      "II. Declara el ARRENDATARIO: Que es una persona moral debidamente constituida.\n\n" +
+      "_______________________________________\n" +
+      "EL ARRENDATARIO\n" +
+      "MINT Boutique, S.A. de C.V.\n" +
+      "Por: Apoderado Legal";
+    expect(extractTenantNameFromDocumentText(text)).toBe("MINT Boutique, S.A. de C.V.");
+  });
+
+  it("requires the standalone label line to have a next line to return", () => {
+    const text = "Cláusula final.\n\nEL ARRENDATARIO";
+    expect(extractTenantNameFromDocumentText(text)).toBeNull();
+  });
 });
