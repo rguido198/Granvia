@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, Fragment } from "react";
+import { useState, useMemo, useRef, useEffect, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import type {
   ConsoleData,
@@ -371,6 +371,25 @@ export function LandlordDashboard({
 
   const [isEditingRentRoll, setIsEditingRentRoll] = useState(false);
   const router = useRouter();
+
+  // The lease-digitization workflow (src/workflows/lease-digitization.ts)
+  // runs after the upload response has already gone back to the browser —
+  // `after()` in the ingest route dispatches it post-response, and
+  // extractFromText/extractFromVision each make a multi-second Opus call on
+  // top of that. LeaseUploadZone's one-shot router.refresh() on upload lands
+  // mid-flight and catches "extracting" every time; nothing ever re-checks
+  // afterward, so the panel looks stuck until a manual reload. Poll instead
+  // while any document is still in-flight, and stop as soon as none are —
+  // `ready_for_triage`/`attached`/`failed` are all resting states waiting on
+  // a human, not on more processing, so they don't keep the poll alive.
+  const hasInFlightLeaseDocument = activeLeaseDocuments.some(
+    (doc) => doc.status === "uploaded" || doc.status === "extracting",
+  );
+  useEffect(() => {
+    if (!hasInFlightLeaseDocument) return;
+    const interval = setInterval(() => router.refresh(), 3000);
+    return () => clearInterval(interval);
+  }, [hasInFlightLeaseDocument, router]);
   // Keyed `${localeId}:${field}` — lets each cell show its own saving state
   // independently instead of locking the whole table while one field saves.
   const [savingField, setSavingField] = useState<string | null>(null);
