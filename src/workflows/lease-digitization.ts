@@ -172,6 +172,34 @@ async function promoteMatch(
   return finalLocaleId;
 }
 
+// ── Step 3b: re-run extraction after a Gate 2 rejection ─────────────────────
+
+/** Surfaces the retry as "Extrayendo…" in the panel (STATUS_LABELS already
+ *  has this state — a rejection re-extracting is the same wait as the first
+ *  pass, from a landlord's point of view) and hides the stale review form,
+ *  since LegalDocumentsPanel only renders it at status 'attached'. */
+async function markReExtracting(documentId: string): Promise<void> {
+  "use step";
+  const supabase = getSupabaseServiceClient();
+  await supabase
+    .from("documents")
+    .update({ status: "extracting", updated_at: new Date().toISOString() })
+    .eq("id", documentId);
+}
+
+async function recordReExtraction(documentId: string, extraction: ExtractionResult): Promise<void> {
+  "use step";
+  const supabase = getSupabaseServiceClient();
+  await supabase
+    .from("documents")
+    .update({
+      extracted_fields: extraction.extractedFields,
+      status: "attached",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", documentId);
+}
+
 // ── Step 4: promote the confirmed extraction onto the current lease ─────────
 
 async function promoteExtraction(
@@ -366,6 +394,19 @@ export async function leaseDigitizationWorkflow(
 
   // Gate 2 (Tier 3) — extraction accuracy. Woken by the confirm-extraction
   // route calling resumeHook(`lease-doc-extraction:${documentId}`, ...).
+  //
+  // One hook, iterated with `for await` rather than recreated per attempt —
+  // this is the documented shape for a token that receives more than one
+  // payload over its lifetime (@workflow/core's createHook: "Hooks
+  // implement... AsyncIterable", with dispose() releasing the token once
+  // done). A rejection re-runs extraction (same document, same locale — only
+  // the field-level read was disputed, not the match) and the *same* hook
+  // waits for another look, rather than stranding the document at `attached`
+  // with no way forward short of a full re-upload. Capped at 3
+  // re-extractions: each retry is a real paid Opus call, and a landlord
+  // repeatedly rejecting the same document is a sign the source text itself
+  // is bad, not something more retries fix — that case should surface as a
+  // failure and point at re-upload, not loop forever.
   const extractionHook = createHook<{
     confirmed: boolean;
     correctedFields?: LeaseExtractedFields;
@@ -373,8 +414,40 @@ export async function leaseDigitizationWorkflow(
   }>({
     token: `lease-doc-extraction:${documentId}`,
   });
-  const extractionDecision = await extractionHook;
-  await promoteExtraction(documentId, localeId, extractionDecision);
 
-  return { documentId, status: "attached" };
+  const MAX_REEXTRACTIONS = 3;
+  let reextractions = 0;
+
+  for await (const extractionDecision of extractionHook) {
+    if (extractionDecision.confirmed) {
+      await promoteExtraction(documentId, localeId, extractionDecision);
+      extractionHook.dispose();
+      return { documentId, status: "attached" };
+    }
+
+    if (reextractions >= MAX_REEXTRACTIONS) {
+      await markExtractionFailed(
+        documentId,
+        "Extracción rechazada varias veces — vuelve a subir el documento para reintentar desde cero.",
+      );
+      extractionHook.dispose();
+      return { documentId, status: "failed" };
+    }
+    reextractions++;
+
+    await markReExtracting(documentId);
+    try {
+      extraction = await extractDocument(context);
+    } catch (error) {
+      await markExtractionFailed(documentId, getStepFailureMessage(error));
+      extractionHook.dispose();
+      return { documentId, status: "failed" };
+    }
+    await recordReExtraction(documentId, extraction);
+  }
+
+  // Unreachable in practice — the loop only exits via an explicit return
+  // above, never by the hook's iterator naturally completing — but keeps
+  // the function's return type honest instead of an implicit `undefined`.
+  throw new FatalError(`lease-doc-extraction hook for ${documentId} ended without a decision`);
 }

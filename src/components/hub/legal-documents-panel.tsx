@@ -409,26 +409,29 @@ export function ExtractionReviewForm({
   onResolved: () => void;
 }) {
   const [fields, setFields] = useState<LeaseExtractedFields>(extractedFields);
-  const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"confirm" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function confirm(confirmed: boolean) {
-    setSubmitting(true);
+    setPendingAction(confirmed ? "confirm" : "reject");
     setError(null);
     try {
       const res = await fetch("/api/workflow/confirm-lease-extraction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // A rejection discards whatever's in the form — it means "this whole
+        // extraction is wrong," not "here are my edits," so correctedFields
+        // stays undefined and the workflow re-runs extraction from scratch.
         body: JSON.stringify({ documentId, confirmed, correctedFields: confirmed ? fields : undefined }),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        setError(json.error ?? "No se pudo confirmar la extracción.");
+        setError(json.error ?? "No se pudo registrar la decisión.");
         return;
       }
       onResolved();
     } finally {
-      setSubmitting(false);
+      setPendingAction(null);
     }
   }
 
@@ -501,14 +504,25 @@ export function ExtractionReviewForm({
         )}
       </div>
 
-      <button
-        type="button"
-        disabled={submitting}
-        onClick={() => confirm(true)}
-        className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
-      >
-        {submitting ? "Confirmando..." : "Confirmar extracción"}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={pendingAction !== null}
+          onClick={() => confirm(true)}
+          className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
+        >
+          {pendingAction === "confirm" ? "Confirmando..." : "Confirmar extracción"}
+        </button>
+        <button
+          type="button"
+          disabled={pendingAction !== null}
+          onClick={() => confirm(false)}
+          title="Descarta esta lectura y vuelve a extraer el contrato desde cero (máx. 3 reintentos)."
+          className="border border-hairline text-ink-700 px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
+        >
+          {pendingAction === "reject" ? "Rechazando..." : "Rechazar y volver a extraer"}
+        </button>
+      </div>
       {error && <p className="font-bold text-red-700">{error}</p>}
     </div>
   );
