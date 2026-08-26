@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DiegoTicket } from "@/lib/data/diego-tickets.server";
 import { CONSOLE_ROOT_ID } from "@/components/hub/console-root";
@@ -61,10 +61,29 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
   const { submitting, errorMsg, resolve } = useResolveTicket(ticket.id);
   const [auditExpanded, setAuditExpanded] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
+  // aria-modal="true" tells assistive tech the virtual cursor is constrained
+  // to this dialog, which is only true if keyboard focus actually moves in on
+  // open and back out on close. Capture whatever had focus (typically the
+  // ticket row that was clicked) before the portal target is even resolved,
+  // so the restore-on-unmount below always has the right target.
   useEffect(() => {
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
     setHost(document.getElementById(CONSOLE_ROOT_ID) ?? document.body);
+    return () => {
+      previouslyFocusedRef.current?.focus?.();
+    };
   }, []);
+
+  // The close button only exists in the DOM once `host` is set and the portal
+  // renders, so focus-on-open has to key off `host` rather than run on mount.
+  useEffect(() => {
+    if (host) {
+      closeButtonRef.current?.focus();
+    }
+  }, [host]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -126,10 +145,11 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
             </p>
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label="Cerrar expediente"
-            className="shrink-0 cursor-pointer rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+            className="shrink-0 cursor-pointer rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--console-accent)]"
           >
             Cerrar ✕
           </button>

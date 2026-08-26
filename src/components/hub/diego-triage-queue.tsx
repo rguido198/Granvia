@@ -27,7 +27,20 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
     <>
       <tr
         onClick={onOpen}
-        className="cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+        tabIndex={0}
+        role="button"
+        aria-label={"Abrir expediente del ticket " + ticket.ticketNumber}
+        onKeyDown={(e) => {
+          // Ignore keydowns bubbling up from the Aprobar/Rechazar buttons inside
+          // this row — otherwise Enter/Space on one of those would both fire the
+          // button's own action and open the drawer.
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            if (e.key === " ") e.preventDefault();
+            onOpen();
+          }
+        }}
+        className="cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-b-0 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--console-accent)]"
       >
         {/* Ticket number + priority only — draft and audit flags moved to Estado
             so the primary identifier cell stays scannable. */}
