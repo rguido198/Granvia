@@ -286,6 +286,12 @@ export function LandlordDashboard({
   corporateUsers,
   portfolio,
   activeLeaseDocuments,
+  currency,
+  copilotOpen,
+  setCopilotOpen,
+  sidebarOpen,
+  setSidebarOpen,
+  triggerToast,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -297,6 +303,18 @@ export function LandlordDashboard({
   corporateUsers: CorporateUser[];
   portfolio: Portfolio;
   activeLeaseDocuments: LeaseDocumentRow[];
+  /**
+   * Console chrome owned by ConsoleShell's single header bar. The controls for
+   * all of these render up there (see console-shell.tsx) — this component is
+   * the consumer, not the owner, so it receives them instead of holding its own
+   * useState and a second header bar to drive them.
+   */
+  currency: "MXN" | "USD";
+  copilotOpen: boolean;
+  setCopilotOpen: (open: boolean) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  triggerToast: (msg: string) => void;
 }) {
   const {
     capexCases,
@@ -325,7 +343,6 @@ export function LandlordDashboard({
 
   // View & Filter States
   const [activeTab, setActiveTab] = useState<SidebarTab>("rentroll");
-  const [currency, setCurrency] = useState<"MXN" | "USD">("MXN");
   const exchangeRate = 17.50; // Exchange rate (17.50 MXN = 1 USD)
 
   const formatVal = (val: number, decimals = 0) => {
@@ -406,9 +423,11 @@ export function LandlordDashboard({
     return sorted;
   }, [rentRoll, rentRollFilter, rentRollStatusFilter, rentRollSort]);
 
-  // AI Copilot Drawer State — one Copiloto, not a per-agent picker: it has both
+  // AI Copilot Drawer — one Copiloto, not a per-agent picker: it has both
   // leases and tickets in context on every question (see the ask-endpoint).
-  const [copilotOpen, setCopilotOpen] = useState(false);
+  // Its open/closed state arrives as a prop because the button that toggles it
+  // now lives in ConsoleShell's single header bar; the drawer itself, and every
+  // conversation state below, still belong here.
   const [queryResult, setQueryResult] = useState<string | null>(null);
   const [copilotQuestion, setCopilotQuestion] = useState("");
   const [copilotAskedQuestion, setCopilotAskedQuestion] = useState<string | null>(null);
@@ -424,16 +443,17 @@ export function LandlordDashboard({
   // Diego IA Maintenance Calendar States
   const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
 
-  // Accessibility font scale lives once now, in ConsoleShell's outer bar — it
-  // wraps this whole component's render tree, so its zoom/scale-font-* already
-  // reaches everything below. A second, independently-stateful "Texto:" control
-  // used to live here too, which meant its own zoom could silently compound with
-  // ConsoleShell's; removed instead of kept as a second source of truth.
+  // Accessibility font scale lives once now, behind the settings gear in
+  // ConsoleShell's outer bar — that bar wraps this whole component's render
+  // tree, so its zoom/scale-font-* already reaches everything below. A second,
+  // independently-stateful "Texto:" control used to live here too, which meant
+  // its own zoom could silently compound with ConsoleShell's; removed instead
+  // of kept as a second source of truth.
 
   // Sidebar nav is a full-screen drawer on mobile (closed by default) so the
   // console content is reachable without scrolling past the entire nav first —
   // on desktop (lg:) it stays permanently visible regardless of this state.
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Opened from the hamburger in ConsoleShell's bar, hence the prop.
   const selectTab = (tab: SidebarTab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
@@ -464,12 +484,8 @@ export function LandlordDashboard({
   const [customProspectCategory, setCustomProspectCategory] = useState("Cafetería & Repostería");
   const [inspectedContractId, setInspectedContractId] = useState<string | null>(null);
 
-  // Toast Notification State
-  const [toast, setToast] = useState<string | null>(null);
-  const triggerToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3500);
-  };
+  // Toast notifications are raised through ConsoleShell (the currency toggle up
+  // in its bar fires them too, so one queue rather than two), hence the prop.
 
   // Immutable Audit Trail — the real events each Tier 2/3 action actually
   // writes to (ticket_status_history, agent_decisions, lease_applications
@@ -480,17 +496,6 @@ export function LandlordDashboard({
 
   return (
     <div className="min-h-screen bg-slate-50 text-ink-700 flex flex-col lg:flex-row antialiased">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-ink text-white px-5 py-3.5 rounded-xl shadow-2xl border border-ink-700 flex items-center gap-3 text-xs font-semibold animate-slideUp">
-          <span className="h-2.5 w-2.5 rounded-full bg-ink-300" />
-          <span>{toast}</span>
-          <button onClick={() => setToast(null)} className="text-ink-400 hover:text-white text-xs ml-2 cursor-pointer font-bold">
-            ✕
-          </button>
-        </div>
-      )}
-
       {/* Mobile drawer backdrop — tap outside the sidebar to close it */}
       {sidebarOpen && (
         <div
@@ -604,87 +609,11 @@ export function LandlordDashboard({
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT AREA — no header of its own: the console has exactly one
+          header bar and it lives in ConsoleShell, directly above this component.
+          The title, the mobile nav toggle, the currency toggle, the period
+          selector and the Copiloto button all moved up there. */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* TOP HEADER BAR */}
-        <header className="h-auto min-h-16 bg-white border-b border-hairline/80 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 shadow-2xs">
-          {/* Top Header Title or Left Spacer */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-ink-700 hover:bg-slate-100 lg:hidden"
-              aria-label="Abrir menú"
-            >
-              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <span className="text-xs sm:text-sm font-bold tracking-wider text-ink-500">
-              La Gran Vía · Consola de Control
-            </span>
-          </div>
-
-          {/* Controls, Currency Toggle & AI Copilot Drawer Toggle — the
-              accessibility font switcher lives once now, in ConsoleShell's
-              outer bar, not duplicated here (see the note by fontSizeLevel's
-              old declaration above). */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* CURRENCY TRANSLATION TOGGLE (MXN DEFAULT / USD AT 17.50 RATE) */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-hairline/80 text-xs font-bold shrink-0">
-              <button
-                onClick={() => {
-                  setCurrency("MXN");
-                  triggerToast("Moneda establecida en Pesos (MXN).");
-                }}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  currency === "MXN"
-                    ? "bg-ink text-white shadow-2xs"
-                    : "text-ink-500 hover:text-ink"
-                }`}
-              >
-                MXN ($)
-              </button>
-              <button
-                onClick={() => {
-                  setCurrency("USD");
-                  triggerToast("Moneda traducida a Dólares (USD @ $17.50 MXN/USD).");
-                }}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  currency === "USD"
-                    ? "bg-ink text-white shadow-2xs"
-                    : "text-ink-500 hover:text-ink"
-                }`}
-              >
-                USD ($17.50)
-              </button>
-            </div>
-
-            <select
-              aria-label="Periodo de reporte"
-              className="bg-slate-100/80 border border-hairline/80 rounded-xl px-3 py-2 text-xs font-semibold text-ink-700 focus:outline-none cursor-pointer"
-            >
-              <option value="ago-2026">Agosto 2026 (Actual)</option>
-              <option value="jul-2026">Julio 2026</option>
-              <option value="jun-2026">Junio 2026</option>
-              <option value="q3-2026">Q3 2026</option>
-              <option value="y-2026">Año 2026 (Full)</option>
-            </select>
-
-            <button
-              onClick={() => setCopilotOpen(!copilotOpen)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
-                copilotOpen
-                  ? "bg-ink-700 text-white"
-                  : "bg-ink hover:bg-ink-700 text-white"
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full bg-ink-400" />
-              <span>Copiloto IA</span>
-            </button>
-          </div>
-        </header>
-
         {/* MAIN BODY AREA */}
         <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
           {activeTab === "rentroll" && (
