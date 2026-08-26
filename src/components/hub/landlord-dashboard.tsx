@@ -741,33 +741,52 @@ export function LandlordDashboard({
                 </p>
               </div>
 
-              {/* Column widths are hints on the <th>, not a table-fixed layout:
-                  auto layout still refuses to shrink a column below its own
-                  content, so the truncate/nowrap and title-tooltip behaviour in
-                  these cells is unchanged.
+              {/* Column widths are percentages that add up to 100%, and the
+                  table is table-fixed so they are honoured literally. Auto
+                  layout is not enough here: the tenant name carries `truncate`
+                  (i.e. white-space: nowrap), which makes that column's
+                  max-content width the longest name in the whole roll, and auto
+                  layout will not take a column below max-content no matter what
+                  width the <th> asks for. Fixed layout is what actually lets
+                  the cap bite — and it is what makes the truncate do its job
+                  instead of sitting there inert.
 
-                  Measured at 1440px, this table has no slack to reclaim — the
-                  four right-hand columns are already at the width their own
-                  header labels need, and squeezing "% Participación GLA" below
-                  154px breaks it onto three lines with "%" stranded alone.
-                  Those four are therefore pinned at exactly that natural width
-                  (nothing moves at 1440px) and the tenant column is left
-                  greedy, so on a wider display the extra width lands on the
-                  one column whose content actually gets truncated instead of
-                  being spread back across the number columns as gutter. */}
+                  The earlier pass pinned the four right-hand columns at their
+                  natural label width and left this one greedy. That was wrong
+                  in practice: the tenant column then sized itself to the single
+                  longest name in 85 rows ("Derma Club Farmacia Dermatológica",
+                  324px), while a typical name is ~120px — so every ordinary row
+                  showed ~210px of dead air before the right-aligned Superficie
+                  figure, which is the gap that got flagged.
+
+                  Capping it at 26% (~253px at 1440) truncates that outlier and
+                  four others — hence the title tooltip on the name below, so
+                  nothing is actually lost — and moves the reclaimed width to
+                  the trailing status column, whose pills are centred. Measured
+                  at 1440px over the first six rows, the space between the
+                  tenant name and the Superficie figure drops from 177–248px to
+                  113–184px. Shortening "% Participación GLA" was the other
+                  lever available and turned out not to be needed: 16% is what
+                  that two-line header already wants.
+
+                  Percentages also fix a second thing the px widths were doing.
+                  Their fixed sum (652px + a greedy tenant column) exceeded the
+                  wrapper below 1400px, and the wrapper is overflow-hidden — at
+                  1024px the old table ran 298px past it and the status column
+                  was simply cut off. Percentages can't overflow. */}
               <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-hidden">
-                <table className="w-full text-left text-sm">
+                <table className="w-full table-fixed text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
-                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} />
-                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" width="w-[100px]" />
+                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} width="w-[26%]" />
+                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" width="w-[11%]" />
                       <SortableHeader
                         label="% Participación GLA"
                         sortKey="sharePct"
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[154px]"
+                        width="w-[16%]"
                         title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
                       />
                       <SortableHeader
@@ -776,11 +795,11 @@ export function LandlordDashboard({
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[186px]"
+                        width="w-[20%]"
                         className="font-extrabold"
                       />
                       <th
-                        className="p-3.5 w-[212px] text-center cursor-default select-none"
+                        className="p-3.5 w-[27%] text-center cursor-default select-none"
                         title="SSOT = Single Source of Truth / Fuente Única de Verdad (Información sincronizada en tiempo real)"
                       >
                         Estatus Contractual SSOT
@@ -804,7 +823,11 @@ export function LandlordDashboard({
                             <div className="flex items-center gap-2.5">
                               <RentRollThumbnail name={r.name} vacant={r.vacant} />
                               <div className="min-w-0">
-                                <p className="font-bold text-ink text-sm truncate">{r.name}</p>
+                                {/* The column is capped now, so the handful of
+                                    names longer than it can hold actually hit
+                                    this truncate — the tooltip is what keeps
+                                    the full name reachable. */}
+                                <p className="font-bold text-ink text-sm truncate" title={r.name}>{r.name}</p>
                                 <p className="text-xs text-ink-500 font-medium">{r.unitCode}</p>
                               </div>
                             </div>
@@ -1019,7 +1042,16 @@ export function LandlordDashboard({
                           <p className="text-xs font-extrabold text-ink">{event.date.split(" ")[0]}</p>
                           <p className="text-[10px] font-bold text-ink-500 uppercase">{event.date.split(" ")[1]} {event.date.split(" ")[2]}</p>
                         </div>
-                        <div className="flex-1 min-w-0">
+                        {/* max-w caps the only growable item in the row. Without
+                            it this block took every spare pixel (629px at 1440px
+                            for content that never exceeds 504px), which parked the
+                            cost and the notify button against the far edge with a
+                            ~150px hole in front of them. Capped at 520px, the
+                            date, the text and the cost read as one cluster; the
+                            leftover moves to the ml-auto on the button below, so
+                            it sits in front of an action rather than in the
+                            middle of the sentence the row is telling. */}
+                        <div className="flex-1 min-w-0 sm:max-w-[520px]">
                           <p className="font-bold text-ink text-xs">{event.title}</p>
                           <p className="text-[11px] text-ink-500">{event.vendor} · {event.category} · Responsable: {event.responsible}</p>
                         </div>
@@ -1029,7 +1061,7 @@ export function LandlordDashboard({
                             Programado
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 sm:ml-auto">
                           <button
                             onClick={() => {
                               setEventNotified((prev) => ({ ...prev, [event.id]: true }));
@@ -1557,16 +1589,28 @@ export function LandlordDashboard({
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
-                          {/* Four short columns over ~970px — the widest gutters
-                              in the console before this. The tenant column keeps
-                              the slack; rent is right-aligned like every other
-                              money column here, and the status pill closes the
-                              row on the right edge, so the three attribute
-                              columns read as one block instead of three islands. */}
-                          <th className="p-3.5 w-[40%]">Inquilino & Ubicación</th>
-                          <th className="p-3.5 w-[20%]">Vencimiento Contrato</th>
-                          <th className="p-3.5 w-[18%] text-right">Renta Mensual</th>
-                          <th className="p-3.5 w-[22%] text-right">Estatus Contractual</th>
+                          {/* Four short columns over ~970px: their combined
+                              natural width is only ~713px, so ~260px of slack
+                              has to live somewhere. Handing all of it to the
+                              tenant column (it was 40%) put ~300px of dead air
+                              between the tenant name and the expiry date while
+                              the other two gaps sat at ~176/151px — one obvious
+                              hole rather than even breathing room.
+
+                              30/21/19/30 splits it: measured at 1440px the
+                              tenant-name-to-expiry-date gap drops from
+                              239–304px to 142–207px, and what it gives up goes
+                              to the other two gaps, which end up in the same
+                              range. The tenant column at 30% (~292px) lands
+                              within a few px of its own natural 298px and this
+                              table's names are not nowrap, so the worst case is
+                              a wrapped name, never a truncated one. Rent stays right-aligned like
+                              every other money column here and the status pill
+                              still closes the row on the right edge. */}
+                          <th className="p-3.5 w-[30%]">Inquilino & Ubicación</th>
+                          <th className="p-3.5 w-[21%]">Vencimiento Contrato</th>
+                          <th className="p-3.5 w-[19%] text-right">Renta Mensual</th>
+                          <th className="p-3.5 w-[30%] text-right">Estatus Contractual</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hairline font-medium">
