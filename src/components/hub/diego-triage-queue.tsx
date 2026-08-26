@@ -44,13 +44,13 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
       >
         {/* Ticket number + priority only — draft and audit flags moved to Estado
             so the primary identifier cell stays scannable. */}
-        <td className="px-4 py-3.5 align-top">
+        <td className="p-3.5 align-top">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-bold text-slate-900 text-xs">{ticket.ticketNumber}</span>
+            <span className="font-bold text-slate-900 text-sm whitespace-nowrap">{ticket.ticketNumber}</span>
             {ticket.priority && (
               <span
                 className={
-                  "rounded-full px-1.5 py-0.5 text-[9px] font-bold " + PRIORITY_BADGE[ticket.priority]
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold " + PRIORITY_BADGE[ticket.priority]
                 }
               >
                 {ticket.priority}
@@ -59,7 +59,7 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
           </div>
         </td>
         <td
-          className="px-4 py-3.5 align-top text-[11px] leading-relaxed text-slate-700 min-w-[150px]"
+          className="p-3.5 align-top text-sm leading-relaxed text-slate-700 min-w-[150px]"
           title={ticket.tenantEntity ?? undefined}
         >
           {ticket.tenantEntity ? shortTenantName(ticket.tenantEntity) : "—"}
@@ -67,20 +67,20 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
         {/* Widest column on purpose — the tenant's own report is what a landlord
             triages from. Diego's diagnosis lives in the drawer, not repeated here
             in low-contrast grey under the line it paraphrases. */}
-        <td className="px-4 py-3.5 align-top text-[11px] min-w-[280px]">
+        <td className="p-3.5 align-top text-sm min-w-[280px]">
           <p className="text-slate-800 leading-relaxed" title={ticket.rawReport}>
             {reportExcerpt}
           </p>
         </td>
-        <td className="px-4 py-3.5 align-top text-[11px] font-semibold text-slate-700 text-right whitespace-nowrap">
+        <td className="p-3.5 align-top text-sm font-semibold text-slate-700 text-right whitespace-nowrap">
           {ticket.estimatedCost !== null ? formatMxn(ticket.estimatedCost) : "—"}
         </td>
         {/* Status column also carries the draft/audit flags — they qualify the
             state of the ticket, so they belong next to the state. */}
-        <td className="px-4 py-3.5 align-top">
+        <td className="p-3.5 align-top">
           <span
             className={
-              "inline-block text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap " +
+              "inline-block text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap " +
               STATUS_BADGE[ticket.status]
             }
           >
@@ -89,13 +89,13 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
           {(ticket.showWatermark || (ticket.skepticFlagged && ticket.skepticConcerns.length > 0)) && (
             <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
               {ticket.showWatermark && (
-                <span className="text-[9px] font-bold uppercase tracking-wide text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5">
                   Draft
                 </span>
               )}
               {ticket.skepticFlagged && ticket.skepticConcerns.length > 0 && (
                 <span
-                  className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5"
+                  className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5"
                   title={
                     ticket.skepticConcerns.length +
                     (ticket.skepticConcerns.length === 1 ? " duda sin resolver" : " dudas sin resolver")
@@ -107,7 +107,7 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
             </div>
           )}
         </td>
-        <td className="px-4 py-3.5 align-top text-right whitespace-nowrap">
+        <td className="p-3.5 align-top text-right whitespace-nowrap">
           {ticket.status === "needs_approval" ? (
             <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
               <button
@@ -128,7 +128,7 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
               </button>
             </div>
           ) : (
-            <span className="text-[11px] text-slate-400" title="Ver expediente completo">
+            <span className="text-sm text-slate-400" title="Ver expediente completo">
               ›
             </span>
           )}
@@ -137,7 +137,7 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
 
       {errorMsg && (
         <tr className="border-b border-slate-100 last:border-b-0">
-          <td colSpan={6} className="px-4 pb-2 pt-0 text-[11px] text-red-600">
+          <td colSpan={6} className="px-3.5 pb-2 pt-0 text-xs text-red-600">
             {errorMsg}
           </td>
         </tr>
@@ -198,13 +198,13 @@ export function DiegoTriageQueue({
         <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-2.5 font-bold">Ticket</th>
-                <th className="px-4 py-2.5 font-bold">Inquilino</th>
-                <th className="px-4 py-2.5 font-bold">Reporte</th>
-                <th className="px-4 py-2.5 font-bold text-right">Costo</th>
-                <th className="px-4 py-2.5 font-bold">Estado</th>
-                <th className="px-4 py-2.5 font-bold text-right">Acciones</th>
+              <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <th className="p-3.5 font-bold">Ticket</th>
+                <th className="p-3.5 font-bold">Inquilino</th>
+                <th className="p-3.5 font-bold">Reporte</th>
+                <th className="p-3.5 font-bold text-right">Costo</th>
+                <th className="p-3.5 font-bold">Estado</th>
+                <th className="p-3.5 font-bold text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>

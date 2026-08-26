@@ -739,7 +739,7 @@ export function LandlordDashboard({
               </div>
 
               <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-hidden">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
                       <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} />
@@ -785,8 +785,8 @@ export function LandlordDashboard({
                             <div className="flex items-center gap-2.5">
                               <RentRollThumbnail name={r.name} vacant={r.vacant} />
                               <div className="min-w-0">
-                                <p className="font-bold text-ink text-xs truncate">{r.name}</p>
-                                <p className="text-[11px] text-ink-500 font-medium">{r.unitCode}</p>
+                                <p className="font-bold text-ink text-sm truncate">{r.name}</p>
+                                <p className="text-xs text-ink-500 font-medium">{r.unitCode}</p>
                               </div>
                             </div>
                           </td>
@@ -797,7 +797,7 @@ export function LandlordDashboard({
                                 defaultValue={r.sqm}
                                 aria-label={`Superficie m² para ${r.name}`}
                                 disabled={savingField === `${r.slug}:sqm`}
-                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-sm focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
                                 onBlur={(e) => saveRentRollField(r.slug, "sqm", e.target.value, r.sqm, `Superficie de ${r.name}`)}
                                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
@@ -805,22 +805,22 @@ export function LandlordDashboard({
                               `${r.sqm} m²`
                             )}
                           </td>
-                          <td className="p-3.5 text-right font-medium text-ink-700 text-xs whitespace-nowrap">{r.sharePct.toFixed(2)}%</td>
-                          <td className="p-3.5 text-right font-bold text-ink text-xs whitespace-nowrap">
+                          <td className="p-3.5 text-right font-medium text-ink-700 text-sm whitespace-nowrap">{r.sharePct.toFixed(2)}%</td>
+                          <td className="p-3.5 text-right font-bold text-ink text-sm whitespace-nowrap">
                             {isEditingRentRoll ? (
                               <input
                                 type="number"
                                 defaultValue={r.rent}
                                 aria-label={`Renta mensual para ${r.name}`}
                                 disabled={savingField === `${r.slug}:rent`}
-                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-sm focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
                                 onBlur={(e) => saveRentRollField(r.slug, "rent", e.target.value, r.rent, `Renta de ${r.name}`)}
                                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
                             ) : (
                               <div>
-                                <p className="font-bold text-ink text-xs">{formatVal(r.rent)}</p>
-                                <p className="text-[10.5px] text-ink-500 font-medium">
+                                <p className="font-bold text-ink text-sm">{formatVal(r.rent)}</p>
+                                <p className="text-xs text-ink-500 font-medium">
                                   {formatVal(Math.round(r.rent / r.sqm))}/m²
                                 </p>
                               </div>
@@ -838,16 +838,16 @@ export function LandlordDashboard({
                                     triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                                   }}
                                   title="Ver auditoría de póliza asignada a Mariana IA"
-                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
+                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
                                 >
                                   Revisar Seguro · Mariana IA →
                                 </button>
                               ) : r.vacant ? (
-                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                                   Vacante
                                 </span>
                               ) : (
-                                <span className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                <span className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                                   Vigente SSOT
                                 </span>
                               )}
@@ -1524,7 +1524,7 @@ export function LandlordDashboard({
                   </div>
 
                   <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                    <table className="w-full text-left text-xs">
+                    <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
                           <th className="p-3.5">Inquilino & Ubicación</th>
@@ -1542,22 +1542,22 @@ export function LandlordDashboard({
                             >
                               <td className="p-3.5">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-ink-400 font-bold text-[10px] select-none">
+                                  <span className="text-ink-400 font-bold text-[11px] select-none">
                                     {inspectedContractId === c.id ? "▲" : "▼"}
                                   </span>
                                   <div>
-                                    <p className="font-bold text-ink text-xs">{c.tenantEntity}</p>
-                                    <p className="text-[11px] text-ink-500">{c.unitCode} · {c.sqm} m²</p>
+                                    <p className="font-bold text-ink text-sm">{c.tenantEntity}</p>
+                                    <p className="text-xs text-ink-500">{c.unitCode} · {c.sqm} m²</p>
                                   </div>
                                 </div>
                               </td>
                               <td className="p-3.5">
-                                <p className="font-bold text-ink text-xs">{formatContractDate(c.endDate)}</p>
+                                <p className="font-bold text-ink text-sm">{formatContractDate(c.endDate)}</p>
                               </td>
-                              <td className="p-3.5 font-semibold text-ink-700 text-xs">{formatMxn(c.rentMonthly)}</td>
+                              <td className="p-3.5 font-semibold text-ink-700 text-sm">{formatMxn(c.rentMonthly)}</td>
                               <td className="p-3.5">
                                 <span
-                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                                     c.renewalSoon ? "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)]/30" : "bg-slate-100 text-ink-700 border border-hairline"
                                   }`}
                                 >
@@ -1571,22 +1571,22 @@ export function LandlordDashboard({
                                 hash, no INPC/penalty clause columns exist in the schema, so none are shown. */}
                             {inspectedContractId === c.id && (
                               <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
-                                <td colSpan={4} className="p-5 space-y-4 text-xs">
+                                <td colSpan={4} className="p-5 space-y-4 text-sm">
                                   <h4 className="font-bold text-sm text-ink border-b border-hairline pb-3">
                                     {c.tenantEntity} · {c.unitCode}
                                   </h4>
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                                     <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                      <p className="font-extrabold text-ink text-xs tracking-wide">Cláusula de Exclusividad</p>
-                                      <p className="text-ink-700 text-xs leading-relaxed font-medium">
+                                      <p className="font-extrabold text-ink text-sm tracking-wide">Cláusula de Exclusividad</p>
+                                      <p className="text-ink-700 text-sm leading-relaxed font-medium">
                                         {c.exclusiveUseClause || "Sin cláusula de exclusividad registrada."}
                                       </p>
                                     </div>
 
                                     <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                      <p className="font-extrabold text-ink text-xs tracking-wide">Uso Permitido</p>
-                                      <p className="text-ink-700 text-xs leading-relaxed font-medium">
+                                      <p className="font-extrabold text-ink text-sm tracking-wide">Uso Permitido</p>
+                                      <p className="text-ink-700 text-sm leading-relaxed font-medium">
                                         {c.permittedUse || "No especificado."}
                                       </p>
                                     </div>
