@@ -235,6 +235,7 @@ export function ConsoleShell({
                 // about to unmount — leaving the flag true would spring the nav
                 // open again on the way back to the owner view.
                 setSidebarOpen(false);
+                setCopilotOpen(false);
               }}
               aria-pressed={!isOwner}
               className={`cursor-pointer rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
