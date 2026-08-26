@@ -36,6 +36,7 @@ function SortableHeader({
   align = "left",
   title,
   className = "",
+  width = "",
 }: {
   label: string;
   sortKey: RentRollSortKey;
@@ -44,10 +45,12 @@ function SortableHeader({
   align?: "left" | "right";
   title?: string;
   className?: string;
+  /** Column width hint on the <th> (see the width note on the Rent Roll table). */
+  width?: string;
 }) {
   const active = current.key === sortKey;
   return (
-    <th className={`p-3.5 ${align === "right" ? "text-right" : "text-left"}`} title={title}>
+    <th className={`p-3.5 ${width} ${align === "right" ? "text-right" : "text-left"}`} title={title}>
       <button
         type="button"
         onClick={() => onSort(sortKey)}
@@ -738,18 +741,33 @@ export function LandlordDashboard({
                 </p>
               </div>
 
+              {/* Column widths are hints on the <th>, not a table-fixed layout:
+                  auto layout still refuses to shrink a column below its own
+                  content, so the truncate/nowrap and title-tooltip behaviour in
+                  these cells is unchanged.
+
+                  Measured at 1440px, this table has no slack to reclaim — the
+                  four right-hand columns are already at the width their own
+                  header labels need, and squeezing "% Participación GLA" below
+                  154px breaks it onto three lines with "%" stranded alone.
+                  Those four are therefore pinned at exactly that natural width
+                  (nothing moves at 1440px) and the tenant column is left
+                  greedy, so on a wider display the extra width lands on the
+                  one column whose content actually gets truncated instead of
+                  being spread back across the number columns as gutter. */}
               <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-hidden">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
                       <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} />
-                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" />
+                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" width="w-[100px]" />
                       <SortableHeader
                         label="% Participación GLA"
                         sortKey="sharePct"
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
+                        width="w-[154px]"
                         title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
                       />
                       <SortableHeader
@@ -758,10 +776,11 @@ export function LandlordDashboard({
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
+                        width="w-[186px]"
                         className="font-extrabold"
                       />
                       <th
-                        className="p-3.5 text-center cursor-default select-none"
+                        className="p-3.5 w-[212px] text-center cursor-default select-none"
                         title="SSOT = Single Source of Truth / Fuente Única de Verdad (Información sincronizada en tiempo real)"
                       >
                         Estatus Contractual SSOT
@@ -877,32 +896,38 @@ export function LandlordDashboard({
                     Locales desocupados — el registro se conserva, no se elimina. {formerTenants.length} en historial.
                   </p>
                 </div>
+                {/* Six short columns over ~970px: left to itself auto layout
+                    stretched every one of them by ~40px, so the whole row read
+                    as gaps. Widths hand the slack to the tenant-name column and
+                    keep the four data columns near their own content; the
+                    status pill closes the row against the right edge instead of
+                    floating in the middle of a wide last column. */}
                 <div className="border border-hairline rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] font-bold text-ink-500 border-b border-hairline tracking-wider">
                       <tr>
-                        <th className="p-3">Local</th>
-                        <th className="p-3">Antiguo Inquilino</th>
-                        <th className="p-3 text-right">Superficie</th>
-                        <th className="p-3 text-right">Última Renta</th>
-                        <th className="p-3">Contrato Terminó</th>
-                        <th className="p-3">Estatus</th>
+                        <th className="p-3.5 w-[10%]">Local</th>
+                        <th className="p-3.5 w-[38%]">Antiguo Inquilino</th>
+                        <th className="p-3.5 w-[10%] text-right">Superficie</th>
+                        <th className="p-3.5 w-[12%] text-right">Última Renta</th>
+                        <th className="p-3.5 w-[15%]">Contrato Terminó</th>
+                        <th className="p-3.5 w-[15%] text-right">Estatus</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-hairline">
                       {formerTenants.map((t) => (
                         <tr key={t.localeId} className="hover:bg-slate-50">
-                          <td className="p-3 font-semibold text-ink-700 whitespace-nowrap">{t.unitCode}</td>
-                          <td className="p-3 text-ink-700">{t.tenantEntity}</td>
-                          <td className="p-3 text-right text-ink-500 tabular-nums">{t.sqm.toLocaleString("es-MX")} m²</td>
-                          <td className="p-3 text-right text-ink-500 tabular-nums">{formatVal(t.lastRentMonthly)}</td>
-                          <td className="p-3 text-ink-500">
+                          <td className="p-3.5 font-semibold text-ink-700 whitespace-nowrap">{t.unitCode}</td>
+                          <td className="p-3.5 text-ink-700">{t.tenantEntity}</td>
+                          <td className="p-3.5 text-right text-ink-500 tabular-nums">{t.sqm.toLocaleString("es-MX")} m²</td>
+                          <td className="p-3.5 text-right text-ink-500 tabular-nums">{formatVal(t.lastRentMonthly)}</td>
+                          <td className="p-3.5 text-ink-500">
                             {t.leaseEndDate !== "—"
                               ? new Date(t.leaseEndDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
                               : "—"}
                           </td>
-                          <td className="p-3">
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-ink-700 border border-hairline">
+                          <td className="p-3.5 text-right">
+                            <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-ink-700 border border-hairline">
                               Vacante
                             </span>
                           </td>
@@ -1047,7 +1072,12 @@ export function LandlordDashboard({
                 </div>
 
                 <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                  <table className="w-full text-left text-xs">
+                  {/* No width hints here on purpose: unlike the other four
+                      ledgers, every column in this one is already content-bound
+                      (its natural width overflows ~970px and wraps), so there is
+                      no slack to redistribute — forcing percentages would only
+                      take room from the case text. */}
+                  <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                       <tr>
                         <th className="p-3.5">Caso / Inquilino</th>
@@ -1067,21 +1097,21 @@ export function LandlordDashboard({
                         return (
                           <tr key={c.id} className="hover:bg-slate-50/90 transition-colors align-top">
                             <td className="p-3.5">
-                              <p className="font-bold text-ink text-xs">{c.tenant}</p>
-                              <p className="text-[11px] text-ink-500">{c.id}</p>
+                              <p className="font-bold text-ink text-sm">{c.tenant}</p>
+                              <p className="text-xs text-ink-500">{c.id}</p>
                             </td>
                             <td className="p-3.5">
                               <p className="text-ink-700 font-semibold">{c.expenseType}</p>
-                              <p className="text-[11px] text-ink-500">{c.equipmentModel} · {c.serialNumber}</p>
+                              <p className="text-xs text-ink-500">{c.equipmentModel} · {c.serialNumber}</p>
                             </td>
                             <td className="p-3.5 text-right font-bold tabular-nums text-ink whitespace-nowrap">
                               {formatVal(c.amount)}
                             </td>
                             <td className="p-3.5">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mb-1 ${verdictMeta.badge}`}>
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1 ${verdictMeta.badge}`}>
                                 {verdictMeta.label}
                               </span>
-                              <p className="text-[11px] text-ink-500 leading-relaxed max-w-md">{c.details}</p>
+                              <p className="text-xs text-ink-500 leading-relaxed max-w-md">{c.details}</p>
                             </td>
                           </tr>
                         );
@@ -1527,10 +1557,16 @@ export function LandlordDashboard({
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
-                          <th className="p-3.5">Inquilino & Ubicación</th>
-                          <th className="p-3.5">Vencimiento Contrato</th>
-                          <th className="p-3.5">Renta Mensual</th>
-                          <th className="p-3.5">Estatus Contractual</th>
+                          {/* Four short columns over ~970px — the widest gutters
+                              in the console before this. The tenant column keeps
+                              the slack; rent is right-aligned like every other
+                              money column here, and the status pill closes the
+                              row on the right edge, so the three attribute
+                              columns read as one block instead of three islands. */}
+                          <th className="p-3.5 w-[40%]">Inquilino & Ubicación</th>
+                          <th className="p-3.5 w-[20%]">Vencimiento Contrato</th>
+                          <th className="p-3.5 w-[18%] text-right">Renta Mensual</th>
+                          <th className="p-3.5 w-[22%] text-right">Estatus Contractual</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hairline font-medium">
@@ -1554,10 +1590,10 @@ export function LandlordDashboard({
                               <td className="p-3.5">
                                 <p className="font-bold text-ink text-sm">{formatContractDate(c.endDate)}</p>
                               </td>
-                              <td className="p-3.5 font-semibold text-ink-700 text-sm">{formatMxn(c.rentMonthly)}</td>
-                              <td className="p-3.5">
+                              <td className="p-3.5 font-semibold text-ink-700 text-sm text-right tabular-nums">{formatMxn(c.rentMonthly)}</td>
+                              <td className="p-3.5 text-right">
                                 <span
-                                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                                     c.renewalSoon ? "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)]/30" : "bg-slate-100 text-ink-700 border border-hairline"
                                   }`}
                                 >
