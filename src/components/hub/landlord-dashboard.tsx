@@ -11,10 +11,11 @@ import type { Contractor } from "@/lib/data/contractors.server";
 import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
-import type { Portfolio, LocaleStatus } from "@/lib/data/portfolio.server";
+import type { Portfolio, LocaleStatus, LeaseDocumentRow } from "@/lib/data/portfolio.server";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
+import { LegalDocumentsPanel, LeaseUploadZone } from "@/components/hub/legal-documents-panel";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
@@ -35,6 +36,7 @@ function SortableHeader({
   align = "left",
   title,
   className = "",
+  width = "",
 }: {
   label: string;
   sortKey: RentRollSortKey;
@@ -43,10 +45,12 @@ function SortableHeader({
   align?: "left" | "right";
   title?: string;
   className?: string;
+  /** Column width hint on the <th> (see the width note on the Rent Roll table). */
+  width?: string;
 }) {
   const active = current.key === sortKey;
   return (
-    <th className={`p-3.5 ${align === "right" ? "text-right" : "text-left"}`} title={title}>
+    <th className={`p-3.5 ${width} ${align === "right" ? "text-right" : "text-left"}`} title={title}>
       <button
         type="button"
         onClick={() => onSort(sortKey)}
@@ -284,6 +288,13 @@ export function LandlordDashboard({
   initialAuditLog,
   corporateUsers,
   portfolio,
+  activeLeaseDocuments,
+  currency,
+  copilotOpen,
+  setCopilotOpen,
+  sidebarOpen,
+  setSidebarOpen,
+  triggerToast,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -294,6 +305,19 @@ export function LandlordDashboard({
   initialAuditLog: AuditEntry[];
   corporateUsers: CorporateUser[];
   portfolio: Portfolio;
+  activeLeaseDocuments: LeaseDocumentRow[];
+  /**
+   * Console chrome owned by ConsoleShell's single header bar. The controls for
+   * all of these render up there (see console-shell.tsx) — this component is
+   * the consumer, not the owner, so it receives them instead of holding its own
+   * useState and a second header bar to drive them.
+   */
+  currency: "MXN" | "USD";
+  copilotOpen: boolean;
+  setCopilotOpen: (open: boolean) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  triggerToast: (msg: string) => void;
 }) {
   const {
     capexCases,
@@ -305,9 +329,23 @@ export function LandlordDashboard({
 
   const { rentRoll, leases, formerTenants, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
 
+  // Unit picker for the Legal tab's Gate 1 (entity reconciliation) form.
+  // Sourced from `localeOptions` rather than `leases` so a vacant or
+  // pending locale is still selectable — a scanned contract can perfectly
+  // well belong to a unit that has no active lease row yet, which is
+  // exactly the case a landlord needs to correct a bad match toward.
+  const leaseDocumentUnits = useMemo(
+    () =>
+      localeOptions.map((l) => ({
+        id: l.id,
+        unitCode: l.unitNumber,
+        tenantEntity: l.tenantEntity ?? "Vacante",
+      })),
+    [localeOptions],
+  );
+
   // View & Filter States
   const [activeTab, setActiveTab] = useState<SidebarTab>("rentroll");
-  const [currency, setCurrency] = useState<"MXN" | "USD">("MXN");
   const exchangeRate = 17.50; // Exchange rate (17.50 MXN = 1 USD)
 
   const formatVal = (val: number, decimals = 0) => {
@@ -388,9 +426,11 @@ export function LandlordDashboard({
     return sorted;
   }, [rentRoll, rentRollFilter, rentRollStatusFilter, rentRollSort]);
 
-  // AI Copilot Drawer State — one Copiloto, not a per-agent picker: it has both
+  // AI Copilot Drawer — one Copiloto, not a per-agent picker: it has both
   // leases and tickets in context on every question (see the ask-endpoint).
-  const [copilotOpen, setCopilotOpen] = useState(false);
+  // Its open/closed state arrives as a prop because the button that toggles it
+  // now lives in ConsoleShell's single header bar; the drawer itself, and every
+  // conversation state below, still belong here.
   const [queryResult, setQueryResult] = useState<string | null>(null);
   const [copilotQuestion, setCopilotQuestion] = useState("");
   const [copilotAskedQuestion, setCopilotAskedQuestion] = useState<string | null>(null);
@@ -406,16 +446,17 @@ export function LandlordDashboard({
   // Diego IA Maintenance Calendar States
   const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
 
-  // Accessibility font scale lives once now, in ConsoleShell's outer bar — it
-  // wraps this whole component's render tree, so its zoom/scale-font-* already
-  // reaches everything below. A second, independently-stateful "Texto:" control
-  // used to live here too, which meant its own zoom could silently compound with
-  // ConsoleShell's; removed instead of kept as a second source of truth.
+  // Accessibility font scale lives once now, behind the settings gear in
+  // ConsoleShell's outer bar — that bar wraps this whole component's render
+  // tree, so its zoom/scale-font-* already reaches everything below. A second,
+  // independently-stateful "Texto:" control used to live here too, which meant
+  // its own zoom could silently compound with ConsoleShell's; removed instead
+  // of kept as a second source of truth.
 
   // Sidebar nav is a full-screen drawer on mobile (closed by default) so the
   // console content is reachable without scrolling past the entire nav first —
   // on desktop (lg:) it stays permanently visible regardless of this state.
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Opened from the hamburger in ConsoleShell's bar, hence the prop.
   const selectTab = (tab: SidebarTab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
@@ -446,12 +487,8 @@ export function LandlordDashboard({
   const [customProspectCategory, setCustomProspectCategory] = useState("Cafetería & Repostería");
   const [inspectedContractId, setInspectedContractId] = useState<string | null>(null);
 
-  // Toast Notification State
-  const [toast, setToast] = useState<string | null>(null);
-  const triggerToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3500);
-  };
+  // Toast notifications are raised through ConsoleShell (the currency toggle up
+  // in its bar fires them too, so one queue rather than two), hence the prop.
 
   // Immutable Audit Trail — the real events each Tier 2/3 action actually
   // writes to (ticket_status_history, agent_decisions, lease_applications
@@ -462,17 +499,6 @@ export function LandlordDashboard({
 
   return (
     <div className="min-h-screen bg-slate-50 text-ink-700 flex flex-col lg:flex-row antialiased">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-ink text-white px-5 py-3.5 rounded-xl shadow-2xl border border-ink-700 flex items-center gap-3 text-xs font-semibold animate-slideUp">
-          <span className="h-2.5 w-2.5 rounded-full bg-ink-300" />
-          <span>{toast}</span>
-          <button onClick={() => setToast(null)} className="text-ink-400 hover:text-white text-xs ml-2 cursor-pointer font-bold">
-            ✕
-          </button>
-        </div>
-      )}
-
       {/* Mobile drawer backdrop — tap outside the sidebar to close it */}
       {sidebarOpen && (
         <div
@@ -586,87 +612,11 @@ export function LandlordDashboard({
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT AREA — no header of its own: the console has exactly one
+          header bar and it lives in ConsoleShell, directly above this component.
+          The title, the mobile nav toggle, the currency toggle, the period
+          selector and the Copiloto button all moved up there. */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* TOP HEADER BAR */}
-        <header className="h-auto min-h-16 bg-white border-b border-hairline/80 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 shadow-2xs">
-          {/* Top Header Title or Left Spacer */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-ink-700 hover:bg-slate-100 lg:hidden"
-              aria-label="Abrir menú"
-            >
-              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <span className="text-xs sm:text-sm font-bold tracking-wider text-ink-500">
-              La Gran Vía · Consola de Control
-            </span>
-          </div>
-
-          {/* Controls, Currency Toggle & AI Copilot Drawer Toggle — the
-              accessibility font switcher lives once now, in ConsoleShell's
-              outer bar, not duplicated here (see the note by fontSizeLevel's
-              old declaration above). */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* CURRENCY TRANSLATION TOGGLE (MXN DEFAULT / USD AT 17.50 RATE) */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-hairline/80 text-xs font-bold shrink-0">
-              <button
-                onClick={() => {
-                  setCurrency("MXN");
-                  triggerToast("Moneda establecida en Pesos (MXN).");
-                }}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  currency === "MXN"
-                    ? "bg-ink text-white shadow-2xs"
-                    : "text-ink-500 hover:text-ink"
-                }`}
-              >
-                MXN ($)
-              </button>
-              <button
-                onClick={() => {
-                  setCurrency("USD");
-                  triggerToast("Moneda traducida a Dólares (USD @ $17.50 MXN/USD).");
-                }}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  currency === "USD"
-                    ? "bg-ink text-white shadow-2xs"
-                    : "text-ink-500 hover:text-ink"
-                }`}
-              >
-                USD ($17.50)
-              </button>
-            </div>
-
-            <select
-              aria-label="Periodo de reporte"
-              className="bg-slate-100/80 border border-hairline/80 rounded-xl px-3 py-2 text-xs font-semibold text-ink-700 focus:outline-none cursor-pointer"
-            >
-              <option value="ago-2026">Agosto 2026 (Actual)</option>
-              <option value="jul-2026">Julio 2026</option>
-              <option value="jun-2026">Junio 2026</option>
-              <option value="q3-2026">Q3 2026</option>
-              <option value="y-2026">Año 2026 (Full)</option>
-            </select>
-
-            <button
-              onClick={() => setCopilotOpen(!copilotOpen)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
-                copilotOpen
-                  ? "bg-ink-700 text-white"
-                  : "bg-ink hover:bg-ink-700 text-white"
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full bg-ink-400" />
-              <span>Copiloto IA</span>
-            </button>
-          </div>
-        </header>
-
         {/* MAIN BODY AREA */}
         <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
           {activeTab === "rentroll" && (
@@ -791,18 +741,52 @@ export function LandlordDashboard({
                 </p>
               </div>
 
+              {/* Column widths are percentages that add up to 100%, and the
+                  table is table-fixed so they are honoured literally. Auto
+                  layout is not enough here: the tenant name carries `truncate`
+                  (i.e. white-space: nowrap), which makes that column's
+                  max-content width the longest name in the whole roll, and auto
+                  layout will not take a column below max-content no matter what
+                  width the <th> asks for. Fixed layout is what actually lets
+                  the cap bite — and it is what makes the truncate do its job
+                  instead of sitting there inert.
+
+                  The earlier pass pinned the four right-hand columns at their
+                  natural label width and left this one greedy. That was wrong
+                  in practice: the tenant column then sized itself to the single
+                  longest name in 85 rows ("Derma Club Farmacia Dermatológica",
+                  324px), while a typical name is ~120px — so every ordinary row
+                  showed ~210px of dead air before the right-aligned Superficie
+                  figure, which is the gap that got flagged.
+
+                  Capping it at 26% (~253px at 1440) truncates that outlier and
+                  four others — hence the title tooltip on the name below, so
+                  nothing is actually lost — and moves the reclaimed width to
+                  the trailing status column, whose pills are centred. Measured
+                  at 1440px over the first six rows, the space between the
+                  tenant name and the Superficie figure drops from 177–248px to
+                  113–184px. Shortening "% Participación GLA" was the other
+                  lever available and turned out not to be needed: 16% is what
+                  that two-line header already wants.
+
+                  Percentages also fix a second thing the px widths were doing.
+                  Their fixed sum (652px + a greedy tenant column) exceeded the
+                  wrapper below 1400px, and the wrapper is overflow-hidden — at
+                  1024px the old table ran 298px past it and the status column
+                  was simply cut off. Percentages can't overflow. */}
               <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-hidden">
-                <table className="w-full text-left text-xs">
+                <table className="w-full table-fixed text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
-                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} />
-                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" />
+                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} width="w-[26%]" />
+                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" width="w-[11%]" />
                       <SortableHeader
                         label="% Participación GLA"
                         sortKey="sharePct"
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
+                        width="w-[16%]"
                         title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
                       />
                       <SortableHeader
@@ -811,10 +795,11 @@ export function LandlordDashboard({
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
+                        width="w-[20%]"
                         className="font-extrabold"
                       />
                       <th
-                        className="p-3.5 text-center cursor-default select-none"
+                        className="p-3.5 w-[27%] text-center cursor-default select-none"
                         title="SSOT = Single Source of Truth / Fuente Única de Verdad (Información sincronizada en tiempo real)"
                       >
                         Estatus Contractual SSOT
@@ -838,8 +823,12 @@ export function LandlordDashboard({
                             <div className="flex items-center gap-2.5">
                               <RentRollThumbnail name={r.name} vacant={r.vacant} />
                               <div className="min-w-0">
-                                <p className="font-bold text-ink text-xs truncate">{r.name}</p>
-                                <p className="text-[11px] text-ink-500 font-medium">{r.unitCode}</p>
+                                {/* The column is capped now, so the handful of
+                                    names longer than it can hold actually hit
+                                    this truncate — the tooltip is what keeps
+                                    the full name reachable. */}
+                                <p className="font-bold text-ink text-sm truncate" title={r.name}>{r.name}</p>
+                                <p className="text-xs text-ink-500 font-medium">{r.unitCode}</p>
                               </div>
                             </div>
                           </td>
@@ -850,7 +839,7 @@ export function LandlordDashboard({
                                 defaultValue={r.sqm}
                                 aria-label={`Superficie m² para ${r.name}`}
                                 disabled={savingField === `${r.slug}:sqm`}
-                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-sm focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
                                 onBlur={(e) => saveRentRollField(r.slug, "sqm", e.target.value, r.sqm, `Superficie de ${r.name}`)}
                                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
@@ -858,22 +847,22 @@ export function LandlordDashboard({
                               `${r.sqm} m²`
                             )}
                           </td>
-                          <td className="p-3.5 text-right font-medium text-ink-700 text-xs whitespace-nowrap">{r.sharePct.toFixed(2)}%</td>
-                          <td className="p-3.5 text-right font-bold text-ink text-xs whitespace-nowrap">
+                          <td className="p-3.5 text-right font-medium text-ink-700 text-sm whitespace-nowrap">{r.sharePct.toFixed(2)}%</td>
+                          <td className="p-3.5 text-right font-bold text-ink text-sm whitespace-nowrap">
                             {isEditingRentRoll ? (
                               <input
                                 type="number"
                                 defaultValue={r.rent}
                                 aria-label={`Renta mensual para ${r.name}`}
                                 disabled={savingField === `${r.slug}:rent`}
-                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-xs focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                className="w-24 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-sm focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
                                 onBlur={(e) => saveRentRollField(r.slug, "rent", e.target.value, r.rent, `Renta de ${r.name}`)}
                                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                               />
                             ) : (
                               <div>
-                                <p className="font-bold text-ink text-xs">{formatVal(r.rent)}</p>
-                                <p className="text-[10.5px] text-ink-500 font-medium">
+                                <p className="font-bold text-ink text-sm">{formatVal(r.rent)}</p>
+                                <p className="text-xs text-ink-500 font-medium">
                                   {formatVal(Math.round(r.rent / r.sqm))}/m²
                                 </p>
                               </div>
@@ -891,16 +880,16 @@ export function LandlordDashboard({
                                     triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                                   }}
                                   title="Ver auditoría de póliza asignada a Mariana IA"
-                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[10px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
+                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
                                 >
                                   Revisar Seguro · Mariana IA →
                                 </button>
                               ) : r.vacant ? (
-                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                                   Vacante
                                 </span>
                               ) : (
-                                <span className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                <span className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                                   Vigente SSOT
                                 </span>
                               )}
@@ -930,32 +919,38 @@ export function LandlordDashboard({
                     Locales desocupados — el registro se conserva, no se elimina. {formerTenants.length} en historial.
                   </p>
                 </div>
+                {/* Six short columns over ~970px: left to itself auto layout
+                    stretched every one of them by ~40px, so the whole row read
+                    as gaps. Widths hand the slack to the tenant-name column and
+                    keep the four data columns near their own content; the
+                    status pill closes the row against the right edge instead of
+                    floating in the middle of a wide last column. */}
                 <div className="border border-hairline rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] font-bold text-ink-500 border-b border-hairline tracking-wider">
                       <tr>
-                        <th className="p-3">Local</th>
-                        <th className="p-3">Antiguo Inquilino</th>
-                        <th className="p-3 text-right">Superficie</th>
-                        <th className="p-3 text-right">Última Renta</th>
-                        <th className="p-3">Contrato Terminó</th>
-                        <th className="p-3">Estatus</th>
+                        <th className="p-3.5 w-[10%]">Local</th>
+                        <th className="p-3.5 w-[38%]">Antiguo Inquilino</th>
+                        <th className="p-3.5 w-[10%] text-right">Superficie</th>
+                        <th className="p-3.5 w-[12%] text-right">Última Renta</th>
+                        <th className="p-3.5 w-[15%]">Contrato Terminó</th>
+                        <th className="p-3.5 w-[15%] text-right">Estatus</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-hairline">
                       {formerTenants.map((t) => (
                         <tr key={t.localeId} className="hover:bg-slate-50">
-                          <td className="p-3 font-semibold text-ink-700 whitespace-nowrap">{t.unitCode}</td>
-                          <td className="p-3 text-ink-700">{t.tenantEntity}</td>
-                          <td className="p-3 text-right text-ink-500 tabular-nums">{t.sqm.toLocaleString("es-MX")} m²</td>
-                          <td className="p-3 text-right text-ink-500 tabular-nums">{formatVal(t.lastRentMonthly)}</td>
-                          <td className="p-3 text-ink-500">
+                          <td className="p-3.5 font-semibold text-ink-700 whitespace-nowrap">{t.unitCode}</td>
+                          <td className="p-3.5 text-ink-700">{t.tenantEntity}</td>
+                          <td className="p-3.5 text-right text-ink-500 tabular-nums">{t.sqm.toLocaleString("es-MX")} m²</td>
+                          <td className="p-3.5 text-right text-ink-500 tabular-nums">{formatVal(t.lastRentMonthly)}</td>
+                          <td className="p-3.5 text-ink-500">
                             {t.leaseEndDate !== "—"
                               ? new Date(t.leaseEndDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
                               : "—"}
                           </td>
-                          <td className="p-3">
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-ink-700 border border-hairline">
+                          <td className="p-3.5 text-right">
+                            <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-ink-700 border border-hairline">
                               Vacante
                             </span>
                           </td>
@@ -1047,7 +1042,16 @@ export function LandlordDashboard({
                           <p className="text-xs font-extrabold text-ink">{event.date.split(" ")[0]}</p>
                           <p className="text-[10px] font-bold text-ink-500 uppercase">{event.date.split(" ")[1]} {event.date.split(" ")[2]}</p>
                         </div>
-                        <div className="flex-1 min-w-0">
+                        {/* max-w caps the only growable item in the row. Without
+                            it this block took every spare pixel (629px at 1440px
+                            for content that never exceeds 504px), which parked the
+                            cost and the notify button against the far edge with a
+                            ~150px hole in front of them. Capped at 520px, the
+                            date, the text and the cost read as one cluster; the
+                            leftover moves to the ml-auto on the button below, so
+                            it sits in front of an action rather than in the
+                            middle of the sentence the row is telling. */}
+                        <div className="flex-1 min-w-0 sm:max-w-[520px]">
                           <p className="font-bold text-ink text-xs">{event.title}</p>
                           <p className="text-[11px] text-ink-500">{event.vendor} · {event.category} · Responsable: {event.responsible}</p>
                         </div>
@@ -1057,7 +1061,7 @@ export function LandlordDashboard({
                             Programado
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 sm:ml-auto">
                           <button
                             onClick={() => {
                               setEventNotified((prev) => ({ ...prev, [event.id]: true }));
@@ -1100,7 +1104,12 @@ export function LandlordDashboard({
                 </div>
 
                 <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                  <table className="w-full text-left text-xs">
+                  {/* No width hints here on purpose: unlike the other four
+                      ledgers, every column in this one is already content-bound
+                      (its natural width overflows ~970px and wraps), so there is
+                      no slack to redistribute — forcing percentages would only
+                      take room from the case text. */}
+                  <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                       <tr>
                         <th className="p-3.5">Caso / Inquilino</th>
@@ -1120,21 +1129,21 @@ export function LandlordDashboard({
                         return (
                           <tr key={c.id} className="hover:bg-slate-50/90 transition-colors align-top">
                             <td className="p-3.5">
-                              <p className="font-bold text-ink text-xs">{c.tenant}</p>
-                              <p className="text-[11px] text-ink-500">{c.id}</p>
+                              <p className="font-bold text-ink text-sm">{c.tenant}</p>
+                              <p className="text-xs text-ink-500">{c.id}</p>
                             </td>
                             <td className="p-3.5">
                               <p className="text-ink-700 font-semibold">{c.expenseType}</p>
-                              <p className="text-[11px] text-ink-500">{c.equipmentModel} · {c.serialNumber}</p>
+                              <p className="text-xs text-ink-500">{c.equipmentModel} · {c.serialNumber}</p>
                             </td>
                             <td className="p-3.5 text-right font-bold tabular-nums text-ink whitespace-nowrap">
                               {formatVal(c.amount)}
                             </td>
                             <td className="p-3.5">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mb-1 ${verdictMeta.badge}`}>
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1 ${verdictMeta.badge}`}>
                                 {verdictMeta.label}
                               </span>
-                              <p className="text-[11px] text-ink-500 leading-relaxed max-w-md">{c.details}</p>
+                              <p className="text-xs text-ink-500 leading-relaxed max-w-md">{c.details}</p>
                             </td>
                           </tr>
                         );
@@ -1164,9 +1173,20 @@ export function LandlordDashboard({
                       Diego IA monitorea la vigencia de pólizas de mantenimiento, reclamaciones a fabricantes e historial técnico.
                     </p>
                   </div>
-                  <span className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
-                    8 Garantías Indexadas en Diego IA
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <span className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
+                      8 Garantías Indexadas en Diego IA
+                    </span>
+                    {/* Second entry point for the same upload action that lives at the top of
+                        the Diego tab — this is where a landlord is actually browsing the
+                        expediente, so the action has to be reachable from here too. */}
+                    <button
+                      onClick={() => triggerToast("Selecciona la Garantía, Póliza o Manual de Equipo (PDF/XML) para indexar en Diego IA...")}
+                      className="bg-ink hover:bg-ink-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0"
+                    >
+                      + Cargar Garantía o Manual (PDF)
+                    </button>
+                  </div>
                 </div>
 
                 {/* WARRANTY SYSTEM CATEGORY FILTER PILLS */}
@@ -1566,13 +1586,31 @@ export function LandlordDashboard({
                   </div>
 
                   <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                    <table className="w-full text-left text-xs">
+                    <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
-                          <th className="p-3.5">Inquilino & Ubicación</th>
-                          <th className="p-3.5">Vencimiento Contrato</th>
-                          <th className="p-3.5">Renta Mensual</th>
-                          <th className="p-3.5">Estatus Contractual</th>
+                          {/* Four short columns over ~970px: their combined
+                              natural width is only ~713px, so ~260px of slack
+                              has to live somewhere. Handing all of it to the
+                              tenant column (it was 40%) put ~300px of dead air
+                              between the tenant name and the expiry date while
+                              the other two gaps sat at ~176/151px — one obvious
+                              hole rather than even breathing room.
+
+                              30/21/19/30 splits it: measured at 1440px the
+                              tenant-name-to-expiry-date gap drops from
+                              239–304px to 142–207px, and what it gives up goes
+                              to the other two gaps, which end up in the same
+                              range. The tenant column at 30% (~292px) lands
+                              within a few px of its own natural 298px and this
+                              table's names are not nowrap, so the worst case is
+                              a wrapped name, never a truncated one. Rent stays right-aligned like
+                              every other money column here and the status pill
+                              still closes the row on the right edge. */}
+                          <th className="p-3.5 w-[30%]">Inquilino & Ubicación</th>
+                          <th className="p-3.5 w-[21%]">Vencimiento Contrato</th>
+                          <th className="p-3.5 w-[19%] text-right">Renta Mensual</th>
+                          <th className="p-3.5 w-[30%] text-right">Estatus Contractual</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hairline font-medium">
@@ -1584,22 +1622,22 @@ export function LandlordDashboard({
                             >
                               <td className="p-3.5">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-ink-400 font-bold text-[10px] select-none">
+                                  <span className="text-ink-400 font-bold text-[11px] select-none">
                                     {inspectedContractId === c.id ? "▲" : "▼"}
                                   </span>
                                   <div>
-                                    <p className="font-bold text-ink text-xs">{c.tenantEntity}</p>
-                                    <p className="text-[11px] text-ink-500">{c.unitCode} · {c.sqm} m²</p>
+                                    <p className="font-bold text-ink text-sm">{c.tenantEntity}</p>
+                                    <p className="text-xs text-ink-500">{c.unitCode} · {c.sqm} m²</p>
                                   </div>
                                 </div>
                               </td>
                               <td className="p-3.5">
-                                <p className="font-bold text-ink text-xs">{formatContractDate(c.endDate)}</p>
+                                <p className="font-bold text-ink text-sm">{formatContractDate(c.endDate)}</p>
                               </td>
-                              <td className="p-3.5 font-semibold text-ink-700 text-xs">{formatMxn(c.rentMonthly)}</td>
-                              <td className="p-3.5">
+                              <td className="p-3.5 font-semibold text-ink-700 text-sm text-right tabular-nums">{formatMxn(c.rentMonthly)}</td>
+                              <td className="p-3.5 text-right">
                                 <span
-                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                                     c.renewalSoon ? "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)]/30" : "bg-slate-100 text-ink-700 border border-hairline"
                                   }`}
                                 >
@@ -1613,22 +1651,22 @@ export function LandlordDashboard({
                                 hash, no INPC/penalty clause columns exist in the schema, so none are shown. */}
                             {inspectedContractId === c.id && (
                               <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
-                                <td colSpan={4} className="p-5 space-y-4 text-xs">
+                                <td colSpan={4} className="p-5 space-y-4 text-sm">
                                   <h4 className="font-bold text-sm text-ink border-b border-hairline pb-3">
                                     {c.tenantEntity} · {c.unitCode}
                                   </h4>
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                                     <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                      <p className="font-extrabold text-ink text-xs tracking-wide">Cláusula de Exclusividad</p>
-                                      <p className="text-ink-700 text-xs leading-relaxed font-medium">
+                                      <p className="font-extrabold text-ink text-sm tracking-wide">Cláusula de Exclusividad</p>
+                                      <p className="text-ink-700 text-sm leading-relaxed font-medium">
                                         {c.exclusiveUseClause || "Sin cláusula de exclusividad registrada."}
                                       </p>
                                     </div>
 
                                     <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                      <p className="font-extrabold text-ink text-xs tracking-wide">Uso Permitido</p>
-                                      <p className="text-ink-700 text-xs leading-relaxed font-medium">
+                                      <p className="font-extrabold text-ink text-sm tracking-wide">Uso Permitido</p>
+                                      <p className="text-ink-700 text-sm leading-relaxed font-medium">
                                         {c.permittedUse || "No especificado."}
                                       </p>
                                     </div>
@@ -1640,6 +1678,27 @@ export function LandlordDashboard({
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* DIGITALIZACIÓN DE CONTRATOS — lease-document pipeline.
+                      Additive to the SSOT table above: that table reads the
+                      `leases` rows, this panel is the intake that produces
+                      and corrects them (two human gates, per document). */}
+                  <div className="border border-hairline rounded-xl bg-white shadow-2xs p-4 space-y-3.5">
+                    <div>
+                      <h3 className="text-base font-bold text-ink">Digitalización de Contratos</h3>
+                      <p className="text-xs text-ink-500 mt-0.5">
+                        Sube contratos escaneados. Cada documento requiere dos confirmaciones humanas: el local al
+                        que corresponde, y la exactitud de las cláusulas extraídas.
+                      </p>
+                    </div>
+
+                    <LeaseUploadZone onUploaded={() => router.refresh()} />
+                    <LegalDocumentsPanel
+                      documents={activeLeaseDocuments}
+                      allUnits={leaseDocumentUnits}
+                      onResolved={() => router.refresh()}
+                    />
                   </div>
                 </div>
               )}

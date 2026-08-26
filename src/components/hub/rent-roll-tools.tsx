@@ -233,7 +233,7 @@ export function TerminateTenantButton({
   const [open, setOpen] = useState(false);
 
   if (state.success) {
-    return <span className="text-[10px] font-bold text-emerald-700">{state.success}</span>;
+    return <span className="text-[11px] font-bold text-emerald-700">{state.success}</span>;
   }
 
   return (
@@ -241,7 +241,7 @@ export function TerminateTenantButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700 cursor-pointer hover:bg-red-100 hover:border-red-300 transition-colors"
+        className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-700 cursor-pointer hover:bg-red-100 hover:border-red-300 transition-colors"
       >
         Desocupar
       </button>

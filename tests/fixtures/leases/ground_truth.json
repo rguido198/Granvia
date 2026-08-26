@@ -1,0 +1,3856 @@
+[
+  {
+    "unit_code": "C-41",
+    "tenant_name": "Derma Club 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Derma Club 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-41?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-41?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-41?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-41?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-41?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Derma Club 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-41?",
+        "answer": "Exclusividad de clínica dermatológica integral y farmacia de cuidado médico de la piel."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-10",
+    "tenant_name": "MINT Boutique",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de MINT Boutique?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-10?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-10?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-10?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-10?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-10?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de MINT Boutique tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "subarrendamiento restringido: Queda expresamente prohibido el subarrendamiento total o parcial del Local sin autorización escrita previa del Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-10?",
+        "answer": "Exclusividad de venta de ropa de diseño importado para dama y alta costura femenina."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-25",
+    "tenant_name": "Tacos El Patrón",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Tacos El Patrón?",
+        "answer": "2024-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-25?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-25?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-25?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-25?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-25?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Tacos El Patrón tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-25?",
+        "answer": "Venta de tacos de carne asada estilo Mexicali con tortillas de harina hechas a mano."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-77",
+    "tenant_name": "GNC 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de GNC 3?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-77?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-77?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-77?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-77?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-77?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de GNC 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-77?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-44",
+    "tenant_name": "Carl's Jr 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Carl's Jr 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-44?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-44?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-44?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-44?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-44?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Carl's Jr 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-44?",
+        "answer": "Exclusividad en hamburguesas de res estilo americano al carbón de cadena comercial."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-70",
+    "tenant_name": "MINT Boutique 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de MINT Boutique 3?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-70?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-70?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-70?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-70?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-70?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de MINT Boutique 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-70?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-48",
+    "tenant_name": "Helados Thrifty 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Helados Thrifty 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-48?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-48?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-48?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-48?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-48?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Helados Thrifty 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-48?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-60",
+    "tenant_name": "Dental Clinic 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Dental Clinic 2?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-60?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-60?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-60?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-60?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-60?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Dental Clinic 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-60?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-81",
+    "tenant_name": "Telcel 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Telcel 3?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-81?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-81?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-81?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-81?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-81?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Telcel 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-81?",
+        "answer": "Distribución oficial de equipos celulares y planes de telefonía móvil."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-69",
+    "tenant_name": "Florería Tulipán 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Florería Tulipán 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-69?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-69?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-69?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-69?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-69?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Florería Tulipán 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-69?",
+        "answer": "Diseño de arreglos florales exclusivos para eventos sociales."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-45",
+    "tenant_name": "Subway 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Subway 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-45?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-45?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-45?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-45?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-45?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Subway 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "remodelación: El Arrendatario podrá realizar remodelaciones menores al interior del Local sin autorización previa, siempre que no afecten elementos estructurales."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-45?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-38",
+    "tenant_name": "Barbería El Dorado",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Barbería El Dorado?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-38?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-38?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-38?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-38?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-38?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Barbería El Dorado tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "subarrendamiento restringido: Queda expresamente prohibido el subarrendamiento total o parcial del Local sin autorización escrita previa del Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-38?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-51",
+    "tenant_name": "Telcel 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Telcel 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-51?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-51?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-51?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-51?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-51?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Telcel 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-51?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-71",
+    "tenant_name": "Derma Club 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Derma Club 3?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-71?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-71?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-71?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-71?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-71?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Derma Club 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-71?",
+        "answer": "Exclusividad de clínica dermatológica integral y farmacia de cuidado médico de la piel."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-66",
+    "tenant_name": "Sport Shoes 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sport Shoes 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-66?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-66?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-66?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-66?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-66?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Sport Shoes 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-66?",
+        "answer": "Exclusividad de calzado deportivo de edición especial e importación."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-83",
+    "tenant_name": "Nails Lounge 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Nails Lounge 3?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-83?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-83?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-83?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-83?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-83?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Nails Lounge 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-83?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-40",
+    "tenant_name": "MINT Boutique 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de MINT Boutique 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-40?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-40?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-40?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-40?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-40?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de MINT Boutique 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-40?",
+        "answer": "Exclusividad de venta de ropa de diseño importado para dama y alta costura femenina."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-36",
+    "tenant_name": "Sport Shoes",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sport Shoes?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-36?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-36?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-36?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-36?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-36?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Sport Shoes tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-36?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-74",
+    "tenant_name": "Carl's Jr 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Carl's Jr 3?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-74?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-74?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-74?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-74?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-74?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Carl's Jr 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-74?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-34",
+    "tenant_name": "Baskin Robbins",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Baskin Robbins?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-34?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-34?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-34?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-34?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-34?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Baskin Robbins tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-34?",
+        "answer": "Venta de helados y postres congelados de 31 sabores."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-53",
+    "tenant_name": "Nails Lounge 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Nails Lounge 2?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-53?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-53?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-53?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-53?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-53?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Nails Lounge 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-53?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-14",
+    "tenant_name": "Carl's Jr",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Carl's Jr?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-14?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-14?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-14?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-14?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-14?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Carl's Jr tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "subarrendamiento restringido: Queda expresamente prohibido el subarrendamiento total o parcial del Local sin autorización escrita previa del Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-14?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-64",
+    "tenant_name": "Baskin Robbins 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Baskin Robbins 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-64?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-64?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-64?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-64?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-64?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Baskin Robbins 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-64?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-11",
+    "tenant_name": "Derma Club",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Derma Club?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-11?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-11?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-11?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-11?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-11?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Derma Club tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-11?",
+        "answer": "Exclusividad de clínica dermatológica integral y farmacia de cuidado médico de la piel."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-29",
+    "tenant_name": "Tintorería Max",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Tintorería Max?",
+        "answer": "2024-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-29?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-29?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-29?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-29?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-29?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Tintorería Max tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-29?",
+        "answer": "Exclusividad de lavado ecológico en seco y planchado express."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-68",
+    "tenant_name": "Barbería El Dorado 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Barbería El Dorado 2?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-68?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-68?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-68?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-68?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-68?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Barbería El Dorado 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-68?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-32",
+    "tenant_name": "Dulces de México",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Dulces de México?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-32?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-32?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-32?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-32?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-32?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Dulces de México tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-32?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "A-01",
+    "tenant_name": "Ashley Furniture",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Ashley Furniture?",
+        "answer": "2028-05-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local A-01?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local A-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local A-01?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local A-01?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local A-01?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Ashley Furniture tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local A-01?",
+        "answer": "Derechos de exclusividad para fabricación y venta de muebles para el hogar a gran escala y decoraciones de gran formato."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-31",
+    "tenant_name": "Cervecería Heroica",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Cervecería Heroica?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-31?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-31?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-31?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-31?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-31?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Cervecería Heroica tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-31?",
+        "answer": "Exclusividad de cerveza artesanal local y maridaje de mariscos."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-37",
+    "tenant_name": "La Casa del Te",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de La Casa del Te?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-37?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-37?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-37?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-37?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-37?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de La Casa del Te tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-37?",
+        "answer": "Exclusividad de infusión de té gourmet de importación asiática."
+      }
+    ]
+  },
+  {
+    "unit_code": "E-01",
+    "tenant_name": "Smart & Final",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Smart & Final?",
+        "answer": "2032-10-01"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local E-01?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local E-01?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local E-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local E-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local E-01?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Smart & Final tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local E-01?",
+        "answer": "Derecho exclusivo de operar supermercado de club de precios o tienda de autoservicio de abarrotes de gran formato."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-59",
+    "tenant_name": "Tintorería Max 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Tintorería Max 2?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-59?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-59?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-59?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-59?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-59?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Tintorería Max 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-59?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-46",
+    "tenant_name": "Sally Beauty 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sally Beauty 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-46?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-46?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-46?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-46?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-46?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Sally Beauty 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-46?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-23",
+    "tenant_name": "Nails Lounge",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Nails Lounge?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-23?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-23?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-23?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-23?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-23?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Nails Lounge tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "subarrendamiento restringido: Queda expresamente prohibido el subarrendamiento total o parcial del Local sin autorización escrita previa del Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-23?",
+        "answer": "Exclusividad en aplicación de uñas acrílicas y manicura spa."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-55",
+    "tenant_name": "Tacos El Patrón 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Tacos El Patrón 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-55?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-55?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-55?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-55?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-55?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Tacos El Patrón 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "subarrendamiento restringido: Queda expresamente prohibido el subarrendamiento total o parcial del Local sin autorización escrita previa del Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-55?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-24",
+    "tenant_name": "Sushi Roll",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sushi Roll?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-24?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-24?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-24?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-24?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-24?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Sushi Roll tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-24?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-82",
+    "tenant_name": "Joyas del Sol 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Joyas del Sol 3?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-82?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-82?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-82?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-82?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-82?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Joyas del Sol 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-82?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-57",
+    "tenant_name": "La Parrilla Mexica 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de La Parrilla Mexica 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-57?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-57?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-57?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-57?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-57?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de La Parrilla Mexica 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-57?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-56",
+    "tenant_name": "Boutique d'Europe 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Boutique d'Europe 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-56?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-56?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-56?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-56?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-56?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Boutique d'Europe 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-56?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-20",
+    "tenant_name": "Ópticas Devlyn",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Ópticas Devlyn?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-20?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-20?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-20?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-20?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-20?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Ópticas Devlyn tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-20?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-33",
+    "tenant_name": "Yoga Studio",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Yoga Studio?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-33?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-33?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-33?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-33?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-33?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Yoga Studio tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-33?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-39",
+    "tenant_name": "Florería Tulipán",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Florería Tulipán?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-39?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-39?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-39?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-39?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-39?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Florería Tulipán tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "subarrendamiento restringido: Queda expresamente prohibido el subarrendamiento total o parcial del Local sin autorización escrita previa del Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-39?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-67",
+    "tenant_name": "La Casa del Te 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de La Casa del Te 2?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-67?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-67?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-67?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-67?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-67?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de La Casa del Te 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-67?",
+        "answer": "Exclusividad de infusión de té gourmet de importación asiática."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-65",
+    "tenant_name": "Burger Joint 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Burger Joint 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-65?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-65?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-65?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-65?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-65?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Burger Joint 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-65?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-49",
+    "tenant_name": "Pizzería Bella 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Pizzería Bella 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-49?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-49?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-49?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-49?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-49?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Pizzería Bella 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-49?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-75",
+    "tenant_name": "Subway 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Subway 3?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-75?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-75?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-75?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-75?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-75?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Subway 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-75?",
+        "answer": "Exclusividad de sándwiches tipo submarino de preparación inmediata."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-17",
+    "tenant_name": "GNC",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de GNC?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-17?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-17?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-17?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-17?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-17?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de GNC tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-17?",
+        "answer": "Exclusividad en venta de suplementos alimenticios y proteínas deportivas."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-78",
+    "tenant_name": "Helados Thrifty 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Helados Thrifty 3?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-78?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-78?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-78?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-78?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-78?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Helados Thrifty 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-78?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-13",
+    "tenant_name": "Buffalo Wild Wings",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Buffalo Wild Wings?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-13?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-13?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-13?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-13?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-13?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Buffalo Wild Wings tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-13?",
+        "answer": "Exclusividad de restaurante deportivo con venta principal de alitas de pollo y cerveza de barril."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-30",
+    "tenant_name": "Dental Clinic",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Dental Clinic?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-30?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-30?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-30?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-30?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-30?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Dental Clinic tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-30?",
+        "answer": "Consultas de odontología general, ortodoncia y diseño de sonrisa."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-79",
+    "tenant_name": "Pizzería Bella 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Pizzería Bella 3?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-79?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-79?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-79?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-79?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-79?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Pizzería Bella 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-79?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-22",
+    "tenant_name": "Joyas del Sol",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Joyas del Sol?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-22?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-22?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-22?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-22?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-22?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Joyas del Sol tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-22?",
+        "answer": "Exclusividad en alta joyería y relojes de diseñador nacional."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-26",
+    "tenant_name": "Boutique d'Europe",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Boutique d'Europe?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-26?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-26?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-26?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-26?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-26?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Boutique d'Europe tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-26?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-62",
+    "tenant_name": "Dulces de México 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Dulces de México 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-62?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-62?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-62?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-62?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-62?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Dulces de México 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "remodelación: El Arrendatario podrá realizar remodelaciones menores al interior del Local sin autorización previa, siempre que no afecten elementos estructurales."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-62?",
+        "answer": "Venta de dulces típicos mexicanos tradicionales y piñatas."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-52",
+    "tenant_name": "Joyas del Sol 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Joyas del Sol 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-52?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-52?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-52?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-52?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-52?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Joyas del Sol 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-52?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-12",
+    "tenant_name": "Alma Verde",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Alma Verde?",
+        "answer": "2024-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-12?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-12?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-12?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-12?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-12?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Alma Verde tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-12?",
+        "answer": "Venta exclusiva de alimentos 100% orgánicos, ensaladas y jugoterapia natural."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-58",
+    "tenant_name": "Petco Express 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Petco Express 2?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-58?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-58?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-58?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-58?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-58?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Petco Express 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-58?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-35",
+    "tenant_name": "Burger Joint",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Burger Joint?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-35?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-35?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-35?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-35?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-35?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Burger Joint tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-35?",
+        "answer": "Venta de hamburguesas gourmet artesanales y papas trufadas."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-76",
+    "tenant_name": "Sally Beauty 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sally Beauty 3?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-76?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-76?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-76?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-76?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-76?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Sally Beauty 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "remodelación: El Arrendatario podrá realizar remodelaciones menores al interior del Local sin autorización previa, siempre que no afecten elementos estructurales."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-76?",
+        "answer": "Exclusividad en productos de belleza y tintes profesionales para estilistas."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-42",
+    "tenant_name": "Alma Verde 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Alma Verde 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-42?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-42?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-42?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-42?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-42?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Alma Verde 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-42?",
+        "answer": "Venta exclusiva de alimentos 100% orgánicos, ensaladas y jugoterapia natural."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-72",
+    "tenant_name": "Alma Verde 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Alma Verde 3?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-72?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-72?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-72?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-72?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-72?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Alma Verde 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "subarrendamiento restringido: Queda expresamente prohibido el subarrendamiento total o parcial del Local sin autorización escrita previa del Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-72?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-21",
+    "tenant_name": "Telcel",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Telcel?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-21?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-21?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-21?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-21?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-21?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Telcel tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-21?",
+        "answer": "Distribución oficial de equipos celulares y planes de telefonía móvil."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-84",
+    "tenant_name": "Sushi Roll 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sushi Roll 3?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-84?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-84?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-84?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-84?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-84?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Sushi Roll 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-84?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-28",
+    "tenant_name": "Petco Express",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Petco Express?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-28?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-28?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-28?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-28?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-28?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Petco Express tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-28?",
+        "answer": "Exclusividad de accesorios y alimento premium para mascotas."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-85",
+    "tenant_name": "Tacos El Patrón 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Tacos El Patrón 3?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-85?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-85?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-85?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-85?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-85?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Tacos El Patrón 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-85?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-87",
+    "tenant_name": "La Parrilla Mexica 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de La Parrilla Mexica 3?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-87?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-87?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-87?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-87?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-87?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de La Parrilla Mexica 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-87?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "F-01",
+    "tenant_name": "Gimnasio Ultra",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Gimnasio Ultra?",
+        "answer": "2028-03-01"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local F-01?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local F-01?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local F-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local F-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local F-01?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Gimnasio Ultra tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local F-01?",
+        "answer": "Exclusividad para operación de centro fitness o club de pesas y gimnasio con superficie mayor a 1000 m2."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-73",
+    "tenant_name": "Starbucks 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Starbucks 3?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-73?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-73?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-73?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-73?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-73?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Starbucks 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-73?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-63",
+    "tenant_name": "Yoga Studio 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Yoga Studio 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-63?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-63?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-63?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-63?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-63?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Yoga Studio 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-63?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-16",
+    "tenant_name": "Sally Beauty",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sally Beauty?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-16?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-16?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-16?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-16?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-16?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Sally Beauty tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "mascotas: Se permite el ingreso de mascotas de clientes al interior del Local, sujeto a las políticas generales de la plaza."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-16?",
+        "answer": "Exclusividad en productos de belleza y tintes profesionales para estilistas."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-27",
+    "tenant_name": "La Parrilla Mexica",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de La Parrilla Mexica?",
+        "answer": "2024-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-27?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-27?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-27?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-27?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-27?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de La Parrilla Mexica tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "estacionamiento reservado: El Arrendatario cuenta con dos (2) cajones de estacionamiento reservados y señalizados frente al Local, de uso exclusivo en horario comercial."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-27?",
+        "answer": "Exclusividad en cortes de carne estilo norteño al carbón."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-15",
+    "tenant_name": "Subway",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Subway?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-15?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-15?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-15?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-15?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-15?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Subway tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-15?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-43",
+    "tenant_name": "Starbucks 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Starbucks 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-43?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-43?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-43?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-43?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-43?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Starbucks 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-43?",
+        "answer": "Exclusividad de venta de café gourmet de grano y bebidas preparadas basadas en café."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-80",
+    "tenant_name": "Ópticas Devlyn 3",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Ópticas Devlyn 3?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-80?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-80?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-80?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-80?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-80?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Ópticas Devlyn 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "señalización exterior: El Arrendatario tiene derecho a instalar un letrero exterior iluminado de hasta 3 metros de ancho sobre la fachada del Local, previa aprobación de diseño por el Arrendador."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-80?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "B-19",
+    "tenant_name": "Pizzería Bella",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Pizzería Bella?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-19?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-19?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-19?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-19?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-19?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Pizzería Bella tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-19?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-50",
+    "tenant_name": "Ópticas Devlyn 2",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Ópticas Devlyn 2?",
+        "answer": "2027-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-50?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-50?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-50?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-50?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-50?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Ópticas Devlyn 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "remodelación: El Arrendatario podrá realizar remodelaciones menores al interior del Local sin autorización previa, siempre que no afecten elementos estructurales."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-50?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "G-18",
+    "tenant_name": "Helados Thrifty",
+    "is_noisy_scan": false,
+    "defect_type": null,
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 30,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Helados Thrifty?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-18?",
+        "answer": "30 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-18?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-18?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-18?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-18?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de Helados Thrifty tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "publicidad en directorio: El Arrendatario tiene derecho a una mención destacada en el directorio digital y físico de la plaza sin costo adicional."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-18?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  },
+  {
+    "unit_code": "C-86",
+    "tenant_name": "Boutique d'Europe 3",
+    "is_noisy_scan": true,
+    "defect_type": "control",
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Boutique d'Europe 3?",
+        "answer": "2028-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-86?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-86?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-86?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-86?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-86?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Boutique d'Europe 3 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-86?",
+        "answer": "Exclusividad en trajes sastres para caballero importados."
+      }
+    ]
+  },
+  {
+    "unit_code": "D-01",
+    "tenant_name": "Cinépolis",
+    "is_noisy_scan": true,
+    "defect_type": "faded",
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendador",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Cinépolis?",
+        "answer": "2030-01-01"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local D-01?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local D-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local D-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local D-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local D-01?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Cinépolis tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "horario extendido: El Arrendatario podrá operar en horario extendido hasta las 23:00 horas los viernes y sábados, sin cargo adicional por uso de áreas comunes."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local D-01?",
+        "answer": "Exclusividad absoluta para exhibición cinematográfica y proyección comercial de películas en la plaza."
+      }
+    ]
+  },
+  {
+    "unit_code": "B-61",
+    "tenant_name": "Cervecería Heroica 2",
+    "is_noisy_scan": true,
+    "defect_type": "skewed",
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendatario",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Cervecería Heroica 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local B-61?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local B-61?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local B-61?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local B-61?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local B-61?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Cervecería Heroica 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local B-61?",
+        "answer": "Exclusividad de cerveza artesanal local y maridaje de mariscos."
+      }
+    ]
+  },
+  {
+    "unit_code": "C-47",
+    "tenant_name": "GNC 2",
+    "is_noisy_scan": true,
+    "defect_type": "noisy_fax",
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendatario",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendatario"
+    },
+    "notice_period_days": 90,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de GNC 2?",
+        "answer": "2025-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local C-47?",
+        "answer": "90 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local C-47?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local C-47?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local C-47?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local C-47?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿El contrato de GNC 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "remodelación: El Arrendatario podrá realizar remodelaciones menores al interior del Local sin autorización previa, siempre que no afecten elementos estructurales."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local C-47?",
+        "answer": "Exclusividad en venta de suplementos alimenticios y proteínas deportivas."
+      }
+    ]
+  },
+  {
+    "unit_code": "G-54",
+    "tenant_name": "Sushi Roll 2",
+    "is_noisy_scan": true,
+    "defect_type": "faded",
+    "responsibility_matrix": {
+      "HVAC / Clima": "Arrendatario",
+      "Techo / Impermeabilización": "Arrendador",
+      "Plomería": "Arrendador",
+      "Instalación Eléctrica": "Arrendador"
+    },
+    "notice_period_days": 60,
+    "questions": [
+      {
+        "question": "¿Cuál es la fecha de vencimiento del contrato de Sushi Roll 2?",
+        "answer": "2026-01-15"
+      },
+      {
+        "question": "¿Cuántos días de aviso previo se requieren para terminar anticipadamente el contrato del Local G-54?",
+        "answer": "60 días"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de HVAC / Clima en el Local G-54?",
+        "answer": "Arrendatario"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Techo / Impermeabilización en el Local G-54?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Plomería en el Local G-54?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿Quién es responsable del mantenimiento del sistema de Instalación Eléctrica en el Local G-54?",
+        "answer": "Arrendador"
+      },
+      {
+        "question": "¿El contrato de Sushi Roll 2 tiene alguna cláusula especial fuera de lo estándar?",
+        "answer": "ampliación futura: El Arrendatario tiene derecho de primera oferta sobre el local adyacente en caso de que éste quede vacante durante la vigencia del contrato."
+      },
+      {
+        "question": "¿Existe cláusula de exclusividad en el contrato del Local G-54?",
+        "answer": "Ninguna (Uso libre no perjudicial)"
+      }
+    ]
+  }
+]

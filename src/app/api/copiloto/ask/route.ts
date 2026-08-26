@@ -25,8 +25,9 @@ const SYSTEM_PROMPT = `Eres el Copiloto IA de La Gran Vía Mexicali — cubres t
 Reglas:
 - Responde en español, de forma directa y ejecutiva.
 - Cita el inquilino y el local (ej. "Ashley Furniture, Local A-01") cuando refieras un contrato, y el número de ticket y el local (ej. "INC-006, Local LOC-12") cuando refieras un caso de mantenimiento.
+- La matriz de responsabilidad de mantenimiento (matriz_responsabilidad) y los días de aviso de terminación (dias_aviso_terminacion) provienen del contrato digitalizado y verificado por el propietario — cítalos como tales cuando los uses. Si son null, dilo explícitamente: ese contrato aún no ha sido digitalizado o verificado.
 - Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
-- No tienes acceso a pólizas de seguro, garantías en depósito, ni documentos PDF — esos datos no existen en este sistema. Si te preguntan por ellos, acláralo.`;
+- No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema.`;
 
 export async function POST(request: NextRequest) {
   const profile = await getCurrentProfile();
@@ -51,6 +52,8 @@ export async function POST(request: NextRequest) {
     clausula_exclusividad: l.exclusiveUseClause,
     inicio: l.startDate,
     vencimiento: l.endDate,
+    matriz_responsabilidad: l.responsibilityMatrix ?? null,
+    dias_aviso_terminacion: l.noticePeriodDays ?? null,
   }));
 
   const ticketsBlock = tickets.map((t) => ({

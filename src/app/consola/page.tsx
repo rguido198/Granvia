@@ -8,7 +8,7 @@ import { fetchContractors } from "@/lib/data/contractors.server";
 import { fetchAutonomyState } from "@/lib/platform/settings.server";
 import { fetchAuditLog } from "@/lib/platform/audit-log.server";
 import { fetchCorporateUsers } from "@/lib/platform/users.server";
-import { fetchPortfolio } from "@/lib/data/portfolio.server";
+import { fetchActiveLeaseDocuments, fetchPortfolio } from "@/lib/data/portfolio.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -50,6 +50,9 @@ export default async function ConsolaPage() {
   const auditLog = await fetchAuditLog();
   const corporateUsers = await fetchCorporateUsers();
   const portfolio = await fetchPortfolio();
+  // Legal tab's lease-digitization pipeline — intake state, not part of the
+  // rent roll / lease ledger fetchPortfolio() returns.
+  const activeLeaseDocuments = await fetchActiveLeaseDocuments();
 
   return (
     <PageFade>
@@ -65,6 +68,7 @@ export default async function ConsolaPage() {
         auditLog={auditLog}
         corporateUsers={corporateUsers}
         portfolio={portfolio}
+        activeLeaseDocuments={activeLeaseDocuments}
       />
     </PageFade>
   );
