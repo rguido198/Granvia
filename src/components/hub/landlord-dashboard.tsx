@@ -28,7 +28,10 @@ type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
 type RentRollSortKey = "name" | "sqm" | "sharePct" | "rent";
 type RentRollSort = { key: RentRollSortKey; dir: "asc" | "desc" };
 
-function SortableHeader({
+type ContractSortKey = "name" | "endDate" | "rent";
+type ContractSort = { key: ContractSortKey; dir: "asc" | "desc" };
+
+function SortableHeader<K extends string>({
   label,
   sortKey,
   current,
@@ -39,9 +42,9 @@ function SortableHeader({
   width = "",
 }: {
   label: string;
-  sortKey: RentRollSortKey;
-  current: RentRollSort;
-  onSort: (key: RentRollSortKey) => void;
+  sortKey: K;
+  current: { key: K; dir: "asc" | "desc" };
+  onSort: (key: K) => void;
   align?: "left" | "right";
   title?: string;
   className?: string;
@@ -486,6 +489,43 @@ export function LandlordDashboard({
   const [customProspectBrand, setCustomProspectBrand] = useState("");
   const [customProspectCategory, setCustomProspectCategory] = useState("Cafetería & Repostería");
   const [inspectedContractId, setInspectedContractId] = useState<string | null>(null);
+
+  // Contracts table (Expedientes & Anomalías) search/filter/sort — same
+  // client-side pattern as the Rent Roll table above; `leases` is already
+  // fully loaded. "Renovación Próxima" (lease.renewalSoon, <=6 months to
+  // end_date, see portfolio.server.ts) is the one real anomaly signal this
+  // schema carries, so it drives both the filter toggle and the tab count
+  // below rather than a fabricated anomaly count.
+  const [contractFilter, setContractFilter] = useState("");
+  const [contractOnlyRenewalSoon, setContractOnlyRenewalSoon] = useState(false);
+  const [contractSort, setContractSort] = useState<ContractSort>({ key: "endDate", dir: "asc" });
+
+  const toggleContractSort = (key: ContractSortKey) => {
+    setContractSort((prev) =>
+      prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
+    );
+  };
+
+  const renewalSoonCount = useMemo(() => leases.filter((c) => c.renewalSoon).length, [leases]);
+
+  const visibleLeases = useMemo(() => {
+    const needle = contractFilter.trim().toLowerCase();
+    const filtered = leases.filter((c) => {
+      const matchesText =
+        !needle || c.tenantEntity.toLowerCase().includes(needle) || c.unitCode.toLowerCase().includes(needle);
+      const matchesRenewal = !contractOnlyRenewalSoon || c.renewalSoon;
+      return matchesText && matchesRenewal;
+    });
+
+    const sorted = [...filtered].sort((a, b) => {
+      const { key, dir } = contractSort;
+      const mult = dir === "asc" ? 1 : -1;
+      if (key === "name") return a.tenantEntity.localeCompare(b.tenantEntity) * mult;
+      if (key === "endDate") return (new Date(a.endDate).getTime() - new Date(b.endDate).getTime()) * mult;
+      return (a.rentMonthly - b.rentMonthly) * mult;
+    });
+    return sorted;
+  }, [leases, contractFilter, contractOnlyRenewalSoon, contractSort]);
 
   // Toast notifications are raised through ConsoleShell (the currency toggle up
   // in its bar fires them too, so one queue rather than two), hence the prop.
@@ -1546,9 +1586,9 @@ export function LandlordDashboard({
                       setCopilotOpen(true);
                       triggerToast("Abriendo Copiloto IA...");
                     }}
-                    className="bg-ink hover:bg-ink-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-xs"
+                    className="bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)] px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
                   >
-                    <span className="h-2 w-2 rounded-full bg-ink-400" />
+                    <span className="h-2 w-2 rounded-full bg-[var(--console-accent)]" />
                     <span>Copiloto IA</span>
                   </button>
                 </div>
@@ -1557,7 +1597,7 @@ export function LandlordDashboard({
               {/* SUB-NAVIGATION — underline tabs, not filled pills */}
               <SubTabBar
                 tabs={[
-                  { key: "expedientes", label: "Expedientes & Anomalías (4)" },
+                  { key: "expedientes", label: `Expedientes & Anomalías (${renewalSoonCount})` },
                   { key: "prospectos", label: "Viabilidad de Prospectos (Exclusividades)" },
                   { key: "marco_legal", label: "Marco Jurídico & Radar de Leyes (DOF & BC)" },
                 ]}
@@ -1585,6 +1625,32 @@ export function LandlordDashboard({
                     </span>
                   </div>
 
+                  {/* Search / filter bar — same client-side pattern as the
+                      Rent Roll table (leases is already fully loaded), added
+                      because a plain 85-row list has no other way to narrow
+                      down to one tenant or to just the renewal-soon subset. */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <input
+                      type="text"
+                      value={contractFilter}
+                      onChange={(e) => setContractFilter(e.target.value)}
+                      placeholder="Filtrar por inquilino o local…"
+                      className="w-full max-w-xs rounded-lg border border-hairline-strong px-3 py-2 text-xs bg-white focus:border-[var(--console-accent)] focus:outline-none"
+                    />
+                    <label className="flex items-center gap-2 text-xs font-semibold text-ink-700 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={contractOnlyRenewalSoon}
+                        onChange={(e) => setContractOnlyRenewalSoon(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-hairline-strong accent-[var(--console-accent)] cursor-pointer"
+                      />
+                      Mostrar solo renovación próxima ({renewalSoonCount})
+                    </label>
+                    <p className="text-[11px] text-ink-500 font-medium whitespace-nowrap ml-auto">
+                      {visibleLeases.length} de {leases.length} contratos
+                    </p>
+                  </div>
+
                   <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
@@ -1607,14 +1673,44 @@ export function LandlordDashboard({
                               a wrapped name, never a truncated one. Rent stays right-aligned like
                               every other money column here and the status pill
                               still closes the row on the right edge. */}
-                          <th className="p-3.5 w-[30%]">Inquilino & Ubicación</th>
-                          <th className="p-3.5 w-[21%]">Vencimiento Contrato</th>
-                          <th className="p-3.5 w-[19%] text-right">Renta Mensual</th>
+                          <SortableHeader
+                            label="Inquilino & Ubicación"
+                            sortKey="name"
+                            current={contractSort}
+                            onSort={toggleContractSort}
+                            width="w-[30%]"
+                          />
+                          <SortableHeader
+                            label="Vencimiento Contrato"
+                            sortKey="endDate"
+                            current={contractSort}
+                            onSort={toggleContractSort}
+                            width="w-[21%]"
+                          />
+                          <SortableHeader
+                            label="Renta Mensual"
+                            sortKey="rent"
+                            current={contractSort}
+                            onSort={toggleContractSort}
+                            align="right"
+                            width="w-[19%]"
+                          />
                           <th className="p-3.5 w-[30%] text-right">Estatus Contractual</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hairline font-medium">
-                        {leases.map((c) => (
+                        {visibleLeases.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="p-6 text-center text-ink-500">
+                              {contractFilter ? (
+                                <>Sin resultados para &ldquo;{contractFilter}&rdquo;.</>
+                              ) : (
+                                "Ningún contrato con renovación próxima."
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                        {visibleLeases.map((c) => (
                           <Fragment key={c.id}>
                             <tr
                               onClick={() => setInspectedContractId(inspectedContractId === c.id ? null : c.id)}
@@ -1632,17 +1728,19 @@ export function LandlordDashboard({
                                 </div>
                               </td>
                               <td className="p-3.5">
-                                <p className="font-bold text-ink text-sm">{formatContractDate(c.endDate)}</p>
+                                <p className={`font-bold text-sm ${c.renewalSoon ? "text-caution" : "text-ink"}`}>
+                                  {formatContractDate(c.endDate)}
+                                </p>
                               </td>
                               <td className="p-3.5 font-semibold text-ink-700 text-sm text-right tabular-nums">{formatMxn(c.rentMonthly)}</td>
                               <td className="p-3.5 text-right">
-                                <span
-                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                                    c.renewalSoon ? "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)]/30" : "bg-slate-100 text-ink-700 border border-hairline"
-                                  }`}
-                                >
-                                  {c.renewalSoon ? "Renovación Próxima" : "Vigente"}
-                                </span>
+                                {c.renewalSoon ? (
+                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40">
+                                    Renovación Próxima
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-semibold text-ink-500">Vigente</span>
+                                )}
                               </td>
                             </tr>
 
