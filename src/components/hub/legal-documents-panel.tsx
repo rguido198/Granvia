@@ -53,6 +53,7 @@ const STATUS_LABELS: Record<string, string> = {
   extracting: "Extrayendo…",
   ready_for_triage: "Pendiente: confirmar local",
   attached: "Pendiente: validar extracción",
+  needs_new_lease: "Local vacante — falta registrar al nuevo inquilino",
   failed: "Falló la extracción",
 };
 
@@ -191,6 +192,30 @@ export function LegalDocumentsPanel({
                 ) : (
                   <p className="text-xs text-ink-500 font-medium">
                     La extracción está incompleta o no cumple el esquema esperado — revisa el documento antes de validar.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Gate 2 confirmed the extraction, but promoteExtraction found no
+             *  active `leases` row for the matched locale — a vacant unit
+             *  being newly occupied. That's a separate decision from "are
+             *  these clauses right" (already answered), so it gets its own
+             *  form instead of folding tenant/term/rent inputs into
+             *  ExtractionReviewForm for every document. */}
+            {doc.status === "needs_new_lease" && (
+              <div className="border-t border-hairline pt-2.5">
+                {fields ? (
+                  <NewLeaseForm
+                    documentId={doc.id}
+                    extractedFields={fields}
+                    targetUnit={doc.localeUnit}
+                    targetTenant={doc.localeTenant}
+                    onResolved={onResolved}
+                  />
+                ) : (
+                  <p className="text-xs text-ink-500 font-medium">
+                    Los datos del contrato no están disponibles — revisa el documento antes de continuar.
                   </p>
                 )}
               </div>
@@ -363,7 +388,7 @@ export function MatchReviewForm({
         <option value="">-- corregir local --</option>
         {allUnits.map((u) => (
           <option key={u.id} value={u.id}>
-            {u.unitCode} — {u.tenantEntity}
+            {u.tenantEntity} — {u.unitCode}
           </option>
         ))}
       </select>
@@ -517,6 +542,158 @@ export function ExtractionReviewForm({
           type="button"
           disabled={pendingAction !== null}
           onClick={() => confirm(false)}
+          title="Descarta esta lectura y vuelve a extraer el contrato desde cero (máx. 3 reintentos)."
+          className="border border-hairline text-ink-700 px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
+        >
+          {pendingAction === "reject" ? "Rechazando..." : "Rechazar y volver a extraer"}
+        </button>
+      </div>
+      {error && <p className="font-bold text-red-700">{error}</p>}
+    </div>
+  );
+}
+
+export function NewLeaseForm({
+  documentId,
+  extractedFields,
+  targetUnit,
+  targetTenant,
+  onResolved,
+}: {
+  documentId: string;
+  /** Read-only source for tenant_entity/start_date/end_date/base_rent_monthly
+   *  prefill — the matrix/notice/clauses in here were already confirmed by
+   *  ExtractionReviewForm and are not re-collected. */
+  extractedFields: LeaseExtractedFields;
+  targetUnit: string | null;
+  targetTenant: string | null;
+  onResolved: () => void;
+}) {
+  const [tenantEntity, setTenantEntity] = useState(extractedFields.tenant_entity);
+  const [startDate, setStartDate] = useState(extractedFields.start_date);
+  const [endDate, setEndDate] = useState(extractedFields.end_date);
+  const [baseRent, setBaseRent] = useState(
+    extractedFields.base_rent_monthly !== null ? String(extractedFields.base_rent_monthly) : "",
+  );
+  const [pendingAction, setPendingAction] = useState<"confirm" | "reject" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submitNewLease() {
+    setPendingAction("confirm");
+    setError(null);
+    try {
+      const rent = baseRent.trim() === "" ? null : Number(baseRent);
+      if (rent !== null && (!Number.isFinite(rent) || rent <= 0)) {
+        setError("La renta debe ser un número positivo, o déjala vacía si el contrato no la fija.");
+        return;
+      }
+      const res = await fetch("/api/workflow/confirm-lease-extraction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId,
+          confirmed: true,
+          newLeaseDetails: {
+            tenant_entity: tenantEntity,
+            start_date: startDate,
+            end_date: endDate,
+            base_rent_monthly: rent,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setError(json.error ?? "No se pudo registrar el nuevo contrato.");
+        return;
+      }
+      onResolved();
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function reject() {
+    setPendingAction("reject");
+    setError(null);
+    try {
+      const res = await fetch("/api/workflow/confirm-lease-extraction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId, confirmed: false }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setError(json.error ?? "No se pudo registrar la decisión.");
+        return;
+      }
+      onResolved();
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  return (
+    <div className="space-y-2 text-xs">
+      <p className="text-ink-700 font-medium">
+        <strong className="text-ink">Local {targetUnit ?? "(no resuelto)"}</strong> no tiene contrato activo
+        {targetTenant && targetTenant !== "Vacante" ? ` (registrado como ${targetTenant})` : ""} — completa los
+        datos del nuevo inquilino para crear su contrato. La matriz de responsabilidad y los días de aviso ya
+        confirmados se aplicarán a este contrato.
+      </p>
+
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-ink-700 font-medium">Inquilino (nombre legal)</span>
+        <input
+          type="text"
+          value={tenantEntity}
+          onChange={(e) => setTenantEntity(e.target.value)}
+          className="border border-hairline rounded-lg px-2 py-1 flex-1 max-w-xs"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-ink-700 font-medium">Fecha de inicio</span>
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="border border-hairline rounded-lg px-2 py-1"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-ink-700 font-medium">Fecha de vencimiento</span>
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="border border-hairline rounded-lg px-2 py-1"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-ink-700 font-medium">Renta base mensual (MXN)</span>
+        <input
+          type="number"
+          min={0}
+          step="0.01"
+          value={baseRent}
+          onChange={(e) => setBaseRent(e.target.value)}
+          placeholder="(sin dato)"
+          className="border border-hairline rounded-lg px-2 py-1 w-32"
+        />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={pendingAction !== null || !tenantEntity.trim() || !startDate || !endDate}
+          onClick={submitNewLease}
+          className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {pendingAction === "confirm" ? "Creando..." : "Crear contrato y confirmar"}
+        </button>
+        <button
+          type="button"
+          disabled={pendingAction !== null}
+          onClick={reject}
           title="Descarta esta lectura y vuelve a extraer el contrato desde cero (máx. 3 reintentos)."
           className="border border-hairline text-ink-700 px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
         >

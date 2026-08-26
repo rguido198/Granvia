@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { resumeHook } from "workflow/api";
 
 import { getCurrentProfile } from "@/lib/auth/server";
-import { LeaseExtractedFieldsSchema } from "@/lib/ingest/lease-extraction-schema";
+import { LeaseExtractedFieldsSchema, NewLeaseDetailsSchema } from "@/lib/ingest/lease-extraction-schema";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 /**
@@ -23,10 +23,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { documentId, confirmed, correctedFields } = body as {
+  const { documentId, confirmed, correctedFields, newLeaseDetails } = body as {
     documentId?: string;
     confirmed?: boolean;
     correctedFields?: unknown;
+    newLeaseDetails?: unknown;
   };
 
   if (typeof documentId !== "string" || typeof confirmed !== "boolean") {
@@ -55,6 +56,25 @@ export async function POST(request: NextRequest) {
     parsedFields = parsed.data;
   }
 
+  let parsedNewLeaseDetails;
+  if (newLeaseDetails !== undefined) {
+    const parsed = NewLeaseDetailsSchema.safeParse(newLeaseDetails);
+    if (!parsed.success) {
+      console.warn(
+        `confirm-lease-extraction: newLeaseDetails failed schema validation for document ${documentId}`,
+        parsed.error.issues,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Los datos del nuevo contrato no tienen el formato esperado. Revisa el inquilino, las fechas y la renta.",
+        },
+        { status: 400 },
+      );
+    }
+    parsedNewLeaseDetails = parsed.data;
+  }
+
   const supabase = getSupabaseServiceClient();
   const { data: document, error: fetchError } = await supabase
     .from("documents")
@@ -65,11 +85,15 @@ export async function POST(request: NextRequest) {
   if (fetchError || !document) {
     return NextResponse.json({ error: "document not found" }, { status: 404 });
   }
-  if (document.status !== "attached") {
+  // 'needs_new_lease' is Gate 2's own follow-up state (promoteExtraction
+  // found no active lease to promote onto and is waiting on tenant/term/rent
+  // details) — a valid pre-state for resuming the same hook, not just
+  // 'attached'.
+  if (document.status !== "attached" && document.status !== "needs_new_lease") {
     // Same rule as the Gate 1 route: the panel renders `error` verbatim to the
     // landlord, so the row status stays in the log and the body stays Spanish.
     console.warn(
-      `confirm-lease-extraction: document ${documentId} is '${document.status}', not 'attached'`,
+      `confirm-lease-extraction: document ${documentId} is '${document.status}', not 'attached' or 'needs_new_lease'`,
     );
     return NextResponse.json(
       { error: "Esta extracción ya fue validada o el contrato cambió de estado. Actualiza la vista." },
@@ -84,6 +108,7 @@ export async function POST(request: NextRequest) {
     const result = await resumeHook(`lease-doc-extraction:${documentId}`, {
       confirmed,
       correctedFields: parsedFields,
+      newLeaseDetails: parsedNewLeaseDetails,
       verifiedById: profile.id,
     });
     return NextResponse.json({ ok: true, runId: result.runId });

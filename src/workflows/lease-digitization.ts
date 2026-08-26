@@ -3,7 +3,7 @@ import { createHook, FatalError } from "workflow";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { extractFromText, extractFromVision } from "@/lib/ingest/lease-extraction";
 import { extractTenantNameFromDocumentText, matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
-import type { LeaseExtractedFields } from "@/lib/ingest/lease-extraction-schema";
+import type { LeaseExtractedFields, NewLeaseDetails } from "@/lib/ingest/lease-extraction-schema";
 
 /**
  * Lease-document digitization as a durable state machine, mirroring
@@ -205,20 +205,21 @@ async function recordReExtraction(documentId: string, extraction: ExtractionResu
 async function promoteExtraction(
   documentId: string,
   localeId: string,
-  decision: { confirmed: boolean; correctedFields?: LeaseExtractedFields; verifiedById?: string },
-): Promise<void> {
+  decision: {
+    confirmed: boolean;
+    correctedFields?: LeaseExtractedFields;
+    newLeaseDetails?: NewLeaseDetails;
+    verifiedById?: string;
+  },
+): Promise<"promoted" | "needs_new_lease"> {
   "use step";
   const supabase = getSupabaseServiceClient();
 
-  if (!decision.confirmed) return; // client rejected — leave attached, unverified, for a human to redo later
-
   // Unlike promoteMatch's lookup — which degrades safely to null and just
   // declines to promote — this row is the only fallback source for the fields
-  // written onto the lease, and Gate 2's hook has already been consumed by the
-  // time we get here (it cannot be re-fired). A silent null would surface as a
-  // plain TypeError on finalFields below, the step would retry, and the
-  // document would strand in `attached` with no extraction_verified_at. Fail
-  // fatally and legibly instead, the same way loadDocumentContext does.
+  // written onto the lease. A silent null would surface as a plain TypeError
+  // on finalFields below and the step would retry forever. Fail fatally and
+  // legibly instead, the same way loadDocumentContext does.
   const { data: document, error: documentError } = await supabase
     .from("documents")
     .select("extracted_fields")
@@ -242,55 +243,96 @@ async function promoteExtraction(
     .order("end_date", { ascending: false })
     .limit(1);
 
-  const currentLeaseId = leaseRows?.[0]?.id;
+  let currentLeaseId = leaseRows?.[0]?.id as string | undefined;
+
   if (!currentLeaseId) {
     // Gate 1's locale picker deliberately offers vacant units too — a scanned
-    // contract can legitimately belong to a unit with no `leases` row yet. So
-    // reaching here is a real, reachable state, not a corrupt one, and it
-    // arrives AFTER Gate 2's single-use hook has already been consumed: a
-    // throw here would kill the run with an opaque error and strand the
-    // document unrecoverably.
-    //
-    // Write a landlord-readable explanation onto the row instead and leave
-    // `status` at 'attached' — the *match* was fine, only the promotion has
-    // nothing to write onto. Creating the missing `leases` row is explicitly
-    // out of scope; that's a human decision, not this workflow's.
-    //
-    // finalFields is the landlord's confirmed/edited Gate 2 answer — the only
-    // copy of it in existence once this hook resolves. Save it onto the
-    // `documents` row as a safe-deposit even though there's no `leases` row to
-    // promote onto, so it's never lost with no recovery path short of
-    // re-upload + redoing both gates. This is NOT a promotion: no
-    // extraction_verified_at is set, and nothing is written to `leases`.
-    await supabase
-      .from("documents")
-      .update({
-        extracted_fields: finalFields,
-        error_message: "Local sin contrato activo — agrega el arrendatario primero",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", documentId);
-    return;
-  }
+    // contract can legitimately belong to a unit with no `leases` row yet.
+    if (!decision.newLeaseDetails) {
+      // First time reaching this locale with no active lease: the match was
+      // fine, there's just nothing to promote onto yet. Save finalFields onto
+      // `documents` as a safe-deposit (it's the landlord's confirmed/edited
+      // matrix — the only copy in existence once the caller's payload is
+      // gone) and flip status to the dedicated `needs_new_lease` state so the
+      // panel renders the follow-up form instead of looking stuck. Returning
+      // this discriminator (rather than just writing the row) is what tells
+      // the workflow loop to keep the same hook open for that follow-up,
+      // instead of treating this call as done.
+      await supabase
+        .from("documents")
+        .update({
+          extracted_fields: finalFields,
+          status: "needs_new_lease",
+          error_message: "Local sin contrato activo — agrega el arrendatario primero",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", documentId);
+      return "needs_new_lease";
+    }
 
-  await supabase
-    .from("leases")
-    .update({
-      responsibility_matrix: finalFields.responsibility_matrix,
-      notice_period_days: finalFields.notice_period_days,
-    })
-    .eq("id", currentLeaseId);
+    // The follow-up form answered: create the missing lease and occupy the
+    // locale. lease_id follows this dataset's existing convention (see any
+    // row in `leases`: "LEASE-<unit_number>") rather than inventing a new one.
+    const { data: locale, error: localeError } = await supabase
+      .from("locales")
+      .select("unit_number")
+      .eq("id", localeId)
+      .single();
+    if (localeError || !locale) {
+      throw new FatalError(
+        `could not load locale ${localeId} to create new lease: ${localeError?.message ?? "no row returned"}`,
+      );
+    }
+
+    const { data: newLease, error: insertError } = await supabase
+      .from("leases")
+      .insert({
+        lease_id: `LEASE-${locale.unit_number}`,
+        locale_id: localeId,
+        tenant_entity: decision.newLeaseDetails.tenant_entity,
+        start_date: decision.newLeaseDetails.start_date,
+        end_date: decision.newLeaseDetails.end_date,
+        base_rent_monthly: decision.newLeaseDetails.base_rent_monthly,
+        responsibility_matrix: finalFields.responsibility_matrix,
+        notice_period_days: finalFields.notice_period_days,
+      })
+      .select("id")
+      .single();
+    if (insertError || !newLease) {
+      throw new FatalError(
+        `could not create lease for locale ${localeId}: ${insertError?.message ?? "no row returned"}`,
+      );
+    }
+    currentLeaseId = newLease.id as string;
+
+    await supabase
+      .from("locales")
+      .update({ tenant_entity: decision.newLeaseDetails.tenant_entity, status: "OCCUPIED" })
+      .eq("id", localeId);
+  } else {
+    await supabase
+      .from("leases")
+      .update({
+        responsibility_matrix: finalFields.responsibility_matrix,
+        notice_period_days: finalFields.notice_period_days,
+      })
+      .eq("id", currentLeaseId);
+  }
 
   await supabase
     .from("documents")
     .update({
       extracted_fields: finalFields,
+      status: "attached",
+      error_message: null,
       extraction_verified_at: new Date().toISOString(),
       // Tier 3 audit trail (root CLAUDE.md §3), same rule as promoteMatch.
       extraction_verified_by_id: decision.verifiedById ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", documentId);
+
+  return "promoted";
 }
 
 /**
@@ -410,6 +452,7 @@ export async function leaseDigitizationWorkflow(
   const extractionHook = createHook<{
     confirmed: boolean;
     correctedFields?: LeaseExtractedFields;
+    newLeaseDetails?: NewLeaseDetails;
     verifiedById?: string;
   }>({
     token: `lease-doc-extraction:${documentId}`,
@@ -420,7 +463,12 @@ export async function leaseDigitizationWorkflow(
 
   for await (const extractionDecision of extractionHook) {
     if (extractionDecision.confirmed) {
-      await promoteExtraction(documentId, localeId, extractionDecision);
+      const result = await promoteExtraction(documentId, localeId, extractionDecision);
+      // "needs_new_lease" isn't a rejection — the extraction itself was
+      // accepted, promotion just has nothing to write onto yet. Keep the
+      // same hook open for the follow-up (tenant name / term / rent) instead
+      // of falling through to dispose+return.
+      if (result === "needs_new_lease") continue;
       extractionHook.dispose();
       return { documentId, status: "attached" };
     }

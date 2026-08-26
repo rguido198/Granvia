@@ -339,11 +339,17 @@ export function LandlordDashboard({
   // exactly the case a landlord needs to correct a bad match toward.
   const leaseDocumentUnits = useMemo(
     () =>
-      localeOptions.map((l) => ({
-        id: l.id,
-        unitCode: l.unitNumber,
-        tenantEntity: l.tenantEntity ?? "Vacante",
-      })),
+      localeOptions
+        .map((l) => ({
+          id: l.id,
+          unitCode: l.unitNumber,
+          tenantEntity: l.tenantEntity ?? "Vacante",
+        }))
+        // Sorted by tenant, not unit code: the picker renders "tenant — unit"
+        // specifically so a landlord can type a tenant's name and jump to it
+        // via the browser's native <select> search — that only works if the
+        // list is actually ordered by the text it's searching on.
+        .sort((a, b) => a.tenantEntity.localeCompare(b.tenantEntity, "es")),
     [localeOptions],
   );
 

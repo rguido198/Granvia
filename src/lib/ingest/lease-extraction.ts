@@ -8,6 +8,12 @@ import { checkLegibility } from "./legibility-check";
 
 const EXTRACTION_SYSTEM_PROMPT = `Extraes datos estructurados de un contrato de arrendamiento comercial mexicano.
 
+tenant_entity: el nombre legal completo del ARRENDATARIO tal como aparece en el contrato (p. ej. "MINT Boutique, S.A. de C.V."), no un apodo ni el giro comercial.
+
+start_date y end_date: fecha de inicio y de vencimiento del plazo forzoso, en formato ISO "YYYY-MM-DD".
+
+base_rent_monthly: renta base mensual como número plano, sin símbolo de moneda ni separadores de miles (p. ej. 48250.50). Si el contrato no declara una renta fija en pesos (p. ej. renta variable pura, o el dato simplemente no aparece), usa null en vez de adivinar.
+
 Para la matriz de responsabilidad de mantenimiento, clasifica cada uno de estos cinco sistemas como "landlord" (Arrendador), "tenant" (Arrendatario), o "shared" según lo que diga el contrato — si el contrato no lo especifica para un sistema, usa "shared" y anótalo en special_clauses en vez de adivinar:
 - hvac (climatización)
 - roof (techo / impermeabilización)
