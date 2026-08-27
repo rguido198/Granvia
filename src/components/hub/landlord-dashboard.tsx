@@ -15,7 +15,7 @@ import type { Portfolio, LocaleStatus, LeaseDocumentRow } from "@/lib/data/portf
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
-import { LegalDocumentsPanel, UploadContractButton } from "@/components/hub/legal-documents-panel";
+import { DocumentViewerButton, LegalDocumentsPanel, UploadContractButton } from "@/components/hub/legal-documents-panel";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
@@ -1798,14 +1798,19 @@ export function LandlordDashboard({
                             </tr>
 
                             {/* EXPANDABLE CLAUSE DETAIL ROW — only fields the real leases table has:
-                                exclusive_use_clause and permitted_use. No document storage, no per-contract
-                                hash, no INPC/penalty clause columns exist in the schema, so none are shown. */}
+                                exclusive_use_clause and permitted_use. No per-contract hash, no
+                                INPC/penalty clause columns exist in the schema, so none are shown.
+                                sourceDocumentId (when the lease came through digitization) links back
+                                to the actual scan via DocumentViewerButton. */}
                             {inspectedContractId === c.id && (
                               <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
                                 <td colSpan={4} className="p-5 space-y-4 text-sm">
-                                  <h4 className="font-bold text-sm text-ink border-b border-hairline pb-3">
-                                    {c.tenantEntity} · {c.unitCode}
-                                  </h4>
+                                  <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
+                                    <h4 className="font-bold text-sm text-ink">
+                                      {c.tenantEntity} · {c.unitCode}
+                                    </h4>
+                                    {c.sourceDocumentId && <DocumentViewerButton documentId={c.sourceDocumentId} />}
+                                  </div>
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                                     <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">

@@ -14,6 +14,16 @@ export const LeaseExtractedFieldsSchema = z
     start_date: z.string(), // ISO "YYYY-MM-DD"
     end_date: z.string(), // ISO "YYYY-MM-DD"
     base_rent_monthly: z.number().positive().nullable(),
+    // These map straight onto `leases.exclusive_use_clause` / `.permitted_use`
+    // — the fields lease-screener/Mariana actually screens new applicants
+    // against (SKILL.md §2B). Previously absent from this schema entirely:
+    // the exclusivity grant and the tenant's permitted use ended up folded
+    // into special_clauses as free text, which is fine for a human reading
+    // the review form but never reached the structured columns anything
+    // downstream (or the SSOT contracts table) reads from — every digitized
+    // lease silently carried zero exclusivity protection on record.
+    exclusive_use_clause: z.string().nullable(),
+    permitted_use: z.string().nullable(),
     responsibility_matrix: z
       .object({
         hvac: ResponsibilitySchema,

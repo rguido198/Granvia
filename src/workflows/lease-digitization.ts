@@ -317,6 +317,9 @@ async function promoteExtraction(
         base_rent_monthly: decision.newLeaseDetails.base_rent_monthly,
         responsibility_matrix: finalFields.responsibility_matrix,
         notice_period_days: finalFields.notice_period_days,
+        exclusive_use_clause: finalFields.exclusive_use_clause,
+        permitted_use: finalFields.permitted_use,
+        source_document_id: documentId,
       })
       .select("id")
       .single();
@@ -337,6 +340,9 @@ async function promoteExtraction(
       .update({
         responsibility_matrix: finalFields.responsibility_matrix,
         notice_period_days: finalFields.notice_period_days,
+        exclusive_use_clause: finalFields.exclusive_use_clause,
+        permitted_use: finalFields.permitted_use,
+        source_document_id: documentId,
       })
       .eq("id", currentLeaseId);
   }

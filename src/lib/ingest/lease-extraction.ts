@@ -14,6 +14,10 @@ start_date y end_date: fecha de inicio y de vencimiento del plazo forzoso, en fo
 
 base_rent_monthly: renta base mensual como número plano, sin símbolo de moneda ni separadores de miles (p. ej. 48250.50). Si el contrato no declara una renta fija en pesos (p. ej. renta variable pura, o el dato simplemente no aparece), usa null en vez de adivinar.
 
+exclusive_use_clause: transcribe textualmente la cláusula de exclusividad de giro que el ARRENDADOR otorga al ARRENDATARIO (normalmente bajo un encabezado como "EXCLUSIVIDAD DE GIRO COMERCIAL" o similar) — el alcance exacto de lo que el arrendador se obliga a no arrendar a competidores. Usa null si el contrato no otorga ninguna exclusividad.
+
+permitted_use: el giro o actividad comercial autorizada para el Local, normalmente descrito en las Declaraciones del ARRENDATARIO (su objeto social) o en la cláusula de destino del Local — qué puede vender u operar el inquilino ahí. Usa null si el contrato no lo especifica.
+
 Para la matriz de responsabilidad de mantenimiento, clasifica cada uno de estos cinco sistemas como "landlord" (Arrendador), "tenant" (Arrendatario), o "shared" según lo que diga el contrato — si el contrato no lo especifica para un sistema, usa "shared" y anótalo en special_clauses en vez de adivinar:
 - hvac (climatización)
 - roof (techo / impermeabilización)

@@ -39,6 +39,12 @@ export type LeaseDetail = {
   startDate: string;
   endDate: string;
   renewalSoon: boolean;
+  /** documents.id of the digitized contract this lease's terms came from —
+   *  null for a lease never touched by the lease-digitization pipeline (a
+   *  hand-entered row, or one predating source_document_id). Lets the SSOT
+   *  table offer "Ver documento" from a lease's own expanded row instead of
+   *  only from the Legal tab's digitization queue. */
+  sourceDocumentId: string | null;
 };
 
 /** A locale that once had a tenant and no longer does — vacateTenantAction
@@ -117,7 +123,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: leaseRows, error: leasesError } = await supabase
     .from("leases")
     .select(
-      "id, locale_id, tenant_entity, permitted_use, exclusive_use_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date",
+      "id, locale_id, tenant_entity, permitted_use, exclusive_use_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id",
     );
   if (leasesError) throw new Error(leasesError.message);
 
@@ -174,6 +180,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         startDate: l.start_date,
         endDate: l.end_date,
         renewalSoon: isRenewalSoon(l.end_date),
+        sourceDocumentId: l.source_document_id,
       };
     })
     .sort((a, b) => a.unitCode.localeCompare(b.unitCode));

@@ -78,19 +78,28 @@ function parseExtractedFields(value: Record<string, unknown> | null): LeaseExtra
   return parsed.success ? parsed.data : null;
 }
 
-export function LegalDocumentsPanel({
-  documents,
-  allUnits,
-  onResolved,
+/**
+ * Signed-URL viewer for a digitized contract, usable anywhere a documentId
+ * is known — the digitization queue below, and the SSOT contracts table's
+ * expanded row (landlord-dashboard.tsx), which has no other way to resurface
+ * the actual scan a lease's terms came from.
+ *
+ * Portaled via ConsoleModal: this was previously an inline `fixed inset-0`
+ * div, which inherited the same containing-block bug RejectDocumentButton's
+ * dialog had (see ConsoleModal's own doc comment) — it just hadn't been
+ * clicked from far enough down the page to surface it yet.
+ */
+export function DocumentViewerButton({
+  documentId,
+  label = "Ver documento",
 }: {
-  documents: DocumentRow[];
-  allUnits: UnitOption[];
-  onResolved: () => void;
+  documentId: string;
+  label?: string;
 }) {
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [viewerError, setViewerError] = useState<string | null>(null);
 
-  async function openViewer(documentId: string) {
+  async function openViewer() {
     setViewerError(null);
     try {
       const res = await fetch(`/api/documents/${documentId}/signed-url`);
@@ -102,6 +111,186 @@ export function LegalDocumentsPanel({
     }
   }
 
+  return (
+    <>
+      <button
+        type="button"
+        onClick={openViewer}
+        className="text-xs font-semibold text-ink-700 underline cursor-pointer"
+      >
+        {label}
+      </button>
+      {viewerError && <p className="text-xs font-bold text-red-700 mt-1">{viewerError}</p>}
+      {viewerUrl && (
+        <ConsoleModal>
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setViewerUrl(null)}
+          >
+            <iframe
+              title="Contrato"
+              src={viewerUrl}
+              className="w-3/4 h-3/4 bg-white rounded-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </ConsoleModal>
+      )}
+    </>
+  );
+}
+
+/** A document still needing a human decision — the only kind shown by
+ *  default. Everything else (verified, rejected, failed) is done, one way
+ *  or another, and collapses into history instead of accumulating forever
+ *  at the top of the queue. */
+function isActionable(doc: DocumentRow): boolean {
+  return (
+    doc.status === "ready_for_triage" ||
+    doc.status === "needs_new_lease" ||
+    (doc.status === "attached" && !doc.extractionVerifiedAt)
+  );
+}
+
+function DocumentCard({
+  doc,
+  allUnits,
+  onResolved,
+}: {
+  doc: DocumentRow;
+  allUnits: UnitOption[];
+  onResolved: () => void;
+}) {
+  const fields = parseExtractedFields(doc.extractedFields);
+  return (
+    <div className="border border-hairline rounded-xl p-3.5 bg-white space-y-2.5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-bold text-xs text-ink">{doc.originalFilename}</p>
+          <p className="text-[11px] text-ink-500 font-medium mt-0.5">
+            {/* STATUS_LABELS['attached'] is "Pendiente: validar extracción"
+             *  regardless of whether it's actually been validated yet —
+             *  accurate for the review-pending state, but confusingly
+             *  identical to what a landlord sees right after confirming.
+             *  The badge above already keys off extractionVerifiedAt;
+             *  this line has to agree with it instead of always reading
+             *  the raw status. */}
+            {doc.status === "attached" && doc.extractionVerifiedAt
+              ? "Contrato actualizado ✓"
+              : (STATUS_LABELS[doc.status] ?? doc.status)}
+          </p>
+        </div>
+        {!doc.extractionVerifiedAt && (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
+            EXTRACCIÓN NO VERIFICADA
+          </span>
+        )}
+      </div>
+
+      {/* Written by promoteExtraction when the confirmed locale has no
+       *  `leases` row to promote onto (and by the failure paths). The
+       *  whole point of not throwing there is that a human reads this,
+       *  so it has to actually render. */}
+      {doc.errorMessage && (
+        <p className="text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+          {doc.errorMessage}
+        </p>
+      )}
+
+      <DocumentViewerButton documentId={doc.id} />
+
+      {doc.status === "ready_for_triage" && (
+        <div className="border-t border-hairline pt-2.5">
+          {/* `ready_for_triage` is written twice on the way here: once by the
+           *  ingest route's after() callback the moment raw text lands, and
+           *  again by the workflow's recordSuggestion step. Only the second
+           *  one means Gate 1's hook exists — resuming it before then 404s.
+           *
+           *  `extracted_fields` is the discriminator: it stays at its `{}`
+           *  column default (which fails the schema parse) until
+           *  recordSuggestion writes the real extraction, and both extraction
+           *  paths already validate against this exact schema before
+           *  returning, so a successful parse here means the workflow reached
+           *  the point of having a suggestion recorded.
+           *
+           *  Deliberately NOT keyed off `suggestedLocaleUnit` — a document
+           *  whose tenant name matched nothing has a null suggestion and is
+           *  still a legitimate thing to review, just with no unit to show. */}
+          {fields ? (
+            <MatchReviewForm
+              documentId={doc.id}
+              suggestedUnit={doc.suggestedLocaleUnit}
+              suggestedTenant={doc.suggestedLocaleTenant}
+              documentTenantName={doc.documentTenantName}
+              confidence={doc.matchConfidence}
+              allUnits={allUnits}
+              onResolved={onResolved}
+            />
+          ) : (
+            <p className="text-xs text-ink-500 font-medium">
+              Procesando el contrato — la sugerencia de local todavía no está lista. Vuelve a
+              cargar la vista en unos momentos.
+            </p>
+          )}
+        </div>
+      )}
+
+      {doc.status === "attached" && !doc.extractionVerifiedAt && (
+        <div className="border-t border-hairline pt-2.5">
+          {fields ? (
+            <ExtractionReviewForm
+              documentId={doc.id}
+              extractedFields={fields}
+              targetUnit={doc.localeUnit}
+              targetTenant={doc.localeTenant}
+              onResolved={onResolved}
+            />
+          ) : (
+            <p className="text-xs text-ink-500 font-medium">
+              La extracción está incompleta o no cumple el esquema esperado — revisa el documento antes de validar.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Gate 2 confirmed the extraction, but promoteExtraction found no
+       *  active `leases` row for the matched locale — a vacant unit
+       *  being newly occupied. That's a separate decision from "are
+       *  these clauses right" (already answered), so it gets its own
+       *  form instead of folding tenant/term/rent inputs into
+       *  ExtractionReviewForm for every document. */}
+      {doc.status === "needs_new_lease" && (
+        <div className="border-t border-hairline pt-2.5">
+          {fields ? (
+            <NewLeaseForm
+              documentId={doc.id}
+              extractedFields={fields}
+              targetUnit={doc.localeUnit}
+              targetTenant={doc.localeTenant}
+              onResolved={onResolved}
+            />
+          ) : (
+            <p className="text-xs text-ink-500 font-medium">
+              Los datos del contrato no están disponibles — revisa el documento antes de continuar.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function LegalDocumentsPanel({
+  documents,
+  allUnits,
+  onResolved,
+}: {
+  documents: DocumentRow[];
+  allUnits: UnitOption[];
+  onResolved: () => void;
+}) {
+  const [showHistory, setShowHistory] = useState(false);
+
   if (documents.length === 0) {
     return (
       <p className="text-xs text-ink-500 font-medium">
@@ -110,151 +299,39 @@ export function LegalDocumentsPanel({
     );
   }
 
+  const active = documents.filter(isActionable);
+  const resolved = documents.filter((d) => !isActionable(d));
+
   return (
     <div className="space-y-3">
-      {viewerError && (
-        <p className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {viewerError}
-        </p>
+      {active.length === 0 && (
+        <p className="text-xs text-ink-500 font-medium">Nada pendiente de revisión.</p>
       )}
+      {active.map((doc) => (
+        <DocumentCard key={doc.id} doc={doc} allUnits={allUnits} onResolved={onResolved} />
+      ))}
 
-      {documents.map((doc) => {
-        const fields = parseExtractedFields(doc.extractedFields);
-        return (
-          <div key={doc.id} className="border border-hairline rounded-xl p-3.5 bg-white space-y-2.5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-bold text-xs text-ink">{doc.originalFilename}</p>
-                <p className="text-[11px] text-ink-500 font-medium mt-0.5">
-                  {/* STATUS_LABELS['attached'] is "Pendiente: validar extracción"
-                   *  regardless of whether it's actually been validated yet —
-                   *  accurate for the review-pending state, but confusingly
-                   *  identical to what a landlord sees right after confirming.
-                   *  The badge above already keys off extractionVerifiedAt;
-                   *  this line has to agree with it instead of always reading
-                   *  the raw status. */}
-                  {doc.status === "attached" && doc.extractionVerifiedAt
-                    ? "Contrato actualizado ✓"
-                    : (STATUS_LABELS[doc.status] ?? doc.status)}
-                </p>
-              </div>
-              {!doc.extractionVerifiedAt && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
-                  EXTRACCIÓN NO VERIFICADA
-                </span>
-              )}
+      {/* Verified/rejected/failed documents were previously listed
+       *  unconditionally forever — fetchActiveLeaseDocuments has no status
+       *  filter, so the queue only ever grew. Collapsed by default instead:
+       *  nothing here needs a landlord's attention, it's just a record of
+       *  what happened. */}
+      {resolved.length > 0 && (
+        <div className="border-t border-hairline pt-3">
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            className="text-xs font-semibold text-ink-700 underline cursor-pointer"
+          >
+            {showHistory ? "Ocultar historial" : `Ver historial (${resolved.length})`}
+          </button>
+          {showHistory && (
+            <div className="space-y-3 mt-3">
+              {resolved.map((doc) => (
+                <DocumentCard key={doc.id} doc={doc} allUnits={allUnits} onResolved={onResolved} />
+              ))}
             </div>
-
-            {/* Written by promoteExtraction when the confirmed locale has no
-             *  `leases` row to promote onto (and by the failure paths). The
-             *  whole point of not throwing there is that a human reads this,
-             *  so it has to actually render. */}
-            {doc.errorMessage && (
-              <p className="text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
-                {doc.errorMessage}
-              </p>
-            )}
-
-            <button
-              type="button"
-              onClick={() => openViewer(doc.id)}
-              className="text-xs font-semibold text-ink-700 underline cursor-pointer"
-            >
-              Ver documento
-            </button>
-
-            {doc.status === "ready_for_triage" && (
-              <div className="border-t border-hairline pt-2.5">
-                {/* `ready_for_triage` is written twice on the way here: once by the
-                 *  ingest route's after() callback the moment raw text lands, and
-                 *  again by the workflow's recordSuggestion step. Only the second
-                 *  one means Gate 1's hook exists — resuming it before then 404s.
-                 *
-                 *  `extracted_fields` is the discriminator: it stays at its `{}`
-                 *  column default (which fails the schema parse) until
-                 *  recordSuggestion writes the real extraction, and both extraction
-                 *  paths already validate against this exact schema before
-                 *  returning, so a successful parse here means the workflow reached
-                 *  the point of having a suggestion recorded.
-                 *
-                 *  Deliberately NOT keyed off `suggestedLocaleUnit` — a document
-                 *  whose tenant name matched nothing has a null suggestion and is
-                 *  still a legitimate thing to review, just with no unit to show. */}
-                {fields ? (
-                  <MatchReviewForm
-                    documentId={doc.id}
-                    suggestedUnit={doc.suggestedLocaleUnit}
-                    suggestedTenant={doc.suggestedLocaleTenant}
-                    documentTenantName={doc.documentTenantName}
-                    confidence={doc.matchConfidence}
-                    allUnits={allUnits}
-                    onResolved={onResolved}
-                  />
-                ) : (
-                  <p className="text-xs text-ink-500 font-medium">
-                    Procesando el contrato — la sugerencia de local todavía no está lista. Vuelve a
-                    cargar la vista en unos momentos.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {doc.status === "attached" && !doc.extractionVerifiedAt && (
-              <div className="border-t border-hairline pt-2.5">
-                {fields ? (
-                  <ExtractionReviewForm
-                    documentId={doc.id}
-                    extractedFields={fields}
-                    targetUnit={doc.localeUnit}
-                    targetTenant={doc.localeTenant}
-                    onResolved={onResolved}
-                  />
-                ) : (
-                  <p className="text-xs text-ink-500 font-medium">
-                    La extracción está incompleta o no cumple el esquema esperado — revisa el documento antes de validar.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Gate 2 confirmed the extraction, but promoteExtraction found no
-             *  active `leases` row for the matched locale — a vacant unit
-             *  being newly occupied. That's a separate decision from "are
-             *  these clauses right" (already answered), so it gets its own
-             *  form instead of folding tenant/term/rent inputs into
-             *  ExtractionReviewForm for every document. */}
-            {doc.status === "needs_new_lease" && (
-              <div className="border-t border-hairline pt-2.5">
-                {fields ? (
-                  <NewLeaseForm
-                    documentId={doc.id}
-                    extractedFields={fields}
-                    targetUnit={doc.localeUnit}
-                    targetTenant={doc.localeTenant}
-                    onResolved={onResolved}
-                  />
-                ) : (
-                  <p className="text-xs text-ink-500 font-medium">
-                    Los datos del contrato no están disponibles — revisa el documento antes de continuar.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {viewerUrl && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={() => setViewerUrl(null)}
-        >
-          <iframe
-            title="Contrato"
-            src={viewerUrl}
-            className="w-3/4 h-3/4 bg-white rounded-xl"
-            onClick={(e) => e.stopPropagation()}
-          />
+          )}
         </div>
       )}
     </div>
