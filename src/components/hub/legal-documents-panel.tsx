@@ -504,6 +504,53 @@ export function MatchReviewForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // "This unit isn't in the rent roll at all yet" — distinct from
+  // correctedLocaleId picking an existing wrong suggestion. Before this,
+  // Gate 1's dropdown only ever listed the units that already exist, so a
+  // genuinely new local had no correct answer to pick; the landlord was
+  // stuck with no path forward and no message explaining why. Creating the
+  // locale here (via /api/locales/create) and feeding its id into the same
+  // correctedLocaleId flow below reuses promoteMatch/promoteExtraction
+  // exactly as-is — the new locale has no leases row yet, so Gate 2 lands on
+  // its existing needs_new_lease path once this confirms.
+  const [creatingNewUnit, setCreatingNewUnit] = useState(false);
+  const [newUnitNumber, setNewUnitNumber] = useState("");
+  const [newUnitAreaSqm, setNewUnitAreaSqm] = useState("");
+  const [createdUnit, setCreatedUnit] = useState<{ id: string; unitNumber: string } | null>(null);
+  const [creatingUnitPending, setCreatingUnitPending] = useState(false);
+
+  async function createNewUnit() {
+    setError(null);
+    const trimmed = newUnitNumber.trim();
+    const sqm = Number(newUnitAreaSqm);
+    if (!trimmed) {
+      setError("El número de local es requerido.");
+      return;
+    }
+    if (!newUnitAreaSqm || !Number.isFinite(sqm) || sqm <= 0) {
+      setError("La superficie (m²) debe ser un número positivo.");
+      return;
+    }
+    setCreatingUnitPending(true);
+    try {
+      const res = await fetch("/api/locales/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unitNumber: trimmed, areaSqm: sqm }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(json.error ?? "No se pudo crear el local.");
+        return;
+      }
+      setCreatedUnit({ id: json.id, unitNumber: json.unitNumber });
+      setSelectedLocaleId(json.id);
+      setCreatingNewUnit(false);
+    } finally {
+      setCreatingUnitPending(false);
+    }
+  }
+
   async function confirm(confirmed: boolean) {
     setSubmitting(true);
     setError(null);
@@ -545,7 +592,7 @@ export function MatchReviewForm({
           <dd className="text-ink font-bold">
             {suggestedUnit ? (
               <>
-                {suggestedTenant ?? "(local sin inquilino registrado)"} — Local {suggestedUnit}
+                {suggestedTenant ?? "(local sin inquilino registrado)"} — {suggestedUnit}
               </>
             ) : (
               "(ninguna)"
@@ -559,18 +606,71 @@ export function MatchReviewForm({
           </dd>
         </div>
       </dl>
-      <select
-        value={selectedLocaleId}
-        onChange={(e) => setSelectedLocaleId(e.target.value)}
-        className="border border-hairline rounded-lg px-2 py-1 cursor-pointer"
-      >
-        <option value="">-- corregir local --</option>
-        {allUnits.map((u) => (
-          <option key={u.id} value={u.id}>
-            {u.tenantEntity} — {u.unitCode}
-          </option>
-        ))}
-      </select>
+      {createdUnit ? (
+        <p className="text-emerald-700 font-bold">
+          Local nuevo creado: {createdUnit.unitNumber} — listo para confirmar la coincidencia.
+        </p>
+      ) : creatingNewUnit ? (
+        <div className="border border-hairline rounded-lg p-2.5 space-y-1.5 bg-slate-50">
+          <p className="text-ink-700 font-bold">Crear un local nuevo</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Número de local"
+              value={newUnitNumber}
+              onChange={(e) => setNewUnitNumber(e.target.value)}
+              className="border border-hairline rounded-lg px-2 py-1 flex-1"
+            />
+            <input
+              type="number"
+              min="1"
+              placeholder="m²"
+              value={newUnitAreaSqm}
+              onChange={(e) => setNewUnitAreaSqm(e.target.value)}
+              className="border border-hairline rounded-lg px-2 py-1 w-20"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={creatingUnitPending}
+              onClick={createNewUnit}
+              className="bg-ink text-white px-2.5 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
+            >
+              {creatingUnitPending ? "Creando..." : "Crear local"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreatingNewUnit(false)}
+              className="text-ink-600 font-bold px-2 py-1 cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedLocaleId}
+            onChange={(e) => setSelectedLocaleId(e.target.value)}
+            className="border border-hairline rounded-lg px-2 py-1 cursor-pointer"
+          >
+            <option value="">-- corregir local --</option>
+            {allUnits.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.tenantEntity} — {u.unitCode}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setCreatingNewUnit(true)}
+            className="text-ink-700 underline font-bold cursor-pointer whitespace-nowrap"
+          >
+            + Es un local nuevo
+          </button>
+        </div>
+      )}
       <div className="flex gap-2">
         {/* With neither a suggestion nor a correction there is no locale to
          *  promote: the route would still pass its status guard and consume
@@ -713,7 +813,7 @@ export function ExtractionReviewForm({
         Se escribirá sobre el contrato vigente de:{" "}
         <strong className="text-ink">
           {targetUnit
-            ? `${targetTenant ?? "(local sin inquilino registrado)"} — Local ${targetUnit}`
+            ? `${targetTenant ?? "(local sin inquilino registrado)"} — ${targetUnit}`
             : "(local no resuelto)"}
         </strong>
       </p>
@@ -867,7 +967,7 @@ export function NewLeaseForm({
   return (
     <div className="space-y-2 text-xs">
       <p className="text-ink-700 font-medium">
-        <strong className="text-ink">Local {targetUnit ?? "(no resuelto)"}</strong> no tiene contrato activo
+        <strong className="text-ink">{targetUnit ?? "(local no resuelto)"}</strong> no tiene contrato activo
         {targetTenant && targetTenant !== "Vacante" ? ` (registrado como ${targetTenant})` : ""} — completa los
         datos del nuevo inquilino para crear su contrato. La matriz de responsabilidad y los días de aviso ya
         confirmados se aplicarán a este contrato.

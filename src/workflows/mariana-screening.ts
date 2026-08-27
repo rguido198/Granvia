@@ -214,7 +214,7 @@ async function draftScreening(context: ApplicationContext): Promise<MarianaDraft
       ? context.activeLeases
           .map(
             (l) =>
-              `- Local ${l.unitNumber} (${l.tenantEntity ?? "?"}): giro="${l.permittedUse ?? "(sin especificar)"}" · exclusiva="${l.exclusiveUseClause ?? "(sin cláusula de exclusividad)"}" · vence ${l.endDate}`,
+              `- ${l.unitNumber} (${l.tenantEntity ?? "?"}): giro="${l.permittedUse ?? "(sin especificar)"}" · exclusiva="${l.exclusiveUseClause ?? "(sin cláusula de exclusividad)"}" · vence ${l.endDate}`,
           )
           .join("\n")
       : "(ningún contrato activo cargado — no hay base para auditar solapamiento; asigna BAJO y dilo en reasoning)",

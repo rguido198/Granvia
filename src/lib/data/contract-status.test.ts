@@ -18,6 +18,8 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     isExpired: false,
     sourceDocumentId: null,
     sourceApplicationNumber: null,
+    leaseRowId: "loc-1",
+    renewals: [],
     ...overrides,
   };
 }

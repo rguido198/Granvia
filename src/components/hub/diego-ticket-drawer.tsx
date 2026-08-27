@@ -141,7 +141,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
               </span>
             </div>
             <p className="text-[11px] text-slate-500">
-              {ticket.propertyName} · Local {ticket.unitNumber}
+              {ticket.propertyName} · {ticket.unitNumber}
             </p>
           </div>
           <button
@@ -192,7 +192,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
             <dl className="grid grid-cols-2 gap-3">
               <Field label="Inquilino">{ticket.tenantEntity ?? "—"}</Field>
               <Field label="Ubicación">
-                {ticket.propertyName} · Local {ticket.unitNumber}
+                {ticket.propertyName} · {ticket.unitNumber}
               </Field>
               <Field label="Recibido">{formatTimestamp(ticket.createdAt)}</Field>
               <Field label="Prioridad">{ticket.priority ?? "Sin asignar"}</Field>

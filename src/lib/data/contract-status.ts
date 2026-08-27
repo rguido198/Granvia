@@ -37,6 +37,31 @@ export type LeaseDetail = {
    *  a lease back to the risk assessment that approved it, without either
    *  table ever restating the other's facts. */
   sourceApplicationNumber: string | null;
+  /** The real `leases.id` — distinct from `id` above, which (existing
+   *  convention in this file) is actually the *locale's* id. The
+   *  lease-renewal trigger needs the real row id; reusing `id` here would
+   *  repeat the exact mismatch bug already found once in landlord-dashboard
+   *  .tsx (PortfolioRow.leaseId vs LeaseDetail.id). */
+  leaseRowId: string;
+  /** Renewal drafts (lease_renewals) for this lease, most recent first —
+   *  empty until "Redactar Renovación" is used. */
+  renewals: LeaseRenewalSummary[];
+};
+
+/** One row of Mariana's renewal-drafting pipeline (lease-renewal.ts) — a
+ *  Convenio Modificatorio draft awaiting landlord approval, or already
+ *  resolved. Mirrors LeaseDocumentRow's role for the digitization pipeline:
+ *  the thing the UI renders and acts on, not the lease it would produce. */
+export type LeaseRenewalSummary = {
+  id: string;
+  renewalNumber: string;
+  status: "needs_landlord_review" | "approved" | "rejected";
+  newStartDate: string;
+  newEndDate: string;
+  newBaseRentMonthly: number;
+  draftMarkdown: string;
+  skepticFlagged: boolean;
+  skepticConcerns: string[];
 };
 
 function monthsUntil(dateStr: string): number {

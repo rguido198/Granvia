@@ -20,6 +20,7 @@ import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
 import { RentRollAdminTools, TerminateTenantButton } from "@/components/hub/rent-roll-tools";
+import { LeaseRenewalPanel } from "@/components/hub/lease-renewal-panel";
 import { TENANTS } from "@/content/tenants";
 import { TenantLogo } from "@/components/tenant-logo";
 
@@ -1889,6 +1890,14 @@ export function LandlordDashboard({
                                       </p>
                                     </div>
                                   </div>
+
+                                  <LeaseRenewalPanel
+                                    leaseId={c.leaseRowId}
+                                    currentEndDate={c.endDate}
+                                    isExpired={c.isExpired}
+                                    renewalSoon={c.renewalSoon}
+                                    renewals={c.renewals}
+                                  />
                                 </td>
                               </tr>
                             )}

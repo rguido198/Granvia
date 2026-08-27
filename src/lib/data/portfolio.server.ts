@@ -1,10 +1,10 @@
 import "server-only";
 import { extractTenantNameFromDocumentText } from "@/lib/ingest/fuzzy-match-tenant";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { isExpired, isRenewalSoon, type LeaseDetail } from "./contract-status";
+import { isExpired, isRenewalSoon, type LeaseDetail, type LeaseRenewalSummary } from "./contract-status";
 
 export { computeContractAggregates, contractStatusLabel } from "./contract-status";
-export type { ContractAggregates, LeaseDetail } from "./contract-status";
+export type { ContractAggregates, LeaseDetail, LeaseRenewalSummary } from "./contract-status";
 
 export type LocaleStatus = "OCCUPIED" | "VACANT" | "PENDING_LEASE";
 
@@ -130,6 +130,32 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       .map((a) => [a.promoted_lease_id as string, a.application_number as string]),
   );
 
+  // Renewal drafts (lease-renewal.ts), grouped by the lease they're for.
+  const { data: renewalRows, error: renewalsError } = await supabase
+    .from("lease_renewals")
+    .select(
+      "id, renewal_number, source_lease_id, status, new_start_date, new_end_date, new_base_rent_monthly, draft_markdown, skeptic_flagged, skeptic_concerns, created_at",
+    )
+    .order("created_at", { ascending: false });
+  if (renewalsError) throw new Error(renewalsError.message);
+
+  const renewalsByLeaseId = new Map<string, LeaseRenewalSummary[]>();
+  for (const r of renewalRows ?? []) {
+    const list = renewalsByLeaseId.get(r.source_lease_id as string) ?? [];
+    list.push({
+      id: r.id as string,
+      renewalNumber: r.renewal_number as string,
+      status: r.status as LeaseRenewalSummary["status"],
+      newStartDate: r.new_start_date as string,
+      newEndDate: r.new_end_date as string,
+      newBaseRentMonthly: Number(r.new_base_rent_monthly),
+      draftMarkdown: r.draft_markdown as string,
+      skepticFlagged: r.skeptic_flagged as boolean,
+      skepticConcerns: (r.skeptic_concerns as string[] | null) ?? [],
+    });
+    renewalsByLeaseId.set(r.source_lease_id as string, list);
+  }
+
   // Latest (by end_date) lease row per locale — the "current" one regardless
   // of whether that locale is currently OCCUPIED or VACANT.
   const latestLeaseByLocale = new Map<string, (typeof allLeases)[number]>();
@@ -184,6 +210,8 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         isExpired: isExpired(l.end_date),
         sourceDocumentId: l.source_document_id,
         sourceApplicationNumber: applicationNumberByLeaseId.get(l.id) ?? null,
+        leaseRowId: l.id,
+        renewals: renewalsByLeaseId.get(l.id) ?? [],
       };
     })
     .sort((a, b) => a.unitCode.localeCompare(b.unitCode));
