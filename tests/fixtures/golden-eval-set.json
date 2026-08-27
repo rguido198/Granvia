@@ -1,0 +1,26 @@
+[
+  {
+    "id": "eval_001_exclusivity",
+    "agent_focus": "Mariana (Leasing & Exclusivity)",
+    "query": "Does MINT Boutique have fashion exclusivity, and does it conflict with a new tenant selling women's athletic wear?",
+    "target_source_field": "clausula_exclusividad",
+    "golden_reasoning_anchor": "Cláusula Séptima explicitly grants exclusivity for 'venta de ropa de diseño importado para dama y alta costura femenina'.",
+    "golden_prose_answer": "Yes, MINT Boutique holds an active exclusivity clause under Cláusula Séptima of their contract for 'venta de ropa de diseño importado para dama y alta costura femenina' (imported designer clothing for women and female haute couture). A new tenant selling generic women's athletic wear does not automatically conflict unless that athletic wear is marketed or sold as designer/haute couture apparel."
+  },
+  {
+    "id": "eval_002_hvac_warranty",
+    "agent_focus": "Diego (Maintenance Dispatch)",
+    "query": "Who pays to repair a broken compressor on MINT Boutique's roof, and is it under warranty?",
+    "target_source_field": "matriz_responsabilidad",
+    "golden_reasoning_anchor": "Cláusula Quinta assigns HVAC maintenance/repairs to the Tenant (Inquilino). However, Cláusula Sexta notes Carrier unit serial HVAC-B10-2023 is under manufacturer warranty until December 31, 2027.",
+    "golden_prose_answer": "Under Cláusula Quinta, the tenant (MINT Boutique) is responsible for the maintenance and repair of the HVAC system serving Local B-10. However, under Cláusula Sexta, the specific Carrier unit (Serial: HVAC-B10-2023) is protected by an active manufacturer warranty until December 31, 2027. Diego must route any compressor failure to the OEM warranty provider at $0 cost rather than charging the tenant or dispatching an external contractor."
+  },
+  {
+    "id": "eval_003_notice_period",
+    "agent_focus": "Renata (Financial & Lease Terms)",
+    "query": "What is the notice period required for MINT Boutique to renegotiate or terminate their lease at expiration?",
+    "target_source_field": "dias_aviso_terminacion",
+    "golden_reasoning_anchor": "Cláusula Cuarta requires exactly 90 calendar days ('90 días naturales') prior notice for renegotiation or termination.",
+    "golden_prose_answer": "According to Cláusula Cuarta of the contract, either party wishing to renegotiate or terminate the lease upon expiration must provide written notice with a minimum anticipation period of exactly 90 calendar days ('90 días naturales') prior to the expiration date of January 15, 2026."
+  }
+]
