@@ -200,13 +200,35 @@ async function recordReExtraction(documentId: string, extraction: ExtractionResu
     .eq("id", documentId);
 }
 
+/** A genuine "discard this document" decision — distinct from a rescan
+ *  (still trying to get a usable extraction) and from `failed` (an error,
+ *  not a choice). Nothing is promoted to `leases`; the document just stops
+ *  here. Same lightweight treatment as markExtractionFailed: an
+ *  error_message for the landlord to read, no verified_at/by_id pair —
+ *  those are reserved for actions that actually write data (root
+ *  CLAUDE.md §3 ties that audit trail to Tier 3 actions, and declining to
+ *  commit isn't one). */
+async function markDocumentRejected(documentId: string): Promise<void> {
+  "use step";
+  const supabase = getSupabaseServiceClient();
+  await supabase
+    .from("documents")
+    .update({
+      status: "rejected",
+      error_message: "Documento rechazado — no se promovió ningún dato a la plaza.",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", documentId);
+}
+
 // ── Step 4: promote the confirmed extraction onto the current lease ─────────
 
 async function promoteExtraction(
   documentId: string,
   localeId: string,
+  // Only ever invoked for action: "confirm" (see the workflow loop below) —
+  // no `confirmed` field here since there is nothing left to branch on.
   decision: {
-    confirmed: boolean;
     correctedFields?: LeaseExtractedFields;
     newLeaseDetails?: NewLeaseDetails;
     verifiedById?: string;
@@ -402,7 +424,7 @@ function getStepFailureMessage(error: unknown): string {
 
 export async function leaseDigitizationWorkflow(
   documentId: string,
-): Promise<{ documentId: string; status: "attached" | "failed" }> {
+): Promise<{ documentId: string; status: "attached" | "failed" | "rejected" }> {
   "use workflow";
 
   const context = await loadDocumentContext(documentId);
@@ -441,16 +463,17 @@ export async function leaseDigitizationWorkflow(
   // this is the documented shape for a token that receives more than one
   // payload over its lifetime (@workflow/core's createHook: "Hooks
   // implement... AsyncIterable", with dispose() releasing the token once
-  // done). A rejection re-runs extraction (same document, same locale — only
-  // the field-level read was disputed, not the match) and the *same* hook
-  // waits for another look, rather than stranding the document at `attached`
-  // with no way forward short of a full re-upload. Capped at 3
-  // re-extractions: each retry is a real paid Opus call, and a landlord
-  // repeatedly rejecting the same document is a sign the source text itself
-  // is bad, not something more retries fix — that case should surface as a
-  // failure and point at re-upload, not loop forever.
+  // done). Three actions land here, not two: "confirm" promotes; "rescan"
+  // re-runs extraction on the same document (same locale — only the
+  // field-level read was disputed, not the match) and the *same* hook waits
+  // for another look; "reject" ends the run with nothing promoted. Landlords
+  // conflated the first version of "rescan" with a full "reject" — this is
+  // the split that fixes that. Rescan is capped at 3 attempts: each is a
+  // real paid Opus call, and repeatedly rescanning the same document is a
+  // sign the source text itself is bad, not something more retries fix —
+  // that case should surface as a failure and point at re-upload.
   const extractionHook = createHook<{
-    confirmed: boolean;
+    action: "confirm" | "rescan" | "reject";
     correctedFields?: LeaseExtractedFields;
     newLeaseDetails?: NewLeaseDetails;
     verifiedById?: string;
@@ -462,7 +485,7 @@ export async function leaseDigitizationWorkflow(
   let reextractions = 0;
 
   for await (const extractionDecision of extractionHook) {
-    if (extractionDecision.confirmed) {
+    if (extractionDecision.action === "confirm") {
       const result = await promoteExtraction(documentId, localeId, extractionDecision);
       // "needs_new_lease" isn't a rejection — the extraction itself was
       // accepted, promotion just has nothing to write onto yet. Keep the
@@ -473,10 +496,17 @@ export async function leaseDigitizationWorkflow(
       return { documentId, status: "attached" };
     }
 
+    if (extractionDecision.action === "reject") {
+      await markDocumentRejected(documentId);
+      extractionHook.dispose();
+      return { documentId, status: "rejected" };
+    }
+
+    // action === "rescan"
     if (reextractions >= MAX_REEXTRACTIONS) {
       await markExtractionFailed(
         documentId,
-        "Extracción rechazada varias veces — vuelve a subir el documento para reintentar desde cero.",
+        "Documento re-escaneado varias veces sin éxito — vuelve a subir el documento para reintentar desde cero.",
       );
       extractionHook.dispose();
       return { documentId, status: "failed" };

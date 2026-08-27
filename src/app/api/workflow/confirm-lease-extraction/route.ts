@@ -10,10 +10,14 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
  * src/workflows/lease-digitization.ts's `extractionHook`, token
  * `lease-doc-extraction:${documentId}`.
  *
- * `correctedFields`, when present, is validated against
- * LeaseExtractedFieldsSchema before the hook resumes — `promoteExtraction()`
- * writes it straight onto `leases.responsibility_matrix` /
- * `notice_period_days`, so a malformed payload is rejected here rather than
+ * `action` is one of three landlord decisions, all routed through this same
+ * endpoint: "confirm" promotes the (possibly edited) fields onto the lease;
+ * "rescan" discards the current read and re-extracts the same document;
+ * "reject" ends the document with nothing promoted.
+ *
+ * `correctedFields`/`newLeaseDetails`, when present, are validated against
+ * their schemas before the hook resumes — `promoteExtraction()` writes them
+ * straight onto `leases`, so a malformed payload is rejected here rather than
  * corrupting that row.
  */
 export async function POST(request: NextRequest) {
@@ -23,15 +27,21 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { documentId, confirmed, correctedFields, newLeaseDetails } = body as {
+  const { documentId, action, correctedFields, newLeaseDetails } = body as {
     documentId?: string;
-    confirmed?: boolean;
+    action?: string;
     correctedFields?: unknown;
     newLeaseDetails?: unknown;
   };
 
-  if (typeof documentId !== "string" || typeof confirmed !== "boolean") {
-    return NextResponse.json({ error: "documentId and confirmed are required" }, { status: 400 });
+  if (
+    typeof documentId !== "string" ||
+    (action !== "confirm" && action !== "rescan" && action !== "reject")
+  ) {
+    return NextResponse.json(
+      { error: "documentId and a valid action ('confirm' | 'rescan' | 'reject') are required" },
+      { status: 400 },
+    );
   }
 
   let parsedFields;
@@ -106,7 +116,7 @@ export async function POST(request: NextRequest) {
     // authenticated session, never the request body. promoteExtraction writes
     // it to documents.extraction_verified_by_id (root CLAUDE.md §3).
     const result = await resumeHook(`lease-doc-extraction:${documentId}`, {
-      confirmed,
+      action,
       correctedFields: parsedFields,
       newLeaseDetails: parsedNewLeaseDetails,
       verifiedById: profile.id,

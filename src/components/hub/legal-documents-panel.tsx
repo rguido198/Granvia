@@ -13,12 +13,15 @@ import {
  * suspends on (src/workflows/lease-digitization.ts).
  *
  * Which gate a document is sitting at is read off `documents.status`, not off
- * a separate UI flag — the same two values the gate routes themselves guard
- * on (src/app/api/workflow/confirm-lease-{match,extraction}/route.ts):
+ * a separate UI flag — the same values the gate routes themselves guard on
+ * (src/app/api/workflow/confirm-lease-{match,extraction}/route.ts):
  *   - `ready_for_triage` → Gate 1, entity reconciliation (which locale is this?)
  *   - `attached`         → Gate 2, extraction accuracy (are these clauses right?)
- * Anything else (uploaded / extracting / failed) is still in flight or dead,
- * so it renders as a status line with no form to act on.
+ *   - `needs_new_lease`  → Gate 2's follow-up when the matched locale has no
+ *                          active lease yet (a vacant unit being newly
+ *                          occupied) — tenant name / term / rent, not clauses.
+ * Anything else (uploaded / extracting / failed / rejected) is still in
+ * flight or dead, so it renders as a status line with no form to act on.
  */
 
 export type DocumentRow = {
@@ -38,6 +41,12 @@ export type DocumentRow = {
 
 export type UnitOption = { id: string; unitCode: string; tenantEntity: string };
 
+/** Gate 2's three landlord decisions — see lease-digitization.ts's
+ *  extractionHook. "rescan" re-reads this same document; "reject" discards
+ *  it with nothing promoted. Landlords conflated those two under one button
+ *  before this split. */
+type GateTwoAction = "confirm" | "rescan" | "reject";
+
 const RESPONSIBILITY_SYSTEMS = ["hvac", "roof", "plumbing", "electrical", "storefront_glass"] as const;
 
 const SYSTEM_LABELS: Record<(typeof RESPONSIBILITY_SYSTEMS)[number], string> = {
@@ -55,6 +64,7 @@ const STATUS_LABELS: Record<string, string> = {
   attached: "Pendiente: validar extracción",
   needs_new_lease: "Local vacante — falta registrar al nuevo inquilino",
   failed: "Falló la extracción",
+  rejected: "Rechazado — sin datos promovidos",
 };
 
 /** `extracted_fields` is a bare jsonb column, so the DB guarantees nothing
@@ -418,6 +428,72 @@ export function MatchReviewForm({
   );
 }
 
+/** Modal-confirm gate for the one irreversible Gate 2 action — mirrors
+ *  TerminateTenantButton's pattern (rent-roll-tools.tsx) rather than a bare
+ *  `window.confirm`, so it looks and behaves like the rest of this console's
+ *  destructive actions. Presentational only: the parent form owns the
+ *  submit/pending/error state and just gets told when the landlord actually
+ *  confirmed inside the dialog. */
+function RejectDocumentButton({
+  disabled,
+  pending,
+  onConfirmReject,
+}: {
+  disabled: boolean;
+  pending: boolean;
+  onConfirmReject: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+        title="Descarta este documento por completo — no se promueve ningún dato."
+        className="border border-red-200 bg-red-50 text-red-700 px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 hover:bg-red-100 hover:border-red-300 transition-colors"
+      >
+        {pending ? "Rechazando..." : "Rechazar documento"}
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-sm w-full space-y-3">
+            <p className="text-sm font-bold text-slate-900">¿Rechazar este documento?</p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              No se promoverá ningún dato a la plaza — ni la matriz de responsabilidad, ni un contrato nuevo. Esta
+              acción no reintenta la extracción; para eso usa &ldquo;Re-escanear contrato&rdquo; en vez de esto.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-slate-600 font-bold px-3 py-2 rounded-lg text-xs cursor-pointer hover:bg-slate-100"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onConfirmReject();
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
+              >
+                Rechazar documento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function ExtractionReviewForm({
   documentId,
   extractedFields,
@@ -434,20 +510,20 @@ export function ExtractionReviewForm({
   onResolved: () => void;
 }) {
   const [fields, setFields] = useState<LeaseExtractedFields>(extractedFields);
-  const [pendingAction, setPendingAction] = useState<"confirm" | "reject" | null>(null);
+  const [pendingAction, setPendingAction] = useState<GateTwoAction | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function confirm(confirmed: boolean) {
-    setPendingAction(confirmed ? "confirm" : "reject");
+  async function submit(action: GateTwoAction) {
+    setPendingAction(action);
     setError(null);
     try {
       const res = await fetch("/api/workflow/confirm-lease-extraction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // A rejection discards whatever's in the form — it means "this whole
-        // extraction is wrong," not "here are my edits," so correctedFields
-        // stays undefined and the workflow re-runs extraction from scratch.
-        body: JSON.stringify({ documentId, confirmed, correctedFields: confirmed ? fields : undefined }),
+        // "rescan"/"reject" both discard whatever's in the form — they mean
+        // "this extraction is wrong" or "discard this document," not "here
+        // are my edits" — so correctedFields only rides along on confirm.
+        body: JSON.stringify({ documentId, action, correctedFields: action === "confirm" ? fields : undefined }),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
@@ -533,7 +609,7 @@ export function ExtractionReviewForm({
         <button
           type="button"
           disabled={pendingAction !== null}
-          onClick={() => confirm(true)}
+          onClick={() => submit("confirm")}
           className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
         >
           {pendingAction === "confirm" ? "Confirmando..." : "Confirmar extracción"}
@@ -541,12 +617,17 @@ export function ExtractionReviewForm({
         <button
           type="button"
           disabled={pendingAction !== null}
-          onClick={() => confirm(false)}
-          title="Descarta esta lectura y vuelve a extraer el contrato desde cero (máx. 3 reintentos)."
+          onClick={() => submit("rescan")}
+          title="Vuelve a extraer este mismo contrato desde cero — usa esto si la lectura parece mal hecha, no si el documento en sí está mal (máx. 3 reintentos)."
           className="border border-hairline text-ink-700 px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
         >
-          {pendingAction === "reject" ? "Rechazando..." : "Rechazar y volver a extraer"}
+          {pendingAction === "rescan" ? "Re-escaneando..." : "Re-escanear contrato"}
         </button>
+        <RejectDocumentButton
+          disabled={pendingAction !== null}
+          pending={pendingAction === "reject"}
+          onConfirmReject={() => submit("reject")}
+        />
       </div>
       {error && <p className="font-bold text-red-700">{error}</p>}
     </div>
@@ -575,51 +656,31 @@ export function NewLeaseForm({
   const [baseRent, setBaseRent] = useState(
     extractedFields.base_rent_monthly !== null ? String(extractedFields.base_rent_monthly) : "",
   );
-  const [pendingAction, setPendingAction] = useState<"confirm" | "reject" | null>(null);
+  const [pendingAction, setPendingAction] = useState<GateTwoAction | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function submitNewLease() {
-    setPendingAction("confirm");
+  async function submit(action: GateTwoAction) {
+    setPendingAction(action);
     setError(null);
     try {
-      const rent = baseRent.trim() === "" ? null : Number(baseRent);
-      if (rent !== null && (!Number.isFinite(rent) || rent <= 0)) {
-        setError("La renta debe ser un número positivo, o déjala vacía si el contrato no la fija.");
-        return;
+      let newLeaseDetails;
+      if (action === "confirm") {
+        const rent = baseRent.trim() === "" ? null : Number(baseRent);
+        if (rent !== null && (!Number.isFinite(rent) || rent <= 0)) {
+          setError("La renta debe ser un número positivo, o déjala vacía si el contrato no la fija.");
+          return;
+        }
+        newLeaseDetails = {
+          tenant_entity: tenantEntity,
+          start_date: startDate,
+          end_date: endDate,
+          base_rent_monthly: rent,
+        };
       }
       const res = await fetch("/api/workflow/confirm-lease-extraction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          documentId,
-          confirmed: true,
-          newLeaseDetails: {
-            tenant_entity: tenantEntity,
-            start_date: startDate,
-            end_date: endDate,
-            base_rent_monthly: rent,
-          },
-        }),
-      });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        setError(json.error ?? "No se pudo registrar el nuevo contrato.");
-        return;
-      }
-      onResolved();
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
-  async function reject() {
-    setPendingAction("reject");
-    setError(null);
-    try {
-      const res = await fetch("/api/workflow/confirm-lease-extraction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, confirmed: false }),
+        body: JSON.stringify({ documentId, action, newLeaseDetails }),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
@@ -685,7 +746,7 @@ export function NewLeaseForm({
         <button
           type="button"
           disabled={pendingAction !== null || !tenantEntity.trim() || !startDate || !endDate}
-          onClick={submitNewLease}
+          onClick={() => submit("confirm")}
           className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {pendingAction === "confirm" ? "Creando..." : "Crear contrato y confirmar"}
@@ -693,12 +754,17 @@ export function NewLeaseForm({
         <button
           type="button"
           disabled={pendingAction !== null}
-          onClick={reject}
-          title="Descarta esta lectura y vuelve a extraer el contrato desde cero (máx. 3 reintentos)."
+          onClick={() => submit("rescan")}
+          title="Vuelve a extraer este mismo contrato desde cero — usa esto si la lectura parece mal hecha, no si el documento en sí está mal (máx. 3 reintentos)."
           className="border border-hairline text-ink-700 px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50"
         >
-          {pendingAction === "reject" ? "Rechazando..." : "Rechazar y volver a extraer"}
+          {pendingAction === "rescan" ? "Re-escaneando..." : "Re-escanear contrato"}
         </button>
+        <RejectDocumentButton
+          disabled={pendingAction !== null}
+          pending={pendingAction === "reject"}
+          onConfirmReject={() => submit("reject")}
+        />
       </div>
       {error && <p className="font-bold text-red-700">{error}</p>}
     </div>
