@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentProfile } from "@/lib/auth/server";
-import { fetchPortfolio } from "@/lib/data/portfolio.server";
+import { contractStatusLabel, fetchPortfolio } from "@/lib/data/portfolio.server";
 import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
 
 /**
@@ -26,6 +26,7 @@ Reglas:
 - Responde en español, de forma directa y ejecutiva.
 - Cita el inquilino y el local (ej. "Ashley Furniture, Local A-01") cuando refieras un contrato, y el número de ticket y el local (ej. "INC-006, Local LOC-12") cuando refieras un caso de mantenimiento.
 - La matriz de responsabilidad de mantenimiento (matriz_responsabilidad) y los días de aviso de terminación (dias_aviso_terminacion) provienen del contrato digitalizado y verificado por el propietario — cítalos como tales cuando los uses. Si son null, dilo explícitamente: ese contrato aún no ha sido digitalizado o verificado.
+- Cada contrato incluye estatus_contractual ("Vigente" / "Renovación Próxima" / "Vencido"), ya calculado a partir de la fecha de hoy que se te da al inicio del mensaje — úsalo directamente para cualquier pregunta sobre si un contrato está vigente, por vencer o vencido. No lo recalcules tú mismo a partir de "vencimiento": es el mismo estatus exacto que ve el propietario en la tabla de contratos, y un cálculo propio podría no coincidir.
 - Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
 - No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema.`;
 
@@ -52,6 +53,13 @@ export async function POST(request: NextRequest) {
     clausula_exclusividad: l.exclusiveUseClause,
     inicio: l.startDate,
     vencimiento: l.endDate,
+    // Precomputed rather than left for the model to derive from
+    // `vencimiento` — the model has no reliable notion of "today" on its
+    // own, and this is the exact same isExpired/renewalSoon precedence the
+    // SSOT contracts table's status pill renders (contractStatusLabel), so
+    // an answer here can't drift from what the landlord sees in the table
+    // for the same lease.
+    estatus_contractual: contractStatusLabel(l),
     matriz_responsabilidad: l.responsibilityMatrix ?? null,
     dias_aviso_terminacion: l.noticePeriodDays ?? null,
   }));
@@ -87,7 +95,13 @@ export async function POST(request: NextRequest) {
     messages: [
       {
         role: "user",
-        content: `Datos reales de la plaza (JSON):\n${dataBlock}\n\nPregunta del propietario: ${question}`,
+        // "Hoy" goes per-request, not into the cached system prompt: it's a
+        // different value every day, and estatus_contractual already carries
+        // the one date computation this endpoint actually needs to get
+        // right — this is a fallback for anything else date-relative the
+        // model might reason about (a model has no reliable notion of the
+        // real-world "today" on its own).
+        content: `Hoy es ${new Date().toISOString().slice(0, 10)}.\n\nDatos reales de la plaza (JSON):\n${dataBlock}\n\nPregunta del propietario: ${question}`,
       },
     ],
   });

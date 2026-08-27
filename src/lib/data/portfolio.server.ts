@@ -94,6 +94,17 @@ function isExpired(endDate: string): boolean {
   return monthsUntil(endDate) < 0;
 }
 
+/** The same three-way precedence the SSOT table's status column renders
+ *  (landlord-dashboard.tsx: isExpired, then renewalSoon, else "Vigente") —
+ *  exported so a consumer that isn't rendering the table itself (Copiloto's
+ *  route) doesn't have to reimplement the date math and risk drifting from
+ *  what the table actually shows for the same lease. */
+export function contractStatusLabel(lease: Pick<LeaseDetail, "isExpired" | "renewalSoon">): string {
+  if (lease.isExpired) return "Vencido";
+  if (lease.renewalSoon) return "Renovación Próxima";
+  return "Vigente";
+}
+
 /**
  * Real locales + leases (src/lib/platform/... sibling — same pattern as
  * fetchAuditLog/fetchAutonomyState). Replaces the TENANTS-derived mock rent
