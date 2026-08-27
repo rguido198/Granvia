@@ -97,7 +97,7 @@ export const CAM_LEDGER: CamLineItem[] = [
  */
 export const PORTAL_TENANT = {
   name: "Buffalo Wild Wings",
-  unit: "Local 10-01",
+  unit: "Local 03",
   zone: "Zona Restaurantes & Terrazas",
   sqm: 450,
   monthlyRent: 98500,
@@ -131,7 +131,7 @@ export type ActivityEntry = { agent: string; text: string; accent: "terra" | "pi
 // the second (same rule applied throughout the console this session).
 export const AI_ACTIVITY_POOL: ActivityEntry[] = [
   { agent: "Agente de Arrendamiento", text: "Evaluó una solicitud entrante para Local C-08 — sin conflicto de exclusividad.", accent: "pine" },
-  { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local 10-01 (falla de AC, código E4).", accent: "terra" },
+  { agent: "Agente de Mantenimiento", text: "Despachó a Climas de Mexicali al Local 03 (falla de AC, código E4).", accent: "terra" },
   { agent: "Agente de Arrendamiento", text: "Generó lineamientos de Islas Comerciales para un giro con cláusula de exclusividad activa.", accent: "terra" },
   { agent: "Agente de Mantenimiento", text: "Cerró el ticket #INC-401 (trampa de grasa) — confirmado por Alma Verde.", accent: "pine" },
 ];

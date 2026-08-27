@@ -967,7 +967,7 @@ export function LandlordDashboard({
                                   onClick={() => {
                                     setCopilotOpen(true);
                                     setQueryResult(
-                                      "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 4-16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
+                                      "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
                                     );
                                     triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                                   }}
@@ -2018,7 +2018,7 @@ export function LandlordDashboard({
                             requestedUnit: "Local B-14 (320 m²)",
                             zone: "Zona B (Exterior)",
                             viable: true,
-                            reasoning: "Dictamen Mariana IA (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona 4 (Local 4-16). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con 260 Grill & Bar ni Cinemex Premium.",
+                            reasoning: "Dictamen Mariana IA (RAG Legal Audit): VIABLE SIN CONFLICTO DE EXCLUSIVIDAD. El contrato de Blue Luna Café (contrato_blue_luna_cafe_2027.pdf, Cláusula 14.2) limita estrictamente la exclusividad de expendio de café preparado a la crujía de Zona 4 (Local 16). El Local B-14 está ubicado en Zona B (Zona Gastronómica Exterior), fuera de la delimitación territorial de exclusividad. Asimismo, no colisiona con 260 Grill & Bar ni Cinemex Premium.",
                             conflictingContract: "Ninguno (Local B-14 fuera de Zona 4)",
                             snippet: "Cláusula 14.2 de Blue Luna Café: 'El derecho de exclusividad para expendio de café de especialidad comprende única y exclusivamente la crujía de Zona 4 del inmueble comercial.'",
                           },
@@ -2038,7 +2038,7 @@ export function LandlordDashboard({
                             requestedUnit: "Local 10-04 (450 m²)",
                             zone: "Zona 10",
                             viable: false,
-                            reasoning: "Dictamen Mariana IA (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El contrato firmado con 260 Grill & Bar (contrato_260_grill_2026_firmado.pdf, Cláusula 18.1) estipula un radio de exclusividad de 50 metros para conceptos de Sports Bar gastronómico con transmisión deportiva en pantallas gigantes. El Local 10-04 se encuentra a sólo 15 metros del Local 10-01.",
+                            reasoning: "Dictamen Mariana IA (RAG Legal Audit): CONFLICTO DETECTADO (IMPROCEDENTE). El contrato firmado con 260 Grill & Bar (contrato_260_grill_2026_firmado.pdf, Cláusula 18.1) estipula un radio de exclusividad de 50 metros para conceptos de Sports Bar gastronómico con transmisión deportiva en pantallas gigantes. El Local 10-04 se encuentra a sólo 15 metros del Local 02.",
                             conflictingContract: "contrato_260_grill_2026_firmado.pdf (Cláusula 18.1)",
                             snippet: "Cláusula 18.1 de 260 Grill: 'Queda prohibida la instalación de Sports Bar u hostelería con pantalla gigante dentro de los locales contiguos del mismo bloque 10.'",
                           },
