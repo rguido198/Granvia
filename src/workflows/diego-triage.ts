@@ -78,12 +78,22 @@ async function loadTicketContextForLocale(
     throw new FatalError(`property for locale ${localeId} not found`);
   }
 
+  // Latest (by end_date) lease row for this locale, NOT filtered to
+  // start_date <= today <= end_date — the same "current lease" definition
+  // portfolio.server.ts already uses for the SSOT table, applied here too.
+  // Found live: MINT Boutique's own real, digitized lease is "Vencido"
+  // (end_date already past, no renewal on file yet) — the old date-range
+  // filter excluded it entirely, so a maintenance ticket for that locale saw
+  // no lease, no clause, no responsibility_matrix at all, and fell straight
+  // to JD-05. An expired lease with no renewal on file is still the
+  // tenant's lease of record for maintenance purposes; they haven't left,
+  // there's just no newer contract yet.
   const { data: lease } = await supabase
     .from("leases")
     .select("maintenance_clause, exclusive_use_clause, responsibility_matrix")
     .eq("locale_id", localeId)
-    .lte("start_date", new Date().toISOString())
-    .gte("end_date", new Date().toISOString())
+    .order("end_date", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   const { data: assets } = await supabase
