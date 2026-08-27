@@ -44,10 +44,24 @@ export type FormerTenant = {
   leaseEndDate: string;
 };
 
+/** An approved-but-not-yet-onboarded Mariana screening — the picker
+ *  addTenantAction's form offers so a landlord can thread a manual onboard
+ *  back to the screening that approved it, via lease_applications
+ *  .promoted_lease_id. Only ever `approved` and still unlinked; once linked
+ *  it drops out of this list (the unique index on promoted_lease_id makes
+ *  "already promoted" and "still open" mutually exclusive). */
+export type ApprovedApplication = {
+  id: string;
+  applicationNumber: string;
+  applicantEntity: string;
+  targetUnitCode: string;
+};
+
 export type Portfolio = {
   rentRoll: PortfolioRow[];
   leases: LeaseDetail[];
   formerTenants: FormerTenant[];
+  approvedApplications: ApprovedApplication[];
   leasedSqm: number;
   plazaTotalGla: number;
   contractedRent: number;
@@ -100,6 +114,21 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   if (leasesError) throw new Error(leasesError.message);
 
   const allLeases = leaseRows ?? [];
+
+  // Both directions of the lease_applications <-> leases thread: which
+  // application (if any) promoted into which lease, and — for the Add
+  // Tenant picker — every approved application still waiting to be
+  // promoted at all.
+  const { data: applicationRows, error: applicationsError } = await supabase
+    .from("lease_applications")
+    .select("id, application_number, applicant_entity, target_locale_id, status, promoted_lease_id");
+  if (applicationsError) throw new Error(applicationsError.message);
+
+  const applicationNumberByLeaseId = new Map(
+    (applicationRows ?? [])
+      .filter((a) => a.promoted_lease_id)
+      .map((a) => [a.promoted_lease_id as string, a.application_number as string]),
+  );
 
   // Latest (by end_date) lease row per locale — the "current" one regardless
   // of whether that locale is currently OCCUPIED or VACANT.
@@ -154,9 +183,20 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         renewalSoon: isRenewalSoon(l.end_date),
         isExpired: isExpired(l.end_date),
         sourceDocumentId: l.source_document_id,
+        sourceApplicationNumber: applicationNumberByLeaseId.get(l.id) ?? null,
       };
     })
     .sort((a, b) => a.unitCode.localeCompare(b.unitCode));
+
+  const approvedApplications: ApprovedApplication[] = (applicationRows ?? [])
+    .filter((a) => a.status === "approved" && !a.promoted_lease_id)
+    .map((a) => ({
+      id: a.id as string,
+      applicationNumber: a.application_number as string,
+      applicantEntity: a.applicant_entity as string,
+      targetUnitCode: localesById.get(a.target_locale_id as string)?.unit_number ?? "?",
+    }))
+    .sort((a, b) => a.applicationNumber.localeCompare(b.applicationNumber));
 
   const formerTenants: FormerTenant[] = (locales ?? [])
     .filter((l) => l.status === "VACANT" && l.tenant_entity)
@@ -175,7 +215,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
     })
     .sort((a, b) => b.leaseEndDate.localeCompare(a.leaseEndDate));
 
-  return { rentRoll, leases, formerTenants, leasedSqm, plazaTotalGla, contractedRent };
+  return { rentRoll, leases, formerTenants, approvedApplications, leasedSqm, plazaTotalGla, contractedRent };
 }
 
 /** One row of the Legal tab's document pipeline — a scanned active lease

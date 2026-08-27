@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import { ConsoleModal } from "@/components/hub/console-modal";
+import type { ApprovedApplication } from "@/lib/data/portfolio.server";
 import {
   addTenantAction,
   bulkAddTenantsAction,
@@ -50,9 +51,16 @@ type TenantDraft = {
   baseRentMonthly: string;
   startDate: string;
   endDate: string;
+  applicationId: string;
 };
 
-function AddTenantForm({ onDone }: { onDone: () => void }) {
+function AddTenantForm({
+  onDone,
+  approvedApplications,
+}: {
+  onDone: () => void;
+  approvedApplications: ApprovedApplication[];
+}) {
   const [state, formAction, pending] = useActionState<RentRollActionState, FormData>(addTenantAction, FORM_INITIAL);
   const [step, setStep] = useState<"form" | "confirm">("form");
   const [draft, setDraft] = useState<TenantDraft>({
@@ -62,6 +70,7 @@ function AddTenantForm({ onDone }: { onDone: () => void }) {
     baseRentMonthly: "",
     startDate: todayISO(),
     endDate: plusYearsISO(5),
+    applicationId: "",
   });
 
   if (state.success) {
@@ -139,6 +148,22 @@ function AddTenantForm({ onDone }: { onDone: () => void }) {
             />
           </Field>
         </div>
+        {approvedApplications.length > 0 && (
+          <Field label="Vincular a solicitud aprobada de Mariana (opcional)">
+            <select
+              value={draft.applicationId}
+              onChange={(e) => setDraft((d) => ({ ...d, applicationId: e.target.value }))}
+              className={INPUT_CLS}
+            >
+              <option value="">-- sin vincular --</option>
+              {approvedApplications.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.applicationNumber} — {a.applicantEntity} ({a.targetUnitCode})
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
         <p className="text-[11px] text-slate-500">
           Fechas precargadas a 5 años desde hoy (plazo ilustrativo) si todavía no hay contrato firmado — ajústalas si ya
           existe una fecha real. Si el número de local corresponde a una unidad actualmente vacante, este formulario la
@@ -173,6 +198,7 @@ function AddTenantForm({ onDone }: { onDone: () => void }) {
       <input type="hidden" name="base_rent_monthly" value={draft.baseRentMonthly} />
       <input type="hidden" name="start_date" value={draft.startDate} />
       <input type="hidden" name="end_date" value={draft.endDate} />
+      <input type="hidden" name="application_id" value={draft.applicationId} />
 
       <p className="text-xs font-bold text-amber-900">
         Confirmar nuevo inquilino — esta acción escribe directamente en el rent roll (Supabase)
@@ -190,6 +216,14 @@ function AddTenantForm({ onDone }: { onDone: () => void }) {
         <dd className="font-bold">
           {draft.startDate} → {draft.endDate}
         </dd>
+        {draft.applicationId && (
+          <>
+            <dt className="text-slate-500">Solicitud Mariana</dt>
+            <dd className="font-bold">
+              {approvedApplications.find((a) => a.id === draft.applicationId)?.applicationNumber}
+            </dd>
+          </>
+        )}
       </dl>
 
       {state.error && <p className="text-[11px] text-red-600 font-semibold">{state.error}</p>}
@@ -555,7 +589,7 @@ function BulkImportPanel({ onDone }: { onDone: () => void }) {
 // Toolbar — rendered next to "Modo Edición" in the rent roll header.
 // ─────────────────────────────────────────────────────────────────────────
 
-export function RentRollAdminTools() {
+export function RentRollAdminTools({ approvedApplications }: { approvedApplications: ApprovedApplication[] }) {
   const [panel, setPanel] = useState<"none" | "add" | "import">("none");
 
   return (
@@ -577,7 +611,9 @@ export function RentRollAdminTools() {
         </button>
       </div>
 
-      {panel === "add" && <AddTenantForm onDone={() => setPanel("none")} />}
+      {panel === "add" && (
+        <AddTenantForm onDone={() => setPanel("none")} approvedApplications={approvedApplications} />
+      )}
       {panel === "import" && <BulkImportPanel onDone={() => setPanel("none")} />}
     </div>
   );

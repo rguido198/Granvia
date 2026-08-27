@@ -89,12 +89,36 @@ function parseExtractedFields(value: Record<string, unknown> | null): LeaseExtra
  * dialog had (see ConsoleModal's own doc comment) — it just hadn't been
  * clicked from far enough down the page to surface it yet.
  */
+/** Bare document-outline glyph — no icon library in this codebase, so this
+ *  stays a plain inline SVG like every other icon here (see RentRollThumbnail
+ *  etc.) rather than adding a dependency for one glyph. */
+function DocumentIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4" aria-hidden="true">
+      <path
+        d="M5 2.5h6.5L15 6v11a.5.5 0 0 1-.5.5h-9A.5.5 0 0 1 5 17V3a.5.5 0 0 1 .5-.5Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path d="M11.5 2.5V6H15" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M7.25 10h5.5M7.25 12.5h5.5M7.25 15h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function DocumentViewerButton({
   documentId,
   label = "Ver documento",
+  iconOnly = false,
 }: {
   documentId: string;
   label?: string;
+  /** Renders a bare document glyph (title=label for the tooltip) instead of
+   *  the underlined text link — for tight spaces like the Rent Roll's SSOT
+   *  column, where a text link per row read as cluttered next to
+   *  "Desocupar." The Legal tab's own document cards keep the text form. */
+  iconOnly?: boolean;
 }) {
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [viewerError, setViewerError] = useState<string | null>(null);
@@ -116,9 +140,15 @@ export function DocumentViewerButton({
       <button
         type="button"
         onClick={openViewer}
-        className="text-xs font-semibold text-ink-700 underline cursor-pointer"
+        title={iconOnly ? label : undefined}
+        aria-label={iconOnly ? label : undefined}
+        className={
+          iconOnly
+            ? "inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-500 hover:text-ink-700 hover:bg-slate-50 cursor-pointer transition-colors shrink-0"
+            : "text-xs font-semibold text-ink-700 underline cursor-pointer"
+        }
       >
-        {label}
+        {iconOnly ? <DocumentIcon /> : label}
       </button>
       {viewerError && <p className="text-xs font-bold text-red-700 mt-1">{viewerError}</p>}
       {viewerUrl && (

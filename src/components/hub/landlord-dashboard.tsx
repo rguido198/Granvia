@@ -99,6 +99,24 @@ function nameInitials(name: string): string {
   return initials.toUpperCase();
 }
 
+/** Marks a rent roll row whose lease traces back to an approved Mariana
+ *  screening (leases <- lease_applications.promoted_lease_id) — a small
+ *  glyph with a tooltip naming the application, not a text pill, so a row
+ *  with both this and the contract icon doesn't read as cluttered. */
+function MarianaLinkIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4" aria-hidden="true">
+      <path
+        d="M10 2.5 11.3 7l4.5 1.3-4.5 1.3L10 14l-1.3-4.4-4.5-1.3L8.7 7 10 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <path d="M15.5 13v3M14 14.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /**
  * Rent Roll row thumbnail — the tenant's real logo when the directory has
  * one on file (src/content/tenants.ts), a neutral initials tile when it
@@ -330,7 +348,16 @@ export function LandlordDashboard({
     periodLabel,
   } = data;
 
-  const { rentRoll, leases, formerTenants, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
+  const { rentRoll, leases, formerTenants, approvedApplications, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
+
+  // Per-row lookup for the SSOT table's "Ver contrato" icon and Mariana
+  // badge — leases is already fetched for the Legal tab's own table, so this
+  // reuses that same data instead of a second query. Keyed by locale id, not
+  // lease id: LeaseDetail.id is actually the locale's id (portfolio.server
+  // .ts's existing convention — `id: l.locale_id` in the leases mapping),
+  // while PortfolioRow.leaseId is the leases-table row's own id. Look this
+  // map up with r.slug (the locale id), never r.leaseId.
+  const leaseByLocaleId = useMemo(() => new Map(leases.map((l) => [l.id, l])), [leases]);
 
   // Unit picker for the Legal tab's Gate 1 (entity reconciliation) form.
   // Sourced from `localeOptions` rather than `leases` so a vacant or
@@ -742,7 +769,7 @@ export function LandlordDashboard({
                   below reads from. Kept next to the header rather than the
                   sort/filter bar so they read as rent-roll-wide operations,
                   not a per-row table control. */}
-              <RentRollAdminTools />
+              <RentRollAdminTools approvedApplications={approvedApplications} />
 
               {/* PORTFOLIO KPI SUMMARY — three numbers derivable from lease
                   terms alone. The previous two cards (Renta Recibida / Real
@@ -959,7 +986,24 @@ export function LandlordDashboard({
                                 </span>
                               )}
                               {!r.vacant && r.leaseId && (
-                                <TerminateTenantButton localeId={r.slug} leaseId={r.leaseId} tenantName={r.name} unitCode={r.unitCode} />
+                                <div className="flex items-center gap-2.5">
+                                  <TerminateTenantButton localeId={r.slug} leaseId={r.leaseId} tenantName={r.name} unitCode={r.unitCode} />
+                                  {leaseByLocaleId.get(r.slug)?.sourceDocumentId && (
+                                    <DocumentViewerButton
+                                      documentId={leaseByLocaleId.get(r.slug)!.sourceDocumentId!}
+                                      label="Ver contrato"
+                                      iconOnly
+                                    />
+                                  )}
+                                  {leaseByLocaleId.get(r.slug)?.sourceApplicationNumber && (
+                                    <span
+                                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-400 shrink-0"
+                                      title={`Origen: ${leaseByLocaleId.get(r.slug)!.sourceApplicationNumber} — evaluado por Mariana IA`}
+                                    >
+                                      <MarianaLinkIcon />
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>
@@ -1815,7 +1859,19 @@ export function LandlordDashboard({
                                     <h4 className="font-bold text-sm text-ink">
                                       {c.tenantEntity} · {c.unitCode}
                                     </h4>
-                                    {c.sourceDocumentId && <DocumentViewerButton documentId={c.sourceDocumentId} />}
+                                    <div className="flex items-center gap-2">
+                                      {c.sourceDocumentId && (
+                                        <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
+                                      )}
+                                      {c.sourceApplicationNumber && (
+                                        <span
+                                          className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-400 shrink-0"
+                                          title={`Origen: ${c.sourceApplicationNumber} — evaluado por Mariana IA`}
+                                        >
+                                          <MarianaLinkIcon />
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">

@@ -30,6 +30,13 @@ export type LeaseDetail = {
    *  table offer "Ver documento" from a lease's own expanded row instead of
    *  only from the Legal tab's digitization queue. */
   sourceDocumentId: string | null;
+  /** application_number of the Mariana screening (lease_applications) that
+   *  led to this lease, via lease_applications.promoted_lease_id — null when
+   *  this tenant was never screened through Mariana (walked in directly, or
+   *  predates the screening pipeline). Lets the SSOT table and Copiloto trace
+   *  a lease back to the risk assessment that approved it, without either
+   *  table ever restating the other's facts. */
+  sourceApplicationNumber: string | null;
 };
 
 function monthsUntil(dateStr: string): number {

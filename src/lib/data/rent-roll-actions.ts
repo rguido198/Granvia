@@ -108,24 +108,50 @@ export async function addTenantAction(
   }
 
   const { start, end } = defaultLeaseDates(startDateInput);
-  const { error: leaseError } = await admin.from("leases").insert({
-    lease_id: newLeaseId(unitNumber),
-    locale_id: localeId,
-    tenant_entity: tenantName,
-    start_date: start,
-    end_date: endDateInput || end,
-    base_rent_monthly: rent,
-    currency: "MXN",
-  });
+  const { data: newLease, error: leaseError } = await admin
+    .from("leases")
+    .insert({
+      lease_id: newLeaseId(unitNumber),
+      locale_id: localeId,
+      tenant_entity: tenantName,
+      start_date: start,
+      end_date: endDateInput || end,
+      base_rent_monthly: rent,
+      currency: "MXN",
+    })
+    .select("id")
+    .single();
 
-  if (leaseError) {
+  if (leaseError || !newLease) {
     // Don't leave a newly-inserted locale OCCUPIED with no lease row behind
     // it — fetchPortfolio() would show it as leased with $0 rent, which is
     // worse than surfacing the failure here. A re-leased (pre-existing)
     // locale is left as-is: rolling it back to VACANT on a lease-insert
     // failure risks erasing the real prior tenant_entity value.
     if (!existingUnit) await admin.from("locales").delete().eq("id", localeId);
-    return { error: leaseError.message };
+    return { error: leaseError?.message ?? "No se pudo crear el contrato" };
+  }
+
+  // Optional — threads this onboarding back to the Mariana screening that
+  // approved it (lease_applications.promoted_lease_id), so the rent roll and
+  // Copiloto can trace a tenant back to the risk assessment that let them
+  // in, without lease_applications ever restating the lease's own facts.
+  // Re-validated here (not just trusted from the form) — the picker only
+  // ever offers approved+unlinked applications, but the unique index on
+  // promoted_lease_id is the real backstop against a stale/tampered value.
+  const applicationId = String(formData.get("application_id") ?? "").trim();
+  if (applicationId) {
+    const { error: linkError } = await admin
+      .from("lease_applications")
+      .update({ promoted_lease_id: newLease.id })
+      .eq("id", applicationId)
+      .eq("status", "approved")
+      .is("promoted_lease_id", null);
+    if (linkError) {
+      // The lease itself already landed successfully — a failed link is a
+      // secondary problem, not a reason to roll back a real onboarding.
+      console.error(`addTenantAction: failed to link application ${applicationId} to lease ${newLease.id}`, linkError);
+    }
   }
 
   revalidatePath("/consola");

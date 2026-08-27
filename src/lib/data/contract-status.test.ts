@@ -17,6 +17,7 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     renewalSoon: false,
     isExpired: false,
     sourceDocumentId: null,
+    sourceApplicationNumber: null,
     ...overrides,
   };
 }
