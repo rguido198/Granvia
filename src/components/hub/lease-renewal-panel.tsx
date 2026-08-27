@@ -5,9 +5,13 @@ import { useState } from "react";
 import { ConsoleModal } from "@/components/hub/console-modal";
 import type { LeaseRenewalSummary } from "@/lib/data/portfolio.server";
 
+// "Aprobado" alone reads as a finished decision — SKILL.md's own closing
+// disclaimer on every draft says the opposite: it's subject to the
+// landlord's approval AND their counsel's, and this button only ever
+// records the landlord's half. Labeled to say what actually happens next.
 const STATUS_LABEL: Record<LeaseRenewalSummary["status"], string> = {
   needs_landlord_review: "Pendiente de revisión",
-  approved: "Aprobado",
+  approved: "Aprobado — enviar a asesoría legal",
   rejected: "Rechazado",
 };
 
@@ -21,6 +25,40 @@ function todayPlusYearsISO(startISO: string, years: number): string {
   const d = new Date(startISO);
   d.setFullYear(d.getFullYear() + years);
   return d.toISOString().slice(0, 10);
+}
+
+function formatMxn(n: number): string {
+  return `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
+}
+
+/** The clear, scannable "what actually changes" block — separate from the
+ *  dense legal prose in draftMarkdown, which was the whole complaint: a
+ *  landlord shouldn't have to read four paragraphs to find the new rent. */
+function RenewalSummary({ renewal }: { renewal: LeaseRenewalSummary }) {
+  const pctChange =
+    renewal.currentBaseRentMonthly && renewal.currentBaseRentMonthly > 0
+      ? (((renewal.newBaseRentMonthly - renewal.currentBaseRentMonthly) / renewal.currentBaseRentMonthly) * 100).toFixed(1)
+      : null;
+
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+      <dt className="text-ink-500 font-medium">Vigencia</dt>
+      <dd className="text-ink font-bold">
+        {renewal.currentEndDate} <span className="text-ink-400 font-medium">→</span> {renewal.newStartDate} a {renewal.newEndDate}
+      </dd>
+      <dt className="text-ink-500 font-medium">Renta mensual</dt>
+      <dd className="text-ink font-bold">
+        {renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)"}{" "}
+        <span className="text-ink-400 font-medium">→</span> {formatMxn(renewal.newBaseRentMonthly)}
+        {pctChange !== null && (
+          <span className={`ml-1.5 font-bold ${Number(pctChange) > 0 ? "text-emerald-700" : Number(pctChange) < 0 ? "text-red-700" : "text-ink-500"}`}>
+            ({Number(pctChange) > 0 ? "+" : ""}
+            {pctChange}%)
+          </span>
+        )}
+      </dd>
+    </dl>
+  );
 }
 
 /** One renewal draft row — view the full Convenio Modificatorio text, and
@@ -76,27 +114,30 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
           Ver borrador
         </button>
       </div>
-      <p className="text-[11px] text-ink-500">
-        {renewal.newStartDate} → {renewal.newEndDate} · ${renewal.newBaseRentMonthly.toLocaleString("es-MX")} MXN/mes
-      </p>
+      <RenewalSummary renewal={renewal} />
       {renewal.status === "needs_landlord_review" && (
-        <div className="flex items-center gap-2 pt-1">
-          <button
-            type="button"
-            disabled={pending !== null}
-            onClick={() => resolve(true)}
-            className="bg-ink text-white px-2.5 py-1 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-50"
-          >
-            {pending === "approve" ? "Aprobando..." : "Aprobar"}
-          </button>
-          <button
-            type="button"
-            disabled={pending !== null}
-            onClick={() => resolve(false)}
-            className="border border-hairline text-ink-700 px-2.5 py-1 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-50"
-          >
-            {pending === "reject" ? "Rechazando..." : "Rechazar"}
-          </button>
+        <div className="space-y-1.5 pt-1">
+          <p className="text-[10px] text-ink-500 font-medium">
+            Tu aprobación autoriza enviar este borrador a tu asesoría legal — no es la aprobación final del contrato.
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={pending !== null}
+              onClick={() => resolve(true)}
+              className="bg-ink text-white px-2.5 py-1 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-50"
+            >
+              {pending === "approve" ? "Enviando..." : "Aprobar y enviar a abogado"}
+            </button>
+            <button
+              type="button"
+              disabled={pending !== null}
+              onClick={() => resolve(false)}
+              className="border border-hairline text-ink-700 px-2.5 py-1 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-50"
+            >
+              {pending === "reject" ? "Rechazando..." : "Rechazar"}
+            </button>
+          </div>
         </div>
       )}
       {error && <p className="text-[11px] font-bold text-red-700">{error}</p>}
@@ -113,7 +154,13 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
                   Cerrar
                 </button>
               </div>
-              <pre className="text-xs text-ink-700 whitespace-pre-wrap font-sans leading-relaxed">{renewal.draftMarkdown}</pre>
+              <div className="bg-slate-50 border border-hairline rounded-xl p-3">
+                <RenewalSummary renewal={renewal} />
+              </div>
+              <details className="border-t border-hairline pt-2.5">
+                <summary className="text-xs font-bold text-ink-700 cursor-pointer">Ver texto completo del convenio</summary>
+                <pre className="text-xs text-ink-700 whitespace-pre-wrap font-sans leading-relaxed mt-2">{renewal.draftMarkdown}</pre>
+              </details>
               {renewal.skepticConcerns.length > 0 && (
                 <div className="border-t border-hairline pt-2.5">
                   <p className="text-xs font-bold text-amber-900 mb-1">Notas del auditor (Mariana IA)</p>

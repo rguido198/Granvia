@@ -141,7 +141,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: renewalRows, error: renewalsError } = await supabase
     .from("lease_renewals")
     .select(
-      "id, renewal_number, source_lease_id, status, new_start_date, new_end_date, new_base_rent_monthly, draft_markdown, skeptic_flagged, skeptic_concerns, created_at",
+      "id, renewal_number, source_lease_id, status, current_end_date, new_start_date, new_end_date, current_base_rent_monthly, new_base_rent_monthly, escalation_pct, escalation_method, draft_markdown, skeptic_flagged, skeptic_concerns, created_at",
     )
     .order("created_at", { ascending: false });
   if (renewalsError) throw new Error(renewalsError.message);
@@ -153,9 +153,13 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       id: r.id as string,
       renewalNumber: r.renewal_number as string,
       status: r.status as LeaseRenewalSummary["status"],
+      currentEndDate: r.current_end_date as string,
       newStartDate: r.new_start_date as string,
       newEndDate: r.new_end_date as string,
+      currentBaseRentMonthly: r.current_base_rent_monthly === null ? null : Number(r.current_base_rent_monthly),
       newBaseRentMonthly: Number(r.new_base_rent_monthly),
+      escalationPct: r.escalation_pct === null ? null : Number(r.escalation_pct),
+      escalationMethod: r.escalation_method as string,
       draftMarkdown: r.draft_markdown as string,
       skepticFlagged: r.skeptic_flagged as boolean,
       skepticConcerns: (r.skeptic_concerns as string[] | null) ?? [],

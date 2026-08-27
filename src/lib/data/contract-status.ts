@@ -95,9 +95,13 @@ export type LeaseRenewalSummary = {
   id: string;
   renewalNumber: string;
   status: "needs_landlord_review" | "approved" | "rejected";
+  currentEndDate: string;
   newStartDate: string;
   newEndDate: string;
+  currentBaseRentMonthly: number | null;
   newBaseRentMonthly: number;
+  escalationPct: number | null;
+  escalationMethod: string;
   draftMarkdown: string;
   skepticFlagged: boolean;
   skepticConcerns: string[];
