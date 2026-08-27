@@ -7,6 +7,14 @@ const CANDIDATES = [
   { id: "loc-3", tenantEntity: "Derma Club" },
 ];
 
+// This plaza's own roster is inconsistent about carrying legal-entity
+// suffixes: some rows are bare, some carry their own "S.A. de C.V." —
+// mirrors the mix actually seen live (MINT Boutique bare, a decoy with it).
+const CANDIDATES_MIXED_SUFFIXES = [
+  { id: "loc-2", tenantEntity: "MINT Boutique" },
+  { id: "loc-4", tenantEntity: "Cafetería El Puente S.A. de C.V." },
+];
+
 describe("matchTenant", () => {
   it("matches an exact name with confidence 1.0", () => {
     const result = matchTenant("Ashley Furniture", CANDIDATES);
@@ -35,6 +43,26 @@ describe("matchTenant", () => {
   it("returns null on an empty candidate list", () => {
     const result = matchTenant("Ashley Furniture", []);
     expect(result).toBeNull();
+  });
+
+  it("matches a full legal name against a bare roster entry at full confidence", () => {
+    // Regression for the live incident: extraction correctly reads "MINT
+    // Boutique, S.A. de C.V." (extractTenantNameFromDocumentText's actual
+    // output), but the roster's own MINT Boutique row is bare. Before
+    // stripping punctuation/suffixes, this scored under MIN_CONFIDENCE.
+    const result = matchTenant("MINT Boutique, S.A. de C.V.", CANDIDATES);
+    expect(result?.localeId).toBe("loc-2");
+    expect(result?.confidence).toBe(1);
+  });
+
+  it("does not let a shared corporate suffix outrank the real match", () => {
+    // Live incident: against this exact candidate pair, the unstripped
+    // comparison put "Cafetería El Puente S.A. de C.V." at ~50% confidence
+    // (just over the floor, on shared "S.A. de C.V." alone) while the real
+    // match, MINT Boutique with no suffix in the roster, scored under it.
+    const result = matchTenant("MINT Boutique, S.A. de C.V.", CANDIDATES_MIXED_SUFFIXES);
+    expect(result?.localeId).toBe("loc-2");
+    expect(result!.confidence).toBeGreaterThan(0.9);
   });
 });
 
