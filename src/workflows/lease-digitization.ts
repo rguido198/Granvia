@@ -134,16 +134,13 @@ async function recordSuggestion(
 
 async function promoteMatch(
   documentId: string,
+  // Only ever invoked with confirmed:true or a correctedLocaleId set — the
+  // workflow loop below intercepts the reject case (neither present) before
+  // calling this, so there's nothing to guard against here.
   decision: { confirmed: boolean; correctedLocaleId?: string; verifiedById?: string },
 ): Promise<string | null> {
   "use step";
   const supabase = getSupabaseServiceClient();
-
-  if (!decision.confirmed && !decision.correctedLocaleId) {
-    // Client rejected the suggestion without picking a replacement — leave
-    // the document sitting in ready_for_triage rather than guessing.
-    return null;
-  }
 
   const { data: document } = await supabase
     .from("documents")
@@ -496,6 +493,15 @@ export async function leaseDigitizationWorkflow(
 
   // Gate 1 (Tier 3) — entity reconciliation. Woken by the confirm-match route
   // calling resumeHook(`lease-doc-match:${documentId}`, ...).
+  //
+  // Iterated with `for await` rather than a single `await` — a landlord
+  // rejecting the suggestion (confirmed:false, no correctedLocaleId) has to
+  // actually discard the document and dispose the hook, not just consume it.
+  // The single-`await` version could only ever resolve the hook once no
+  // matter the decision, so a reject silently spent it while writing
+  // nothing — stranding the document at `ready_for_triage` with no live
+  // hook left, unrecoverable short of the resume-or-start path
+  // confirm-lease-match/route.ts now has for a genuinely dead hook.
   const matchHook = createHook<{
     confirmed: boolean;
     correctedLocaleId?: string;
@@ -503,11 +509,21 @@ export async function leaseDigitizationWorkflow(
   }>({
     token: `lease-doc-match:${documentId}`,
   });
-  const matchDecision = await matchHook;
-  const localeId = await promoteMatch(documentId, matchDecision);
+
+  let localeId: string | null = null;
+  for await (const matchDecision of matchHook) {
+    if (!matchDecision.confirmed && !matchDecision.correctedLocaleId) {
+      await markDocumentRejected(documentId);
+      matchHook.dispose();
+      return { documentId, status: "rejected" };
+    }
+    localeId = await promoteMatch(documentId, matchDecision);
+    matchHook.dispose();
+    break;
+  }
 
   if (!localeId) {
-    return { documentId, status: "failed" }; // rejected with no replacement — stays ready_for_triage
+    return { documentId, status: "failed" };
   }
 
   // Gate 2 (Tier 3) — extraction accuracy. Woken by the confirm-extraction

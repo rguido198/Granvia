@@ -535,7 +535,7 @@ export function MatchReviewForm({
   onResolved: () => void;
 }) {
   const [selectedLocaleId, setSelectedLocaleId] = useState<string>("");
-  const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"confirm" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // "This unit isn't in the rent roll at all yet" — distinct from
@@ -588,7 +588,7 @@ export function MatchReviewForm({
   }
 
   async function confirm(confirmed: boolean) {
-    setSubmitting(true);
+    setPendingAction(confirmed ? "confirm" : "reject");
     setError(null);
     try {
       const res = await fetch("/api/workflow/confirm-lease-match", {
@@ -597,7 +597,10 @@ export function MatchReviewForm({
         body: JSON.stringify({
           documentId,
           confirmed,
-          correctedLocaleId: selectedLocaleId || undefined,
+          // A reject discards the document outright — ignore whatever
+          // happens to be sitting in the local picker so it can never be
+          // read as a correction instead.
+          correctedLocaleId: confirmed ? selectedLocaleId || undefined : undefined,
         }),
       });
       if (!res.ok) {
@@ -607,7 +610,7 @@ export function MatchReviewForm({
       }
       onResolved();
     } finally {
-      setSubmitting(false);
+      setPendingAction(null);
     }
   }
 
@@ -709,19 +712,22 @@ export function MatchReviewForm({
       )}
       <div className="flex gap-2">
         {/* With neither a suggestion nor a correction there is no locale to
-         *  promote: the route would still pass its status guard and consume
-         *  Gate 1's single-use hook, then promoteMatch would resolve
-         *  finalLocaleId to null and write nothing — stranding the document at
-         *  `ready_for_triage` with its hook already spent, unrecoverable short
-         *  of re-uploading. Block the click instead. */}
+         *  promote — promoteMatch has nothing to write. Block the click
+         *  rather than send a request that can only fail. */}
         <button
           type="button"
-          disabled={submitting || (!suggestedUnit && !selectedLocaleId)}
+          disabled={pendingAction !== null || (!suggestedUnit && !selectedLocaleId)}
           onClick={() => confirm(true)}
           className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? "Confirmando..." : "Confirmar"}
+          {pendingAction === "confirm" ? "Confirmando..." : "Confirmar"}
         </button>
+        <RejectDocumentButton
+          disabled={pendingAction !== null}
+          pending={pendingAction === "reject"}
+          onConfirmReject={() => confirm(false)}
+          body="No se promoverá ningún dato a la plaza — este documento nunca llegó a asignarse a un local. Esta acción no reintenta la extracción; si la lectura del contrato parece mal hecha, vuelve a subirlo en vez de rechazarlo."
+        />
       </div>
       {!suggestedUnit && !selectedLocaleId && (
         <p className="text-ink-500 font-medium">
@@ -733,20 +739,26 @@ export function MatchReviewForm({
   );
 }
 
-/** Modal-confirm gate for the one irreversible Gate 2 action — mirrors
- *  TerminateTenantButton's pattern (rent-roll-tools.tsx) rather than a bare
- *  `window.confirm`, so it looks and behaves like the rest of this console's
- *  destructive actions. Presentational only: the parent form owns the
- *  submit/pending/error state and just gets told when the landlord actually
- *  confirmed inside the dialog. */
+/** Modal-confirm gate for the irreversible reject action at either gate —
+ *  mirrors TerminateTenantButton's pattern (rent-roll-tools.tsx) rather than
+ *  a bare `window.confirm`, so it looks and behaves like the rest of this
+ *  console's destructive actions. Presentational only: the parent form owns
+ *  the submit/pending/error state and just gets told when the landlord
+ *  actually confirmed inside the dialog. */
 function RejectDocumentButton({
   disabled,
   pending,
   onConfirmReject,
+  body,
 }: {
   disabled: boolean;
   pending: boolean;
   onConfirmReject: () => void;
+  /** Gate-specific explanation of what rejecting actually discards — Gate 1
+   *  has never written anything yet (no locale, no lease), Gate 2 has a
+   *  confirmed match and a "Re-escanear contrato" alternative that doesn't
+   *  exist at Gate 1, so the two can't share one body. */
+  body: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -770,10 +782,7 @@ function RejectDocumentButton({
           >
             <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-sm w-full space-y-3">
               <p className="text-sm font-bold text-slate-900">¿Rechazar este documento?</p>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                No se promoverá ningún dato a la plaza — ni la matriz de responsabilidad, ni un contrato nuevo. Esta
-                acción no reintenta la extracción; para eso usa &ldquo;Re-escanear contrato&rdquo; en vez de esto.
-              </p>
+              <p className="text-xs text-slate-600 leading-relaxed">{body}</p>
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
@@ -934,6 +943,7 @@ export function ExtractionReviewForm({
           disabled={pendingAction !== null}
           pending={pendingAction === "reject"}
           onConfirmReject={() => submit("reject")}
+          body="No se promoverá ningún dato a la plaza — ni la matriz de responsabilidad, ni un contrato nuevo. Esta acción no reintenta la extracción; para eso usa “Re-escanear contrato” en vez de esto."
         />
       </div>
       {error && <p className="font-bold text-red-700">{error}</p>}
@@ -1071,6 +1081,7 @@ export function NewLeaseForm({
           disabled={pendingAction !== null}
           pending={pendingAction === "reject"}
           onConfirmReject={() => submit("reject")}
+          body="No se promoverá ningún dato a la plaza — ni la matriz de responsabilidad, ni un contrato nuevo. Esta acción no reintenta la extracción; para eso usa “Re-escanear contrato” en vez de esto."
         />
       </div>
       {error && <p className="font-bold text-red-700">{error}</p>}
