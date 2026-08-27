@@ -1657,6 +1657,27 @@ export function LandlordDashboard({
                     </div>
                   </div>
 
+                  {/* DIGITALIZACIÓN DE CONTRATOS — lease-document pipeline
+                      review queue. Sits right under the upload button on
+                      purpose: it was previously below the 85-row table, so
+                      uploading (top) and reviewing what you just uploaded
+                      (bottom) read as two disconnected places. */}
+                  <div className="border border-hairline rounded-xl bg-white shadow-2xs p-4 space-y-3.5">
+                    <div>
+                      <h3 className="text-base font-bold text-ink">Digitalización de Contratos</h3>
+                      <p className="text-xs text-ink-500 mt-0.5">
+                        Documentos en proceso de validación. Cada uno requiere dos confirmaciones humanas: el local
+                        al que corresponde, y la exactitud de las cláusulas extraídas.
+                      </p>
+                    </div>
+
+                    <LegalDocumentsPanel
+                      documents={activeLeaseDocuments}
+                      allUnits={leaseDocumentUnits}
+                      onResolved={() => router.refresh()}
+                    />
+                  </div>
+
                   {/* Search / filter bar — same client-side pattern as the
                       Rent Roll table (leases is already fully loaded), added
                       because a plain 85-row list has no other way to narrow
@@ -1808,29 +1829,6 @@ export function LandlordDashboard({
                         ))}
                       </tbody>
                     </table>
-                  </div>
-
-                  {/* DIGITALIZACIÓN DE CONTRATOS — lease-document pipeline.
-                      Additive to the SSOT table above: that table reads the
-                      `leases` rows, this panel is the intake that produces
-                      and corrects them (two human gates, per document). Entry
-                      point is the "Subir contrato(s)" button up in the header
-                      — this card is the review queue, not where uploads
-                      start. */}
-                  <div className="border border-hairline rounded-xl bg-white shadow-2xs p-4 space-y-3.5">
-                    <div>
-                      <h3 className="text-base font-bold text-ink">Digitalización de Contratos</h3>
-                      <p className="text-xs text-ink-500 mt-0.5">
-                        Documentos en proceso de validación. Cada uno requiere dos confirmaciones humanas: el local
-                        al que corresponde, y la exactitud de las cláusulas extraídas.
-                      </p>
-                    </div>
-
-                    <LegalDocumentsPanel
-                      documents={activeLeaseDocuments}
-                      allUnits={leaseDocumentUnits}
-                      onResolved={() => router.refresh()}
-                    />
                   </div>
                 </div>
               )}
