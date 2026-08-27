@@ -126,7 +126,16 @@ export function LegalDocumentsPanel({
               <div>
                 <p className="font-bold text-xs text-ink">{doc.originalFilename}</p>
                 <p className="text-[11px] text-ink-500 font-medium mt-0.5">
-                  {STATUS_LABELS[doc.status] ?? doc.status}
+                  {/* STATUS_LABELS['attached'] is "Pendiente: validar extracción"
+                   *  regardless of whether it's actually been validated yet —
+                   *  accurate for the review-pending state, but confusingly
+                   *  identical to what a landlord sees right after confirming.
+                   *  The badge above already keys off extractionVerifiedAt;
+                   *  this line has to agree with it instead of always reading
+                   *  the raw status. */}
+                  {doc.status === "attached" && doc.extractionVerifiedAt
+                    ? "Contrato actualizado ✓"
+                    : (STATUS_LABELS[doc.status] ?? doc.status)}
                 </p>
               </div>
               {!doc.extractionVerifiedAt && (
