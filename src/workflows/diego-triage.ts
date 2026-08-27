@@ -22,6 +22,14 @@ type TicketContext = {
   lease: {
     maintenance_clause: string | null;
     exclusive_use_clause: string | null;
+    // Per-system, human-confirmed assignment from the lease-digitization
+    // pipeline (Gate 2) — a different, newer field than maintenance_clause
+    // above (free text, never written by that pipeline). Previously never
+    // selected here at all: a digitized lease's matrix sat unused on the
+    // same row Diego was already reading, and every ticket fell through to
+    // JD-05 or PENDIENTE regardless of whether the matrix already had the
+    // answer.
+    responsibility_matrix: Record<string, string> | null;
   } | null;
   assets: {
     id: string;
@@ -72,7 +80,7 @@ async function loadTicketContextForLocale(
 
   const { data: lease } = await supabase
     .from("leases")
-    .select("maintenance_clause, exclusive_use_clause")
+    .select("maintenance_clause, exclusive_use_clause, responsibility_matrix")
     .eq("locale_id", localeId)
     .lte("start_date", new Date().toISOString())
     .gte("end_date", new Date().toISOString())
@@ -126,10 +134,15 @@ P4 Programado — cosmetic/preventive/planned. Acuse <=1 business day.
 
 DIAGNOSIS: ask only the one or two questions whose answer changes which trade gets dispatched. Resolve error codes against the asset's manual, cite the manual as the source. If two trades are plausible and nothing separates them, pick the trade that can diagnose the other.
 
-COST ATTRIBUTION — cite the lease's maintenance clause verbatim if the fault is covered. If the clause is silent, you may apply JD-05 (the jurisdictional default for maintenance responsibility when the lease doesn't address it) — set jd05_applied true and still name the resulting bucket. If neither the clause nor JD-05 resolves it, set cost_bucket to PENDIENTE and list the unresolved key. Never guess a bucket without a cited source.
+COST ATTRIBUTION, in this order of preference:
+1. "Matriz de responsabilidad" (when provided): a landlord-confirmed, per-system assignment from the digitized, human-verified lease — stronger evidence than the freeform clause below, because a person already read the real contract and picked the bucket for exactly this system. If the fault matches one of its five systems (HVAC/clima, techo/impermeabilización, plomería, instalación eléctrica, cristalería de fachada), use that system's assignment: landlord -> ARRENDADOR, tenant -> INQUILINO, shared -> ARRENDADOR (see the CAM rule below — "shared" without a CAM program still lands on the landlord). Set lease_clause_citation to name the system and the matrix, e.g. "Matriz de responsabilidad (contrato digitalizado): HVAC = arrendatario" — you are not quoting a clause verbatim here, you are citing a structured, already-confirmed field, and jd05_applied stays false since the matrix resolved it, not the jurisdictional default.
+2. The freeform maintenance clause, if the fault's system isn't in the matrix (matrix absent, or a system like a tenant's own kitchen equipment that was never one of the five universal systems): cite the clause verbatim if it covers the fault.
+3. JD-05 (the jurisdictional default for maintenance responsibility when neither the matrix nor the clause addresses it) — set jd05_applied true and still name the resulting bucket.
+4. If nothing above resolves it, set cost_bucket to PENDIENTE and list the unresolved key. Never guess a bucket without a cited source.
+
 - ARRENDADOR: structure, roof, foundation, building envelope, base building systems.
 - INQUILINO: interior finishes, tenant's own equipment, tenant-caused damage.
-- This client has not engaged cam-allocator (Renata) — there is no proration mechanism, so CAM is not a valid bucket here. A fault that would normally be CAM (common-area repairs, shared systems — common HVAC, common lighting, parking, shared security) attributes to ARRENDADOR instead: the landlord absorbs it directly, uncharged to tenants. Note in lease_clause_citation that this would be CAM if a CAM program existed, so the landlord can tell the two cases apart.
+- This client has not engaged cam-allocator (Renata) — there is no proration mechanism, so CAM is not a valid bucket here. A fault that would normally be CAM (common-area repairs, shared systems — common HVAC, common lighting, parking, shared security, or a matrix system marked "shared") attributes to ARRENDADOR instead: the landlord absorbs it directly, uncharged to tenants. Note in lease_clause_citation that this would be CAM if a CAM program existed, so the landlord can tell the two cases apart.
 - Capital replacement of an asset at end-of-life is landlord capital, not CAM-chargeable, even when that asset's routine repair would be.
 
 WARRANTY: if you can match the reported fault to one of the assets provided, say so via matched_asset_id — the caller checks its warranty/service-contract status independently; you are not asked to judge dates yourself.
@@ -137,6 +150,25 @@ WARRANTY: if you can match the reported fault to one of the assets provided, say
 TRADE: recommended_trade must be exactly one of HVAC, plomeria, electrico, seguridad, refrigeracion — these are the contractor roster's own trade categories, used for an exact-match dispatch lookup. A descriptive phrase instead of one of these five values means no contractor gets found even when a valid one exists.
 
 Respond only with the structured fields requested — no prose outside them.`;
+
+// Same five keys and Spanish labels legal-documents-panel.tsx's Gate 2 form
+// renders (SYSTEM_LABELS) — kept as the same literal mapping rather than
+// imported, matching how this codebase already handles this exact
+// duplication (see contract-status.ts's own note on the same five keys).
+const MATRIX_SYSTEM_LABELS: Record<string, string> = {
+  hvac: "HVAC / Clima",
+  roof: "Techo / Impermeabilización",
+  plumbing: "Plomería",
+  electrical: "Instalación eléctrica",
+  storefront_glass: "Cristalería de fachada",
+};
+
+function formatResponsibilityMatrix(matrix: Record<string, string> | null): string {
+  if (!matrix) return "(sin matriz — contrato no digitalizado o sin contrato activo cargado)";
+  return Object.entries(MATRIX_SYSTEM_LABELS)
+    .map(([key, label]) => `- ${label}: ${matrix[key] ?? "(no especificado)"}`)
+    .join("\n");
+}
 
 async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
   "use step";
@@ -146,7 +178,9 @@ async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
     `Reporte del inquilino (${context.locale.tenant_entity ?? "desconocido"}, local ${context.locale.unit_number}):`,
     context.rawText ?? "(sin texto extraído — evidencia visual únicamente)",
     "",
-    `Cláusula de mantenimiento del contrato: ${context.lease?.maintenance_clause ?? "(sin contrato activo cargado)"}`,
+    `Matriz de responsabilidad (contrato digitalizado y confirmado por el propietario, ver COST ATTRIBUTION):\n${formatResponsibilityMatrix(context.lease?.responsibility_matrix ?? null)}`,
+    "",
+    `Cláusula de mantenimiento del contrato (usar solo si la matriz no cubre el sistema en falla): ${context.lease?.maintenance_clause ?? "(sin contrato activo cargado)"}`,
     "",
     "Activos registrados en este local:",
     context.assets.length
@@ -201,7 +235,7 @@ const SkepticVerdictSchema = z.object({
 });
 type SkepticVerdict = z.infer<typeof SkepticVerdictSchema>;
 
-const SKEPTIC_SYSTEM_PROMPT = `You audit a maintenance-triage draft before it reaches a landlord. Find the weakest claim in the cost attribution: an uncited clause, a capital-vs-repair mixup, a bucket assigned without JD-05 support when the clause is silent, or a priority that doesn't match the severity table. Flag only real problems — do not invent uncertainty that isn't there.`;
+const SKEPTIC_SYSTEM_PROMPT = `You audit a maintenance-triage draft before it reaches a landlord. Find the weakest claim in the cost attribution: an uncited clause, a capital-vs-repair mixup, a bucket assigned without JD-05 support when the clause and the responsibility matrix are both silent, a bucket that ignores a matrix entry that actually covers the fault's system (the matrix outranks the freeform clause and JD-05 — see the draft prompt's ordering), or a priority that doesn't match the severity table. Flag only real problems — do not invent uncertainty that isn't there.`;
 
 async function runSkeptic(
   context: TicketContext,
@@ -218,6 +252,7 @@ async function runSkeptic(
       {
         role: "user",
         content: [
+          `Matriz de responsabilidad (contrato digitalizado):\n${formatResponsibilityMatrix(context.lease?.responsibility_matrix ?? null)}`,
           `Cláusula de mantenimiento: ${context.lease?.maintenance_clause ?? "(ninguna)"}`,
           `Borrador de Diego: ${JSON.stringify(draft)}`,
         ].join("\n\n"),
