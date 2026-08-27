@@ -356,7 +356,14 @@ export function LegalDocumentsPanel({
        *  unconditionally forever — fetchActiveLeaseDocuments has no status
        *  filter, so the queue only ever grew. Collapsed by default instead:
        *  nothing here needs a landlord's attention, it's just a record of
-       *  what happened. */}
+       *  what happened.
+       *
+       *  fetchActiveLeaseDocuments now caps the resolved set it fetches
+       *  (RESOLVED_DOCUMENT_HISTORY_LIMIT) — `resolved.length` is however
+       *  many came back, not the plaza's true lifetime total, so the label
+       *  says "reciente" rather than implying this is the full record. The
+       *  actual full record per lease already lives in the rent roll's SSOT
+       *  view via source_document_id. */}
       {resolved.length > 0 && (
         <div className="border-t border-hairline pt-3">
           <button
@@ -364,7 +371,7 @@ export function LegalDocumentsPanel({
             onClick={() => setShowHistory((v) => !v)}
             className="text-xs font-semibold text-ink-700 underline cursor-pointer"
           >
-            {showHistory ? "Ocultar historial" : `Ver historial (${resolved.length})`}
+            {showHistory ? "Ocultar historial" : `Ver historial reciente (${resolved.length})`}
           </button>
           {showHistory && (
             <div className="space-y-3 mt-3">

@@ -321,8 +321,23 @@ function tenantNameFromExtractedFields(extractedFields: unknown): string | null 
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
+// A document that has cleared both gates (or died trying) has no further
+// claim on a landlord's attention — its real, durable record is the `leases`
+// row it produced (source_document_id), browsable from the rent roll's SSOT
+// view, not this pipeline queue. Capped so the Legal tab's history accordion
+// stays a "what happened recently" convenience instead of an ever-growing
+// fetch of every document this plaza has ever digitized — uncapped, this
+// query's cost (extracted_fields included, a real per-row JSON blob) grows
+// forever with plaza age, on every single page load, regardless of whether
+// anyone ever opens the accordion.
+const RESOLVED_DOCUMENT_HISTORY_LIMIT = 20;
+
+const LEASE_DOCUMENT_COLUMNS =
+  "id, original_filename, status, suggested_locale_id, match_confidence, locale_id, extracted_fields, extraction_verified_at, error_message";
+
 /**
- * Every `kind = 'active_lease'` document, newest first, for the Legal tab's
+ * Every `kind = 'active_lease'` document that still needs a landlord's
+ * attention, plus the most recently resolved ones, for the Legal tab's
  * pipeline panel. Kept as its own fetch rather than folded into
  * fetchPortfolio() — the portfolio is the rent roll / lease ledger, and this
  * is intake state that a document can hold without ever producing a lease row.
@@ -330,14 +345,32 @@ function tenantNameFromExtractedFields(extractedFields: unknown): string | null 
 export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
   const supabase = getSupabaseServiceClient();
 
-  const { data: rows, error } = await supabase
-    .from("documents")
-    .select(
-      "id, original_filename, status, suggested_locale_id, match_confidence, locale_id, extracted_fields, extraction_verified_at, error_message",
-    )
-    .eq("kind", "active_lease")
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  // Mirrors isActionable() in legal-documents-panel.tsx: the queue itself
+  // (ready_for_triage / needs_new_lease / attached-but-unverified) is never
+  // capped — that's real pending work, and however small it should always
+  // render in full. Only what's already resolved (attached-and-verified,
+  // rejected, failed) gets bounded, and by *resolution* recency
+  // (updated_at), not upload recency — "what happened lately" is what a
+  // history view is for.
+  const [{ data: activeRows, error: activeError }, { data: resolvedRows, error: resolvedError }] =
+    await Promise.all([
+      supabase
+        .from("documents")
+        .select(LEASE_DOCUMENT_COLUMNS)
+        .eq("kind", "active_lease")
+        .or("status.eq.ready_for_triage,status.eq.needs_new_lease,and(status.eq.attached,extraction_verified_at.is.null)")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("documents")
+        .select(LEASE_DOCUMENT_COLUMNS)
+        .eq("kind", "active_lease")
+        .or("status.eq.rejected,status.eq.failed,and(status.eq.attached,extraction_verified_at.not.is.null)")
+        .order("updated_at", { ascending: false })
+        .limit(RESOLVED_DOCUMENT_HISTORY_LIMIT),
+    ]);
+  if (activeError) throw new Error(activeError.message);
+  if (resolvedError) throw new Error(resolvedError.message);
+  const rows = [...(activeRows ?? []), ...(resolvedRows ?? [])];
 
   // Both the Gate 1 suggestion and the Gate 2 confirmed target need resolving,
   // so collect them together and do one lookup rather than two.
