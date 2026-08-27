@@ -14,6 +14,13 @@ export const LeaseExtractedFieldsSchema = z
     start_date: z.string(), // ISO "YYYY-MM-DD"
     end_date: z.string(), // ISO "YYYY-MM-DD"
     base_rent_monthly: z.number().positive().nullable(),
+    // Written onto `locales.area_sqm` by promoteExtraction — the contract's
+    // stated GLA is the authoritative source, and until this field existed
+    // there was no path for a digitized lease to ever correct a locale's
+    // seeded square footage (rent roll and Mariana's fit scoring both read
+    // that column directly). Nullable: not every contract states a GLA in a
+    // form clean enough to extract.
+    area_sqm: z.number().positive().nullable(),
     // These map straight onto `leases.exclusive_use_clause` / `.permitted_use`
     // — the fields lease-screener/Mariana actually screens new applicants
     // against (SKILL.md §2B). Previously absent from this schema entirely:

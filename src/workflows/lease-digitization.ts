@@ -255,6 +255,15 @@ async function promoteExtraction(
 
   const finalFields = decision.correctedFields ?? (document.extracted_fields as LeaseExtractedFields);
 
+  const { data: locale, error: localeError } = await supabase
+    .from("locales")
+    .select("unit_number, tenant_entity, status")
+    .eq("id", localeId)
+    .single();
+  if (localeError || !locale) {
+    throw new FatalError(`could not load locale ${localeId}: ${localeError?.message ?? "no row returned"}`);
+  }
+
   // "Current" lease for the locale is resolved the same way
   // portfolio.server.ts already does it — latest end_date among that locale's
   // leases rows — rather than inventing new selection logic here.
@@ -267,19 +276,33 @@ async function promoteExtraction(
 
   let currentLeaseId = leaseRows?.[0]?.id as string | undefined;
 
-  if (!currentLeaseId) {
-    // Gate 1's locale picker deliberately offers vacant units too — a scanned
-    // contract can legitimately belong to a unit with no `leases` row yet.
-    if (!decision.newLeaseDetails) {
-      // First time reaching this locale with no active lease: the match was
-      // fine, there's just nothing to promote onto yet. Save finalFields onto
-      // `documents` as a safe-deposit (it's the landlord's confirmed/edited
-      // matrix — the only copy in existence once the caller's payload is
-      // gone) and flip status to the dedicated `needs_new_lease` state so the
-      // panel renders the follow-up form instead of looking stuck. Returning
-      // this discriminator (rather than just writing the row) is what tells
-      // the workflow loop to keep the same hook open for that follow-up,
-      // instead of treating this call as done.
+  // Whether this confirm is starting a fresh tenancy rather than editing the
+  // current tenant's own terms. True when the locale isn't actually occupied
+  // by anyone (vacant, or genuinely lease-less) OR when the contract names
+  // someone other than the locale's tenant of record — an expired-but-not-
+  // yet-offboarded unit (locales.status still OCCUPIED, vacateTenantAction
+  // never run) getting a new tenant's contract without a separate "vacate"
+  // step first. Found live: uploading Sushi Central's contract onto MINT
+  // Boutique's expired-but-still-OCCUPIED unit silently overwrote MINT's
+  // lease row in place under MINT's own tenant_entity, because the old
+  // lookup only asked "does a leases row exist," never "is it this same
+  // tenant's." portfolio.server.ts already keys "active lease" off
+  // locales.status, not date/existence alone — this mirrors that.
+  const incomingTenant = finalFields.tenant_entity.trim().toLowerCase();
+  const recordedTenant = locale.tenant_entity?.trim().toLowerCase();
+  const isNewTenancy = locale.status !== "OCCUPIED" || !recordedTenant || incomingTenant !== recordedTenant;
+
+  if (isNewTenancy) {
+    if (!currentLeaseId && !decision.newLeaseDetails) {
+      // First time reaching this locale with no lease row at all: the match
+      // was fine, there's just nothing to promote onto yet. Save finalFields
+      // onto `documents` as a safe-deposit (it's the landlord's confirmed/
+      // edited matrix — the only copy in existence once the caller's payload
+      // is gone) and flip status to the dedicated `needs_new_lease` state so
+      // the panel renders the follow-up form instead of looking stuck.
+      // Returning this discriminator (rather than just writing the row) is
+      // what tells the workflow loop to keep the same hook open for that
+      // follow-up, instead of treating this call as done.
       await supabase
         .from("documents")
         .update({
@@ -292,29 +315,32 @@ async function promoteExtraction(
       return "needs_new_lease";
     }
 
-    // The follow-up form answered: create the missing lease and occupy the
-    // locale. lease_id follows this dataset's existing convention (see any
-    // row in `leases`: "LEASE-<unit_number>") rather than inventing a new one.
-    const { data: locale, error: localeError } = await supabase
-      .from("locales")
-      .select("unit_number")
-      .eq("id", localeId)
-      .single();
-    if (localeError || !locale) {
-      throw new FatalError(
-        `could not load locale ${localeId} to create new lease: ${localeError?.message ?? "no row returned"}`,
-      );
-    }
+    // Either the needs_new_lease follow-up answered (a genuinely lease-less
+    // locale), or a tenant swap detected directly from the confirmed
+    // extraction — finalFields already carries tenant_entity/start_date/
+    // end_date/base_rent_monthly (LeaseExtractedFieldsSchema extracts them
+    // unconditionally for exactly this reason), so no extra round-trip is
+    // needed for the swap case. lease_id follows rent-roll-actions.ts's own
+    // convention for a locale gaining a subsequent lease row (`newLeaseId`)
+    // rather than the original "LEASE-<unit_number>" one, which only ever
+    // held for a locale's first-ever lease — a second row for the same unit
+    // would collide against `leases.lease_id`'s unique constraint.
+    const leaseDetails = decision.newLeaseDetails ?? {
+      tenant_entity: finalFields.tenant_entity,
+      start_date: finalFields.start_date,
+      end_date: finalFields.end_date,
+      base_rent_monthly: finalFields.base_rent_monthly,
+    };
 
     const { data: newLease, error: insertError } = await supabase
       .from("leases")
       .insert({
-        lease_id: `LEASE-${locale.unit_number}`,
+        lease_id: `LEASE-${locale.unit_number}-${Date.now()}`,
         locale_id: localeId,
-        tenant_entity: decision.newLeaseDetails.tenant_entity,
-        start_date: decision.newLeaseDetails.start_date,
-        end_date: decision.newLeaseDetails.end_date,
-        base_rent_monthly: decision.newLeaseDetails.base_rent_monthly,
+        tenant_entity: leaseDetails.tenant_entity,
+        start_date: leaseDetails.start_date,
+        end_date: leaseDetails.end_date,
+        base_rent_monthly: leaseDetails.base_rent_monthly,
         responsibility_matrix: finalFields.responsibility_matrix,
         notice_period_days: finalFields.notice_period_days,
         exclusive_use_clause: finalFields.exclusive_use_clause,
@@ -332,9 +358,21 @@ async function promoteExtraction(
 
     await supabase
       .from("locales")
-      .update({ tenant_entity: decision.newLeaseDetails.tenant_entity, status: "OCCUPIED" })
+      .update({
+        tenant_entity: leaseDetails.tenant_entity,
+        status: "OCCUPIED",
+        ...(finalFields.area_sqm !== null ? { area_sqm: finalFields.area_sqm } : {}),
+      })
       .eq("id", localeId);
   } else {
+    if (finalFields.area_sqm !== null) {
+      // A confirmed extraction is the contract's stated GLA — same rule as
+      // the tenant/term/rent overwrite just above: this document is now the
+      // authoritative source, not a value to leave stale forever because
+      // nothing else in the pipeline ever writes `locales.area_sqm`.
+      await supabase.from("locales").update({ area_sqm: finalFields.area_sqm }).eq("id", localeId);
+    }
+
     await supabase
       .from("leases")
       .update({
