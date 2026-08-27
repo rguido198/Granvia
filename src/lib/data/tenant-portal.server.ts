@@ -16,6 +16,12 @@ export type LocaleOption = {
   id: string;
   unitNumber: string;
   tenantEntity: string | null;
+  /** `locales.status` verbatim ("OCCUPIED" / "VACANT" / etc.) — the Legal
+   *  tab's Gate 1 picker groups by this, and the overwrite-warning check
+   *  mirrors lease-digitization.ts's own isNewTenancy predicate
+   *  (`status !== "OCCUPIED"`), so this has to be the same ground truth,
+   *  not a tenantEntity-nullness proxy. */
+  status: string;
   propertyName: string;
 };
 
@@ -133,16 +139,23 @@ export async function fetchLocaleOptions(): Promise<LocaleOption[]> {
   const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from("locales")
-    .select("id, unit_number, tenant_entity, properties ( name )")
+    .select("id, unit_number, tenant_entity, status, properties ( name )")
     .order("unit_number", { ascending: true });
 
   if (error || !data) return [];
 
-  type Row = { id: string; unit_number: string; tenant_entity: string | null; properties: { name: string } | null };
+  type Row = {
+    id: string;
+    unit_number: string;
+    tenant_entity: string | null;
+    status: string;
+    properties: { name: string } | null;
+  };
   return (data as unknown as Row[]).map((l) => ({
     id: l.id,
     unitNumber: l.unit_number,
     tenantEntity: l.tenant_entity,
+    status: l.status,
     propertyName: l.properties?.name ?? "?",
   }));
 }

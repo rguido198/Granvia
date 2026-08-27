@@ -372,6 +372,7 @@ export function LandlordDashboard({
           id: l.id,
           unitCode: l.unitNumber,
           tenantEntity: l.tenantEntity ?? "Vacante",
+          status: l.status,
         }))
         // Sorted by tenant, not unit code: the picker renders "tenant — unit"
         // specifically so a landlord can type a tenant's name and jump to it

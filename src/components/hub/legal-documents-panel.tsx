@@ -40,7 +40,18 @@ export type DocumentRow = {
   errorMessage: string | null;
 };
 
-export type UnitOption = { id: string; unitCode: string; tenantEntity: string };
+export type UnitOption = {
+  id: string;
+  unitCode: string;
+  tenantEntity: string;
+  /** `locales.status` verbatim — groups Gate 1's correction picker into
+   *  "Inquilinos existentes" vs "Locales vacantes" and feeds the
+   *  overwrite-warning check, which needs the real status, not a
+   *  tenantEntity-nullness guess (a locale can carry a stale tenant_entity
+   *  while not actually being OCCUPIED — see isNewTenancy in
+   *  lease-digitization.ts). */
+  status: string;
+};
 
 /** Gate 2's three landlord decisions — see lease-digitization.ts's
  *  extractionHook. "rescan" re-reads this same document; "reject" discards
@@ -542,8 +553,35 @@ export function MatchReviewForm({
   onResolved: () => void;
 }) {
   const [selectedLocaleId, setSelectedLocaleId] = useState<string>("");
+  // Requires an explicit second click before an overwrite-risk confirm goes
+  // through — see isOverwriteRisk below. Reset whenever the selection
+  // changes so acknowledging one locale's risk can never silently carry
+  // over to a different one.
+  const [overwriteAcknowledged, setOverwriteAcknowledged] = useState(false);
   const [pendingAction, setPendingAction] = useState<"confirm" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedUnit = selectedLocaleId ? allUnits.find((u) => u.id === selectedLocaleId) : undefined;
+  // A manual correction overrides the auto-suggestion as the confirm target.
+  // Auto-suggested candidates are always drawn from OCCUPIED locales
+  // (loadDocumentContext in lease-digitization.ts filters on that status),
+  // so an unmodified suggestion is always implicitly targeting an occupied
+  // unit — no lookup needed for that case.
+  const targetTenant = selectedUnit
+    ? selectedUnit.status === "OCCUPIED"
+      ? selectedUnit.tenantEntity
+      : null
+    : suggestedTenant;
+  // Same strict trim+lowercase comparison promoteExtraction's isNewTenancy
+  // uses (lease-digitization.ts) to decide a swap, not the fuzzy matcher —
+  // this warning has to agree with what Gate 2 is about to independently
+  // decide, not offer a second opinion that could disagree with it. This is
+  // the exact seam the MINT Boutique/Sushi Central incident happened at:
+  // confirming a match onto a still-OCCUPIED locale silently overwrote the
+  // recorded tenant's lease because nothing surfaced the mismatch before
+  // the click.
+  const isOverwriteRisk =
+    !!targetTenant && !!documentTenantName && targetTenant.trim().toLowerCase() !== documentTenantName.trim().toLowerCase();
 
   // "This unit isn't in the rent roll at all yet" — distinct from
   // correctedLocaleId picking an existing wrong suggestion. Before this,
@@ -561,6 +599,11 @@ export function MatchReviewForm({
   );
   const [createdUnit, setCreatedUnit] = useState<{ id: string; unitNumber: string } | null>(null);
   const [creatingUnitPending, setCreatingUnitPending] = useState(false);
+  // selectedLocaleId (and therefore isOverwriteRisk) can hold a stale
+  // occupied-locale pick from before "+ Es un local nuevo" was clicked —
+  // this has no business arming the warning or the confirm button while
+  // that unrelated create-new-local form is what's actually on screen.
+  const showOverwriteWarning = isOverwriteRisk && !creatingNewUnit && !createdUnit;
 
   async function createNewUnit() {
     setError(null);
@@ -588,6 +631,7 @@ export function MatchReviewForm({
       }
       setCreatedUnit({ id: json.id, unitNumber: json.unitNumber });
       setSelectedLocaleId(json.id);
+      setOverwriteAcknowledged(false);
       setCreatingNewUnit(false);
     } finally {
       setCreatingUnitPending(false);
@@ -698,15 +742,36 @@ export function MatchReviewForm({
         <div className="flex items-center gap-2">
           <select
             value={selectedLocaleId}
-            onChange={(e) => setSelectedLocaleId(e.target.value)}
+            onChange={(e) => {
+              setSelectedLocaleId(e.target.value);
+              setOverwriteAcknowledged(false);
+            }}
             className="border border-hairline rounded-lg px-2 py-1 cursor-pointer"
           >
             <option value="">-- corregir local --</option>
-            {allUnits.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.tenantEntity} — {u.unitCode}
-              </option>
-            ))}
+            {/* Grouped by occupancy rather than one flat alphabetical list of
+             *  every local in the plaza — the landlord has to be able to tell
+             *  at a glance whether they're correcting toward another existing
+             *  tenant's renewal or picking a genuinely vacant space, not
+             *  discover it only after confirming. */}
+            <optgroup label="Inquilinos existentes">
+              {allUnits
+                .filter((u) => u.status === "OCCUPIED")
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.tenantEntity} — {u.unitCode}
+                  </option>
+                ))}
+            </optgroup>
+            <optgroup label="Locales vacantes">
+              {allUnits
+                .filter((u) => u.status !== "OCCUPIED")
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.tenantEntity} — {u.unitCode}
+                  </option>
+                ))}
+            </optgroup>
           </select>
           <button
             type="button"
@@ -717,6 +782,13 @@ export function MatchReviewForm({
           </button>
         </div>
       )}
+      {showOverwriteWarning && (
+        <p className="text-amber-900 font-semibold bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+          Este local está ocupado actualmente por <strong>{targetTenant}</strong> — el documento indica un inquilino
+          distinto (<strong>{documentTenantName}</strong>). Confirmar sobrescribirá el contrato vigente de{" "}
+          {targetTenant}.
+        </p>
+      )}
       <div className="flex gap-2">
         {/* With neither a suggestion nor a correction there is no locale to
          *  promote — promoteMatch has nothing to write. Block the click
@@ -724,10 +796,28 @@ export function MatchReviewForm({
         <button
           type="button"
           disabled={pendingAction !== null || (!suggestedUnit && !selectedLocaleId)}
-          onClick={() => confirm(true)}
-          className="bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => {
+            // First click on an overwrite-risk target only arms the button —
+            // the warning above is already visible by then, but requiring a
+            // second, differently-labeled click is the actual friction that
+            // stops a misclick from silently overwriting someone's lease.
+            if (showOverwriteWarning && !overwriteAcknowledged) {
+              setOverwriteAcknowledged(true);
+              return;
+            }
+            confirm(true);
+          }}
+          className={
+            showOverwriteWarning && overwriteAcknowledged
+              ? "bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              : "bg-ink text-white px-3 py-1 rounded-lg font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          }
         >
-          {pendingAction === "confirm" ? "Confirmando..." : "Confirmar"}
+          {pendingAction === "confirm"
+            ? "Confirmando..."
+            : showOverwriteWarning && overwriteAcknowledged
+              ? `Sí, sobrescribir contrato de ${targetTenant}`
+              : "Confirmar"}
         </button>
         <RejectDocumentButton
           disabled={pendingAction !== null}
