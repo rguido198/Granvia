@@ -1781,13 +1781,19 @@ export function LandlordDashboard({
                                 </div>
                               </td>
                               <td className="p-3.5">
-                                <p className={`font-bold text-sm ${c.renewalSoon ? "text-caution" : "text-ink"}`}>
+                                <p
+                                  className={`font-bold text-sm ${c.isExpired ? "text-alert" : c.renewalSoon ? "text-caution" : "text-ink"}`}
+                                >
                                   {formatContractDate(c.endDate)}
                                 </p>
                               </td>
                               <td className="p-3.5 font-semibold text-ink-700 text-sm text-right tabular-nums">{formatMxn(c.rentMonthly)}</td>
                               <td className="p-3.5 text-right">
-                                {c.renewalSoon ? (
+                                {c.isExpired ? (
+                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge">
+                                    Vencido
+                                  </span>
+                                ) : c.renewalSoon ? (
                                   <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40">
                                     Renovación Próxima
                                   </span>

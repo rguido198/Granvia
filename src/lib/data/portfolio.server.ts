@@ -39,6 +39,10 @@ export type LeaseDetail = {
   startDate: string;
   endDate: string;
   renewalSoon: boolean;
+  /** end_date has already passed with no renewal recorded — distinct from
+   *  renewalSoon (0–6 months *remaining*), which silently returns false
+   *  once that window goes negative rather than flagging it. */
+  isExpired: boolean;
   /** documents.id of the digitized contract this lease's terms came from —
    *  null for a lease never touched by the lease-digitization pipeline (a
    *  hand-entered row, or one predating source_document_id). Lets the SSOT
@@ -79,6 +83,15 @@ function monthsUntil(dateStr: string): number {
 function isRenewalSoon(endDate: string): boolean {
   const months = monthsUntil(endDate);
   return months >= 0 && months <= 6;
+}
+
+/** A lease whose end_date has already passed with no renewal recorded —
+ *  previously indistinguishable from "Vigente" in the SSOT table, since
+ *  isRenewalSoon only flags 0–6 months *remaining* and silently returns
+ *  false once that window is negative. Found live: a digitized contract's
+ *  real end_date landed in the past relative to today. */
+function isExpired(endDate: string): boolean {
+  return monthsUntil(endDate) < 0;
 }
 
 /**
@@ -180,6 +193,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         startDate: l.start_date,
         endDate: l.end_date,
         renewalSoon: isRenewalSoon(l.end_date),
+        isExpired: isExpired(l.end_date),
         sourceDocumentId: l.source_document_id,
       };
     })
