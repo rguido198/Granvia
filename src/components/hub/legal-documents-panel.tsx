@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ConsoleModal } from "@/components/hub/console-modal";
 import {
   LeaseExtractedFieldsSchema,
   type LeaseExtractedFields,
@@ -311,6 +312,58 @@ export function LeaseUploadZone({ onUploaded }: { onUploaded: () => void }) {
   );
 }
 
+/**
+ * Prominent, always-visible entry point for the upload flow. Previously the
+ * only way in was LeaseUploadZone's inline drop-zone, rendered at the bottom
+ * of a card below an 85-row contracts table — reachable, but only after
+ * scrolling well past the table, which read as "hidden." This is a plain
+ * button at the top of the tab; the drop-zone itself is unchanged, just
+ * relocated into a modal opened from here instead of sitting inline.
+ */
+export function UploadContractButton({ onUploaded }: { onUploaded: () => void }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
+      >
+        Subir contrato(s)
+      </button>
+      {open && (
+        <ConsoleModal>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-lg w-full space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-bold text-slate-900">Subir contratos escaneados</p>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Cerrar"
+                  className="text-slate-400 hover:text-slate-700 cursor-pointer text-lg leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Cada documento requiere dos confirmaciones humanas: el local al que corresponde, y la exactitud de
+                las cláusulas extraídas. Revísalos en la lista de abajo una vez subidos.
+              </p>
+              <LeaseUploadZone onUploaded={onUploaded} />
+            </div>
+          </div>
+        </ConsoleModal>
+      )}
+    </>
+  );
+}
+
 export function MatchReviewForm({
   documentId,
   suggestedUnit,
@@ -457,38 +510,40 @@ function RejectDocumentButton({
         {pending ? "Rechazando..." : "Rechazar documento"}
       </button>
       {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-sm w-full space-y-3">
-            <p className="text-sm font-bold text-slate-900">¿Rechazar este documento?</p>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              No se promoverá ningún dato a la plaza — ni la matriz de responsabilidad, ni un contrato nuevo. Esta
-              acción no reintenta la extracción; para eso usa &ldquo;Re-escanear contrato&rdquo; en vez de esto.
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="text-slate-600 font-bold px-3 py-2 rounded-lg text-xs cursor-pointer hover:bg-slate-100"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  onConfirmReject();
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
-              >
-                Rechazar documento
-              </button>
+        <ConsoleModal>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-sm w-full space-y-3">
+              <p className="text-sm font-bold text-slate-900">¿Rechazar este documento?</p>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                No se promoverá ningún dato a la plaza — ni la matriz de responsabilidad, ni un contrato nuevo. Esta
+                acción no reintenta la extracción; para eso usa &ldquo;Re-escanear contrato&rdquo; en vez de esto.
+              </p>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="text-slate-600 font-bold px-3 py-2 rounded-lg text-xs cursor-pointer hover:bg-slate-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    onConfirmReject();
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
+                >
+                  Rechazar documento
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ConsoleModal>
       )}
     </>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
+import { ConsoleModal } from "@/components/hub/console-modal";
 import {
   addTenantAction,
   bulkAddTenantsAction,
@@ -246,38 +247,40 @@ export function TerminateTenantButton({
         Desocupar
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-sm w-full space-y-3">
-            <p className="text-sm font-bold text-slate-900">¿Desocupar el local de {tenantName}?</p>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {unitCode} pasará a estatus <strong>VACANTE</strong> y el contrato se marcará con vencimiento hoy. Esto
-              no borra nada — {tenantName} se mueve a &ldquo;Inquilinos Anteriores&rdquo; con su renta y fecha de
-              salida, y el local queda listo para un nuevo contrato.
-            </p>
-            <form action={formAction} className="space-y-2">
-              <input type="hidden" name="locale_id" value={localeId} />
-              <input type="hidden" name="lease_id" value={leaseId} />
-              <input type="hidden" name="tenant_name" value={tenantName} />
-              {state.error && <p className="text-[11px] text-red-600 font-semibold">{state.error}</p>}
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="text-slate-600 font-bold px-3 py-2 rounded-lg text-xs cursor-pointer hover:bg-slate-100"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={pending}
-                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
-                >
-                  {pending ? "Procesando…" : "Confirmar Desocupación"}
-                </button>
-              </div>
-            </form>
+        <ConsoleModal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-sm w-full space-y-3">
+              <p className="text-sm font-bold text-slate-900">¿Desocupar el local de {tenantName}?</p>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {unitCode} pasará a estatus <strong>VACANTE</strong> y el contrato se marcará con vencimiento hoy. Esto
+                no borra nada — {tenantName} se mueve a &ldquo;Inquilinos Anteriores&rdquo; con su renta y fecha de
+                salida, y el local queda listo para un nuevo contrato.
+              </p>
+              <form action={formAction} className="space-y-2">
+                <input type="hidden" name="locale_id" value={localeId} />
+                <input type="hidden" name="lease_id" value={leaseId} />
+                <input type="hidden" name="tenant_name" value={tenantName} />
+                {state.error && <p className="text-[11px] text-red-600 font-semibold">{state.error}</p>}
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="text-slate-600 font-bold px-3 py-2 rounded-lg text-xs cursor-pointer hover:bg-slate-100"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
+                  >
+                    {pending ? "Procesando…" : "Confirmar Desocupación"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </ConsoleModal>
       )}
     </>
   );

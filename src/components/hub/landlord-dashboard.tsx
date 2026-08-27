@@ -15,7 +15,7 @@ import type { Portfolio, LocaleStatus, LeaseDocumentRow } from "@/lib/data/portf
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
-import { LegalDocumentsPanel, LeaseUploadZone } from "@/components/hub/legal-documents-panel";
+import { LegalDocumentsPanel, UploadContractButton } from "@/components/hub/legal-documents-panel";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
@@ -1642,12 +1642,19 @@ export function LandlordDashboard({
                         Resumen ejecutivo de expedientes. Haz clic en cualquier fila para desplegar el desglose de cláusulas auditadas.
                       </p>
                     </div>
-                    <span
-                      className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0 cursor-default select-none"
-                      title="SSOT = Single Source of Truth / Fuente Única de Verdad"
-                    >
-                      {leases.length} Contratos Indexados (SSOT)
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline cursor-default select-none"
+                        title="SSOT = Single Source of Truth / Fuente Única de Verdad"
+                      >
+                        {leases.length} Contratos Indexados (SSOT)
+                      </span>
+                      {/* Was buried at the bottom of this tab, below the
+                          table, inside the Digitalización card — reachable
+                          only after scrolling past 85 rows. Moved to the one
+                          entry point every visit to this tab starts at. */}
+                      <UploadContractButton onUploaded={() => router.refresh()} />
+                    </div>
                   </div>
 
                   {/* Search / filter bar — same client-side pattern as the
@@ -1806,17 +1813,19 @@ export function LandlordDashboard({
                   {/* DIGITALIZACIÓN DE CONTRATOS — lease-document pipeline.
                       Additive to the SSOT table above: that table reads the
                       `leases` rows, this panel is the intake that produces
-                      and corrects them (two human gates, per document). */}
+                      and corrects them (two human gates, per document). Entry
+                      point is the "Subir contrato(s)" button up in the header
+                      — this card is the review queue, not where uploads
+                      start. */}
                   <div className="border border-hairline rounded-xl bg-white shadow-2xs p-4 space-y-3.5">
                     <div>
                       <h3 className="text-base font-bold text-ink">Digitalización de Contratos</h3>
                       <p className="text-xs text-ink-500 mt-0.5">
-                        Sube contratos escaneados. Cada documento requiere dos confirmaciones humanas: el local al
-                        que corresponde, y la exactitud de las cláusulas extraídas.
+                        Documentos en proceso de validación. Cada uno requiere dos confirmaciones humanas: el local
+                        al que corresponde, y la exactitud de las cláusulas extraídas.
                       </p>
                     </div>
 
-                    <LeaseUploadZone onUploaded={() => router.refresh()} />
                     <LegalDocumentsPanel
                       documents={activeLeaseDocuments}
                       allUnits={leaseDocumentUnits}
