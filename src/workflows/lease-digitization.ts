@@ -338,6 +338,18 @@ async function promoteExtraction(
     await supabase
       .from("leases")
       .update({
+        // A confirmed extraction asserts "this document is the current,
+        // authoritative version of this lease" — tenant/term/rent included,
+        // not just the matrix. Previously left untouched here on the
+        // assumption an existing lease's core terms were already correct;
+        // that's wrong whenever the uploaded contract is what actually
+        // corrects or supersedes them (found live: an existing lease row
+        // carried placeholder end_date/rent that didn't match the real
+        // contract just confirmed).
+        tenant_entity: finalFields.tenant_entity,
+        start_date: finalFields.start_date,
+        end_date: finalFields.end_date,
+        base_rent_monthly: finalFields.base_rent_monthly,
         responsibility_matrix: finalFields.responsibility_matrix,
         notice_period_days: finalFields.notice_period_days,
         exclusive_use_clause: finalFields.exclusive_use_clause,
