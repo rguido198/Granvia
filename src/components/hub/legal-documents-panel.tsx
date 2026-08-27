@@ -253,6 +253,7 @@ function DocumentCard({
               suggestedTenant={doc.suggestedLocaleTenant}
               documentTenantName={doc.documentTenantName}
               confidence={doc.matchConfidence}
+              extractedAreaSqm={fields.area_sqm}
               allUnits={allUnits}
               onResolved={onResolved}
             />
@@ -486,6 +487,7 @@ export function MatchReviewForm({
   suggestedTenant,
   documentTenantName,
   confidence,
+  extractedAreaSqm,
   allUnits,
   onResolved,
 }: {
@@ -497,6 +499,11 @@ export function MatchReviewForm({
    *  percentage cannot separate "Derma Club" from "Derma Club 2". */
   documentTenantName: string | null;
   confidence: number | null;
+  /** The contract's own stated GLA, already OCR'd by the same extraction pass
+   *  that produced documentTenantName — prefills the new-local form's m² field
+   *  so the landlord isn't retyping a number the pipeline already read.
+   *  Nullable: not every contract states a GLA cleanly enough to extract. */
+  extractedAreaSqm: number | null;
   allUnits: UnitOption[];
   onResolved: () => void;
 }) {
@@ -515,7 +522,9 @@ export function MatchReviewForm({
   // its existing needs_new_lease path once this confirms.
   const [creatingNewUnit, setCreatingNewUnit] = useState(false);
   const [newUnitNumber, setNewUnitNumber] = useState("");
-  const [newUnitAreaSqm, setNewUnitAreaSqm] = useState("");
+  const [newUnitAreaSqm, setNewUnitAreaSqm] = useState(
+    extractedAreaSqm !== null ? String(extractedAreaSqm) : "",
+  );
   const [createdUnit, setCreatedUnit] = useState<{ id: string; unitNumber: string } | null>(null);
   const [creatingUnitPending, setCreatingUnitPending] = useState(false);
 
