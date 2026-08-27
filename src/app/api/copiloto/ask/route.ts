@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentProfile } from "@/lib/auth/server";
-import { contractStatusLabel, fetchPortfolio } from "@/lib/data/portfolio.server";
+import { computeContractAggregates, contractStatusLabel, fetchPortfolio } from "@/lib/data/portfolio.server";
 import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { LeaseExtractedFieldsSchema } from "@/lib/ingest/lease-extraction-schema";
@@ -30,6 +30,7 @@ Reglas:
 - La matriz de responsabilidad de mantenimiento (matriz_responsabilidad) y los días de aviso de terminación (dias_aviso_terminacion) provienen del contrato digitalizado y verificado por el propietario — cítalos como tales cuando los uses. Si son null, dilo explícitamente: ese contrato aún no ha sido digitalizado o verificado.
 - Cada contrato incluye estatus_contractual ("Vigente" / "Renovación Próxima" / "Vencido"), ya calculado a partir de la fecha de hoy que se te da al inicio del mensaje — úsalo directamente para cualquier pregunta sobre si un contrato está vigente, por vencer o vencido. No lo recalcules tú mismo a partir de "vencimiento": es el mismo estatus exacto que ve el propietario en la tabla de contratos, y un cálculo propio podría no coincidir.
 - Cuando un contrato incluya texto_completo_contrato (el documento digitalizado íntegro) o clausulas_especiales (cláusulas fuera de lo estándar detectadas en Gate 2), úsalos para responder cualquier pregunta sobre ese contrato que los campos estructurados no cubran — no te limites a matriz_responsabilidad/uso_permitido/clausula_exclusividad si la respuesta real está en el texto completo. Si ambos son null, ese contrato aún no ha sido digitalizado — dilo explícitamente en vez de responder solo con lo poco que sí tienes.
+- Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?"), usa directamente estadisticas_agregadas_contratos — nunca cuentes tú mismo recorriendo el arreglo de contratos_de_arrendamiento. Un conteo propio sobre docenas de registros es exactamente el tipo de tarea donde un modelo puede equivocarse en silencio; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema solo cuenta contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita (ej. "de los 3 contratos digitalizados, 2 tienen el HVAC a cargo del arrendatario; los otros 82 aún no han sido digitalizados").
 - Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
 - No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema.`;
 
@@ -112,7 +113,18 @@ export async function POST(request: NextRequest) {
     creado: t.createdAt,
   }));
 
-  const dataBlock = JSON.stringify({ contratos_de_arrendamiento: leasesBlock, tickets_de_mantenimiento: ticketsBlock });
+  const aggregates = computeContractAggregates(leases);
+  const dataBlock = JSON.stringify({
+    estadisticas_agregadas_contratos: {
+      total_contratos: aggregates.totalContratos,
+      contratos_digitalizados: aggregates.contratosDigitalizados,
+      por_estatus: aggregates.porEstatus,
+      por_anio_vencimiento: aggregates.porAnioVencimiento,
+      responsabilidad_por_sistema: aggregates.responsabilidadPorSistema,
+    },
+    contratos_de_arrendamiento: leasesBlock,
+    tickets_de_mantenimiento: ticketsBlock,
+  });
 
   const client = new Anthropic();
   const response = await client.messages.create({

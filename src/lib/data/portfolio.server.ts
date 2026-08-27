@@ -1,6 +1,10 @@
 import "server-only";
 import { extractTenantNameFromDocumentText } from "@/lib/ingest/fuzzy-match-tenant";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { isExpired, isRenewalSoon, type LeaseDetail } from "./contract-status";
+
+export { computeContractAggregates, contractStatusLabel } from "./contract-status";
+export type { ContractAggregates, LeaseDetail } from "./contract-status";
 
 export type LocaleStatus = "OCCUPIED" | "VACANT" | "PENDING_LEASE";
 
@@ -26,31 +30,6 @@ export type PortfolioRow = {
   status: LocaleStatus;
 };
 
-export type LeaseDetail = {
-  id: string;
-  unitCode: string;
-  tenantEntity: string;
-  sqm: number;
-  rentMonthly: number;
-  permittedUse: string | null;
-  exclusiveUseClause: string | null;
-  responsibilityMatrix: Record<string, string> | null;
-  noticePeriodDays: number | null;
-  startDate: string;
-  endDate: string;
-  renewalSoon: boolean;
-  /** end_date has already passed with no renewal recorded — distinct from
-   *  renewalSoon (0–6 months *remaining*), which silently returns false
-   *  once that window goes negative rather than flagging it. */
-  isExpired: boolean;
-  /** documents.id of the digitized contract this lease's terms came from —
-   *  null for a lease never touched by the lease-digitization pipeline (a
-   *  hand-entered row, or one predating source_document_id). Lets the SSOT
-   *  table offer "Ver documento" from a lease's own expanded row instead of
-   *  only from the Legal tab's digitization queue. */
-  sourceDocumentId: string | null;
-};
-
 /** A locale that once had a tenant and no longer does — vacateTenantAction
  *  never deletes the locale or lease row, it just flips locales.status to
  *  VACANT and stamps the lease's end_date. This is that history, read back
@@ -73,37 +52,6 @@ export type Portfolio = {
   plazaTotalGla: number;
   contractedRent: number;
 };
-
-function monthsUntil(dateStr: string): number {
-  const end = new Date(dateStr);
-  const now = new Date();
-  return (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth());
-}
-
-function isRenewalSoon(endDate: string): boolean {
-  const months = monthsUntil(endDate);
-  return months >= 0 && months <= 6;
-}
-
-/** A lease whose end_date has already passed with no renewal recorded —
- *  previously indistinguishable from "Vigente" in the SSOT table, since
- *  isRenewalSoon only flags 0–6 months *remaining* and silently returns
- *  false once that window is negative. Found live: a digitized contract's
- *  real end_date landed in the past relative to today. */
-function isExpired(endDate: string): boolean {
-  return monthsUntil(endDate) < 0;
-}
-
-/** The same three-way precedence the SSOT table's status column renders
- *  (landlord-dashboard.tsx: isExpired, then renewalSoon, else "Vigente") —
- *  exported so a consumer that isn't rendering the table itself (Copiloto's
- *  route) doesn't have to reimplement the date math and risk drifting from
- *  what the table actually shows for the same lease. */
-export function contractStatusLabel(lease: Pick<LeaseDetail, "isExpired" | "renewalSoon">): string {
-  if (lease.isExpired) return "Vencido";
-  if (lease.renewalSoon) return "Renovación Próxima";
-  return "Vigente";
-}
 
 /**
  * Real locales + leases (src/lib/platform/... sibling — same pattern as
