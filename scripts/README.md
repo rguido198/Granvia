@@ -1,5 +1,12 @@
 # scripts/ — generación del directorio
 
+> `golden-eval-runner.ts` es distinto a todo lo demás en esta carpeta — no
+> genera contenido del directorio, evalúa la calidad de las respuestas de
+> Copiloto contra `tests/fixtures/golden-eval-set.json`. Corre con
+> `npm run eval:copiloto`; hace llamadas reales (con costo) a Anthropic y
+> Supabase, por eso nunca corre en `npm test` ni en build. Ver el comentario
+> al inicio del archivo para el detalle del flag `--conditions=react-server`.
+
 Estos scripts produjeron `src/content/tenants.ts` y `public/tenants/*` a partir
 del directorio oficial en <https://lagranvia.com.mx/1330-2/>.
 

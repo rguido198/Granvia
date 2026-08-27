@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval:copiloto": "node --conditions=react-server --env-file=.env.local --import tsx scripts/golden-eval-runner.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
@@ -32,6 +33,7 @@
     "eslint-config-next": "^15.2.0",
     "puppeteer": "^25.4.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5",
     "vitest": "^4.1.11"
   }
