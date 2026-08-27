@@ -1897,6 +1897,8 @@ export function LandlordDashboard({
                                     isExpired={c.isExpired}
                                     renewalSoon={c.renewalSoon}
                                     renewals={c.renewals}
+                                    suggestedEscalationPct={c.suggestedEscalationPct}
+                                    suggestedEscalationClauseText={c.suggestedEscalationClauseText}
                                   />
                                 </td>
                               </tr>

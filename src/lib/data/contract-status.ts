@@ -46,7 +46,46 @@ export type LeaseDetail = {
   /** Renewal drafts (lease_renewals) for this lease, most recent first —
    *  empty until "Redactar Renovación" is used. */
   renewals: LeaseRenewalSummary[];
+  /** A rent-escalation term found in the original contract's own special
+   *  clauses (see findEscalationClause below) — null when the source
+   *  contract states none, or was never digitized. Pre-fills the renewal
+   *  form's percentage field; the landlord can still override it. */
+  suggestedEscalationPct: number | null;
+  suggestedEscalationClauseText: string | null;
 };
+
+export type SpecialClause = { label: string; text: string };
+
+const ESCALATION_KEYWORDS = [
+  "incremento",
+  "escalaci",
+  "ajuste anual",
+  "aumento anual",
+  "inpc",
+  "índice nacional de precios",
+  "revisión anual",
+];
+
+/** Scans a digitized contract's special_clauses for a stated rent-escalation
+ *  term — e.g. "incremento anual del 5% conforme al INPC" — so the renewal
+ *  form can pre-fill from the original contract's own words instead of
+ *  asking the landlord to recall or re-derive it every time. Deliberately
+ *  conservative: requires both an escalation-shaped keyword AND a percentage
+ *  figure in the SAME clause. A late-payment interest clause states a %
+ *  too, but has none of these keywords, so it correctly doesn't match —
+ *  confirmed against MINT Boutique's real digitized contract, which has a
+ *  5.5% moratory-interest clause and no escalation clause at all. */
+export function findEscalationClause(clauses: SpecialClause[] | null): { pct: number; clauseText: string } | null {
+  if (!clauses) return null;
+  for (const clause of clauses) {
+    const haystack = `${clause.label} ${clause.text}`.toLowerCase();
+    if (!ESCALATION_KEYWORDS.some((k) => haystack.includes(k))) continue;
+    const match = clause.text.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (!match) continue;
+    return { pct: Number(match[1]), clauseText: clause.text };
+  }
+  return null;
+}
 
 /** One row of Mariana's renewal-drafting pipeline (lease-renewal.ts) — a
  *  Convenio Modificatorio draft awaiting landlord approval, or already

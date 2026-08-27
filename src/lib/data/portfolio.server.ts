@@ -1,7 +1,14 @@
 import "server-only";
 import { extractTenantNameFromDocumentText } from "@/lib/ingest/fuzzy-match-tenant";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { isExpired, isRenewalSoon, type LeaseDetail, type LeaseRenewalSummary } from "./contract-status";
+import {
+  findEscalationClause,
+  isExpired,
+  isRenewalSoon,
+  type LeaseDetail,
+  type LeaseRenewalSummary,
+  type SpecialClause,
+} from "./contract-status";
 
 export { computeContractAggregates, contractStatusLabel } from "./contract-status";
 export type { ContractAggregates, LeaseDetail, LeaseRenewalSummary } from "./contract-status";
@@ -156,6 +163,23 @@ export async function fetchPortfolio(): Promise<Portfolio> {
     renewalsByLeaseId.set(r.source_lease_id as string, list);
   }
 
+  // Escalation clause lookup — reads each lease's own source document's
+  // special_clauses (extraction never persists them onto `leases` itself,
+  // only `documents.extracted_fields`), so the renewal form can suggest a
+  // starting percentage from the original contract's own words.
+  const sourceDocumentIds = [...new Set(allLeases.map((l) => l.source_document_id).filter(Boolean))] as string[];
+  const { data: sourceDocs } = sourceDocumentIds.length
+    ? await supabase.from("documents").select("id, extracted_fields").in("id", sourceDocumentIds)
+    : { data: [] };
+  const specialClausesByDocumentId = new Map(
+    (sourceDocs ?? []).map((d) => [
+      d.id as string,
+      ((d.extracted_fields as { special_clauses?: SpecialClause[] } | null)?.special_clauses ?? null) as
+        | SpecialClause[]
+        | null,
+    ]),
+  );
+
   // Latest (by end_date) lease row per locale — the "current" one regardless
   // of whether that locale is currently OCCUPIED or VACANT.
   const latestLeaseByLocale = new Map<string, (typeof allLeases)[number]>();
@@ -194,6 +218,9 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const leases: LeaseDetail[] = [...activeLeaseByLocale.values()]
     .map((l) => {
       const locale = localesById.get(l.locale_id);
+      const escalation = l.source_document_id
+        ? findEscalationClause(specialClausesByDocumentId.get(l.source_document_id) ?? null)
+        : null;
       return {
         id: l.locale_id,
         unitCode: locale?.unit_number ?? "?",
@@ -212,6 +239,8 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         sourceApplicationNumber: applicationNumberByLeaseId.get(l.id) ?? null,
         leaseRowId: l.id,
         renewals: renewalsByLeaseId.get(l.id) ?? [],
+        suggestedEscalationPct: escalation?.pct ?? null,
+        suggestedEscalationClauseText: escalation?.clauseText ?? null,
       };
     })
     .sort((a, b) => a.unitCode.localeCompare(b.unitCode));

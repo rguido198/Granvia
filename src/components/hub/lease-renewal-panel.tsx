@@ -139,16 +139,30 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
 function DraftRenewalForm({
   leaseId,
   currentEndDate,
+  suggestedEscalationPct,
+  suggestedEscalationClauseText,
   onDone,
 }: {
   leaseId: string;
   currentEndDate: string;
+  /** Pulled from the original contract's own special_clauses
+   *  (findEscalationClause, contract-status.ts) — pre-fills the field below
+   *  but is still fully editable; null when the source contract has no
+   *  escalation clause on record (or was never digitized). */
+  suggestedEscalationPct: number | null;
+  suggestedEscalationClauseText: string | null;
   onDone: () => void;
 }) {
   const router = useRouter();
   const [newEndDate, setNewEndDate] = useState(todayPlusYearsISO(currentEndDate, 3));
   const [mode, setMode] = useState<"pct" | "flat">("pct");
-  const [escalationPct, setEscalationPct] = useState("5");
+  // Default to 0% (renew at the same rent) when the original contract has
+  // no escalation clause on record — an arbitrary guessed percentage (the
+  // previous default here) has no basis; "same rent unless the landlord
+  // says otherwise" does. Still fully editable either way.
+  const [escalationPct, setEscalationPct] = useState(
+    suggestedEscalationPct !== null ? String(suggestedEscalationPct) : "0",
+  );
   const [flatRent, setFlatRent] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -213,13 +227,25 @@ function DraftRenewalForm({
         </label>
       </div>
       {mode === "pct" ? (
-        <input
-          type="number"
-          value={escalationPct}
-          onChange={(e) => setEscalationPct(e.target.value)}
-          placeholder="% ej. 5"
-          className="border border-hairline rounded-lg px-2 py-1 text-xs w-24"
-        />
+        <div className="space-y-1">
+          <input
+            type="number"
+            value={escalationPct}
+            onChange={(e) => setEscalationPct(e.target.value)}
+            placeholder="% ej. 5"
+            className="border border-hairline rounded-lg px-2 py-1 text-xs w-24"
+          />
+          <p className="text-[10px] text-ink-500 font-medium max-w-md">
+            {suggestedEscalationPct !== null ? (
+              <>
+                Sugerido por el contrato original: &ldquo;{suggestedEscalationClauseText}&rdquo; — edítalo si no
+                corresponde.
+              </>
+            ) : (
+              "El contrato original no tiene cláusula de escalación en registro — 0% renueva a la misma renta. Ajusta el porcentaje o cambia a renta fija si lo deseas."
+            )}
+          </p>
+        </div>
       ) : (
         <input
           type="number"
@@ -256,12 +282,16 @@ export function LeaseRenewalPanel({
   isExpired,
   renewalSoon,
   renewals,
+  suggestedEscalationPct,
+  suggestedEscalationClauseText,
 }: {
   leaseId: string;
   currentEndDate: string;
   isExpired: boolean;
   renewalSoon: boolean;
   renewals: LeaseRenewalSummary[];
+  suggestedEscalationPct: number | null;
+  suggestedEscalationClauseText: string | null;
 }) {
   const [drafting, setDrafting] = useState(false);
 
@@ -275,7 +305,15 @@ export function LeaseRenewalPanel({
           </button>
         )}
       </div>
-      {drafting && <DraftRenewalForm leaseId={leaseId} currentEndDate={currentEndDate} onDone={() => setDrafting(false)} />}
+      {drafting && (
+        <DraftRenewalForm
+          leaseId={leaseId}
+          currentEndDate={currentEndDate}
+          suggestedEscalationPct={suggestedEscalationPct}
+          suggestedEscalationClauseText={suggestedEscalationClauseText}
+          onDone={() => setDrafting(false)}
+        />
+      )}
       {renewals.length === 0 && !drafting && (
         <p className="text-[11px] text-ink-500 font-medium">Sin borradores de renovación para este contrato.</p>
       )}

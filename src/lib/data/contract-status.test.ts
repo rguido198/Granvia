@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeContractAggregates, contractStatusLabel, type LeaseDetail } from "./contract-status";
+import { computeContractAggregates, contractStatusLabel, findEscalationClause, type LeaseDetail } from "./contract-status";
 
 function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
   return {
@@ -20,6 +20,8 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     sourceApplicationNumber: null,
     leaseRowId: "loc-1",
     renewals: [],
+    suggestedEscalationPct: null,
+    suggestedEscalationClauseText: null,
     ...overrides,
   };
 }
@@ -65,5 +67,37 @@ describe("computeContractAggregates", () => {
     expect(result.porEstatus).toEqual({ vigente: 0, renovacionProxima: 0, vencido: 0 });
     expect(result.porAnioVencimiento).toEqual({});
     expect(result.responsabilidadPorSistema.hvac).toEqual({ landlord: 0, tenant: 0, shared: 0 });
+  });
+});
+
+describe("findEscalationClause", () => {
+  it("returns null when there are no clauses", () => {
+    expect(findEscalationClause(null)).toBeNull();
+    expect(findEscalationClause([])).toBeNull();
+  });
+
+  it("finds an escalation clause and extracts its percentage", () => {
+    const result = findEscalationClause([
+      { label: "Cláusula de renta", text: "La renta se pagará puntualmente cada mes." },
+      { label: "Incremento anual", text: "La renta se incrementará anualmente conforme al INPC más 2.5%." },
+    ]);
+    expect(result).toEqual({ pct: 2.5, clauseText: "La renta se incrementará anualmente conforme al INPC más 2.5%." });
+  });
+
+  it("does not match a late-payment interest clause, even though it states a percentage — the exact MINT Boutique regression this was built against", () => {
+    const result = findEscalationClause([
+      {
+        label: "Intereses moratorios (Cláusula Octava)",
+        text: "Falta de pago de rentas o cuotas CAM genera interés moratorio mensual del 5.5% acumulativo sobre saldos insolutos.",
+      },
+    ]);
+    expect(result).toBeNull();
+  });
+
+  it("does not match an escalation-shaped keyword with no percentage in the same clause", () => {
+    const result = findEscalationClause([
+      { label: "Ajuste anual", text: "La renta se ajustará anualmente según lo que determinen las partes de mutuo acuerdo." },
+    ]);
+    expect(result).toBeNull();
   });
 });
