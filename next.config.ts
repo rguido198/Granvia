@@ -21,7 +21,16 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://formspree.io https://thoofdklpbdnaicvommo.supabase.co; frame-ancestors 'none';",
+              // frame-src added for DocumentViewerButton's PDF viewer
+              // (legal-documents-panel.tsx) — it iframes a signed Supabase
+              // Storage URL to show a digitized contract inline. Without an
+              // explicit frame-src, browsers fall back to default-src 'self'
+              // for iframes too, silently blocking that cross-origin embed
+              // ("This content is blocked") even though connect-src already
+              // allowed fetch/XHR to the same origin — frame-src is a
+              // separate CSP directive with its own fallback and isn't
+              // covered by connect-src.
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://formspree.io https://thoofdklpbdnaicvommo.supabase.co; frame-src https://thoofdklpbdnaicvommo.supabase.co; frame-ancestors 'none';",
           },
         ],
       },
