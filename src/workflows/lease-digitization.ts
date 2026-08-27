@@ -2,7 +2,7 @@ import { createHook, FatalError } from "workflow";
 
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { extractFromText, extractFromVision } from "@/lib/ingest/lease-extraction";
-import { extractTenantNameFromDocumentText, matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
+import { matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
 import type { LeaseExtractedFields, NewLeaseDetails } from "@/lib/ingest/lease-extraction-schema";
 
 /**
@@ -100,17 +100,15 @@ async function suggestMatch(
   extraction: ExtractionResult,
 ): Promise<{ suggestedLocaleId: string | null; confidence: number | null }> {
   "use step";
-  // The extraction's special_clauses/rawText don't carry a clean "tenant name"
-  // field by design (the schema is scoped to the fields Diego/Renata/Mariana
-  // need, not document metadata) — pull the likely name from the transcribed
-  // "ARRENDATARIO: <name>" line every generated and real contract carries.
-  //
-  // Shared with the Legal tab's Gate 1 form (via portfolio.server.ts) rather
-  // than inlined here, so the name the landlord is shown is provably the same
-  // string this confidence score was computed from.
-  const extractedName = extractTenantNameFromDocumentText(extraction.rawText) ?? "";
-
-  const match = matchTenant(extractedName, context.candidates);
+  // tenant_entity is a required field in LeaseExtractedFieldsSchema — the
+  // same Opus call that read the whole contract for
+  // responsibility_matrix/notice_period_days/etc. already extracted this,
+  // so match against it directly rather than re-deriving a name from a
+  // narrower line-pattern regex over the raw text. portfolio.server.ts reads
+  // the same `extracted_fields.tenant_entity` for the Legal tab's Gate 1
+  // display, so the name the landlord is shown is provably the same string
+  // this confidence score was computed from.
+  const match = matchTenant(extraction.extractedFields.tenant_entity, context.candidates);
   return { suggestedLocaleId: match?.localeId ?? null, confidence: match?.confidence ?? null };
 }
 

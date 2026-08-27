@@ -1,5 +1,4 @@
 import "server-only";
-import { extractTenantNameFromDocumentText } from "@/lib/ingest/fuzzy-match-tenant";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import {
   findEscalationClause,
@@ -295,9 +294,10 @@ export type LeaseDocumentRow = {
    *  are not enough to verify a match against a roster holding both
    *  "Derma Club" and "Derma Club 2" — the landlord has to see the name. */
   suggestedLocaleTenant: string | null;
-  /** The tenant name the *document* states for itself, derived from the same
-   *  helper the fuzzy matcher scored on. Shown next to the suggestion so
-   *  Gate 1 is a comparison of two names, not a bare assertion. */
+  /** The tenant name the LLM extraction already read off the contract
+   *  (`extracted_fields.tenant_entity`) — the same string suggestMatch
+   *  scored the fuzzy match against, so this is a comparison, not a bare
+   *  assertion. */
   documentTenantName: string | null;
   matchConfidence: number | null;
   /** Unit number / tenant of the locale Gate 1 already confirmed. Gate 2
@@ -310,6 +310,16 @@ export type LeaseDocumentRow = {
    *  promote onto — the document is fine, there is just nothing to write to. */
   errorMessage: string | null;
 };
+
+/** `extracted_fields` is a bare jsonb column with no shape guarantee, and an
+ *  in-flight or failed document leaves it at its `{}` column default — so
+ *  this reads only the one field the Legal tab's Gate 1 card needs, rather
+ *  than validating the whole LeaseExtractedFields shape just to show a name. */
+function tenantNameFromExtractedFields(extractedFields: unknown): string | null {
+  if (!extractedFields || typeof extractedFields !== "object") return null;
+  const value = (extractedFields as Record<string, unknown>).tenant_entity;
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
 
 /**
  * Every `kind = 'active_lease'` document, newest first, for the Legal tab's
@@ -328,24 +338,6 @@ export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
     .eq("kind", "active_lease")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-
-  // `raw_text` is a full 20-50 page contract per row. Only Gate 1's review
-  // form needs anything out of it (the document's own tenant name), and only
-  // `ready_for_triage` rows render that form — so fetch it for those rows
-  // alone rather than dragging every digitized contract's full text through
-  // the Legal tab on every render. In steady state that's the small pending
-  // queue, not all 85.
-  const triageIds = (rows ?? []).filter((r) => r.status === "ready_for_triage").map((r) => r.id);
-  const tenantNameByDocumentId = new Map<string, string | null>();
-  if (triageIds.length > 0) {
-    const { data: texts } = await supabase
-      .from("documents")
-      .select("id, raw_text")
-      .in("id", triageIds);
-    for (const t of texts ?? []) {
-      tenantNameByDocumentId.set(t.id, extractTenantNameFromDocumentText(t.raw_text));
-    }
-  }
 
   // Both the Gate 1 suggestion and the Gate 2 confirmed target need resolving,
   // so collect them together and do one lookup rather than two.
@@ -379,11 +371,7 @@ export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
       status: r.status,
       suggestedLocaleUnit: suggested?.unit ?? null,
       suggestedLocaleTenant: suggested?.tenant ?? null,
-      // Derived server-side, deliberately: `raw_text` is a full 20-50 page
-      // contract and has no business crossing to the client — only the one
-      // line the match was scored on does. Null for any row past Gate 1,
-      // which no longer needs it.
-      documentTenantName: tenantNameByDocumentId.get(r.id) ?? null,
+      documentTenantName: tenantNameFromExtractedFields(r.extracted_fields),
       matchConfidence: r.match_confidence === null ? null : Number(r.match_confidence),
       localeUnit: confirmed?.unit ?? null,
       localeTenant: confirmed?.tenant ?? null,

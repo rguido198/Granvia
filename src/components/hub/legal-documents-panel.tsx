@@ -122,9 +122,15 @@ export function DocumentViewerButton({
 }) {
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [viewerError, setViewerError] = useState<string | null>(null);
+  // The signed-URL fetch is the only feedback between click and modal — with
+  // no state change in between, a click on a document sitting off-screen
+  // (or over a slow connection) reads as "nothing happened" rather than
+  // "loading."
+  const [loading, setLoading] = useState(false);
 
   async function openViewer() {
     setViewerError(null);
+    setLoading(true);
     try {
       const res = await fetch(`/api/documents/${documentId}/signed-url`);
       const json = await res.json();
@@ -132,6 +138,8 @@ export function DocumentViewerButton({
       else setViewerError(json.error ?? "No se pudo abrir el documento.");
     } catch {
       setViewerError("No se pudo abrir el documento.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -140,15 +148,17 @@ export function DocumentViewerButton({
       <button
         type="button"
         onClick={openViewer}
+        disabled={loading}
         title={iconOnly ? label : undefined}
         aria-label={iconOnly ? label : undefined}
+        aria-busy={loading}
         className={
           iconOnly
-            ? "inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-500 hover:text-ink-700 hover:bg-slate-50 cursor-pointer transition-colors shrink-0"
-            : "text-xs font-semibold text-ink-700 underline cursor-pointer"
+            ? "inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-500 hover:text-ink-700 hover:bg-slate-50 cursor-pointer transition-colors shrink-0 disabled:opacity-50 disabled:cursor-wait"
+            : "text-xs font-semibold text-ink-700 underline cursor-pointer disabled:opacity-50 disabled:cursor-wait"
         }
       >
-        {iconOnly ? <DocumentIcon /> : label}
+        {iconOnly ? <DocumentIcon /> : loading ? "Cargando…" : label}
       </button>
       {viewerError && <p className="text-xs font-bold text-red-700 mt-1">{viewerError}</p>}
       {viewerUrl && (
