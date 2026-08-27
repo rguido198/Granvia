@@ -379,7 +379,20 @@ export function LegalDocumentsPanel({
   );
 }
 
-export function LeaseUploadZone({ onUploaded }: { onUploaded: () => void }) {
+export function LeaseUploadZone({
+  onUploaded,
+  onAllSucceeded,
+}: {
+  onUploaded: () => void;
+  /** Called only when every file in a batch uploaded cleanly — distinct from
+   *  `onUploaded` (which fires regardless, to refresh the queue below even on
+   *  a partial failure). Previously nothing told the modal a batch fully
+   *  succeeded, so it just sat open with no feedback: the drop zone silently
+   *  reverted to its idle prompt and a landlord had no way to tell "it
+   *  worked" from "nothing happened" short of closing it themselves and
+   *  scrolling down to check. */
+  onAllSucceeded?: () => void;
+}) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -396,7 +409,11 @@ export function LeaseUploadZone({ onUploaded }: { onUploaded: () => void }) {
         }),
       );
       const failed = results.filter((r) => !r.ok).length;
-      if (failed > 0) setError(`${failed} de ${results.length} archivo(s) no se pudieron subir.`);
+      if (failed > 0) {
+        setError(`${failed} de ${results.length} archivo(s) no se pudieron subir.`);
+      } else {
+        onAllSucceeded?.();
+      }
       onUploaded();
     } catch {
       setError("No se pudo completar la subida.");
@@ -482,7 +499,7 @@ export function UploadContractButton({ onUploaded }: { onUploaded: () => void })
                 Cada documento requiere dos confirmaciones humanas: el local al que corresponde, y la exactitud de
                 las cláusulas extraídas. Revísalos en la lista de abajo una vez subidos.
               </p>
-              <LeaseUploadZone onUploaded={onUploaded} />
+              <LeaseUploadZone onUploaded={onUploaded} onAllSucceeded={() => setOpen(false)} />
             </div>
           </div>
         </ConsoleModal>

@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { resumeHook } from "workflow/api";
+import { resumeHook, start } from "workflow/api";
+import { HookNotFoundError } from "workflow/internal/errors";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { leaseDigitizationWorkflow } from "@/workflows/lease-digitization";
 
 /**
  * Wakes leaseDigitizationWorkflow's Gate 1 (entity reconciliation) —
@@ -82,11 +84,34 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, runId: result.runId });
   } catch (error) {
+    // The "resume or start" pattern @workflow/errors documents for
+    // HookNotFoundError: the run this hook belonged to is gone (a dev-server
+    // restart, an expired hook, or a workflow that never actually reached
+    // this point) — document.status still says 'ready_for_triage', so
+    // nothing was ever promoted, but there is no live hook left to resume.
+    // The document itself isn't corrupt; only re-running the pipeline can
+    // produce a fresh, resumable hook for it.
+    if (HookNotFoundError.is(error)) {
+      console.warn(
+        `confirm-lease-match: hook gone for document ${documentId}, re-starting the workflow`,
+        error,
+      );
+      const run = await start(leaseDigitizationWorkflow, [documentId]);
+      await supabase.from("documents").update({ workflow_run_id: run.runId }).eq("id", documentId);
+      return NextResponse.json(
+        {
+          error:
+            "Este documento perdió su proceso de fondo y se está reprocesando desde cero. Espera unos segundos y vuelve a confirmar.",
+        },
+        { status: 409 },
+      );
+    }
+
     // Never echo the raw resumeHook error — it embeds the internal hook token.
     console.error(`confirm-lease-match: resumeHook failed for document ${documentId}`, error);
     return NextResponse.json(
-      { error: "El contrato aún se está procesando o esta confirmación ya se registró. Actualiza la vista." },
-      { status: 404 },
+      { error: "Este contrato ya fue resuelto o cambió de estado. Actualiza la vista." },
+      { status: 409 },
     );
   }
 }
