@@ -23,6 +23,19 @@ export type PortfolioRow = {
   leaseId: string | null;
   unitCode: string;
   name: string;
+  /** The tenant's trade/brand name when the digitized lease states one
+   *  distinct from `name` (its legal name) — e.g. name "PETCO Animal
+   *  Supplies de México, S.A. de C.V.", tradeName "PETCO". null for an
+   *  undigitized lease or one that doesn't distinguish the two. Lets the
+   *  Rent Roll and its search box use whichever name a landlord actually
+   *  types, not just the legal one `name` already carries. */
+  tradeName: string | null;
+  /** documents.id of the digitized contract behind this lease, if any —
+   *  same field LeaseDetail.sourceDocumentId already carries for the SSOT
+   *  table, duplicated here so the Rent Roll's own collapsed row can show
+   *  "there's a scan on file" without a landlord having to expand or
+   *  cross-reference the other table to find out. */
+  sourceDocumentId: string | null;
   sqm: number;
   rent: number;
   sharePct: number;
@@ -108,7 +121,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
 
   const { data: locales, error: localesError } = await supabase
     .from("locales")
-    .select("id, unit_number, area_sqm, status, tenant_entity")
+    .select("id, unit_number, area_sqm, status, tenant_entity, trade_name")
     .order("unit_number");
   if (localesError) throw new Error(localesError.message);
 
@@ -206,6 +219,8 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       leaseId: !vacant && lease ? lease.id : null,
       unitCode: l.unit_number,
       name: vacant ? "Vacante" : (l.tenant_entity ?? "—"),
+      tradeName: vacant ? null : l.trade_name,
+      sourceDocumentId: !vacant && lease ? lease.source_document_id : null,
       sqm: Number(l.area_sqm),
       rent: !vacant && lease ? Number(lease.base_rent_monthly ?? 0) : 0,
       sharePct: (Number(l.area_sqm) / plazaTotalGla) * 100,

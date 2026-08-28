@@ -505,7 +505,11 @@ export function LandlordDashboard({
   const visibleRentRoll = useMemo(() => {
     const needle = rentRollFilter.trim().toLowerCase();
     const filtered = rentRoll.filter((r) => {
-      const matchesText = !needle || r.name.toLowerCase().includes(needle) || r.unitCode.toLowerCase().includes(needle);
+      const matchesText =
+        !needle ||
+        r.name.toLowerCase().includes(needle) ||
+        (r.tradeName ?? "").toLowerCase().includes(needle) ||
+        r.unitCode.toLowerCase().includes(needle);
       const matchesStatus = rentRollStatusFilter === "ALL" || r.status === rentRollStatusFilter;
       return matchesText && matchesStatus;
     });
@@ -602,7 +606,10 @@ export function LandlordDashboard({
     const needle = contractFilter.trim().toLowerCase();
     const filtered = leases.filter((c) => {
       const matchesText =
-        !needle || c.tenantEntity.toLowerCase().includes(needle) || c.unitCode.toLowerCase().includes(needle);
+        !needle ||
+        c.tenantEntity.toLowerCase().includes(needle) ||
+        (c.tradeName ?? "").toLowerCase().includes(needle) ||
+        c.unitCode.toLowerCase().includes(needle);
       const matchesRenewal = !contractOnlyRenewalSoon || c.renewalSoon;
       return matchesText && matchesRenewal;
     });
@@ -951,15 +958,34 @@ export function LandlordDashboard({
                         <tr key={r.slug} className={`transition-colors ${isEditingRentRoll ? "bg-slate-100/50 hover:bg-slate-100" : "hover:bg-slate-50"}`}>
                           <td className="p-3.5">
                             <div className="flex items-center gap-2.5">
-                              <RentRollThumbnail name={r.name} vacant={r.vacant} />
-                              <div className="min-w-0">
+                              <RentRollThumbnail name={r.tradeName ?? r.name} vacant={r.vacant} />
+                              <div className="min-w-0 flex-1">
                                 {/* The column is capped now, so the handful of
                                     names longer than it can hold actually hit
                                     this truncate — the tooltip is what keeps
-                                    the full name reachable. */}
-                                <p className="font-bold text-ink text-sm truncate" title={r.name}>{r.name}</p>
+                                    the full name reachable. tradeName leads
+                                    when present (what a landlord actually
+                                    calls the tenant) — name (the legal
+                                    entity) drops to a secondary line instead
+                                    of disappearing, since it's still what
+                                    RFC/CFDI-facing work needs. */}
+                                <p className="font-bold text-ink text-sm truncate" title={r.tradeName ?? r.name}>
+                                  {r.tradeName ?? r.name}
+                                </p>
+                                {r.tradeName && (
+                                  <p className="text-xs text-ink-500 truncate" title={r.name}>
+                                    {r.name}
+                                  </p>
+                                )}
                                 <p className="text-xs text-ink-500 font-medium">{r.unitCode}</p>
                               </div>
+                              {/* Only real, direct signal a contract scan exists for this
+                                  unit without expanding the row — previously buried as an
+                                  icon-only button off in the far-right Acciones column,
+                                  easy to miss while scanning names top-to-bottom. */}
+                              {r.sourceDocumentId && (
+                                <DocumentViewerButton documentId={r.sourceDocumentId} label="Ver contrato" iconOnly />
+                              )}
                             </div>
                           </td>
                           <td className="p-3.5 text-right font-medium text-ink-700 whitespace-nowrap">
@@ -1026,13 +1052,10 @@ export function LandlordDashboard({
                               {!r.vacant && r.leaseId && (
                                 <div className="flex items-center gap-2.5">
                                   <TerminateTenantButton localeId={r.slug} leaseId={r.leaseId} tenantName={r.name} unitCode={r.unitCode} />
-                                  {leaseByLocaleId.get(r.slug)?.sourceDocumentId && (
-                                    <DocumentViewerButton
-                                      documentId={leaseByLocaleId.get(r.slug)!.sourceDocumentId!}
-                                      label="Ver contrato"
-                                      iconOnly
-                                    />
-                                  )}
+                                  {/* DocumentViewerButton for this lease now lives in the name
+                                      cell (leftmost column) instead of here — showing up
+                                      wherever a landlord is already scanning for it, not
+                                      buried in this action column too. */}
                                   {leaseByLocaleId.get(r.slug)?.sourceApplicationNumber && (
                                     <span
                                       className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-400 shrink-0"
@@ -1872,10 +1895,22 @@ export function LandlordDashboard({
                                   <span className="text-ink-400 font-bold text-[11px] select-none">
                                     {inspectedContractId === c.id ? "▲" : "▼"}
                                   </span>
-                                  <div>
-                                    <p className="font-bold text-ink text-sm">{c.tenantEntity}</p>
+                                  <div className="min-w-0">
+                                    {/* tradeName leads (what a landlord actually calls the
+                                        tenant); tenantEntity — the legal name — drops to a
+                                        secondary line instead of repeating as the only name
+                                        shown, which is what the expanded row's header used
+                                        to do (same string, twice, no more informative the
+                                        second time). */}
+                                    <p className="font-bold text-ink text-sm">{c.tradeName ?? c.tenantEntity}</p>
+                                    {c.tradeName && <p className="text-xs text-ink-500">{c.tenantEntity}</p>}
                                     <p className="text-xs text-ink-500">{c.unitCode} · {c.sqm} m²</p>
                                   </div>
+                                  {c.sourceDocumentId && (
+                                    <span onClick={(e) => e.stopPropagation()}>
+                                      <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
+                                    </span>
+                                  )}
                                 </div>
                               </td>
                               <td className="p-3.5">
@@ -1911,7 +1946,7 @@ export function LandlordDashboard({
                                 <td colSpan={4} className="p-5 space-y-4 text-sm">
                                   <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
                                     <h4 className="font-bold text-sm text-ink">
-                                      {c.tenantEntity} · {c.unitCode}
+                                      {c.tradeName ? `${c.tradeName} — ${c.tenantEntity}` : c.tenantEntity} · {c.unitCode}
                                     </h4>
                                     <div className="flex items-center gap-2">
                                       {c.sourceDocumentId && (
