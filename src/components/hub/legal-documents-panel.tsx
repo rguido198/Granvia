@@ -203,6 +203,61 @@ function isActionable(doc: DocumentRow): boolean {
   );
 }
 
+/** Gate 2 fallback when extracted_fields is populated but fails
+ *  LeaseExtractedFieldsSchema's strict parse — the same root cause Gate 1 hit
+ *  live on c5b14f47 (a document extracted under an older schema version,
+ *  missing a field added later, that will never parse no matter how long you
+ *  wait). Unlike Gate 1, ExtractionReviewForm/NewLeaseForm render every field
+ *  straight off the parsed object and genuinely can't work without a full
+ *  valid parse — there's no "render the real form anyway" fix here. But a
+ *  schema-mismatched document still shouldn't be a permanent dead end with
+ *  zero actions, so this at least offers a way out. */
+function FailedExtractionFallback({
+  documentId,
+  message,
+  onResolved,
+}: {
+  documentId: string;
+  message: string;
+  onResolved: () => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function reject() {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/workflow/confirm-lease-extraction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId, action: "reject" }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setError(json.error ?? "No se pudo rechazar el documento.");
+        return;
+      }
+      onResolved();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-ink-500 font-medium">{message}</p>
+      <RejectDocumentButton
+        disabled={pending}
+        pending={pending}
+        onConfirmReject={reject}
+        body="No se promoverá ningún dato a la plaza. Esta extracción no cumple el esquema actual y no se puede validar ni editar desde aquí — si el contrato sigue siendo válido, vuelve a subirlo para reprocesarlo desde cero."
+      />
+      {error && <p className="text-xs font-bold text-red-700">{error}</p>}
+    </div>
+  );
+}
+
 function DocumentCard({
   doc,
   allUnits,
@@ -301,9 +356,11 @@ function DocumentCard({
               onResolved={onResolved}
             />
           ) : (
-            <p className="text-xs text-ink-500 font-medium">
-              La extracción está incompleta o no cumple el esquema esperado — revisa el documento antes de validar.
-            </p>
+            <FailedExtractionFallback
+              documentId={doc.id}
+              message="La extracción está incompleta o no cumple el esquema esperado — no se puede validar ni editar desde aquí."
+              onResolved={onResolved}
+            />
           )}
         </div>
       )}
@@ -325,9 +382,11 @@ function DocumentCard({
               onResolved={onResolved}
             />
           ) : (
-            <p className="text-xs text-ink-500 font-medium">
-              Los datos del contrato no están disponibles — revisa el documento antes de continuar.
-            </p>
+            <FailedExtractionFallback
+              documentId={doc.id}
+              message="Los datos del contrato no están disponibles — no se puede completar el contrato desde aquí."
+              onResolved={onResolved}
+            />
           )}
         </div>
       )}
