@@ -802,8 +802,8 @@ export function UploadContractButton({
             role="dialog"
             aria-modal="true"
           >
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-lg w-full space-y-3">
-              <div className="flex items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col">
+              <div className="flex items-center justify-between gap-3 p-5 pb-3 shrink-0 border-b border-slate-100">
                 <p className="text-sm font-bold text-slate-900">Subir contratos escaneados</p>
                 <button
                   type="button"
@@ -814,22 +814,24 @@ export function UploadContractButton({
                   ✕
                 </button>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Cada documento requiere dos confirmaciones humanas: el local al que corresponde, y la exactitud de
-                las cláusulas extraídas. Verás el progreso de cada uno aquí mismo mientras se procesan.
-              </p>
-              {inFlightCount > 0 && (
-                <p className="text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 leading-relaxed">
-                  Ya en proceso ({inFlightCount}): {inFlightFilenames!.join(", ")}. Evita subir el mismo archivo otra
-                  vez mientras se procesa.
+              <div className="p-5 pt-3 space-y-3 overflow-y-auto min-h-0">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Cada documento requiere dos confirmaciones humanas: el local al que corresponde, y la exactitud de
+                  las cláusulas extraídas. Verás el progreso de cada uno aquí mismo mientras se procesan.
                 </p>
-              )}
-              <LeaseUploadZone
-                onUploaded={onUploaded}
-                onClose={() => setOpen(false)}
-                onFeedback={onFeedback}
-                onLiveUpdate={onLiveUpdate}
-              />
+                {inFlightCount > 0 && (
+                  <p className="text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 leading-relaxed">
+                    Ya en proceso ({inFlightCount}): {inFlightFilenames!.join(", ")}. Evita subir el mismo archivo
+                    otra vez mientras se procesa.
+                  </p>
+                )}
+                <LeaseUploadZone
+                  onUploaded={onUploaded}
+                  onClose={() => setOpen(false)}
+                  onFeedback={onFeedback}
+                  onLiveUpdate={onLiveUpdate}
+                />
+              </div>
             </div>
           </div>
         </ConsoleModal>
