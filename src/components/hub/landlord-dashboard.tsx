@@ -1906,11 +1906,6 @@ export function LandlordDashboard({
                                     {c.tradeName && <p className="text-xs text-ink-500">{c.tenantEntity}</p>}
                                     <p className="text-xs text-ink-500">{c.unitCode} · {c.sqm} m²</p>
                                   </div>
-                                  {c.sourceDocumentId && (
-                                    <span onClick={(e) => e.stopPropagation()}>
-                                      <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
-                                    </span>
-                                  )}
                                 </div>
                               </td>
                               <td className="p-3.5">
@@ -1922,25 +1917,34 @@ export function LandlordDashboard({
                               </td>
                               <td className="p-3.5 font-semibold text-ink-700 text-sm text-right tabular-nums">{formatMxn(c.rentMonthly)}</td>
                               <td className="p-3.5 text-right">
-                                {c.isExpired ? (
-                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge">
-                                    Vencido
-                                  </span>
-                                ) : c.renewalSoon ? (
-                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40">
-                                    Renovación Próxima
-                                  </span>
-                                ) : (
-                                  <span className="text-xs font-semibold text-ink-500">Vigente</span>
-                                )}
+                                <div className="flex items-center justify-end gap-2">
+                                  {/* One instance, here — not duplicated next to the name in
+                                      both the collapsed row and the expanded header the way
+                                      it was before. This is the only place "is there a scan
+                                      on file" needs to show. */}
+                                  {c.sourceDocumentId && (
+                                    <span onClick={(e) => e.stopPropagation()}>
+                                      <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
+                                    </span>
+                                  )}
+                                  {c.isExpired ? (
+                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge">
+                                      Vencido
+                                    </span>
+                                  ) : c.renewalSoon ? (
+                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40">
+                                      Renovación Próxima
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs font-semibold text-ink-500">Vigente</span>
+                                  )}
+                                </div>
                               </td>
                             </tr>
 
                             {/* EXPANDABLE CLAUSE DETAIL ROW — only fields the real leases table has:
                                 exclusive_use_clause and permitted_use. No per-contract hash, no
-                                INPC/penalty clause columns exist in the schema, so none are shown.
-                                sourceDocumentId (when the lease came through digitization) links back
-                                to the actual scan via DocumentViewerButton. */}
+                                INPC/penalty clause columns exist in the schema, so none are shown. */}
                             {inspectedContractId === c.id && (
                               <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
                                 <td colSpan={4} className="p-5 space-y-4 text-sm">
@@ -1949,9 +1953,10 @@ export function LandlordDashboard({
                                       {c.tradeName ? `${c.tradeName} — ${c.tenantEntity}` : c.tenantEntity} · {c.unitCode}
                                     </h4>
                                     <div className="flex items-center gap-2">
-                                      {c.sourceDocumentId && (
-                                        <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
-                                      )}
+                                      {/* The document viewer lives next to the Vigente/Vencido
+                                          badge in the collapsed row now, not here too — one
+                                          instance instead of the same icon repeating in every
+                                          view of this same contract. */}
                                       {c.sourceApplicationNumber && (
                                         <span
                                           className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-400 shrink-0"
