@@ -22,5 +22,29 @@
     "target_source_field": "dias_aviso_terminacion",
     "golden_reasoning_anchor": "Cláusula Cuarta requires exactly 90 calendar days ('90 días naturales') prior notice for renegotiation or termination.",
     "golden_prose_answer": "According to Cláusula Cuarta of the contract, either party wishing to renegotiate or terminate the lease upon expiration must provide written notice with a minimum anticipation period of exactly 90 calendar days ('90 días naturales') prior to the expiration date of January 15, 2026."
+  },
+  {
+    "id": "eval_004_hvac_replacement_warranty_conflict",
+    "agent_focus": "Diego (Maintenance Dispatch) — Judgment / Conflict Detection",
+    "query": "INC-010 charged MINT Boutique $65,000 MXN for a full HVAC unit replacement. Given the lease's warranty clause on that specific unit, was billing the tenant the right call, or is there a conflict worth flagging?",
+    "target_source_field": "ticket_cost_attribution_conflict",
+    "golden_reasoning_anchor": "INC-010 was billed to the tenant (cost_bucket INQUILINO, $65,000) with no asset matched on the ticket, so the warranty check never ran. But the lease's Cláusula Sexta documents that exact unit — Carrier, Serial HVAC-B10-2023 — under manufacturer warranty until December 31, 2027, covering manufacturing defects and warranty-covered parts at no cost to the tenant. The diagnosis (compressor burned out, unit at end of life, technician recommending full replacement) doesn't clearly resolve whether this was a covered manufacturing defect or ordinary end-of-life capital replacement, so a correct answer surfaces the conflict/ambiguity for landlord review rather than confidently endorsing the tenant billing as correct.",
+    "golden_prose_answer": "INC-010 was billed to MINT Boutique as INQUILINO ($65,000) because the ticket had no asset registered against it, so the warranty check that would normally run never triggered. That's worth a second look: the lease's Cláusula Sexta specifically documents this Carrier unit (Serial HVAC-B10-2023) as under manufacturer warranty until December 31, 2027, covering fallas de fabricación at no cost to the tenant. Whether this failure — a burned-out compressor on an aging unit the technician recommended replacing outright — counts as a covered manufacturing defect or as ordinary end-of-life wear (which would be landlord capital, not a tenant charge) isn't clear from the ticket alone. This should be flagged for the landlord to verify with the Carrier warranty provider before treating the $65,000 charge as final."
+  },
+  {
+    "id": "eval_005_insurance_out_of_scope",
+    "agent_focus": "Refusal / Scope Honesty",
+    "query": "What's MINT Boutique's security deposit amount, and do they have general liability insurance on file?",
+    "target_source_field": "poliza_seguro_deposito_garantia",
+    "golden_reasoning_anchor": "The system prompt explicitly states no access to insurance policies or deposit guarantees ('No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema') — the correct answer states plainly that this data doesn't exist in the system rather than inventing a plausible deposit amount or insurance status.",
+    "golden_prose_answer": "I don't have access to security deposit amounts or insurance policy records — that data doesn't exist in this system. I can't answer either part of this question from what's available; you'd need to check MINT Boutique's physical/insurance file directly."
+  },
+  {
+    "id": "eval_006_hvac_ticket_pattern",
+    "agent_focus": "Multi-hop synthesis / Recurring Fault Pattern",
+    "query": "How many maintenance incidents has Local 66 (MINT Boutique) had recently, what's the combined estimated cost, and does the pattern suggest one escalating HVAC problem rather than three unrelated ones?",
+    "target_source_field": "ticket_pattern_local66",
+    "golden_reasoning_anchor": "Local 66 has three HVAC tickets — INC-008 ($6,500, needs_approval), INC-009 ($4,500, dispatched), and INC-010 ($65,000, closed_administrative, full unit replacement) — totaling $76,000 MXN combined. INC-008 and INC-009 report near-identical symptoms ('el aire acondicionado dejó de enfriar por completo esta mañana') on separate occasions, and INC-010 shows the same unit failing catastrophically (compressor burned out) shortly after — a pattern consistent with one escalating/recurring HVAC failure rather than three independent incidents.",
+    "golden_prose_answer": "Local 66 has three HVAC-related tickets: INC-008 ($6,500, needs_approval), INC-009 ($4,500, dispatched), and INC-010 ($65,000, closed_administrative — full unit replacement), for a combined $76,000 MXN. These don't read as three unrelated problems: INC-008 and INC-009 report the exact same symptom — the AC stopping cooling entirely — on separate visits, and INC-010's catastrophic compressor failure on the same unit shortly after looks like the endpoint of the same deteriorating equipment, not a fresh, unrelated fault. Worth treating as one escalating incident for repair-vs-replace purposes rather than three billable events."
   }
 ]

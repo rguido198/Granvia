@@ -62,8 +62,13 @@ async function judgeGrounding(anchor: string, answer: string): Promise<JudgeVerd
   const client = new Anthropic();
   const response = await client.messages.create({
     model: "claude-opus-5",
-    max_tokens: 500,
-    system: `Eres un juez de evaluación estricto para un agente de bienes raíces. Te doy un "ancla de verdad" (el hecho correcto que debe aparecer) y la respuesta real de un agente. Responde SOLO con JSON de una línea: {"pass": true|false, "reasoning": "..."}. "pass" es true únicamente si la respuesta real contiene, de forma sustantiva, el hecho del ancla — sonar plausible o relacionado no basta. No agregues texto fuera del JSON.`,
+    // 500 was enough for the original 3 single-fact-lookup cases' short
+    // verdicts, but a judgment/conflict-detection case (eval_004) needs the
+    // judge to reason over a much longer real answer — it hit the cap
+    // mid-string, producing an unterminated JSON object that read as a false
+    // FAIL rather than the true PASS it was mid-way through writing.
+    max_tokens: 1500,
+    system: `Eres un juez de evaluación estricto para un agente de bienes raíces. Te doy un "ancla de verdad" (el hecho correcto que debe aparecer) y la respuesta real de un agente. Responde SOLO con JSON de una línea: {"pass": true|false, "reasoning": "..."}. "pass" es true únicamente si la respuesta real contiene, de forma sustantiva, el hecho del ancla — sonar plausible o relacionado no basta. Mantén "reasoning" breve (una o dos oraciones) — no agregues texto fuera del JSON.`,
     messages: [
       { role: "user", content: `Ancla de verdad:\n${anchor}\n\nRespuesta real del agente:\n${answer}` },
     ],
