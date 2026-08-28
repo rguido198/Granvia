@@ -498,6 +498,7 @@ export function LegalDocumentsPanel({
 export function LeaseUploadZone({
   onUploaded,
   onAllSucceeded,
+  onFeedback,
 }: {
   onUploaded: () => void;
   /** Called only when every file in a batch uploaded cleanly — distinct from
@@ -508,6 +509,14 @@ export function LeaseUploadZone({
    *  worked" from "nothing happened" short of closing it themselves and
    *  scrolling down to check. */
   onAllSucceeded?: () => void;
+  /** Fired the instant the upload request(s) resolve — plain client state,
+   *  rendered immediately, no dependency on onUploaded's router.refresh()
+   *  actually landing or the 3s poll's next tick. A landlord who closes the
+   *  modal right after uploading has no other guaranteed-immediate signal
+   *  that anything registered at all: the queue below only reflects it once
+   *  a server round-trip completes, which is fast (usually well under a
+   *  second) but not instant, and easy to miss if attention moves on. */
+  onFeedback?: (message: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -525,10 +534,21 @@ export function LeaseUploadZone({
         }),
       );
       const failed = results.filter((r) => !r.ok).length;
+      const succeeded = results.length - failed;
       if (failed > 0) {
         setError(`${failed} de ${results.length} archivo(s) no se pudieron subir.`);
+        if (succeeded > 0) {
+          onFeedback?.(
+            `${succeeded} de ${results.length} documento(s) recibido(s) — procesando digitalización. ${failed} fallaron.`,
+          );
+        }
       } else {
         onAllSucceeded?.();
+        onFeedback?.(
+          results.length === 1
+            ? "Documento recibido — procesando digitalización."
+            : `${results.length} documentos recibidos — procesando digitalización.`,
+        );
       }
       onUploaded();
     } catch {
@@ -580,7 +600,14 @@ export function LeaseUploadZone({
  * button at the top of the tab; the drop-zone itself is unchanged, just
  * relocated into a modal opened from here instead of sitting inline.
  */
-export function UploadContractButton({ onUploaded }: { onUploaded: () => void }) {
+export function UploadContractButton({
+  onUploaded,
+  onFeedback,
+}: {
+  onUploaded: () => void;
+  /** Forwarded to LeaseUploadZone — see its own doc comment. */
+  onFeedback?: (message: string) => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -615,7 +642,7 @@ export function UploadContractButton({ onUploaded }: { onUploaded: () => void })
                 Cada documento requiere dos confirmaciones humanas: el local al que corresponde, y la exactitud de
                 las cláusulas extraídas. Revísalos en la lista de abajo una vez subidos.
               </p>
-              <LeaseUploadZone onUploaded={onUploaded} onAllSucceeded={() => setOpen(false)} />
+              <LeaseUploadZone onUploaded={onUploaded} onAllSucceeded={() => setOpen(false)} onFeedback={onFeedback} />
             </div>
           </div>
         </ConsoleModal>

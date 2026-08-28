@@ -1699,7 +1699,7 @@ export function LandlordDashboard({
                           table, inside the Digitalización card — reachable
                           only after scrolling past 85 rows. Moved to the one
                           entry point every visit to this tab starts at. */}
-                      <UploadContractButton onUploaded={() => router.refresh()} />
+                      <UploadContractButton onUploaded={() => router.refresh()} onFeedback={triggerToast} />
                     </div>
                   </div>
 
