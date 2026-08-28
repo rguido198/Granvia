@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
 
 export type UpdateRentRollFieldResult = { error?: string };
 
@@ -69,5 +70,6 @@ export async function updateRentRollFieldAction(
   }
 
   revalidatePath("/consola");
+  invalidateCopilotoCache();
   return {};
 }

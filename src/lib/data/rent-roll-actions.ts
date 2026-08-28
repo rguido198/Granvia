@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
 
 export type RentRollActionState = { error?: string; success?: string };
 
@@ -155,6 +156,7 @@ export async function addTenantAction(
   }
 
   revalidatePath("/consola");
+  invalidateCopilotoCache();
   return { success: `${tenantName} agregado al rent roll — ${unitNumber}, ${sqm} m², ${rent.toLocaleString("es-MX")} MXN/mes.` };
 }
 
@@ -191,6 +193,7 @@ export async function vacateTenantAction(
   if (leaseError) return { error: leaseError.message };
 
   revalidatePath("/consola");
+  invalidateCopilotoCache();
   return { success: `${tenantName || "Local"} marcado como vacante. Contrato terminado el ${today}.` };
 }
 
@@ -286,6 +289,9 @@ export async function bulkAddTenantsAction(_prev: BulkImportResult, rows: BulkIm
     insertedCount += 1;
   }
 
-  if (insertedCount > 0) revalidatePath("/consola");
+  if (insertedCount > 0) {
+    revalidatePath("/consola");
+    invalidateCopilotoCache();
+  }
   return { insertedCount, failed };
 }

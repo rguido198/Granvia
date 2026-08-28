@@ -2785,11 +2785,27 @@ export function LandlordDashboard({
                     body: JSON.stringify({ question: asked }),
                     signal: controller.signal,
                   });
-                  const json = await res.json();
-                  if (!res.ok) throw new Error(json.error ?? "Error desconocido");
+                  if (!res.ok) {
+                    const json = await res.json().catch(() => ({}));
+                    throw new Error(json.error ?? "Error desconocido");
+                  }
+                  if (!res.body) throw new Error("Error de conexión con el agente.");
+
                   setCopilotAskedQuestion(asked);
-                  setQueryResult(json.answer);
+                  setQueryResult("");
                   setCopilotQuestion("");
+
+                  // Streamed plain text — append each chunk as Claude
+                  // generates it rather than waiting for res.json() on the
+                  // full response, so the drawer fills in live instead of
+                  // staying blank for the entire generation.
+                  const reader = res.body.getReader();
+                  const decoder = new TextDecoder();
+                  for (;;) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    setQueryResult((prev) => prev + decoder.decode(value, { stream: true }));
+                  }
                 } catch (err) {
                   if (err instanceof DOMException && err.name === "AbortError") return;
                   setCopilotError(err instanceof Error ? err.message : "Error de conexión con el agente.");

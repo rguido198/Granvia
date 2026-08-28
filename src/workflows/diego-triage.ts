@@ -4,6 +4,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
 
 /**
  * Diego (maintenance-dispatcher) as a durable state machine.
@@ -383,6 +384,7 @@ async function writeTicket(params: {
     .update({ status: "attached", ticket_id: ticket.id, workflow_run_id: workflowRunId })
     .eq("id", context.documentId);
 
+  invalidateCopilotoCache();
   return ticket.id as string;
 }
 
@@ -393,6 +395,7 @@ async function markDispatched(ticketId: string) {
     .from("tickets")
     .update({ status: "dispatched", dispatched_at: new Date().toISOString() })
     .eq("id", ticketId);
+  invalidateCopilotoCache();
 }
 
 async function markApprovalResolved(ticketId: string, approved: boolean) {
@@ -405,6 +408,7 @@ async function markApprovalResolved(ticketId: string, approved: boolean) {
       dispatched_at: approved ? new Date().toISOString() : null,
     })
     .eq("id", ticketId);
+  invalidateCopilotoCache();
 }
 
 // ── The workflow ─────────────────────────────────────────────────────────

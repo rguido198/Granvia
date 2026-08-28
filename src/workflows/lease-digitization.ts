@@ -4,6 +4,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { extractFromText, extractFromVision } from "@/lib/ingest/lease-extraction";
 import { matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
 import type { LeaseExtractedFields, NewLeaseDetails } from "@/lib/ingest/lease-extraction-schema";
+import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
 
 /**
  * Lease-document digitization as a durable state machine, mirroring
@@ -404,6 +405,12 @@ async function promoteExtraction(
       updated_at: new Date().toISOString(),
     })
     .eq("id", documentId);
+
+  // The leases row this just wrote responsibility_matrix/notice_period_days
+  // onto is exactly what Copiloto's cached data block (ask-copiloto.ts)
+  // grounds its answers in — without this, a landlord could get a
+  // pre-digitization answer for up to the cache's 30s safety-net window.
+  invalidateCopilotoCache();
 
   return "promoted";
 }

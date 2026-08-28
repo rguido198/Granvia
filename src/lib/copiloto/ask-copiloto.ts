@@ -1,10 +1,12 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { unstable_cache } from "next/cache";
 
 import { computeContractAggregates, contractStatusLabel, fetchPortfolio } from "@/lib/data/portfolio.server";
 import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { LeaseExtractedFieldsSchema } from "@/lib/ingest/lease-extraction-schema";
+import { COPILOTO_CACHE_TAG } from "@/lib/copiloto/cache";
 
 /**
  * Copiloto's actual retrieval + generation logic, factored out of
@@ -33,7 +35,20 @@ Reglas:
 
 export type AskCopilotoResult = { answer: string } | { error: string };
 
-export async function askCopiloto(question: string): Promise<AskCopilotoResult> {
+type CopilotoRequest = {
+  system: Anthropic.Messages.MessageCreateParams["system"];
+  messages: Anthropic.Messages.MessageParam[];
+};
+
+// The Supabase retrieval + dataBlock assembly below is identical for every
+// question asked in a session — only the date line and the question itself
+// change per call (added back in buildCopilotoRequest). Wrapped in
+// unstable_cache so a same-session follow-up question skips re-querying
+// leases/tickets/documents entirely, on top of the Anthropic-side prompt
+// cache already covering the assembled block. 30s revalidate is a safety
+// net; invalidateCopilotoCache() (called from every write path that touches
+// leases/tickets/documents) is the real freshness mechanism.
+async function fetchDataBlock(): Promise<string> {
   const [{ leases }, { tickets }] = await Promise.all([fetchPortfolio(), fetchDiegoTickets()]);
 
   // A digitized lease's structured fields (matriz_responsabilidad,
@@ -114,7 +129,7 @@ export async function askCopiloto(question: string): Promise<AskCopilotoResult> 
   }));
 
   const aggregates = computeContractAggregates(leases);
-  const dataBlock = JSON.stringify({
+  return JSON.stringify({
     estadisticas_agregadas_contratos: {
       total_contratos: aggregates.totalContratos,
       contratos_digitalizados: aggregates.contratosDigitalizados,
@@ -125,33 +140,85 @@ export async function askCopiloto(question: string): Promise<AskCopilotoResult> 
     contratos_de_arrendamiento: leasesBlock,
     tickets_de_mantenimiento: ticketsBlock,
   });
+}
 
-  const client = new Anthropic();
-  const response = await client.messages.create({
-    model: "claude-opus-5",
-    // claude-opus-5's extended thinking counts against max_tokens, and has no
-    // separate hard cap on this model (budget_tokens is rejected). Two levers
-    // instead of one: max_tokens raised to the SDK's own non-streaming default
-    // (16000, well past the ~2900 tokens a synthesis-heavy question measured
-    // at), and effort held to "medium" since this endpoint is data lookup +
-    // summary, not deep multi-step reasoning — cuts thinking spend at the
-    // source rather than just raising the ceiling it can hit.
-    max_tokens: 16000,
-    output_config: { effort: "medium" },
+// unstable_cache needs Next.js's incremental cache, which only exists inside
+// an actual Next.js server request (dev/prod runtime) — not in
+// scripts/golden-eval-runner.ts, which runs fetchDataBlock via plain tsx
+// with no Next runtime at all. buildCopilotoRequest below tries this first
+// and falls back to the raw fetchDataBlock on that specific failure, so the
+// eval script keeps working uncached rather than breaking outright.
+const getCachedDataBlock = unstable_cache(fetchDataBlock, ["copiloto-data-block"], {
+  tags: [COPILOTO_CACHE_TAG],
+  revalidate: 30,
+});
+
+// Shared by askCopiloto (non-streaming — used by scripts/golden-eval-runner.ts,
+// which needs a plain string to grade) and askCopilotoStream (the live
+// endpoint) so the two never drift on what data the model actually sees.
+async function buildCopilotoRequest(question: string): Promise<CopilotoRequest> {
+  let dataBlock: string;
+  try {
+    dataBlock = await getCachedDataBlock();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("incrementalCache")) {
+      dataBlock = await fetchDataBlock();
+    } else {
+      throw err;
+    }
+  }
+
+  return {
     system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
     messages: [
       {
         role: "user",
-        // "Hoy" goes per-request, not into the cached system prompt: it's a
-        // different value every day, and estatus_contractual already carries
-        // the one date computation this endpoint actually needs to get
-        // right — this is a fallback for anything else date-relative the
-        // model might reason about (a model has no reliable notion of the
-        // real-world "today" on its own).
-        content: `Hoy es ${new Date().toISOString().slice(0, 10)}.\n\nDatos reales de la plaza (JSON):\n${dataBlock}\n\nPregunta del propietario: ${question}`,
+        content: [
+          // Cached separately from the date/question below — the portfolio
+          // barely changes between two questions in the same landlord
+          // session, so a same-session follow-up question can hit this
+          // block's cache instead of reprocessing the full data dump.
+          {
+            type: "text",
+            text: `Datos reales de la plaza (JSON):\n${dataBlock}`,
+            cache_control: { type: "ephemeral" },
+          },
+          {
+            type: "text",
+            // "Hoy" goes per-request, not into the cached blocks above: it's
+            // a different value every day, and estatus_contractual already
+            // carries the one date computation this endpoint actually needs
+            // to get right — this is a fallback for anything else
+            // date-relative the model might reason about (a model has no
+            // reliable notion of the real-world "today" on its own).
+            text: `Hoy es ${new Date().toISOString().slice(0, 10)}.\n\nPregunta del propietario: ${question}`,
+          },
+        ],
       },
     ],
-  });
+  };
+}
+
+// claude-opus-5's extended thinking counts against max_tokens, and has no
+// separate hard cap on this model (budget_tokens is rejected). Two levers
+// instead of one: max_tokens raised to the SDK's own non-streaming default
+// (16000, well past the ~2900 tokens a synthesis-heavy question measured
+// at), and effort held to "medium" since this endpoint is data lookup +
+// summary, not deep multi-step reasoning — cuts thinking spend at the
+// source rather than just raising the ceiling it can hit.
+const MODEL_PARAMS = {
+  model: "claude-opus-5" as const,
+  max_tokens: 16000,
+  output_config: { effort: "medium" as const },
+};
+
+// Non-streaming — kept for scripts/golden-eval-runner.ts, which grades a
+// complete answer against a golden reasoning anchor and has no UI to stream
+// tokens into.
+export async function askCopiloto(question: string): Promise<AskCopilotoResult> {
+  const request = await buildCopilotoRequest(question);
+  const client = new Anthropic();
+  const response = await client.messages.create({ ...MODEL_PARAMS, ...request });
 
   const answer = response.content.find((block) => block.type === "text")?.text ?? "";
   if (!answer) {
@@ -163,4 +230,44 @@ export async function askCopiloto(question: string): Promise<AskCopilotoResult> 
     };
   }
   return { answer };
+}
+
+// Streaming — what /api/copiloto/ask actually serves. Same retrieval, same
+// prompt, same model params as askCopiloto above; only the generation call
+// differs, so the landlord sees the first tokens as soon as Claude produces
+// them instead of waiting for the entire ~2900+ token answer to finish
+// before anything renders.
+export async function askCopilotoStream(question: string): Promise<ReadableStream<Uint8Array>> {
+  const request = await buildCopilotoRequest(question);
+  const client = new Anthropic();
+  const anthropicStream = client.messages.stream({ ...MODEL_PARAMS, ...request });
+
+  let sawText = false;
+  const encoder = new TextEncoder();
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      anthropicStream.on("text", (delta) => {
+        sawText = true;
+        controller.enqueue(encoder.encode(delta));
+      });
+      anthropicStream.on("end", () => {
+        // Same "fail loudly, don't return a silent blank" principle as
+        // askCopiloto's empty-answer check above — mid-stream there's no
+        // status code left to change, so the explanation is sent as the
+        // only text the client ever receives instead.
+        if (!sawText) {
+          controller.enqueue(
+            encoder.encode(
+              "El agente no generó una respuesta. Intenta de nuevo o reformula la pregunta.",
+            ),
+          );
+        }
+        controller.close();
+      });
+      anthropicStream.on("error", (err) => controller.error(err));
+    },
+    cancel() {
+      anthropicStream.abort();
+    },
+  });
 }
