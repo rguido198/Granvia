@@ -2,7 +2,7 @@ import { createHook, FatalError } from "workflow";
 
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { extractFromText, extractFromVision } from "@/lib/ingest/lease-extraction";
-import { matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
+import { isSameTenant, matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
 import type { LeaseExtractedFields, NewLeaseDetails } from "@/lib/ingest/lease-extraction-schema";
 import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
 
@@ -284,9 +284,18 @@ async function promoteExtraction(
   // lookup only asked "does a leases row exist," never "is it this same
   // tenant's." portfolio.server.ts already keys "active lease" off
   // locales.status, not date/existence alone — this mirrors that.
-  const incomingTenant = finalFields.tenant_entity.trim().toLowerCase();
-  const recordedTenant = locale.tenant_entity?.trim().toLowerCase();
-  const isNewTenancy = locale.status !== "OCCUPIED" || !recordedTenant || incomingTenant !== recordedTenant;
+  const recordedTenant = locale.tenant_entity?.trim();
+  // isSameTenant (fuzzy-match-tenant.ts), not a bare string comparison —
+  // must agree with legal-documents-panel.tsx's isOverwriteRisk, which
+  // warns the landlord about this exact decision before they click confirm.
+  // A strict trim+lowercase equality used to sit here and false-positived
+  // on a short brand name against its own full legal name ("PETCO" vs.
+  // "PETCO ANIMAL SUPPLIES DE MÉXICO, S.A. DE C.V.") — same tenant, but it
+  // forked into the tenant-swap path below: a new `leases` row and an
+  // overwritten `locales.tenant_entity`, instead of updating the existing
+  // lease's own terms in place.
+  const isNewTenancy =
+    locale.status !== "OCCUPIED" || !recordedTenant || !isSameTenant(finalFields.tenant_entity, recordedTenant);
 
   if (isNewTenancy) {
     if (!currentLeaseId && !decision.newLeaseDetails) {

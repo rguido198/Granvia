@@ -7,6 +7,7 @@ import {
   LeaseExtractedFieldsSchema,
   type LeaseExtractedFields,
 } from "@/lib/ingest/lease-extraction-schema";
+import { isSameTenant } from "@/lib/ingest/fuzzy-match-tenant";
 
 /**
  * Legal-tab UI for the active-lease document pipeline: bulk upload, the
@@ -667,16 +668,19 @@ export function MatchReviewForm({
       ? selectedUnit.tenantEntity
       : null
     : suggestedTenant;
-  // Same strict trim+lowercase comparison promoteExtraction's isNewTenancy
-  // uses (lease-digitization.ts) to decide a swap, not the fuzzy matcher —
+  // Same isSameTenant check promoteExtraction's isNewTenancy uses
+  // (lease-digitization.ts) to decide a swap, not a bare string comparison —
   // this warning has to agree with what Gate 2 is about to independently
   // decide, not offer a second opinion that could disagree with it. This is
   // the exact seam the MINT Boutique/Sushi Central incident happened at:
   // confirming a match onto a still-OCCUPIED locale silently overwrote the
   // recorded tenant's lease because nothing surfaced the mismatch before
-  // the click.
+  // the click. (A plain trim+lowercase equality used to sit here — found
+  // live to also false-positive on "PETCO" vs. the same tenant's own full
+  // legal name, "PETCO ANIMAL SUPPLIES DE MÉXICO, S.A. DE C.V.", which is
+  // exactly the kind of same-tenant pair this warning shouldn't fire on.)
   const isOverwriteRisk =
-    !!targetTenant && !!documentTenantName && targetTenant.trim().toLowerCase() !== documentTenantName.trim().toLowerCase();
+    !!targetTenant && !!documentTenantName && !isSameTenant(targetTenant, documentTenantName);
 
   // "This unit isn't in the rent roll at all yet" — distinct from
   // correctedLocaleId picking an existing wrong suggestion. Before this,

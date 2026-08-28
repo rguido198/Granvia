@@ -53,6 +53,43 @@ function similarity(a: string, b: string): number {
   return 1 - levenshtein(a, b) / maxLen;
 }
 
+// A short guard, not a real business-name length — this is a lower bound
+// on how much of a normalized name has to precede a word boundary before a
+// prefix match counts, to keep a two-letter fragment from matching almost
+// anything.
+const MIN_PREFIX_MATCH_LENGTH = 3;
+
+/**
+ * Found live: the plaza's own roster carries "PETCO" (the operational/brand
+ * name a landlord actually recognizes), but a digitized contract's
+ * declarative section always states the full legal name ("PETCO ANIMAL
+ * SUPPLIES DE MÉXICO, S.A. DE C.V."). Whole-string Levenshtein similarity
+ * scores that pair far under MIN_CONFIDENCE — ~25 of 32 characters differ —
+ * even after normalize() strips the corporate suffix, so Gate 1 offered no
+ * suggestion at all for an objectively unambiguous same-tenant case.
+ *
+ * A short name that appears as a whole word (or word sequence) at the start
+ * of a longer one is exactly this pattern — a brand short-form is a prefix
+ * of its own legal name, not a coincidental substring — so it's scored as a
+ * near-certain match, high enough to clear MIN_CONFIDENCE on its own, but
+ * short of full string-identity confidence.
+ */
+function prefixMatchScore(a: string, b: string): number {
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+  if (shorter.length < MIN_PREFIX_MATCH_LENGTH || !longer.startsWith(shorter)) return 0;
+  const rest = longer.slice(shorter.length);
+  return rest === "" || rest.startsWith(" ") ? 0.9 : 0;
+}
+
+/** The single score both matchTenant (ranking candidates against a
+ *  MIN_CONFIDENCE floor) and isSameTenant (a yes/no decision) are built on —
+ *  they have to share this, not each run their own comparison, so a name
+ *  Gate 1 confidently suggests can never be a name Gate 2 then treats as a
+ *  different tenant (or vice versa). */
+function nameSimilarity(a: string, b: string): number {
+  return Math.max(similarity(a, b), prefixMatchScore(a, b));
+}
+
 export function matchTenant(
   extractedName: string,
   candidates: { id: string; tenantEntity: string }[],
@@ -63,11 +100,23 @@ export function matchTenant(
   let best: { localeId: string; confidence: number } | null = null;
 
   for (const candidate of candidates) {
-    const confidence = similarity(normalizedExtracted, normalize(candidate.tenantEntity));
+    const confidence = nameSimilarity(normalizedExtracted, normalize(candidate.tenantEntity));
     if (!best || confidence > best.confidence) {
       best = { localeId: candidate.id, confidence };
     }
   }
 
   return best && best.confidence >= MIN_CONFIDENCE ? best : null;
+}
+
+/**
+ * Is `a` and `b` close enough to be the same real-world tenant — a short
+ * brand name against its own full legal name, an OCR-mangled spelling, a
+ * formatting difference — rather than two different businesses? Same
+ * MIN_CONFIDENCE floor and same nameSimilarity scoring matchTenant uses, so
+ * a name Gate 1 suggests with confidence and a name Gate 2 checks for an
+ * overwrite risk can never disagree about whether it's the same tenant.
+ */
+export function isSameTenant(a: string, b: string): boolean {
+  return nameSimilarity(normalize(a), normalize(b)) >= MIN_CONFIDENCE;
 }
