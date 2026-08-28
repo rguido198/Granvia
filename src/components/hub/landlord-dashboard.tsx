@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect, Fragment } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import type {
   ConsoleData,
@@ -411,23 +411,52 @@ export function LandlordDashboard({
   // runs after the upload response has already gone back to the browser —
   // `after()` in the ingest route dispatches it post-response, and
   // extractFromText/extractFromVision each make a multi-second Opus call on
-  // top of that. LeaseUploadZone's one-shot router.refresh() on upload lands
-  // mid-flight and catches "extracting" every time; nothing ever re-checks
-  // afterward, so the panel looks stuck until a manual reload. Poll instead
-  // while any document is still in-flight, and stop as soon as none are —
-  // `ready_for_triage`/`attached`/`failed` are all resting states waiting on
-  // a human, not on more processing, so they don't keep the poll alive.
+  // top of that.
+  //
+  // This used to poll via router.refresh() (re-running the Server Component
+  // and delivering a fresh activeLeaseDocuments prop). Confirmed live that
+  // was NOT reliably reaching the rendered page in production — checked the
+  // database directly mid-test and found a document genuinely `extracting`
+  // (which isInFlight correctly renders, unit-tested) that the deployed page
+  // still showed as "Nada pendiente de revisión," unchanged across several
+  // router.refresh() calls and multiple poll ticks. Removing a leftover
+  // `runtime = "edge"` on the page was a reasonable, confirmed-safe fix
+  // attempt and didn't fully resolve it either. Rather than keep chasing
+  // why RSC refresh isn't landing, this polls a plain JSON endpoint
+  // (/api/documents/active-lease) directly from the client and holds the
+  // result in local state — sidesteps router.refresh()/RSC entirely, so
+  // whatever was wrong with that path can't affect this one.
+  const [liveActiveLeaseDocuments, setLiveActiveLeaseDocuments] = useState(activeLeaseDocuments);
+  // If a genuine full navigation or an RSC refresh from elsewhere on the
+  // page DOES land with a new prop, take it — don't let stale local poll
+  // state fight a fresher server-provided value.
+  useEffect(() => {
+    setLiveActiveLeaseDocuments(activeLeaseDocuments);
+  }, [activeLeaseDocuments]);
+
+  const refreshActiveLeaseDocuments = useCallback(async () => {
+    try {
+      const res = await fetch("/api/documents/active-lease");
+      if (!res.ok) return;
+      const { documents } = (await res.json()) as { documents: LeaseDocumentRow[] };
+      setLiveActiveLeaseDocuments(documents);
+    } catch {
+      // Transient network hiccup — the next poll tick (or the next manual
+      // upload) tries again; nothing here is worth surfacing to the landlord.
+    }
+  }, []);
+
   // Same predicate legal-documents-panel.tsx's queue card uses (imported,
   // not re-declared) — the poll-alive condition and what UploadContractButton's
   // badge/warning count as "still processing" have to agree, or the button
   // could show zero in-flight while the queue still has some (or vice versa).
-  const inFlightLeaseDocuments = activeLeaseDocuments.filter(isInFlight);
+  const inFlightLeaseDocuments = liveActiveLeaseDocuments.filter(isInFlight);
   const hasInFlightLeaseDocument = inFlightLeaseDocuments.length > 0;
   useEffect(() => {
     if (!hasInFlightLeaseDocument) return;
-    const interval = setInterval(() => router.refresh(), 3000);
+    const interval = setInterval(refreshActiveLeaseDocuments, 3000);
     return () => clearInterval(interval);
-  }, [hasInFlightLeaseDocument, router]);
+  }, [hasInFlightLeaseDocument, refreshActiveLeaseDocuments]);
   // Keyed `${localeId}:${field}` — lets each cell show its own saving state
   // independently instead of locking the whole table while one field saves.
   const [savingField, setSavingField] = useState<string | null>(null);
@@ -1703,7 +1732,15 @@ export function LandlordDashboard({
                           only after scrolling past 85 rows. Moved to the one
                           entry point every visit to this tab starts at. */}
                       <UploadContractButton
-                        onUploaded={() => router.refresh()}
+                        onUploaded={() => {
+                          // Immediate — doesn't wait for the first 3s poll
+                          // tick, so the queue below picks up the new
+                          // document(s) as soon as the upload itself
+                          // resolves. router.refresh() kept alongside for
+                          // whatever else on this page it does still reach.
+                          void refreshActiveLeaseDocuments();
+                          router.refresh();
+                        }}
                         onFeedback={triggerToast}
                         inFlightFilenames={inFlightLeaseDocuments.map((doc) => doc.originalFilename)}
                       />
@@ -1725,9 +1762,12 @@ export function LandlordDashboard({
                     </div>
 
                     <LegalDocumentsPanel
-                      documents={activeLeaseDocuments}
+                      documents={liveActiveLeaseDocuments}
                       allUnits={leaseDocumentUnits}
-                      onResolved={() => router.refresh()}
+                      onResolved={() => {
+                        void refreshActiveLeaseDocuments();
+                        router.refresh();
+                      }}
                     />
                   </div>
 
