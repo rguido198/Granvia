@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ConsoleModal } from "@/components/hub/console-modal";
 import {
@@ -513,10 +513,16 @@ const PROGRESS_STATUS_LABELS: Record<string, string> = {
 /**
  * Replaces the drop zone inside the same modal once upload(s) succeed —
  * doesn't close and leave a landlord guessing whether anything is still
- * happening. Polls the same no-store'd endpoint the queue card uses
- * (/api/documents/active-lease), filtered to just this batch's document
- * ids, so each file's real status is visible right where the landlord is
- * already looking, not in a badge elsewhere they'd have to notice and read.
+ * happening. Reads each file's live status from `liveDocuments` — the same
+ * state landlord-dashboard.tsx already polls every 3s while anything's in
+ * flight (its own useEffect, not one owned by this component) — instead of
+ * running a second, independent poll of its own. That second poll is
+ * exactly the bug this replaced: it kept this view itself accurate, but
+ * updated a completely separate piece of state from what the queue card
+ * and "Nada pendiente de revisión" text below render from, so closing this
+ * modal handed back a page that still hadn't heard about the upload at
+ * all. One poll, one shared source of truth — this and the queue card
+ * literally cannot disagree now, because they read the same data.
  *
  * Previously this closed the modal immediately (onAllSucceeded) and relied
  * on a toast (auto-dismisses in ~3.5s) plus a badge next to the trigger
@@ -525,41 +531,20 @@ const PROGRESS_STATUS_LABELS: Record<string, string> = {
  * telling them work was still in progress. This keeps the modal open and
  * showing exactly that until the landlord is ready to close it themselves.
  */
-function UploadProgressView({ docs, onClose }: { docs: UploadedDoc[]; onClose: () => void }) {
-  const [statusById, setStatusById] = useState<Record<string, string>>(
-    Object.fromEntries(docs.map((d) => [d.documentId, "uploaded"])),
+function UploadProgressView({
+  docs,
+  liveDocuments,
+  onClose,
+}: {
+  docs: UploadedDoc[];
+  /** landlord-dashboard.tsx's liveActiveLeaseDocuments, forwarded down —
+   *  the single state both this view and the queue card below read from. */
+  liveDocuments: { id: string; status: string }[];
+  onClose: () => void;
+}) {
+  const statusById = Object.fromEntries(
+    docs.map((d) => [d.documentId, liveDocuments.find((live) => live.id === d.documentId)?.status ?? "uploaded"]),
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    async function poll() {
-      try {
-        const res = await fetch("/api/documents/active-lease", { cache: "no-store" });
-        if (!res.ok || cancelled) return;
-        const { documents } = (await res.json()) as { documents: { id: string; status: string }[] };
-        if (cancelled) return;
-        setStatusById((prev) => {
-          const next = { ...prev };
-          for (const doc of docs) {
-            const match = documents.find((d) => d.id === doc.documentId);
-            if (match) next[doc.documentId] = match.status;
-          }
-          return next;
-        });
-      } catch {
-        // Transient network hiccup — the next tick retries.
-      }
-    }
-    poll();
-    const interval = setInterval(poll, 2000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-    // docs is the batch this view was mounted for — fixed for its lifetime,
-    // not meant to restart the poll on every parent re-render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const allSettled = docs.every((d) => {
     const status = statusById[d.documentId];
@@ -616,6 +601,7 @@ export function LeaseUploadZone({
   onUploaded,
   onClose,
   onFeedback,
+  liveDocuments,
 }: {
   onUploaded: () => void;
   /** Closes the parent modal — wired to UploadProgressView's "Listo" button
@@ -630,6 +616,11 @@ export function LeaseUploadZone({
    *  one — a toast alone auto-dismisses in ~3.5s, far short of the
    *  ~30-45s a real extraction pass takes. */
   onFeedback?: (message: string) => void;
+  /** landlord-dashboard.tsx's liveActiveLeaseDocuments — forwarded straight
+   *  through to UploadProgressView. See that component's doc comment for
+   *  why this has to be the same state the queue card reads, not a second
+   *  independent poll. */
+  liveDocuments: { id: string; status: string }[];
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -682,7 +673,7 @@ export function LeaseUploadZone({
   }
 
   if (uploadedDocs) {
-    return <UploadProgressView docs={uploadedDocs} onClose={onClose} />;
+    return <UploadProgressView docs={uploadedDocs} liveDocuments={liveDocuments} onClose={onClose} />;
   }
 
   return (
@@ -731,6 +722,7 @@ export function UploadContractButton({
   onUploaded,
   onFeedback,
   inFlightFilenames,
+  liveDocuments,
 }: {
   onUploaded: () => void;
   /** Forwarded to LeaseUploadZone — see its own doc comment. */
@@ -745,6 +737,10 @@ export function UploadContractButton({
    *  a landlord who's unsure "did that upload work?" doesn't resubmit the
    *  same file while it's still being read. */
   inFlightFilenames?: string[];
+  /** Forwarded to LeaseUploadZone → UploadProgressView — see its doc
+   *  comment for why this has to be the same state the queue card below
+   *  reads, not a second independent poll. */
+  liveDocuments: { id: string; status: string }[];
 }) {
   const [open, setOpen] = useState(false);
   const inFlightCount = inFlightFilenames?.length ?? 0;
@@ -793,7 +789,12 @@ export function UploadContractButton({
                   vez mientras se procesa.
                 </p>
               )}
-              <LeaseUploadZone onUploaded={onUploaded} onClose={() => setOpen(false)} onFeedback={onFeedback} />
+              <LeaseUploadZone
+                onUploaded={onUploaded}
+                onClose={() => setOpen(false)}
+                onFeedback={onFeedback}
+                liveDocuments={liveDocuments}
+              />
             </div>
           </div>
         </ConsoleModal>

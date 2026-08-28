@@ -1747,6 +1747,7 @@ export function LandlordDashboard({
                         }}
                         onFeedback={triggerToast}
                         inFlightFilenames={inFlightLeaseDocuments.map((doc) => doc.originalFilename)}
+                        liveDocuments={liveActiveLeaseDocuments}
                       />
                     </div>
                   </div>
