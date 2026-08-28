@@ -254,35 +254,38 @@ function DocumentCard({
         <div className="border-t border-hairline pt-2.5">
           {/* `ready_for_triage` is written twice on the way here: once by the
            *  ingest route's after() callback the moment raw text lands, and
-           *  again by the workflow's recordSuggestion step. Only the second
-           *  one means Gate 1's hook exists — resuming it before then 404s.
-           *
-           *  `extracted_fields` is the discriminator: it stays at its `{}`
-           *  column default (which fails the schema parse) until
-           *  recordSuggestion writes the real extraction, and both extraction
-           *  paths already validate against this exact schema before
-           *  returning, so a successful parse here means the workflow reached
-           *  the point of having a suggestion recorded.
-           *
-           *  Deliberately NOT keyed off `suggestedLocaleUnit` — a document
-           *  whose tenant name matched nothing has a null suggestion and is
-           *  still a legitimate thing to review, just with no unit to show. */}
-          {fields ? (
+           *  again by the workflow's recordSuggestion step — only the second
+           *  one means Gate 1's hook exists. `extracted_fields` at its `{}`
+           *  column default (before recordSuggestion writes the real
+           *  extraction) is genuinely "still processing," but a populated
+           *  object that still fails LeaseExtractedFieldsSchema's strict
+           *  parse is a *different* case entirely: a document extracted
+           *  under an older schema version (found live on c5b14f47, missing
+           *  the area_sqm key added after it was processed) that will never
+           *  parse no matter how long you wait. Gate 1 doesn't actually need
+           *  the full schema to hold — it only ever reads area_sqm, one
+           *  optional leaf — so it renders the real review form either way;
+           *  full-schema validity only gates Gate 2, which does need every
+           *  field to render its editable form. Distinguishing "empty" from
+           *  "populated but invalid" is what tells apart an honest "wait a
+           *  moment" from a permanently stuck document that needs a human
+           *  decision now. */}
+          {Object.keys(doc.extractedFields ?? {}).length === 0 ? (
+            <p className="text-xs text-ink-500 font-medium">
+              Procesando el contrato — la sugerencia de local todavía no está lista. Vuelve a
+              cargar la vista en unos momentos.
+            </p>
+          ) : (
             <MatchReviewForm
               documentId={doc.id}
               suggestedUnit={doc.suggestedLocaleUnit}
               suggestedTenant={doc.suggestedLocaleTenant}
               documentTenantName={doc.documentTenantName}
               confidence={doc.matchConfidence}
-              extractedAreaSqm={fields.area_sqm}
+              extractedAreaSqm={fields?.area_sqm ?? null}
               allUnits={allUnits}
               onResolved={onResolved}
             />
-          ) : (
-            <p className="text-xs text-ink-500 font-medium">
-              Procesando el contrato — la sugerencia de local todavía no está lista. Vuelve a
-              cargar la vista en unos momentos.
-            </p>
           )}
         </div>
       )}
