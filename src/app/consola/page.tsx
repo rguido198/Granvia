@@ -23,7 +23,19 @@ import { fetchActiveLeaseDocuments, fetchPortfolio } from "@/lib/data/portfolio.
  * exist: nothing on disk, nothing to serve by accident.
  */
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
+// Was `runtime = "edge"` -- leftover from this app's Cloudflare Pages era
+// (see git history: explicitly removed once for an RSC response mismatch,
+// then re-added the same day for the Cloudflare migration, never cleaned up
+// after the later move to Vercel). Nothing in this page's chain needs
+// edge-specific APIs -- it's the same getSupabaseServiceClient() every
+// other route uses, several of which (src/app/api/ingest/route.ts) already
+// declare `runtime = "nodejs"` explicitly. Found live: a landlord uploading
+// a lease saw router.refresh() and the 3s in-flight poll (both confirmed
+// correct against live data) never actually update the rendered page --
+// Edge Runtime on Vercel has documented RSC/revalidation consistency
+// quirks force-dynamic doesn't fully route around. Node is a strict
+// superset of what Edge can do, so this can't regress anything that
+// worked before.
 
 export const metadata: Metadata = {
   title: "Consola de Asset Management | La Gran Vía Mexicali",
