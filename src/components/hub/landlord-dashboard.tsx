@@ -601,6 +601,7 @@ export function LandlordDashboard({
   };
 
   const renewalSoonCount = useMemo(() => leases.filter((c) => c.renewalSoon).length, [leases]);
+  const digitizedLeaseCount = useMemo(() => leases.filter((c) => c.sourceDocumentId).length, [leases]);
 
   const visibleLeases = useMemo(() => {
     const needle = contractFilter.trim().toLowerCase();
@@ -822,7 +823,12 @@ export function LandlordDashboard({
                   actually collected and which invoices had payment-method
                   mismatches — that requires a bank feed or ERP/accounting
                   connection this engagement doesn't have and isn't getting.
-                  Nothing here implies knowledge this system doesn't have. */}
+                  Nothing here implies knowledge this system doesn't have.
+                  Renta Promedio/m² (an average nobody actually acts on) was
+                  swapped for Contratos Digitalizados — a number tied
+                  directly to the active work of reading the 85-lease
+                  backlog into the system, and one that visibly moves every
+                  time a landlord confirms one at Gate 2. */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 space-y-1">
                   <p className="text-xs font-bold text-ink-500 tracking-wide">Renta Contratada (Portafolio)</p>
@@ -831,9 +837,14 @@ export function LandlordDashboard({
                 </div>
 
                 <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 space-y-1">
-                  <p className="text-xs font-bold text-ink-500 tracking-wide">Renta Promedio / m²</p>
-                  <p className="text-2xl font-bold text-ink">{formatVal(Math.round(contractedRent / leasedSqm))}</p>
-                  <p className="text-xs text-ink-500 font-medium">Sobre {leasedSqm.toLocaleString("es-MX")} m² arrendados</p>
+                  <p className="text-xs font-bold text-ink-500 tracking-wide">Contratos Digitalizados</p>
+                  <p className="text-2xl font-bold text-ink">
+                    {digitizedLeaseCount} de {leases.length}
+                  </p>
+                  <p className="text-xs text-ink-500 font-medium">
+                    {leases.length > 0 ? Math.round((digitizedLeaseCount / leases.length) * 100) : 0}% con contrato
+                    escaneado en el sistema
+                  </p>
                 </div>
 
                 <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 flex items-center gap-4">
