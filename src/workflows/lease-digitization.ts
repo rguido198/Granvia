@@ -36,7 +36,7 @@ type DocumentContext = {
   storagePath: string;
   mimeType: string;
   rawText: string | null; // populated by pdf-parse in the ingest route, if native text existed
-  candidates: { id: string; tenantEntity: string }[];
+  candidates: { id: string; tenantEntity: string; tradeName: string | null }[];
 };
 
 async function loadDocumentContext(documentId: string): Promise<DocumentContext> {
@@ -57,7 +57,7 @@ async function loadDocumentContext(documentId: string): Promise<DocumentContext>
   // it loads every occupied locale in the plaza as a match candidate.
   const { data: locales } = await supabase
     .from("locales")
-    .select("id, tenant_entity")
+    .select("id, tenant_entity, trade_name")
     .eq("status", "OCCUPIED")
     .not("tenant_entity", "is", null);
 
@@ -66,7 +66,11 @@ async function loadDocumentContext(documentId: string): Promise<DocumentContext>
     storagePath: document.storage_path,
     mimeType: document.mime_type,
     rawText: document.raw_text,
-    candidates: (locales ?? []).map((l) => ({ id: l.id, tenantEntity: l.tenant_entity as string })),
+    candidates: (locales ?? []).map((l) => ({
+      id: l.id,
+      tenantEntity: l.tenant_entity as string,
+      tradeName: l.trade_name,
+    })),
   };
 }
 
@@ -109,7 +113,11 @@ async function suggestMatch(
   // the same `extracted_fields.tenant_entity` for the Legal tab's Gate 1
   // display, so the name the landlord is shown is provably the same string
   // this confidence score was computed from.
-  const match = matchTenant(extraction.extractedFields.tenant_entity, context.candidates);
+  const match = matchTenant(
+    extraction.extractedFields.tenant_entity,
+    context.candidates,
+    extraction.extractedFields.trade_name,
+  );
   return { suggestedLocaleId: match?.localeId ?? null, confidence: match?.confidence ?? null };
 }
 
@@ -250,10 +258,15 @@ async function promoteExtraction(
   }
 
   const finalFields = decision.correctedFields ?? (document.extracted_fields as LeaseExtractedFields);
+  // trade_name is optional in the schema (a document extracted before this
+  // field existed has no key at all, not a null value) — normalized here,
+  // once, so every read below is a plain `string | null` instead of each
+  // site separately handling the `undefined` case.
+  const extractedTradeName = finalFields.trade_name ?? null;
 
   const { data: locale, error: localeError } = await supabase
     .from("locales")
-    .select("unit_number, tenant_entity, status")
+    .select("unit_number, tenant_entity, trade_name, status")
     .eq("id", localeId)
     .single();
   if (localeError || !locale) {
@@ -295,7 +308,9 @@ async function promoteExtraction(
   // overwritten `locales.tenant_entity`, instead of updating the existing
   // lease's own terms in place.
   const isNewTenancy =
-    locale.status !== "OCCUPIED" || !recordedTenant || !isSameTenant(finalFields.tenant_entity, recordedTenant);
+    locale.status !== "OCCUPIED" ||
+    !recordedTenant ||
+    !isSameTenant(finalFields.tenant_entity, recordedTenant, extractedTradeName, locale.trade_name);
 
   if (isNewTenancy) {
     if (!currentLeaseId && !decision.newLeaseDetails) {
@@ -343,6 +358,12 @@ async function promoteExtraction(
         lease_id: `LEASE-${locale.unit_number}-${Date.now()}`,
         locale_id: localeId,
         tenant_entity: leaseDetails.tenant_entity,
+        // Always extractedTradeName, not leaseDetails' — NewLeaseDetailsSchema
+        // (the needs_new_lease follow-up form) has no trade_name field of its
+        // own, but finalFields (the confirmed extraction) is available either
+        // way and is the only source of this value regardless of which path
+        // leaseDetails came from.
+        trade_name: extractedTradeName,
         start_date: leaseDetails.start_date,
         end_date: leaseDetails.end_date,
         base_rent_monthly: leaseDetails.base_rent_monthly,
@@ -365,6 +386,7 @@ async function promoteExtraction(
       .from("locales")
       .update({
         tenant_entity: leaseDetails.tenant_entity,
+        trade_name: extractedTradeName,
         status: "OCCUPIED",
         ...(finalFields.area_sqm !== null ? { area_sqm: finalFields.area_sqm } : {}),
       })
@@ -376,6 +398,15 @@ async function promoteExtraction(
       // authoritative source, not a value to leave stale forever because
       // nothing else in the pipeline ever writes `locales.area_sqm`.
       await supabase.from("locales").update({ area_sqm: finalFields.area_sqm }).eq("id", localeId);
+    }
+    if (extractedTradeName !== null && extractedTradeName !== locale.trade_name) {
+      // Backfill only — this is the same tenant (isNewTenancy is false), so
+      // there's no swap to record, but this document may be the first one
+      // to ever state a trade name for this locale at all. Doing it now
+      // means the NEXT document naming this tenant by its trade name (a
+      // second location, a renewal) has something to match against on the
+      // roster side, not just this one document's own extraction.
+      await supabase.from("locales").update({ trade_name: extractedTradeName }).eq("id", localeId);
     }
 
     await supabase
@@ -390,6 +421,7 @@ async function promoteExtraction(
         // carried placeholder end_date/rent that didn't match the real
         // contract just confirmed).
         tenant_entity: finalFields.tenant_entity,
+        trade_name: extractedTradeName,
         start_date: finalFields.start_date,
         end_date: finalFields.end_date,
         base_rent_monthly: finalFields.base_rent_monthly,

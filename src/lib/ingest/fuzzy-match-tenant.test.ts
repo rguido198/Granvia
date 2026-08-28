@@ -87,6 +87,37 @@ describe("matchTenant", () => {
     const result = matchTenant("PETCO", candidates);
     expect(result).toBeNull();
   });
+
+  it("matches on trade name when the legal name shares nothing with the roster", () => {
+    // Live case: roster carries "Cabanna" (the trade name), the contract's
+    // declarative section names the legal entity "Restaurantes del
+    // Noroeste, S.A. de C.V." — zero shared characters, no prefix
+    // relationship either. Only findable via the extraction's own
+    // trade_name field, not tenant_entity at all.
+    const candidates = [{ id: "loc-18", tenantEntity: "Cabanna" }];
+    const result = matchTenant("Restaurantes del Noroeste, S.A. de C.V.", candidates, "Cabanna");
+    expect(result?.localeId).toBe("loc-18");
+    expect(result!.confidence).toBe(1);
+  });
+
+  it("matches when the roster itself carries a trade name, not the extraction", () => {
+    // The reverse direction — a roster row already split into
+    // tenantEntity/tradeName (backfilled from an earlier document), matched
+    // against a fresh extraction that only stated the legal name this time.
+    const candidates = [{ id: "loc-18", tenantEntity: "Restaurantes del Noroeste, S.A. de C.V.", tradeName: "Cabanna" }];
+    const result = matchTenant("Cabanna", candidates);
+    expect(result?.localeId).toBe("loc-18");
+    expect(result!.confidence).toBe(1);
+  });
+
+  it("ignores extraneous fields without a trade name and behaves exactly as before", () => {
+    // Backward-compatibility check: the 2-arg call shape (no extractedTradeName,
+    // candidates with no tradeName) must score identically to pre-trade-name
+    // behavior — nothing about adding the feature should shift existing scores.
+    const result = matchTenant("Ashley Furniture", CANDIDATES);
+    expect(result?.localeId).toBe("loc-1");
+    expect(result?.confidence).toBe(1);
+  });
 });
 
 describe("isSameTenant", () => {
@@ -104,5 +135,18 @@ describe("isSameTenant", () => {
 
   it("is order-independent", () => {
     expect(isSameTenant("PETCO Animal Supplies de México, S.A. de C.V.", "PETCO")).toBe(true);
+  });
+
+  it("recognizes a legal name and an unrelated trade name as the same tenant", () => {
+    // The Cabanna case: neither legal name alone (Levenshtein) nor prefix
+    // containment finds this — only checking the trade name against the
+    // other side's name does.
+    expect(
+      isSameTenant("Restaurantes del Noroeste, S.A. de C.V.", "Cabanna", "Cabanna", undefined),
+    ).toBe(true);
+  });
+
+  it("does not let an unrelated trade name manufacture a false match", () => {
+    expect(isSameTenant("Sushi Central", "Cabanna", "Not Sushi At All", "Cabanna")).toBe(false);
   });
 });

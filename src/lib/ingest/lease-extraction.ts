@@ -10,6 +10,8 @@ const EXTRACTION_SYSTEM_PROMPT = `Extraes datos estructurados de un contrato de 
 
 tenant_entity: el nombre legal completo del ARRENDATARIO tal como aparece en el contrato (p. ej. "MINT Boutique, S.A. de C.V."), no un apodo ni el giro comercial.
 
+trade_name: si el contrato declara que el ARRENDATARIO opera bajo un nombre comercial o marca distinto de su razón social (p. ej. una cláusula que diga "operando bajo el nombre comercial de Cabanna" o "conocido comercialmente como..."), transcribe ese nombre comercial aquí — no el nombre legal completo otra vez. Usa null si el contrato no distingue un nombre comercial de la razón social, o si el nombre comercial y la razón social son efectivamente el mismo texto.
+
 start_date y end_date: fecha de inicio y de vencimiento del plazo forzoso, en formato ISO "YYYY-MM-DD".
 
 base_rent_monthly: renta base mensual como número plano, sin símbolo de moneda ni separadores de miles (p. ej. 48250.50). Si el contrato no declara una renta fija en pesos (p. ej. renta variable pura, o el dato simplemente no aparece), usa null en vez de adivinar.

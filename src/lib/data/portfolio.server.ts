@@ -115,7 +115,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: leaseRows, error: leasesError } = await supabase
     .from("leases")
     .select(
-      "id, locale_id, tenant_entity, permitted_use, exclusive_use_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id",
+      "id, locale_id, tenant_entity, trade_name, permitted_use, exclusive_use_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id",
     );
   if (leasesError) throw new Error(leasesError.message);
 
@@ -228,6 +228,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         id: l.locale_id,
         unitCode: locale?.unit_number ?? "?",
         tenantEntity: l.tenant_entity,
+        tradeName: l.trade_name,
         sqm: Number(locale?.area_sqm ?? 0),
         rentMonthly: Number(l.base_rent_monthly ?? 0),
         permittedUse: l.permitted_use,
@@ -299,6 +300,12 @@ export type LeaseDocumentRow = {
    *  scored the fuzzy match against, so this is a comparison, not a bare
    *  assertion. */
   documentTenantName: string | null;
+  /** The trade/brand name the LLM extraction read off the contract
+   *  (`extracted_fields.trade_name`) when it names one distinct from
+   *  documentTenantName — e.g. "Cabanna" for a legal name of "Restaurantes
+   *  del Noroeste, S.A. de C.V." null when the contract doesn't distinguish
+   *  one, or hasn't been through extraction yet. */
+  documentTradeName: string | null;
   matchConfidence: number | null;
   /** Unit number / tenant of the locale Gate 1 already confirmed. Gate 2
    *  writes onto this locale's lease, so its form has to name it. */
@@ -318,6 +325,15 @@ export type LeaseDocumentRow = {
 function tenantNameFromExtractedFields(extractedFields: unknown): string | null {
   if (!extractedFields || typeof extractedFields !== "object") return null;
   const value = (extractedFields as Record<string, unknown>).tenant_entity;
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+/** Same pattern as tenantNameFromExtractedFields, for trade_name — Gate 1's
+ *  form needs both to show "documento indica razón social X, operando como
+ *  Y" instead of just the legal name a landlord may not recognize at all. */
+function tradeNameFromExtractedFields(extractedFields: unknown): string | null {
+  if (!extractedFields || typeof extractedFields !== "object") return null;
+  const value = (extractedFields as Record<string, unknown>).trade_name;
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
@@ -405,6 +421,7 @@ export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
       suggestedLocaleUnit: suggested?.unit ?? null,
       suggestedLocaleTenant: suggested?.tenant ?? null,
       documentTenantName: tenantNameFromExtractedFields(r.extracted_fields),
+      documentTradeName: tradeNameFromExtractedFields(r.extracted_fields),
       matchConfidence: r.match_confidence === null ? null : Number(r.match_confidence),
       localeUnit: confirmed?.unit ?? null,
       localeTenant: confirmed?.tenant ?? null,

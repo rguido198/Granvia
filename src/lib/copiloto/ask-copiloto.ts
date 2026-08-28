@@ -27,6 +27,7 @@ const SYSTEM_PROMPT = `Eres el Copiloto IA de La Gran Vía Mexicali — cubres t
 Reglas:
 - Responde en español, de forma directa y ejecutiva.
 - Cita el inquilino y el local (ej. "Ashley Furniture, Local A-01") cuando refieras un contrato, y el número de ticket y el local (ej. "INC-006, Local LOC-12") cuando refieras un caso de mantenimiento.
+- inquilino es la razón social (nombre legal registrado) del arrendatario. nombre_comercial es su marca u operación pública cuando el contrato distingue una de la otra (p. ej. inquilino "Restaurantes del Noroeste, S.A. de C.V.", nombre_comercial "Cabanna") — puede no compartir ninguna palabra con inquilino, no es una variante de ese mismo nombre. Si el propietario pregunta por el nombre comercial/marca, usa nombre_comercial; si pregunta por la razón social o RFC/facturación, usa inquilino. Si nombre_comercial es null, el contrato no distingue los dos y basta con inquilino.
 - La matriz de responsabilidad de mantenimiento (matriz_responsabilidad) y los días de aviso de terminación (dias_aviso_terminacion) provienen del contrato digitalizado y verificado por el propietario — cítalos como tales cuando los uses. Si son null, dilo explícitamente: ese contrato aún no ha sido digitalizado o verificado.
 - Cada contrato incluye estatus_contractual ("Vigente" / "Renovación Próxima" / "Vencido"), ya calculado a partir de la fecha de hoy que se te da al inicio del mensaje — úsalo directamente para cualquier pregunta sobre si un contrato está vigente, por vencer o vencido. No lo recalcules tú mismo a partir de "vencimiento": es el mismo estatus exacto que ve el propietario en la tabla de contratos, y un cálculo propio podría no coincidir.
 - Cuando un contrato incluya texto_completo_contrato (el documento digitalizado íntegro) o clausulas_especiales (cláusulas fuera de lo estándar detectadas en Gate 2), úsalos para responder cualquier pregunta sobre ese contrato que los campos estructurados no cubran — no te limites a matriz_responsabilidad/uso_permitido/clausula_exclusividad si la respuesta real está en el texto completo.
@@ -44,6 +45,12 @@ type CopilotoRequest = {
 
 type PortfolioLeaseRecord = {
   inquilino: string;
+  // The operating brand/DBA name when the digitized contract states one
+  // distinct from `inquilino` (its registered legal name) — e.g. inquilino
+  // "Restaurantes del Noroeste, S.A. de C.V.", nombre_comercial "Cabanna".
+  // null for an undigitized lease, or one whose contract never distinguishes
+  // the two. See SYSTEM_PROMPT's guidance on citing both.
+  nombre_comercial: string | null;
   local: string;
   m2: number | null;
   renta_mensual_mxn: number | null;
@@ -120,6 +127,7 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
 
   const leasesBlock: PortfolioLeaseRecord[] = leases.map((l) => ({
     inquilino: l.tenantEntity,
+    nombre_comercial: l.tradeName,
     local: l.unitCode,
     m2: l.sqm,
     renta_mensual_mxn: l.rentMonthly,
@@ -212,7 +220,9 @@ async function buildCopilotoRequest(question: string): Promise<CopilotoRequest> 
   // question ("how many leases expire this year") matches none, which is
   // correct — the aggregates already cover that without any raw text.
   const relevantLeases = data.contratos_de_arrendamiento.filter(
-    (l) => l.sourceDocumentId && isLeaseRelevantToQuestion(question, { tenantEntity: l.inquilino, unitCode: l.local }),
+    (l) =>
+      l.sourceDocumentId &&
+      isLeaseRelevantToQuestion(question, { tenantEntity: l.inquilino, unitCode: l.local, tradeName: l.nombre_comercial }),
   );
   const relevantTexts: { inquilino: string; local: string; texto_completo_contrato: string }[] = [];
   for (const l of relevantLeases) {

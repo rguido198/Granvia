@@ -11,6 +11,12 @@ export type LeaseDetail = {
   id: string;
   unitCode: string;
   tenantEntity: string;
+  /** The tenant's operating brand/DBA name when the digitized contract
+   *  states one distinct from tenantEntity (its registered legal name) —
+   *  e.g. tenantEntity "Restaurantes del Noroeste, S.A. de C.V.", tradeName
+   *  "Cabanna". null when the contract doesn't distinguish one, or for a
+   *  lease never digitized. */
+  tradeName: string | null;
   sqm: number;
   rentMonthly: number;
   permittedUse: string | null;

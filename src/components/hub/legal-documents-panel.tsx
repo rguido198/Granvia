@@ -33,6 +33,7 @@ export type DocumentRow = {
   suggestedLocaleUnit: string | null;
   suggestedLocaleTenant: string | null;
   documentTenantName: string | null;
+  documentTradeName: string | null;
   matchConfidence: number | null;
   localeUnit: string | null;
   localeTenant: string | null;
@@ -361,6 +362,7 @@ function DocumentCard({
               suggestedUnit={doc.suggestedLocaleUnit}
               suggestedTenant={doc.suggestedLocaleTenant}
               documentTenantName={doc.documentTenantName}
+              documentTradeName={doc.documentTradeName}
               confidence={doc.matchConfidence}
               extractedAreaSqm={fields?.area_sqm ?? null}
               allUnits={allUnits}
@@ -627,6 +629,7 @@ export function MatchReviewForm({
   suggestedUnit,
   suggestedTenant,
   documentTenantName,
+  documentTradeName,
   confidence,
   extractedAreaSqm,
   allUnits,
@@ -639,6 +642,12 @@ export function MatchReviewForm({
    *  matcher scored on. Shown beside the suggestion because a unit code and a
    *  percentage cannot separate "Derma Club" from "Derma Club 2". */
   documentTenantName: string | null;
+  /** The trade/brand name the extraction read separately from
+   *  documentTenantName (e.g. "Cabanna" for a legal name of "Restaurantes
+   *  del Noroeste, S.A. de C.V.") — shown alongside it, and fed into
+   *  isOverwriteRisk below so a same-tenant pair that only agrees on this
+   *  field (not the legal name) doesn't false-positive as a tenant swap. */
+  documentTradeName: string | null;
   confidence: number | null;
   /** The contract's own stated GLA, already OCR'd by the same extraction pass
    *  that produced documentTenantName — prefills the new-local form's m² field
@@ -680,7 +689,9 @@ export function MatchReviewForm({
   // legal name, "PETCO ANIMAL SUPPLIES DE MÉXICO, S.A. DE C.V.", which is
   // exactly the kind of same-tenant pair this warning shouldn't fire on.)
   const isOverwriteRisk =
-    !!targetTenant && !!documentTenantName && !isSameTenant(targetTenant, documentTenantName);
+    !!targetTenant &&
+    !!documentTenantName &&
+    !isSameTenant(targetTenant, documentTenantName, undefined, documentTradeName);
 
   // "This unit isn't in the rent roll at all yet" — distinct from
   // correctedLocaleId picking an existing wrong suggestion. Before this,
@@ -776,6 +787,12 @@ export function MatchReviewForm({
             {documentTenantName ?? "(no se encontró en el contrato)"}
           </dd>
         </div>
+        {documentTradeName && (
+          <div className="flex gap-2">
+            <dt className="text-ink-500 font-medium shrink-0">Nombre comercial:</dt>
+            <dd className="text-ink font-bold">{documentTradeName}</dd>
+          </div>
+        )}
         <div className="flex gap-2">
           <dt className="text-ink-500 font-medium shrink-0">Coincidencia sugerida:</dt>
           <dd className="text-ink font-bold">

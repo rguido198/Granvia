@@ -16,10 +16,17 @@ import { normalize } from "@/lib/ingest/fuzzy-match-tenant";
  */
 export function isLeaseRelevantToQuestion(
   question: string,
-  lease: { tenantEntity: string; unitCode: string },
+  // tradeName: the operating brand/DBA name when it's distinct from
+  // tenantEntity (the registered legal name) — e.g. tenantEntity
+  // "Restaurantes del Noroeste, S.A. de C.V.", tradeName "Cabanna". A
+  // landlord asking about "Cabanna" would never match on tenantEntity
+  // alone; the two names can share zero characters.
+  lease: { tenantEntity: string; unitCode: string; tradeName?: string | null },
 ): boolean {
   const q = normalize(question);
-  const tenantNorm = normalize(lease.tenantEntity);
+  const names = [lease.tenantEntity, lease.tradeName]
+    .filter((n): n is string => !!n && n.trim().length > 0)
+    .map(normalize);
   const unitNorm = normalize(lease.unitCode);
-  return (tenantNorm.length > 0 && q.includes(tenantNorm)) || (unitNorm.length > 0 && q.includes(unitNorm));
+  return names.some((n) => n.length > 0 && q.includes(n)) || (unitNorm.length > 0 && q.includes(unitNorm));
 }

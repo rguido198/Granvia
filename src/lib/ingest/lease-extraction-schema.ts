@@ -11,6 +11,26 @@ export const LeaseExtractedFieldsSchema = z
     // read these near-universal, prominent contract fields, and an
     // existing-lease update just ignores them.
     tenant_entity: z.string(),
+    // The registered legal entity's declarative section names it as the
+    // signing ARRENDATARIO, but a lease frequently also states it's
+    // "operando bajo el nombre comercial de X" — a brand/trade name that
+    // can share zero characters with the legal name (e.g. "Cabanna" vs.
+    // "Restaurantes del Noroeste, S.A. de C.V.") and is usually what a
+    // landlord's own roster and vocabulary actually use. null when the
+    // contract doesn't distinguish one from the razon social.
+    //
+    // .optional() in addition to .nullable(): every document extracted
+    // before this field existed has extracted_fields JSON with no
+    // trade_name key at all, not trade_name: null — a .strict() schema
+    // otherwise rejects the whole object on a missing required key, same
+    // failure mode the special_clauses sub-schema parse in
+    // ask-copiloto.ts already works around for a different added field
+    // (area_sqm). Found live: PETCO's and Cabanna's documents were both
+    // still sitting at Gate 1 when this field was added, extracted under
+    // the pre-trade_name prompt — without .optional() here, confirming
+    // either into Gate 2 would have strict-parse-failed on their own
+    // already-good extraction and dead-ended into the reject-only fallback.
+    trade_name: z.string().nullable().optional(),
     start_date: z.string(), // ISO "YYYY-MM-DD"
     end_date: z.string(), // ISO "YYYY-MM-DD"
     base_rent_monthly: z.number().positive().nullable(),

@@ -5,6 +5,7 @@ describe("LeaseExtractedFieldsSchema", () => {
   it("accepts a well-formed extraction", () => {
     const result = LeaseExtractedFieldsSchema.safeParse({
       tenant_entity: "MINT Boutique, S.A. de C.V.",
+      trade_name: null,
       start_date: "2024-01-15",
       end_date: "2026-01-15",
       base_rent_monthly: 48250.5,
@@ -27,6 +28,30 @@ describe("LeaseExtractedFieldsSchema", () => {
   it("accepts null base_rent_monthly/area_sqm/exclusive_use_clause/permitted_use when the contract doesn't state them", () => {
     const result = LeaseExtractedFieldsSchema.safeParse({
       tenant_entity: "MINT Boutique, S.A. de C.V.",
+      trade_name: null,
+      start_date: "2024-01-15",
+      end_date: "2026-01-15",
+      base_rent_monthly: null,
+      area_sqm: null,
+      exclusive_use_clause: null,
+      permitted_use: null,
+      responsibility_matrix: {
+        hvac: "landlord",
+        roof: "landlord",
+        plumbing: "tenant",
+        electrical: "tenant",
+        storefront_glass: "tenant",
+      },
+      notice_period_days: 90,
+      special_clauses: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a non-null trade_name distinct from tenant_entity", () => {
+    const result = LeaseExtractedFieldsSchema.safeParse({
+      tenant_entity: "Restaurantes del Noroeste, S.A. de C.V.",
+      trade_name: "Cabanna",
       start_date: "2024-01-15",
       end_date: "2026-01-15",
       base_rent_monthly: null,

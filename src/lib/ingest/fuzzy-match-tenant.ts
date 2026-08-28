@@ -90,17 +90,45 @@ function nameSimilarity(a: string, b: string): number {
   return Math.max(similarity(a, b), prefixMatchScore(a, b));
 }
 
+function collectNormalizedNames(...names: (string | null | undefined)[]): string[] {
+  return names
+    .filter((n): n is string => !!n && n.trim().length > 0)
+    .map(normalize)
+    .filter((n) => n.length > 0);
+}
+
+/**
+ * Best score across every (legal name, trade name) pair on each side — not
+ * just legal-vs-legal. A legal name and its own trade name can share zero
+ * characters (razon social "Restaurantes del Noroeste, S.A. de C.V." vs.
+ * trade name "Cabanna" — neither prefix nor edit-distance similar to the
+ * other at all), so the only way to recognize them as the same tenant is to
+ * also check the extraction's trade name against the roster's name(s), not
+ * assume the useful signal always lands on the same field both sides.
+ */
+function bestNameSimilarity(namesA: string[], namesB: string[]): number {
+  let best = 0;
+  for (const a of namesA) {
+    for (const b of namesB) {
+      best = Math.max(best, nameSimilarity(a, b));
+    }
+  }
+  return best;
+}
+
 export function matchTenant(
   extractedName: string,
-  candidates: { id: string; tenantEntity: string }[],
+  candidates: { id: string; tenantEntity: string; tradeName?: string | null }[],
+  extractedTradeName?: string | null,
 ): { localeId: string; confidence: number } | null {
   if (candidates.length === 0) return null;
 
-  const normalizedExtracted = normalize(extractedName);
+  const extractedNames = collectNormalizedNames(extractedName, extractedTradeName);
   let best: { localeId: string; confidence: number } | null = null;
 
   for (const candidate of candidates) {
-    const confidence = nameSimilarity(normalizedExtracted, normalize(candidate.tenantEntity));
+    const candidateNames = collectNormalizedNames(candidate.tenantEntity, candidate.tradeName);
+    const confidence = bestNameSimilarity(extractedNames, candidateNames);
     if (!best || confidence > best.confidence) {
       best = { localeId: candidate.id, confidence };
     }
@@ -111,12 +139,20 @@ export function matchTenant(
 
 /**
  * Is `a` and `b` close enough to be the same real-world tenant — a short
- * brand name against its own full legal name, an OCR-mangled spelling, a
- * formatting difference — rather than two different businesses? Same
- * MIN_CONFIDENCE floor and same nameSimilarity scoring matchTenant uses, so
- * a name Gate 1 suggests with confidence and a name Gate 2 checks for an
- * overwrite risk can never disagree about whether it's the same tenant.
+ * brand name against its own full legal name, an unrelated trade name
+ * against its own razon social, an OCR-mangled spelling — rather than two
+ * different businesses? Same MIN_CONFIDENCE floor and same nameSimilarity
+ * scoring matchTenant uses, so a name Gate 1 suggests with confidence and a
+ * name Gate 2 checks for an overwrite risk can never disagree about whether
+ * it's the same tenant. aTradeName/bTradeName are optional — passing only
+ * the two required name args behaves exactly as before this had trade-name
+ * support.
  */
-export function isSameTenant(a: string, b: string): boolean {
-  return nameSimilarity(normalize(a), normalize(b)) >= MIN_CONFIDENCE;
+export function isSameTenant(
+  a: string,
+  b: string,
+  aTradeName?: string | null,
+  bTradeName?: string | null,
+): boolean {
+  return bestNameSimilarity(collectNormalizedNames(a, aTradeName), collectNormalizedNames(b, bTradeName)) >= MIN_CONFIDENCE;
 }

@@ -6,6 +6,7 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     id: "loc-1",
     unitCode: "A-01",
     tenantEntity: "Test Tenant",
+    tradeName: null,
     sqm: 100,
     rentMonthly: 10000,
     permittedUse: null,

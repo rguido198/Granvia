@@ -34,4 +34,28 @@ describe("isLeaseRelevantToQuestion", () => {
   it("matches Sushi Central by name", () => {
     expect(isLeaseRelevantToQuestion("What's Sushi Central's exclusivity clause?", SUSHI)).toBe(true);
   });
+
+  it("matches on a trade name that shares nothing with the legal tenantEntity", () => {
+    // The Cabanna case: tenantEntity is the razon social, unrelated as text
+    // to the trade name a landlord would actually type.
+    const CABANNA = {
+      tenantEntity: "Restaurantes del Noroeste, S.A. de C.V.",
+      unitCode: "Local 18",
+      tradeName: "Cabanna",
+    };
+    expect(isLeaseRelevantToQuestion("What's the notice period for Cabanna?", CABANNA)).toBe(true);
+  });
+
+  it("still matches on the legal name when tradeName is present but unmentioned", () => {
+    const CABANNA = {
+      tenantEntity: "Restaurantes del Noroeste, S.A. de C.V.",
+      unitCode: "Local 18",
+      tradeName: "Cabanna",
+    };
+    expect(isLeaseRelevantToQuestion("What's Restaurantes del Noroeste's rent?", CABANNA)).toBe(true);
+  });
+
+  it("does not match on a null or missing tradeName", () => {
+    expect(isLeaseRelevantToQuestion("What about Cabanna?", { ...MINT, tradeName: null })).toBe(false);
+  });
 });
