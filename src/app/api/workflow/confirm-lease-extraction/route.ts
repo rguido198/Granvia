@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { resumeHook } from "workflow/api";
+import { resumeHook, start } from "workflow/api";
 import { HookNotFoundError } from "workflow/internal/errors";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { LeaseExtractedFieldsSchema, NewLeaseDetailsSchema } from "@/lib/ingest/lease-extraction-schema";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { leaseDigitizationWorkflow } from "@/workflows/lease-digitization";
 
 /**
  * Wakes leaseDigitizationWorkflow's Gate 2 (extraction accuracy) —
@@ -125,26 +126,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, runId: result.runId });
   } catch (error) {
     // Unlike Gate 1 (confirm-lease-match/route.ts), a dead hook here can't
-    // self-heal by re-starting the workflow: a fresh run always begins at
-    // Gate 1 (loadDocumentContext → extraction → the match hook), which
-    // would silently flip this already-`attached` document's status back to
-    // `ready_for_triage` — undoing the Gate 1 confirmation a landlord already
-    // made, not just re-running the step they were already about to redo.
-    // That's a real, surprising side effect a silent auto-restart shouldn't
-    // spring on someone, so this surfaces the true cause instead and tells
-    // the landlord what recovering it actually requires: re-confirming Gate 1
-    // for the same document (the "Pendiente: confirmar local" card,
-    // reachable once the document's status is nudged back — currently a
-    // support/dev action, not a self-serve one).
+    // self-heal into another live Gate 2 hook: a fresh run always begins at
+    // Gate 1 (loadDocumentContext → extraction → the match hook), so
+    // restarting necessarily flips this already-`attached` document's status
+    // back to `ready_for_triage` — undoing the Gate 1 confirmation a
+    // landlord already made, not just re-running the step they were about to
+    // redo. locale_id itself is untouched (recordSuggestion only ever
+    // touches suggested_locale_id), so the very likely outcome is the same
+    // locale gets re-suggested and reconfirming Gate 1 is a formality — but
+    // it is still a real extra step, so this says so plainly instead of
+    // silently doing it and leaving the landlord to notice the document
+    // reappeared at Gate 1 on its own.
     if (HookNotFoundError.is(error)) {
       console.warn(
-        `confirm-lease-extraction: hook gone for document ${documentId}`,
+        `confirm-lease-extraction: hook gone for document ${documentId}, re-starting the workflow`,
         error,
       );
+      const run = await start(leaseDigitizationWorkflow, [documentId]);
+      await supabase.from("documents").update({ workflow_run_id: run.runId }).eq("id", documentId);
       return NextResponse.json(
         {
           error:
-            "Este documento perdió su proceso de fondo y no se puede validar desde aquí. Contacta a soporte para reiniciarlo — no se perdió ningún dato, pero habrá que confirmar el local (Gate 1) de nuevo.",
+            "Este documento perdió su proceso de fondo y se está reprocesando desde cero — no se perdió ningún dato, pero volverá a pedirte confirmar el local (Gate 1) antes de validar la extracción de nuevo. Espera unos segundos y actualiza la vista.",
         },
         { status: 409 },
       );
