@@ -55,10 +55,22 @@ export async function askCopiloto(question: string): Promise<AskCopilotoResult> 
       .select("id, raw_text, extracted_fields")
       .in("id", documentIds);
     for (const d of docs ?? []) {
-      const parsed = LeaseExtractedFieldsSchema.safeParse(d.extracted_fields);
+      // Validates only special_clauses' own sub-schema, not the full
+      // LeaseExtractedFieldsSchema — a document extracted under an older
+      // schema version (missing a field added later, like area_sqm on
+      // MINT Boutique's b10 contract) has a special_clauses array that is
+      // itself perfectly valid, but a whole-object .strict() parse fails on
+      // the unrelated missing keys and discards it anyway. Found live: real
+      // clauses (HVAC warranty, exclusivity, late fees) silently dropped
+      // from every Copiloto answer about that lease, with no error anywhere
+      // to notice it by.
+      const extractedFields = d.extracted_fields as Record<string, unknown> | null;
+      const parsedClauses = LeaseExtractedFieldsSchema.shape.special_clauses.safeParse(
+        extractedFields?.special_clauses,
+      );
       documentDetailsById.set(d.id, {
         rawText: d.raw_text,
-        specialClauses: parsed.success ? parsed.data.special_clauses : null,
+        specialClauses: parsedClauses.success ? parsedClauses.data : null,
       });
     }
   }
