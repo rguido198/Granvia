@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ConsoleModal } from "@/components/hub/console-modal";
 import {
@@ -498,59 +498,179 @@ export function LegalDocumentsPanel({
   );
 }
 
+type UploadedDoc = { documentId: string; filename: string };
+
+const PROGRESS_STATUS_LABELS: Record<string, string> = {
+  uploaded: "Recibido…",
+  extracting: "Extrayendo cláusulas…",
+  ready_for_triage: "Listo — pendiente de tu revisión",
+  attached: "Listo — pendiente de tu revisión",
+  needs_new_lease: "Listo — pendiente de tu revisión",
+  failed: "Error en la extracción",
+  rejected: "Rechazado",
+};
+
+/**
+ * Replaces the drop zone inside the same modal once upload(s) succeed —
+ * doesn't close and leave a landlord guessing whether anything is still
+ * happening. Polls the same no-store'd endpoint the queue card uses
+ * (/api/documents/active-lease), filtered to just this batch's document
+ * ids, so each file's real status is visible right where the landlord is
+ * already looking, not in a badge elsewhere they'd have to notice and read.
+ *
+ * Previously this closed the modal immediately (onAllSucceeded) and relied
+ * on a toast (auto-dismisses in ~3.5s) plus a badge next to the trigger
+ * button to carry the rest of the ~30-45s extraction. Found live,
+ * repeatedly: a landlord watched the toast disappear and had nothing left
+ * telling them work was still in progress. This keeps the modal open and
+ * showing exactly that until the landlord is ready to close it themselves.
+ */
+function UploadProgressView({ docs, onClose }: { docs: UploadedDoc[]; onClose: () => void }) {
+  const [statusById, setStatusById] = useState<Record<string, string>>(
+    Object.fromEntries(docs.map((d) => [d.documentId, "uploaded"])),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    async function poll() {
+      try {
+        const res = await fetch("/api/documents/active-lease", { cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const { documents } = (await res.json()) as { documents: { id: string; status: string }[] };
+        if (cancelled) return;
+        setStatusById((prev) => {
+          const next = { ...prev };
+          for (const doc of docs) {
+            const match = documents.find((d) => d.id === doc.documentId);
+            if (match) next[doc.documentId] = match.status;
+          }
+          return next;
+        });
+      } catch {
+        // Transient network hiccup — the next tick retries.
+      }
+    }
+    poll();
+    const interval = setInterval(poll, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+    // docs is the batch this view was mounted for — fixed for its lifetime,
+    // not meant to restart the poll on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const allSettled = docs.every((d) => {
+    const status = statusById[d.documentId];
+    return status !== "uploaded" && status !== "extracting";
+  });
+
+  return (
+    <div className="space-y-3">
+      <ul className="space-y-2">
+        {docs.map((d) => {
+          const status = statusById[d.documentId] ?? "uploaded";
+          const inFlight = status === "uploaded" || status === "extracting";
+          return (
+            <li
+              key={d.documentId}
+              className="flex items-center gap-2.5 text-xs bg-slate-50 border border-hairline rounded-lg px-3 py-2.5"
+            >
+              {inFlight ? (
+                <span
+                  className="inline-block h-3.5 w-3.5 rounded-full border-2 border-ink-300 border-t-ink-600 animate-spin shrink-0"
+                  aria-hidden="true"
+                />
+              ) : (
+                <span className="text-emerald-600 font-bold shrink-0" aria-hidden="true">
+                  ✓
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="font-bold text-ink truncate">{d.filename}</p>
+                <p className="text-ink-500">{PROGRESS_STATUS_LABELS[status] ?? status}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {allSettled ? (
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+        >
+          Listo — revisar en la cola de abajo
+        </button>
+      ) : (
+        <p className="text-[11px] text-ink-500 text-center">
+          Puedes cerrar esta ventana en cualquier momento — el progreso se sigue viendo en la cola de abajo.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function LeaseUploadZone({
   onUploaded,
-  onAllSucceeded,
+  onClose,
   onFeedback,
 }: {
   onUploaded: () => void;
-  /** Called only when every file in a batch uploaded cleanly — distinct from
-   *  `onUploaded` (which fires regardless, to refresh the queue below even on
-   *  a partial failure). Previously nothing told the modal a batch fully
-   *  succeeded, so it just sat open with no feedback: the drop zone silently
-   *  reverted to its idle prompt and a landlord had no way to tell "it
-   *  worked" from "nothing happened" short of closing it themselves and
-   *  scrolling down to check. */
-  onAllSucceeded?: () => void;
+  /** Closes the parent modal — wired to UploadProgressView's "Listo" button
+   *  once every uploaded file has settled, so finishing the batch actually
+   *  dismisses the dialog instead of just resetting this component back to
+   *  an empty drop zone underneath it. */
+  onClose: () => void;
   /** Fired the instant the upload request(s) resolve — plain client state,
    *  rendered immediately, no dependency on onUploaded's router.refresh()
-   *  actually landing or the 3s poll's next tick. A landlord who closes the
-   *  modal right after uploading has no other guaranteed-immediate signal
-   *  that anything registered at all: the queue below only reflects it once
-   *  a server round-trip completes, which is fast (usually well under a
-   *  second) but not instant, and easy to miss if attention moves on. */
+   *  actually landing or the 3s poll's next tick. Kept as a secondary,
+   *  redundant signal alongside UploadProgressView below, not the primary
+   *  one — a toast alone auto-dismisses in ~3.5s, far short of the
+   *  ~30-45s a real extraction pass takes. */
   onFeedback?: (message: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Non-null switches this component from the drop zone into
+  // UploadProgressView — see its own doc comment for why closing the modal
+  // immediately on success isn't enough.
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[] | null>(null);
 
   async function handleFiles(files: FileList) {
     setUploading(true);
     setError(null);
     try {
+      const fileArray = Array.from(files);
       const results = await Promise.all(
-        Array.from(files).map((file) => {
+        fileArray.map(async (file) => {
           const formData = new FormData();
           formData.append("file", file);
           formData.append("kind", "active_lease");
-          return fetch("/api/ingest", { method: "POST", body: formData });
+          const res = await fetch("/api/ingest", { method: "POST", body: formData });
+          return { file, res };
         }),
       );
-      const failed = results.filter((r) => !r.ok).length;
-      const succeeded = results.length - failed;
-      if (failed > 0) {
-        setError(`${failed} de ${results.length} archivo(s) no se pudieron subir.`);
-        if (succeeded > 0) {
-          onFeedback?.(
-            `${succeeded} de ${results.length} documento(s) recibido(s) — procesando digitalización. ${failed} fallaron.`,
-          );
+      const succeeded: UploadedDoc[] = [];
+      let failedCount = 0;
+      for (const { file, res } of results) {
+        if (res.ok) {
+          const json = (await res.json().catch(() => ({}))) as { documentId?: string };
+          if (json.documentId) succeeded.push({ documentId: json.documentId, filename: file.name });
+        } else {
+          failedCount++;
         }
-      } else {
-        onAllSucceeded?.();
+      }
+      if (failedCount > 0) {
+        setError(`${failedCount} de ${results.length} archivo(s) no se pudieron subir.`);
+      }
+      if (succeeded.length > 0) {
+        setUploadedDocs(succeeded);
         onFeedback?.(
-          results.length === 1
+          succeeded.length === 1
             ? "Documento recibido — procesando digitalización."
-            : `${results.length} documentos recibidos — procesando digitalización.`,
+            : `${succeeded.length} documentos recibidos — procesando digitalización.`,
         );
       }
       onUploaded();
@@ -559,6 +679,10 @@ export function LeaseUploadZone({
     } finally {
       setUploading(false);
     }
+  }
+
+  if (uploadedDocs) {
+    return <UploadProgressView docs={uploadedDocs} onClose={onClose} />;
   }
 
   return (
@@ -669,7 +793,7 @@ export function UploadContractButton({
                   vez mientras se procesa.
                 </p>
               )}
-              <LeaseUploadZone onUploaded={onUploaded} onAllSucceeded={() => setOpen(false)} onFeedback={onFeedback} />
+              <LeaseUploadZone onUploaded={onUploaded} onClose={() => setOpen(false)} onFeedback={onFeedback} />
             </div>
           </div>
         </ConsoleModal>
