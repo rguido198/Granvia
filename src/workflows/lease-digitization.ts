@@ -3,6 +3,7 @@ import { createHook, FatalError } from "workflow";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { extractFromText, extractFromVision } from "@/lib/ingest/lease-extraction";
 import { isSameTenant, matchTenant } from "@/lib/ingest/fuzzy-match-tenant";
+import { checkExclusivityConflicts } from "@/lib/ingest/exclusivity-check";
 import type { LeaseExtractedFields, NewLeaseDetails } from "@/lib/ingest/lease-extraction-schema";
 import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
 
@@ -434,12 +435,67 @@ async function promoteExtraction(
       .eq("id", currentLeaseId);
   }
 
+  // Tier 1 (root CLAUDE.md §1) — read-only, informational, never blocks the
+  // confirm above. mariana-screening.ts's own §2B overlap audit only ever
+  // runs on a NEW application against existing clauses; it has never
+  // checked the reverse direction — an already-signed lease's own
+  // permitted_use against everyone else's exclusivity — which is exactly
+  // the backlog this digitization pipeline exists to read in for the first
+  // time. Scoped to leases with an exclusivity clause on file (nothing to
+  // check a new lease's giro against otherwise) and excludes the locale
+  // just confirmed.
+  // Two plain queries rather than an embedded-resource filter
+  // (locales!inner(...) + dot-notation .eq on the embed) — mariana-
+  // screening.ts's loadApplicationContext already found that pattern
+  // silently returns null joined columns for every row (confirmed the same
+  // data joins fine in raw SQL), so this follows its established fix
+  // instead of re-introducing the same fragility here.
+  const { data: occupiedLocaleRows } = await supabase
+    .from("locales")
+    .select("id, unit_number")
+    .eq("status", "OCCUPIED")
+    .neq("id", localeId);
+  const occupiedLocalesById = new Map((occupiedLocaleRows ?? []).map((l) => [l.id, l]));
+
+  const { data: otherLeaseRows } = await supabase
+    .from("leases")
+    .select("locale_id, tenant_entity, exclusive_use_clause")
+    .in("locale_id", [...occupiedLocalesById.keys()])
+    .not("exclusive_use_clause", "is", null);
+
+  const otherActiveLeasesWithExclusivity = (otherLeaseRows ?? [])
+    .map((row) => ({
+      unitCode: occupiedLocalesById.get(row.locale_id as string)?.unit_number ?? "?",
+      tenantEntity: row.tenant_entity as string,
+      exclusiveUseClause: row.exclusive_use_clause as string,
+    }))
+    // A locale can carry more than one historical `leases` row (see
+    // portfolio.server.ts's own note on this) — the occupiedLocaleRows
+    // filter already scopes to units with a live tenant, but that alone
+    // doesn't collapse multiple leases rows for the same unit (an older,
+    // superseded one and the current one) down to one entry.
+    .filter((l, i, arr) => arr.findIndex((other) => other.unitCode === l.unitCode) === i);
+
+  const conflicts = await checkExclusivityConflicts(
+    { unitCode: locale.unit_number, tenantEntity: finalFields.tenant_entity, permittedUse: finalFields.permitted_use },
+    otherActiveLeasesWithExclusivity,
+  );
+  const conflictNote =
+    conflicts.length > 0
+      ? `Posible conflicto de exclusividad: ${conflicts
+          .map(
+            (c) =>
+              `${c.tenant_entity} (Local ${c.unit_code}, ${c.severity}) — "${c.this_lease_term}" vs. cláusula "${c.protected_term}"`,
+          )
+          .join("; ")}. Requiere revisión legal antes de operar el giro tal cual está descrito.`
+      : null;
+
   await supabase
     .from("documents")
     .update({
       extracted_fields: finalFields,
       status: "attached",
-      error_message: null,
+      error_message: conflictNote,
       extraction_verified_at: new Date().toISOString(),
       // Tier 3 audit trail (root CLAUDE.md §3), same rule as promoteMatch.
       extraction_verified_by_id: decision.verifiedById ?? null,
