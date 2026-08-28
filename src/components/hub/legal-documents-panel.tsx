@@ -203,6 +203,29 @@ function isActionable(doc: DocumentRow): boolean {
   );
 }
 
+/** Still being read by the pipeline — not a landlord decision yet, but not
+ *  "done" either. Before this, a document sitting here fell into `resolved`
+ *  (isActionable is false for both `uploaded` and `extracting`) and got
+ *  folded into the collapsed history list, indistinguishable from a
+ *  genuinely finished record. A landlord who'd just uploaded a batch and
+ *  watched the modal close saw "Nada pendiente de revisión" and a history
+ *  count that quietly grew by however many they'd just uploaded — no
+ *  visible sign the upload had registered at all. landlord-dashboard.tsx's
+ *  3s poll (hasInFlightLeaseDocument) already refetches while this is true;
+ *  this is what gives that refetch somewhere to actually show up. */
+function isInFlight(doc: DocumentRow): boolean {
+  return doc.status === "uploaded" || doc.status === "extracting";
+}
+
+function InFlightSpinner() {
+  return (
+    <span
+      className="inline-block h-3 w-3 rounded-full border-2 border-ink-300 border-t-ink-600 animate-spin"
+      aria-hidden="true"
+    />
+  );
+}
+
 /** Gate 2 fallback when extracted_fields is populated but fails
  *  LeaseExtractedFieldsSchema's strict parse — the same root cause Gate 1 hit
  *  live on c5b14f47 (a document extracted under an older schema version,
@@ -273,7 +296,8 @@ function DocumentCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-bold text-xs text-ink">{doc.originalFilename}</p>
-          <p className="text-[11px] text-ink-500 font-medium mt-0.5">
+          <p className="text-[11px] text-ink-500 font-medium mt-0.5 flex items-center gap-1.5">
+            {isInFlight(doc) && <InFlightSpinner />}
             {/* STATUS_LABELS['attached'] is "Pendiente: validar extracción"
              *  regardless of whether it's actually been validated yet —
              *  accurate for the review-pending state, but confusingly
@@ -413,14 +437,23 @@ export function LegalDocumentsPanel({
     );
   }
 
+  const inFlight = documents.filter(isInFlight);
   const active = documents.filter(isActionable);
-  const resolved = documents.filter((d) => !isActionable(d));
+  const resolved = documents.filter((d) => !isInFlight(d) && !isActionable(d));
 
   return (
     <div className="space-y-3">
-      {active.length === 0 && (
+      {inFlight.length === 0 && active.length === 0 && (
         <p className="text-xs text-ink-500 font-medium">Nada pendiente de revisión.</p>
       )}
+
+      {/* Always visible, never collapsed into history — a landlord who just
+       *  closed the upload modal needs to see these registered immediately,
+       *  not learn it worked by finding them later under "Ver historial." */}
+      {inFlight.map((doc) => (
+        <DocumentCard key={doc.id} doc={doc} allUnits={allUnits} onResolved={onResolved} />
+      ))}
+
       {active.map((doc) => (
         <DocumentCard key={doc.id} doc={doc} allUnits={allUnits} onResolved={onResolved} />
       ))}
