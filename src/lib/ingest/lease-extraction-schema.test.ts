@@ -8,6 +8,7 @@ describe("LeaseExtractedFieldsSchema", () => {
       start_date: "2024-01-15",
       end_date: "2026-01-15",
       base_rent_monthly: 48250.5,
+      area_sqm: 95,
       exclusive_use_clause: "Exclusividad absoluta para venta de ropa de diseño importado para dama.",
       permitted_use: "Comercialización y venta de prendas de vestir, accesorios de diseñador y alta costura femenina.",
       responsibility_matrix: {
@@ -23,12 +24,13 @@ describe("LeaseExtractedFieldsSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts null base_rent_monthly/exclusive_use_clause/permitted_use when the contract doesn't state them", () => {
+  it("accepts null base_rent_monthly/area_sqm/exclusive_use_clause/permitted_use when the contract doesn't state them", () => {
     const result = LeaseExtractedFieldsSchema.safeParse({
       tenant_entity: "MINT Boutique, S.A. de C.V.",
       start_date: "2024-01-15",
       end_date: "2026-01-15",
       base_rent_monthly: null,
+      area_sqm: null,
       exclusive_use_clause: null,
       permitted_use: null,
       responsibility_matrix: {
