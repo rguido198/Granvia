@@ -623,11 +623,11 @@ function UploadProgressView({
           onClick={onClose}
           className="w-full bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
         >
-          Listo — revisar en la cola de abajo
+          Cerrar y revisar contratos
         </button>
       ) : (
         <p className="text-[11px] text-ink-500 text-center">
-          Puedes cerrar esta ventana en cualquier momento — el progreso se sigue viendo en la cola de abajo.
+          Puedes cerrar esta ventana en cualquier momento — el progreso se sigue viendo en la cola de revisión.
         </p>
       )}
     </div>
@@ -816,7 +816,7 @@ export function UploadContractButton({
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Cada documento requiere dos confirmaciones humanas: el local al que corresponde, y la exactitud de
-                las cláusulas extraídas. Revísalos en la lista de abajo una vez subidos.
+                las cláusulas extraídas. Verás el progreso de cada uno aquí mismo mientras se procesan.
               </p>
               {inFlightCount > 0 && (
                 <p className="text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 leading-relaxed">
