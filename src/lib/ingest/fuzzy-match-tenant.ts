@@ -20,7 +20,7 @@ const CORPORATE_SUFFIX = /\s+(sapi de cv|s de rl de cv|sa de cv|s de rl|sc|ac)$/
  * the suffix from both sides before comparing so the score reflects the
  * business name, not shared corporate boilerplate.
  */
-function normalize(s: string): string {
+export function normalize(s: string): string {
   return s
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "") // strip accents
