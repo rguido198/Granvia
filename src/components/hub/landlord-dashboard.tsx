@@ -349,7 +349,30 @@ export function LandlordDashboard({
     periodLabel,
   } = data;
 
-  const { rentRoll, leases, formerTenants, approvedApplications, plazaTotalGla, leasedSqm, contractedRent } = portfolio;
+  // Same fix as liveActiveLeaseDocuments below, same reason: portfolio is
+  // fetched by this exact page's Server Component (consola/page.tsx) the
+  // same way activeLeaseDocuments was, and router.refresh() was confirmed
+  // unreliable at delivering that prop fresh on this deployment. A rent
+  // change confirmed at Gate 2, or an inline Rent Roll edit, writes
+  // leases.base_rent_monthly correctly either way -- this is what makes
+  // seeing that update not depend on a manual page reload.
+  const [livePortfolio, setLivePortfolio] = useState(portfolio);
+  useEffect(() => {
+    setLivePortfolio(portfolio);
+  }, [portfolio]);
+  const refreshPortfolio = useCallback(async () => {
+    try {
+      const res = await fetch("/api/portfolio", { cache: "no-store" });
+      if (!res.ok) return;
+      const { portfolio: fresh } = (await res.json()) as { portfolio: Portfolio };
+      setLivePortfolio(fresh);
+    } catch {
+      // Transient network hiccup — the next mutation's refresh call retries.
+    }
+  }, []);
+
+  const { rentRoll, leases, formerTenants, approvedApplications, plazaTotalGla, leasedSqm, contractedRent } =
+    livePortfolio;
 
   // Per-row lookup for the SSOT table's "Ver contrato" icon and Mariana
   // badge — leases is already fetched for the Legal tab's own table, so this
@@ -483,6 +506,7 @@ export function LandlordDashboard({
       return;
     }
     triggerToast(`${label} actualizado.`);
+    void refreshPortfolio();
     router.refresh();
   }
 
@@ -1805,6 +1829,7 @@ export function LandlordDashboard({
                       allUnits={leaseDocumentUnits}
                       onResolved={() => {
                         void refreshActiveLeaseDocuments();
+                        void refreshPortfolio();
                         router.refresh();
                       }}
                     />
