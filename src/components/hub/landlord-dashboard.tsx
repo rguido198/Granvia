@@ -15,7 +15,7 @@ import type { Portfolio, LocaleStatus, LeaseDocumentRow } from "@/lib/data/portf
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
-import { DocumentViewerButton, LegalDocumentsPanel, UploadContractButton } from "@/components/hub/legal-documents-panel";
+import { DocumentViewerButton, isInFlight, LegalDocumentsPanel, UploadContractButton } from "@/components/hub/legal-documents-panel";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
@@ -417,9 +417,12 @@ export function LandlordDashboard({
   // while any document is still in-flight, and stop as soon as none are —
   // `ready_for_triage`/`attached`/`failed` are all resting states waiting on
   // a human, not on more processing, so they don't keep the poll alive.
-  const hasInFlightLeaseDocument = activeLeaseDocuments.some(
-    (doc) => doc.status === "uploaded" || doc.status === "extracting",
-  );
+  // Same predicate legal-documents-panel.tsx's queue card uses (imported,
+  // not re-declared) — the poll-alive condition and what UploadContractButton's
+  // badge/warning count as "still processing" have to agree, or the button
+  // could show zero in-flight while the queue still has some (or vice versa).
+  const inFlightLeaseDocuments = activeLeaseDocuments.filter(isInFlight);
+  const hasInFlightLeaseDocument = inFlightLeaseDocuments.length > 0;
   useEffect(() => {
     if (!hasInFlightLeaseDocument) return;
     const interval = setInterval(() => router.refresh(), 3000);
@@ -1699,7 +1702,11 @@ export function LandlordDashboard({
                           table, inside the Digitalización card — reachable
                           only after scrolling past 85 rows. Moved to the one
                           entry point every visit to this tab starts at. */}
-                      <UploadContractButton onUploaded={() => router.refresh()} onFeedback={triggerToast} />
+                      <UploadContractButton
+                        onUploaded={() => router.refresh()}
+                        onFeedback={triggerToast}
+                        inFlightFilenames={inFlightLeaseDocuments.map((doc) => doc.originalFilename)}
+                      />
                     </div>
                   </div>
 

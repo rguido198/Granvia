@@ -215,7 +215,10 @@ function isActionable(doc: DocumentRow): boolean {
  *  visible sign the upload had registered at all. landlord-dashboard.tsx's
  *  3s poll (hasInFlightLeaseDocument) already refetches while this is true;
  *  this is what gives that refetch somewhere to actually show up. */
-function isInFlight(doc: DocumentRow): boolean {
+// Exported — UploadContractButton's badge (below) needs the same predicate
+// to count in-flight documents plaza-wide, not just within this panel's own
+// active/resolved split.
+export function isInFlight(doc: DocumentRow): boolean {
   return doc.status === "uploaded" || doc.status === "extracting";
 }
 
@@ -603,15 +606,33 @@ export function LeaseUploadZone({
 export function UploadContractButton({
   onUploaded,
   onFeedback,
+  inFlightFilenames,
 }: {
   onUploaded: () => void;
   /** Forwarded to LeaseUploadZone — see its own doc comment. */
   onFeedback?: (message: string) => void;
+  /** original_filename of every document currently uploaded/extracting,
+   *  plaza-wide (see isInFlight above) — landlord-dashboard.tsx's
+   *  activeLeaseDocuments, filtered. Real server/poll data, not a timer:
+   *  the toast onFeedback fires confirms receipt but auto-dismisses in a
+   *  few seconds, far short of the ~30-45s a real extraction pass takes —
+   *  this badge (and the in-modal warning below) can't disappear before
+   *  processing genuinely finishes, and names exactly what's in flight so
+   *  a landlord who's unsure "did that upload work?" doesn't resubmit the
+   *  same file while it's still being read. */
+  inFlightFilenames?: string[];
 }) {
   const [open, setOpen] = useState(false);
+  const inFlightCount = inFlightFilenames?.length ?? 0;
 
   return (
-    <>
+    <div className="flex items-center gap-2.5">
+      {inFlightCount > 0 && (
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-ink-600 shrink-0">
+          <InFlightSpinner />
+          Procesando {inFlightCount} documento{inFlightCount === 1 ? "" : "s"}…
+        </span>
+      )}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -642,12 +663,18 @@ export function UploadContractButton({
                 Cada documento requiere dos confirmaciones humanas: el local al que corresponde, y la exactitud de
                 las cláusulas extraídas. Revísalos en la lista de abajo una vez subidos.
               </p>
+              {inFlightCount > 0 && (
+                <p className="text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 leading-relaxed">
+                  Ya en proceso ({inFlightCount}): {inFlightFilenames!.join(", ")}. Evita subir el mismo archivo otra
+                  vez mientras se procesa.
+                </p>
+              )}
               <LeaseUploadZone onUploaded={onUploaded} onAllSucceeded={() => setOpen(false)} onFeedback={onFeedback} />
             </div>
           </div>
         </ConsoleModal>
       )}
-    </>
+    </div>
   );
 }
 
