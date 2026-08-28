@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ConsoleModal } from "@/components/hub/console-modal";
 import {
@@ -513,16 +513,19 @@ const PROGRESS_STATUS_LABELS: Record<string, string> = {
 /**
  * Replaces the drop zone inside the same modal once upload(s) succeed —
  * doesn't close and leave a landlord guessing whether anything is still
- * happening. Reads each file's live status from `liveDocuments` — the same
- * state landlord-dashboard.tsx already polls every 3s while anything's in
- * flight (its own useEffect, not one owned by this component) — instead of
- * running a second, independent poll of its own. That second poll is
- * exactly the bug this replaced: it kept this view itself accurate, but
- * updated a completely separate piece of state from what the queue card
- * and "Nada pendiente de revisión" text below render from, so closing this
- * modal handed back a page that still hadn't heard about the upload at
- * all. One poll, one shared source of truth — this and the queue card
- * literally cannot disagree now, because they read the same data.
+ * happening. Polls /api/documents/active-lease itself (confirmed live to
+ * work reliably for showing this view's own progress) and, on every
+ * successful fetch, also hands the result up to onLiveUpdate so
+ * landlord-dashboard.tsx's queue card updates from the exact same tick —
+ * rather than that queue running its own separate poll that has to somehow
+ * end up agreeing with this one. Tried the reverse (this view reading a
+ * shared top-level poll instead of running its own) and found live that
+ * the shared poll wasn't reliably updating at all — three real documents
+ * sat at `ready_for_triage` in the database for minutes while this view
+ * kept showing "Recibido…" for all of them. This view's own poll is the
+ * one independently proven to work; onLiveUpdate makes it the single
+ * source for both places instead of trusting a second, separate poll to
+ * also get it right.
  *
  * Previously this closed the modal immediately (onAllSucceeded) and relied
  * on a toast (auto-dismisses in ~3.5s) plus a badge next to the trigger
@@ -533,18 +536,52 @@ const PROGRESS_STATUS_LABELS: Record<string, string> = {
  */
 function UploadProgressView({
   docs,
-  liveDocuments,
+  onLiveUpdate,
   onClose,
 }: {
   docs: UploadedDoc[];
-  /** landlord-dashboard.tsx's liveActiveLeaseDocuments, forwarded down —
-   *  the single state both this view and the queue card below read from. */
-  liveDocuments: { id: string; status: string }[];
+  /** Called with every successful poll response — landlord-dashboard.tsx
+   *  passes its liveActiveLeaseDocuments setter directly, so the queue card
+   *  and badge update from the same fetch this view renders from. */
+  onLiveUpdate: (documents: DocumentRow[]) => void;
   onClose: () => void;
 }) {
-  const statusById = Object.fromEntries(
-    docs.map((d) => [d.documentId, liveDocuments.find((live) => live.id === d.documentId)?.status ?? "uploaded"]),
+  const [statusById, setStatusById] = useState<Record<string, string>>(
+    Object.fromEntries(docs.map((d) => [d.documentId, "uploaded"])),
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    async function poll() {
+      try {
+        const res = await fetch("/api/documents/active-lease", { cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const { documents } = (await res.json()) as { documents: DocumentRow[] };
+        if (cancelled) return;
+        onLiveUpdate(documents);
+        setStatusById((prev) => {
+          const next = { ...prev };
+          for (const doc of docs) {
+            const match = documents.find((d) => d.id === doc.documentId);
+            if (match) next[doc.documentId] = match.status;
+          }
+          return next;
+        });
+      } catch {
+        // Transient network hiccup — the next tick retries.
+      }
+    }
+    poll();
+    const interval = setInterval(poll, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+    // docs/onLiveUpdate are fixed for this view's lifetime (the batch it
+    // was mounted for, and landlord-dashboard.tsx's stable state setter) —
+    // not meant to restart the poll on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const allSettled = docs.every((d) => {
     const status = statusById[d.documentId];
@@ -601,7 +638,7 @@ export function LeaseUploadZone({
   onUploaded,
   onClose,
   onFeedback,
-  liveDocuments,
+  onLiveUpdate,
 }: {
   onUploaded: () => void;
   /** Closes the parent modal — wired to UploadProgressView's "Listo" button
@@ -616,11 +653,10 @@ export function LeaseUploadZone({
    *  one — a toast alone auto-dismisses in ~3.5s, far short of the
    *  ~30-45s a real extraction pass takes. */
   onFeedback?: (message: string) => void;
-  /** landlord-dashboard.tsx's liveActiveLeaseDocuments — forwarded straight
-   *  through to UploadProgressView. See that component's doc comment for
-   *  why this has to be the same state the queue card reads, not a second
-   *  independent poll. */
-  liveDocuments: { id: string; status: string }[];
+  /** Forwarded straight through to UploadProgressView — see its doc
+   *  comment. landlord-dashboard.tsx passes its liveActiveLeaseDocuments
+   *  setter, so the queue card updates from the same poll this view does. */
+  onLiveUpdate: (documents: DocumentRow[]) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -673,7 +709,7 @@ export function LeaseUploadZone({
   }
 
   if (uploadedDocs) {
-    return <UploadProgressView docs={uploadedDocs} liveDocuments={liveDocuments} onClose={onClose} />;
+    return <UploadProgressView docs={uploadedDocs} onLiveUpdate={onLiveUpdate} onClose={onClose} />;
   }
 
   return (
@@ -722,7 +758,7 @@ export function UploadContractButton({
   onUploaded,
   onFeedback,
   inFlightFilenames,
-  liveDocuments,
+  onLiveUpdate,
 }: {
   onUploaded: () => void;
   /** Forwarded to LeaseUploadZone — see its own doc comment. */
@@ -738,9 +774,8 @@ export function UploadContractButton({
    *  same file while it's still being read. */
   inFlightFilenames?: string[];
   /** Forwarded to LeaseUploadZone → UploadProgressView — see its doc
-   *  comment for why this has to be the same state the queue card below
-   *  reads, not a second independent poll. */
-  liveDocuments: { id: string; status: string }[];
+   *  comment. */
+  onLiveUpdate: (documents: DocumentRow[]) => void;
 }) {
   const [open, setOpen] = useState(false);
   const inFlightCount = inFlightFilenames?.length ?? 0;
@@ -793,7 +828,7 @@ export function UploadContractButton({
                 onUploaded={onUploaded}
                 onClose={() => setOpen(false)}
                 onFeedback={onFeedback}
-                liveDocuments={liveDocuments}
+                onLiveUpdate={onLiveUpdate}
               />
             </div>
           </div>
