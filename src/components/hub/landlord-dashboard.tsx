@@ -436,7 +436,11 @@ export function LandlordDashboard({
 
   const refreshActiveLeaseDocuments = useCallback(async () => {
     try {
-      const res = await fetch("/api/documents/active-lease");
+      // no-store: every poll hits this exact same URL every 3s -- without
+      // this, the browser's own HTTP cache can serve the first response
+      // back forever regardless of what the server sends, which reproduces
+      // exactly the bug this endpoint exists to fix.
+      const res = await fetch("/api/documents/active-lease", { cache: "no-store" });
       if (!res.ok) return;
       const { documents } = (await res.json()) as { documents: LeaseDocumentRow[] };
       setLiveActiveLeaseDocuments(documents);

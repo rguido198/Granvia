@@ -3,6 +3,17 @@ import { NextResponse } from "next/server";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { fetchActiveLeaseDocuments } from "@/lib/data/portfolio.server";
 
+// Every poll hits this exact same URL every 3s -- without this, a GET with
+// no explicit caching directive is exactly the shape a browser's own HTTP
+// cache (or an intermediate CDN edge) can serve from cache instead of
+// re-running the handler, which would reproduce the identical symptom this
+// route was built to fix: the first response looks right, every request
+// after it silently returns that same stale snapshot forever. Set on both
+// ends -- this and the client fetch()'s own `cache: "no-store"` in
+// landlord-dashboard.tsx -- since either layer caching independently would
+// be enough to cause it.
+export const dynamic = "force-dynamic";
+
 /**
  * Plain JSON polling endpoint for the Legal tab's digitization queue —
  * landlord-dashboard.tsx's client-side poll (useActiveLeaseDocumentsPoll)
@@ -28,5 +39,8 @@ export async function GET() {
   }
 
   const documents = await fetchActiveLeaseDocuments();
-  return NextResponse.json({ documents });
+  // Explicit header, not just relying on `dynamic = "force-dynamic"` above
+  // -- that controls Next's own render/data cache, not necessarily what
+  // Cache-Control the browser actually receives on the response.
+  return NextResponse.json({ documents }, { headers: { "Cache-Control": "no-store" } });
 }
