@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { CONSOLE_LOGIN_PATH } from "@/lib/console-session";
-import { PRIVATE_GATE_PATH, SITE_ACCESS_COOKIE } from "@/lib/site-session";
+import { PRIVATE_GATE_PATH, SITE_ACCESS_COOKIE, verifySiteAccessCookie } from "@/lib/site-session";
 import { createSupabaseMiddlewareClient } from "@/lib/auth/middleware-client";
 
 const TENANT_LOGIN_PATH = "/inquilinos/acceso";
@@ -41,9 +41,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Global Site Access Gate check
+  // 2. Global Site Access Gate check — cookie value must carry a valid HMAC
+  // signature, not just equal the literal string "granted" (a client-set
+  // cookie can't forge that without SITE_SESSION_SECRET).
   const siteAccessCookie = request.cookies.get(SITE_ACCESS_COOKIE)?.value;
-  const hasSiteAccess = siteAccessCookie === "granted";
+  const hasSiteAccess = await verifySiteAccessCookie(siteAccessCookie);
 
   // If site access cookie is missing, rewrite to private access gate
   if (!hasSiteAccess) {

@@ -4,6 +4,8 @@ import { start } from "workflow/api";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { extractText } from "@/lib/ingest/extract-text";
+import { matchesDeclaredType } from "@/lib/ingest/file-signature";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { diegoTriageWorkflow } from "@/workflows/diego-triage";
 import { leaseDigitizationWorkflow } from "@/workflows/lease-digitization";
@@ -26,6 +28,16 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/heic",
 ]);
 
+// 25MB covers a multi-page scanned lease PDF with comfortable headroom
+// without leaving the storage/AI-cost abuse vector wide open.
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+
+// The two OPEN kinds (see the auth note above) are the abuse surface — a
+// caller with no session at all can hit this endpoint as fast as it wants.
+// active_lease is already gated by landlord auth, which is a much stronger
+// throttle on its own.
+const RATE_LIMITED_KINDS: ReadonlySet<IngestKind> = new Set(["maintenance_ticket", "lease_application"]);
+
 /**
  * Single-file intake for Diego and Mariana. A landlord's ZIP of N lease
  * applications is a separate, later endpoint (Concept 2 — parallel
@@ -37,7 +49,11 @@ const ALLOWED_MIME_TYPES = new Set([
  *     exempts /api/ from its gates precisely so these can be posted by
  *     systems with no browser session at all (a WhatsApp bridge, per
  *     maintenance-dispatcher/SKILL.md §1's intake channels). Do not add auth
- *     to those two — it would break the documented intake contract.
+ *     to those two — it would break the documented intake contract. Being
+ *     open is mitigated, not left bare: MAX_FILE_BYTES caps upload size,
+ *     matchesDeclaredType() checks the file's actual magic bytes against
+ *     its declared MIME type, and checkRateLimit() throttles both kinds
+ *     per-IP — see RATE_LIMITED_KINDS below.
  *   - `active_lease` requires an authenticated landlord. It is only ever
  *     uploaded from the Legal tab by the landlord themselves, and an
  *     unauthenticated upload would push a document into a Tier 3 approval
@@ -54,11 +70,29 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file is required" }, { status: 400 });
   }
+  if (file.size > MAX_FILE_BYTES) {
+    return NextResponse.json(
+      { error: `file exceeds the ${MAX_FILE_BYTES / (1024 * 1024)}MB limit` },
+      { status: 413 },
+    );
+  }
   if (typeof kind !== "string" || !ALLOWED_KINDS.includes(kind as IngestKind)) {
     return NextResponse.json(
       { error: `kind must be one of: ${ALLOWED_KINDS.join(", ")}` },
       { status: 400 },
     );
+  }
+  if (RATE_LIMITED_KINDS.has(kind as IngestKind)) {
+    // Only the OPEN kinds — active_lease is already throttled by requiring
+    // a landlord session.
+    const ip = getClientIp(request);
+    const rateLimit = await checkRateLimit(`ingest:${kind}:${ip}`, {
+      max: 20,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json({ error: "too many uploads — try again shortly" }, { status: 429 });
+    }
   }
   if (kind === "active_lease") {
     // Mirrors LEASE_DIGITIZATION_PAUSED in legal-documents-panel.tsx, which
@@ -105,9 +139,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!matchesDeclaredType(file.type, bytes)) {
+    return NextResponse.json(
+      { error: `file content does not match declared type ${file.type}` },
+      { status: 400 },
+    );
+  }
+
   const supabase = getSupabaseServiceClient();
   const storagePath = `${kind}/${randomUUID()}-${file.name}`;
-  const bytes = new Uint8Array(await file.arrayBuffer());
 
   const { error: uploadError } = await supabase.storage
     .from("intake")

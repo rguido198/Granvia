@@ -43,18 +43,41 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  await supabase
-    .from("lease_applications")
-    .update({ reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
-    .eq("id", applicationId);
-
+  // resumeHook first — see /api/workflow/approve for why: a missing/already
+  // -resolved hook must not leave the DB claiming a decision was delivered
+  // when it wasn't.
+  let runId: string;
   try {
     const result = await resumeHook(`lease-application-review:${applicationId}`, { approved });
-    return NextResponse.json({ runId: result.runId });
+    runId = result.runId;
   } catch (error) {
     return NextResponse.json(
       { error: `workflow hook not found or already resolved: ${error instanceof Error ? error.message : error}` },
       { status: 404 },
     );
   }
+
+  // The workflow has already accepted the decision at this point — this
+  // write is the audit trail, not the decision itself, and resumeHook can't
+  // be rolled back if it fails. See /api/workflow/approve for the same
+  // pattern and its note on why this stays a logged warning, not a durable
+  // outbox/retry queue.
+  const { error: updateError } = await supabase
+    .from("lease_applications")
+    .update({ reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
+    .eq("id", applicationId);
+
+  if (updateError) {
+    console.error(
+      `lease application ${applicationId}: resumeHook succeeded (runId ${runId}) but audit write failed`,
+      updateError,
+    );
+    return NextResponse.json({
+      runId,
+      warning:
+        "la decisión se envió al flujo de trabajo, pero no se pudo registrar en la auditoría — requiere revisión manual",
+    });
+  }
+
+  return NextResponse.json({ runId });
 }

@@ -39,14 +39,27 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabaseServiceClient();
 
-  // Any existing row for this unit_number — occupied, vacant, or pending —
-  // means this isn't actually a new unit. Distinct from addTenantAction's
-  // check (which only blocks on OCCUPIED, since it also handles re-leasing
-  // a vacant unit): this route's whole point is asserting "this local has
-  // never existed in the system," so any match at all is a contradiction.
+  // No .limit(1) — this app assumes exactly one property per Supabase
+  // project (see root CLAUDE.md §5's per-client isolation model). .single()
+  // alone fails loudly if that assumption is ever violated instead of
+  // .limit(1) masking a second property row by silently picking one.
+  const { data: property, error: propertyError } = await supabase.from("properties").select("id").single();
+  if (propertyError || !property) {
+    return NextResponse.json({ error: "No se encontró una propiedad única en Supabase" }, { status: 500 });
+  }
+
+  // Any existing row for this unit_number within the same property —
+  // occupied, vacant, or pending — means this isn't actually a new unit.
+  // Scoped by property_id to match the `unique (property_id, unit_number)`
+  // constraint on `locales` exactly, not just unit_number globally.
+  // Distinct from addTenantAction's check (which only blocks on OCCUPIED,
+  // since it also handles re-leasing a vacant unit): this route's whole
+  // point is asserting "this local has never existed in the system," so any
+  // match at all is a contradiction.
   const { data: existing, error: existingError } = await supabase
     .from("locales")
     .select("id")
+    .eq("property_id", property.id)
     .eq("unit_number", trimmedUnitNumber)
     .maybeSingle();
   if (existingError) {
@@ -57,11 +70,6 @@ export async function POST(request: NextRequest) {
       { error: `El local ${trimmedUnitNumber} ya existe en el sistema — selecciónalo de la lista en vez de crearlo.` },
       { status: 409 },
     );
-  }
-
-  const { data: property, error: propertyError } = await supabase.from("properties").select("id").limit(1).single();
-  if (propertyError || !property) {
-    return NextResponse.json({ error: "No se encontró la propiedad en Supabase" }, { status: 500 });
   }
 
   const { data: locale, error: insertError } = await supabase
@@ -76,6 +84,16 @@ export async function POST(request: NextRequest) {
     .select("id, unit_number")
     .single();
   if (insertError || !locale) {
+    // The pre-check above is a courtesy for the common case; a unique-
+    // constraint violation (23505) on the insert is the real, race-proof
+    // authority — two concurrent creates for the same unit both pass the
+    // pre-check, but only one insert can win.
+    if (insertError?.code === "23505") {
+      return NextResponse.json(
+        { error: `El local ${trimmedUnitNumber} ya existe en el sistema — selecciónalo de la lista en vez de crearlo.` },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ error: insertError?.message ?? "No se pudo crear el local" }, { status: 500 });
   }
 

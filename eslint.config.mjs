@@ -21,6 +21,10 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     ".vercel/**",
+    // Nested .next/** inside a git worktree (see using-git-worktrees) isn't
+    // caught by the top-level ".next/**" pattern above — each worktree gets
+    // its own build output, generated, not source, and shouldn't be linted.
+    ".claude/worktrees/**",
   ]),
 ]);
 
