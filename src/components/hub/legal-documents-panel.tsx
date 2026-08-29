@@ -33,7 +33,7 @@ import { isSameTenant } from "@/lib/ingest/fuzzy-match-tenant";
 // (and mirrored server-side in src/app/api/ingest/route.ts) rather than
 // left open to keep producing more unmatchable documents until credits
 // are topped up.
-const LEASE_DIGITIZATION_PAUSED = true;
+const LEASE_DIGITIZATION_PAUSED = false;
 
 export type DocumentRow = {
   id: string;

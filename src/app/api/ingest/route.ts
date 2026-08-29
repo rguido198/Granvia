@@ -13,7 +13,7 @@ export const runtime = "nodejs"; // pdf-parse needs Node's Buffer, not the Edge 
 
 // See the matching flag in legal-documents-panel.tsx — same reason, same
 // on/off switch, flip both back together.
-const LEASE_DIGITIZATION_PAUSED = true;
+const LEASE_DIGITIZATION_PAUSED = false;
 
 const ALLOWED_KINDS = ["maintenance_ticket", "lease_application", "active_lease"] as const;
 type IngestKind = (typeof ALLOWED_KINDS)[number];
