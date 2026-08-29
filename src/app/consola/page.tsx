@@ -3,6 +3,7 @@ import { PageFade } from "@/components/ui";
 import { ConsoleShell } from "@/components/hub/console-shell";
 import { buildConsoleData } from "@/lib/console-data.server";
 import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
+import { fetchPendingLeaseApplications } from "@/lib/data/approval-queue.server";
 import { fetchLocaleOptions, fetchTenantPortalData } from "@/lib/data/tenant-portal.server";
 import { fetchContractors } from "@/lib/data/contractors.server";
 import { fetchAutonomyState } from "@/lib/platform/settings.server";
@@ -65,6 +66,10 @@ export default async function ConsolaPage() {
   // Legal tab's lease-digitization pipeline — intake state, not part of the
   // rent roll / lease ledger fetchPortfolio() returns.
   const activeLeaseDocuments = await fetchActiveLeaseDocuments();
+  // Approval Inbox's one genuinely new source — see
+  // approval-queue.server.ts's doc comment: no other fetch reaches pending
+  // lease_applications rows.
+  const leaseApplications = await fetchPendingLeaseApplications();
 
   return (
     <PageFade>
@@ -81,6 +86,7 @@ export default async function ConsolaPage() {
         corporateUsers={corporateUsers}
         portfolio={portfolio}
         activeLeaseDocuments={activeLeaseDocuments}
+        leaseApplications={leaseApplications}
       />
     </PageFade>
   );

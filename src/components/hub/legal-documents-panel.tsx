@@ -8,6 +8,7 @@ import {
   type LeaseExtractedFields,
 } from "@/lib/ingest/lease-extraction-schema";
 import { isSameTenant } from "@/lib/ingest/fuzzy-match-tenant";
+import { isDocumentActionable } from "@/lib/data/document-status";
 
 /**
  * Legal-tab UI for the active-lease document pipeline: bulk upload, the
@@ -49,6 +50,7 @@ export type DocumentRow = {
   extractedFields: Record<string, unknown> | null;
   extractionVerifiedAt: string | null;
   errorMessage: string | null;
+  createdAt: string;
 };
 
 export type UnitOption = {
@@ -205,14 +207,11 @@ export function DocumentViewerButton({
 /** A document still needing a human decision — the only kind shown by
  *  default. Everything else (verified, rejected, failed) is done, one way
  *  or another, and collapses into history instead of accumulating forever
- *  at the top of the queue. */
-function isActionable(doc: DocumentRow): boolean {
-  return (
-    doc.status === "ready_for_triage" ||
-    doc.status === "needs_new_lease" ||
-    (doc.status === "attached" && !doc.extractionVerifiedAt)
-  );
-}
+ *  at the top of the queue. Predicate itself lives in document-status.ts —
+ *  the approval inbox (approval-queue.ts) imports the same function rather
+ *  than re-deriving it, so the two views can't drift apart on what counts
+ *  as pending. */
+const isActionable = isDocumentActionable;
 
 /** Still being read by the pipeline — not a landlord decision yet, but not
  *  "done" either. Before this, a document sitting here fell into `resolved`
@@ -299,14 +298,23 @@ function DocumentCard({
   doc,
   allUnits,
   onResolved,
+  highlighted = false,
 }: {
   doc: DocumentRow;
   allUnits: UnitOption[];
   onResolved: () => void;
+  /** True for the one doc, if any, the approval inbox's "Ir a revisión"
+   *  navigated here for — see LegalDocumentsPanel's focusDocumentId. */
+  highlighted?: boolean;
 }) {
   const fields = parseExtractedFields(doc.extractedFields);
   return (
-    <div className="border border-hairline rounded-xl p-3.5 bg-white space-y-2.5">
+    <div
+      id={`document-${doc.id}`}
+      className={`border rounded-xl p-3.5 bg-white space-y-2.5 transition-colors ${
+        highlighted ? "border-amber-400 ring-2 ring-amber-300" : "border-hairline"
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-bold text-xs text-ink">{doc.originalFilename}</p>
@@ -437,12 +445,30 @@ export function LegalDocumentsPanel({
   documents,
   allUnits,
   onResolved,
+  focusDocumentId = null,
 }: {
   documents: DocumentRow[];
   allUnits: UnitOption[];
   onResolved: () => void;
+  /** Set by the approval inbox's "Ir a revisión" for a lease_match/
+   *  lease_extraction row — scrolls to and briefly highlights that document
+   *  instead of just landing on the tab and leaving the landlord to find it
+   *  among however many others are pending. */
+  focusDocumentId?: string | null;
 }) {
   const [showHistory, setShowHistory] = useState(false);
+
+  // Cleared after a couple seconds so re-visiting the tab later, or another
+  // navigation, doesn't leave a stale highlight lit forever.
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focusDocumentId) return;
+    setHighlightedId(focusDocumentId);
+    const el = document.getElementById(`document-${focusDocumentId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timer = setTimeout(() => setHighlightedId(null), 2000);
+    return () => clearTimeout(timer);
+  }, [focusDocumentId]);
 
   if (documents.length === 0) {
     return (
@@ -470,7 +496,13 @@ export function LegalDocumentsPanel({
       ))}
 
       {active.map((doc) => (
-        <DocumentCard key={doc.id} doc={doc} allUnits={allUnits} onResolved={onResolved} />
+        <DocumentCard
+          key={doc.id}
+          doc={doc}
+          allUnits={allUnits}
+          onResolved={onResolved}
+          highlighted={doc.id === highlightedId}
+        />
       ))}
 
       {/* Verified/rejected/failed documents were previously listed

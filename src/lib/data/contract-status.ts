@@ -111,6 +111,7 @@ export type LeaseRenewalSummary = {
   draftMarkdown: string;
   skepticFlagged: boolean;
   skepticConcerns: string[];
+  createdAt: string;
 };
 
 function monthsUntil(dateStr: string): number {

@@ -527,7 +527,13 @@ export function DirectoryMap() {
               key={tenant.slug}
               className="flex gap-4 rounded-xl border border-hairline bg-sand-100 p-4 transition-all hover:border-ink-400 hover:shadow-xs group"
             >
-              <TenantLogo tenant={tenant} className="h-20 w-24 flex-none object-contain rounded-lg border border-hairline bg-white p-1" />
+              <TenantLogo
+                tenant={tenant}
+                className="h-20 w-24 flex-none border border-hairline"
+                padding="p-1"
+                rounded="rounded-lg"
+                background="bg-white"
+              />
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex items-start justify-between gap-2">
                   <h4 className="font-display text-lg font-semibold text-ink leading-tight group-hover:text-black">

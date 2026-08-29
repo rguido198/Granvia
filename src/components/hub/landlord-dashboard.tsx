@@ -12,10 +12,14 @@ import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
 import type { Portfolio, LocaleStatus, LeaseDocumentRow } from "@/lib/data/portfolio.server";
+import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
+import { buildApprovalQueue, type ApprovalQueueItem } from "@/lib/approval-queue";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
 import { ContractorRoster } from "@/components/hub/contractor-roster";
 import { MarianaApplicationForm } from "@/components/hub/mariana-application-form";
 import { DocumentViewerButton, isInFlight, LegalDocumentsPanel, UploadContractButton } from "@/components/hub/legal-documents-panel";
+import { MarianaPendingPanel } from "@/components/hub/mariana-pending-panel";
+import type { AttentionCounts } from "@/components/hub/header-attention-bell";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
 import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
@@ -83,16 +87,6 @@ function emailInitials(email: string): string {
   return initials.toUpperCase();
 }
 
-/** Matches a Rent Roll row's real tenant_entity name against the real
- *  directory content (src/content/tenants.ts) so the row can show the
- *  tenant's real logo — same source TenantLogo already renders elsewhere
- *  (directory-map.tsx, plan-your-day.tsx). Case-insensitive since the two
- *  data sources are maintained independently. */
-function findTenantByName(name: string) {
-  const needle = name.trim().toLowerCase();
-  return TENANTS.find((t) => t.name.trim().toLowerCase() === needle);
-}
-
 function nameInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -118,17 +112,56 @@ function MarianaLinkIcon() {
   );
 }
 
+// A small fixed palette of pastel/text pairs, each with real contrast
+// (WCAG-safe 700/800-weight text on a 100-weight fill) — deterministic per
+// tenant name so the same row always lands on the same color across
+// reloads, and 80 rows read as scannable rather than one flat gray column.
+const AVATAR_PALETTE: { bg: string; text: string }[] = [
+  { bg: "bg-indigo-100", text: "text-indigo-700" },
+  { bg: "bg-emerald-100", text: "text-emerald-700" },
+  { bg: "bg-amber-100", text: "text-amber-800" },
+  { bg: "bg-rose-100", text: "text-rose-700" },
+  { bg: "bg-sky-100", text: "text-sky-700" },
+  { bg: "bg-violet-100", text: "text-violet-700" },
+  { bg: "bg-teal-100", text: "text-teal-700" },
+  { bg: "bg-orange-100", text: "text-orange-800" },
+];
+
+function avatarPalette(name: string): { bg: string; text: string } {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+}
+
+/** Matches a Rent Roll row's real tenant_entity name against the real
+ *  directory content (src/content/tenants.ts) so the row can show the
+ *  tenant's real logo — same source TenantLogo already renders elsewhere
+ *  (directory-map.tsx, plan-your-day.tsx). Case-insensitive since the two
+ *  data sources are maintained independently. */
+function findTenantByName(name: string) {
+  const needle = name.trim().toLowerCase();
+  return TENANTS.find((t) => t.name.trim().toLowerCase() === needle);
+}
+
 /**
  * Rent Roll row thumbnail — the tenant's real logo when the directory has
- * one on file (src/content/tenants.ts), a neutral initials tile when it
+ * one on file (src/content/tenants.ts), a colored initials tile when it
  * doesn't (never a fabricated image), and a plain empty-slot glyph for a
  * vacant local (there's no tenant to show a mark for).
+ *
+ * The real-logo path previously looked illegible here not because the logos
+ * themselves were bad, but because TenantLogo's own hardcoded p-3/rounded-xs
+ * classes were silently winning over this component's `p-1`/`rounded-lg`
+ * override (see TenantLogo's doc comment — cn() can't resolve that kind of
+ * conflict) — most of the 36px box was padding, not logo. Fixed via
+ * TenantLogo's explicit padding/rounded props instead of a second
+ * className string fighting the first.
  */
 function RentRollThumbnail({ name, vacant }: { name: string; vacant: boolean }) {
   if (vacant) {
     return (
       <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-hairline-strong text-ink-300"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-hairline-strong text-ink-300"
         aria-hidden="true"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,11 +173,21 @@ function RentRollThumbnail({ name, vacant }: { name: string; vacant: boolean }) 
 
   const tenant = findTenantByName(name);
   if (tenant) {
-    return <TenantLogo tenant={tenant} className="h-9 w-9 shrink-0 rounded-lg border border-hairline p-1" />;
+    return (
+      <TenantLogo
+        tenant={tenant}
+        className="h-10 w-10 shrink-0 border border-hairline"
+        padding="p-1"
+        rounded="rounded-lg"
+      />
+    );
   }
 
+  const { bg, text } = avatarPalette(name);
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-hairline text-[10px] font-bold text-ink-500">
+    <span
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-hairline text-[11px] font-bold ${bg} ${text}`}
+    >
       {nameInitials(name)}
     </span>
   );
@@ -311,6 +354,10 @@ export function LandlordDashboard({
   corporateUsers,
   portfolio,
   activeLeaseDocuments,
+  leaseApplications,
+  onPendingCountsChange,
+  navigateRequest,
+  onNavigateRequestHandled,
   currency,
   copilotOpen,
   setCopilotOpen,
@@ -328,6 +375,16 @@ export function LandlordDashboard({
   corporateUsers: CorporateUser[];
   portfolio: Portfolio;
   activeLeaseDocuments: LeaseDocumentRow[];
+  leaseApplications: PendingLeaseApplication[];
+  /** Pushed up on every change so ConsoleShell's HeaderAttentionBell (its
+   *  header bar, not this component's) can render a live count without
+   *  duplicating the buildApprovalQueue() derivation up there. */
+  onPendingCountsChange: (counts: AttentionCounts) => void;
+  /** Set by a HeaderAttentionBell click; consumed once (see the effect
+   *  below) to flip activeTab/maintSubTab/legalSubTab the same way a
+   *  sidebar or "Ir a revisión" click already does. */
+  navigateRequest: { tab: "maint" | "legal"; subTab: string } | null;
+  onNavigateRequestHandled: () => void;
   /**
    * Console chrome owned by ConsoleShell's single header bar. The controls for
    * all of these render up there (see console-shell.tsx) — this component is
@@ -484,6 +541,136 @@ export function LandlordDashboard({
     const interval = setInterval(refreshActiveLeaseDocuments, 3000);
     return () => clearInterval(interval);
   }, [hasInFlightLeaseDocument, refreshActiveLeaseDocuments]);
+
+  // Approval Inbox — two more sources with no live-refresh path anywhere in
+  // this file today (diegoTickets is a plain prop; lease_applications was
+  // never fetched client-side at all before this tab existed). Rather than
+  // add a second background poll interval, both refresh together from one
+  // explicit "Actualizar" button on the inbox itself — see refreshApprovals
+  // below. livePortfolio/liveActiveLeaseDocuments above are reused as-is.
+  const [liveDiegoTickets, setLiveDiegoTickets] = useState(diegoTickets);
+  const [liveDiegoKpis, setLiveDiegoKpis] = useState(diegoKpis);
+  useEffect(() => {
+    setLiveDiegoTickets(diegoTickets);
+  }, [diegoTickets]);
+  useEffect(() => {
+    setLiveDiegoKpis(diegoKpis);
+  }, [diegoKpis]);
+
+  const [liveLeaseApplications, setLiveLeaseApplications] = useState(leaseApplications);
+  useEffect(() => {
+    setLiveLeaseApplications(leaseApplications);
+  }, [leaseApplications]);
+
+  const [refreshingApprovals, setRefreshingApprovals] = useState(false);
+  const refreshApprovals = useCallback(async () => {
+    setRefreshingApprovals(true);
+    try {
+      const [ticketsRes, applicationsRes] = await Promise.all([
+        fetch("/api/tickets/active", { cache: "no-store" }),
+        fetch("/api/leases/pending-applications", { cache: "no-store" }),
+      ]);
+      if (ticketsRes.ok) {
+        const { tickets, kpis } = (await ticketsRes.json()) as { tickets: DiegoTicket[]; kpis: DiegoKPIs };
+        setLiveDiegoTickets(tickets);
+        setLiveDiegoKpis(kpis);
+      }
+      if (applicationsRes.ok) {
+        const { applications } = (await applicationsRes.json()) as { applications: PendingLeaseApplication[] };
+        setLiveLeaseApplications(applications);
+      }
+    } catch {
+      // Transient network hiccup — the button stays clickable to retry.
+    } finally {
+      setRefreshingApprovals(false);
+    }
+  }, []);
+
+  const approvalQueue = useMemo(
+    () =>
+      buildApprovalQueue({
+        diegoTickets: liveDiegoTickets,
+        portfolio: livePortfolio,
+        activeLeaseDocuments: liveActiveLeaseDocuments,
+        leaseApplications: liveLeaseApplications,
+      }),
+    [liveDiegoTickets, livePortfolio, liveActiveLeaseDocuments, liveLeaseApplications],
+  );
+
+  // Mariana's sidebar badge splits real legal decisions from Gate 1/2
+  // document volume — a 70-document backlog and 3 actual decisions
+  // (lease applications + renewals) aren't the same kind of "pending" and
+  // shouldn't collapse into one number. Diego's badge doesn't need an
+  // equivalent split or a useMemo at all — diegoKpis.pendingApprovalsCount
+  // already is exactly this count.
+  const marianaDecisionesCount = useMemo(
+    () => approvalQueue.filter((i) => i.kind === "lease_application" || i.kind === "lease_renewal").length,
+    [approvalQueue],
+  );
+  const marianaExpedientesCount = useMemo(
+    () => approvalQueue.filter((i) => i.kind === "lease_match" || i.kind === "lease_extraction").length,
+    [approvalQueue],
+  );
+
+  // Pushes these three numbers up to ConsoleShell's HeaderAttentionBell.
+  // liveDiegoKpis.pendingApprovalsCount is Diego's own count (no separate
+  // derivation needed — it's already exactly this number).
+  useEffect(() => {
+    onPendingCountsChange({
+      diegoDecisiones: liveDiegoKpis.pendingApprovalsCount,
+      marianaDecisiones: marianaDecisionesCount,
+      marianaExpedientes: marianaExpedientesCount,
+    });
+  }, [liveDiegoKpis.pendingApprovalsCount, marianaDecisionesCount, marianaExpedientesCount, onPendingCountsChange]);
+
+  // Consumes a HeaderAttentionBell click exactly once, then clears it —
+  // same tab/sub-tab state handleApprovalNavigate already drives, just
+  // triggered from the header instead of a queue row.
+  useEffect(() => {
+    if (!navigateRequest) return;
+    selectTab(navigateRequest.tab);
+    if (navigateRequest.tab === "maint") setMaintSubTab(navigateRequest.subTab as typeof maintSubTab);
+    else setLegalSubTab(navigateRequest.subTab as typeof legalSubTab);
+    onNavigateRequestHandled();
+    // selectTab/setMaintSubTab/setLegalSubTab are plain consts redefined
+    // every render (not memoized) — omitted from deps for the same reason
+    // handleApprovalNavigate above omits them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigateRequest, onNavigateRequestHandled]);
+
+  // Deep-link targets: set by handleApprovalNavigate below, consumed by
+  // DiegoTriageQueue (focusTicketId) and LegalDocumentsPanel
+  // (focusDocumentId) to open/scroll to the specific row, not just the tab.
+  const [focusTicketId, setFocusTicketId] = useState<string | null>(null);
+  const [focusDocumentId, setFocusDocumentId] = useState<string | null>(null);
+
+  const handleApprovalNavigate = useCallback(
+    (item: ApprovalQueueItem) => {
+      if (!("tab" in item.deepLink)) return; // lease_application: no panel to send it to yet
+      const { tab, subTab, target } = item.deepLink;
+      selectTab(tab);
+      if (tab === "maint" && subTab) setMaintSubTab(subTab as typeof maintSubTab);
+      if (tab === "legal" && subTab) setLegalSubTab(subTab as typeof legalSubTab);
+
+      if (target.kind === "ticket") {
+        setFocusTicketId(target.id);
+        setFocusDocumentId(null);
+      } else if (target.kind === "lease_renewal") {
+        setInspectedContractId(target.id);
+        setFocusTicketId(null);
+        setFocusDocumentId(null);
+      } else if (target.kind === "lease_match" || target.kind === "lease_extraction") {
+        setFocusDocumentId(target.id);
+        setFocusTicketId(null);
+      }
+    },
+    // selectTab isn't itself memoized (it's a plain const redefined every
+    // render), so it's intentionally omitted — including it would recreate
+    // this callback every render for no behavioral difference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   // Keyed `${localeId}:${field}` — lets each cell show its own saving state
   // independently instead of locking the whole table while one field saves.
   const [savingField, setSavingField] = useState<string | null>(null);
@@ -600,8 +787,14 @@ export function LandlordDashboard({
   // Diego IA Maintenance Sub-Navigation State
   const [maintSubTab, setMaintSubTab] = useState<"triage" | "calendario" | "capex" | "contratistas">("triage");
 
-  // Mariana IA Legal Engine States
-  const [legalSubTab, setLegalSubTab] = useState<"expedientes" | "prospectos" | "marco_legal">("expedientes");
+  // Mariana IA Legal Engine States. "expedientes" (Locales y Contratos) is
+  // her default landing — the legal intelligence workspace itself, not the
+  // pending-decision queue. "pendientes" exists as a focused sub-view,
+  // reached via the sidebar's dedicated "Ver pendientes" badge click
+  // (onTrailingClick above) rather than by replacing the default.
+  const [legalSubTab, setLegalSubTab] = useState<"pendientes" | "expedientes" | "prospectos" | "marco_legal">(
+    "expedientes",
+  );
   const [lastLawScanDate, setLastLawScanDate] = useState("Hoy, 10 Ago 2026 · 06:00 hrs");
   const [selectedProspectIndex, setSelectedProspectIndex] = useState<number>(0);
   const [customProspectBrand, setCustomProspectBrand] = useState("");
@@ -721,6 +914,13 @@ export function LandlordDashboard({
               Gestión & Inteligencia Operativa
             </p>
 
+            {/* No counts on the sidebar itself — a long badge here read as
+             *  heavier than the agent name and turned navigation into an
+             *  alert rail. Counts live where they have context: inside
+             *  each agent's own tabs (Diego's "Triage" label, Mariana's
+             *  "Pendientes" label, both below) and in the header's
+             *  HeaderAttentionBell, which both push their counts into via
+             *  onPendingCountsChange. */}
             <SidebarNavItem active={activeTab === "maint"} onClick={() => selectTab("maint")}>
               Diego IA · Mantenimiento
             </SidebarNavItem>
@@ -1199,7 +1399,13 @@ export function LandlordDashboard({
               {/* SUB-NAVIGATION — underline tabs, not filled pills */}
               <SubTabBar
                 tabs={[
-                  { key: "triage", label: "Triage" },
+                  {
+                    key: "triage",
+                    label:
+                      liveDiegoKpis.pendingApprovalsCount > 0
+                        ? `Triage (${liveDiegoKpis.pendingApprovalsCount} requieren aprobación)`
+                        : "Triage",
+                  },
                   { key: "calendario", label: "Calendario" },
                   { key: "capex", label: "CapEx & Costos" },
                   { key: "contratistas", label: "Contratistas & Garantías" },
@@ -1213,7 +1419,12 @@ export function LandlordDashboard({
               <div className="space-y-6 animate-fadeIn">
               {/* DIEGO IA · LIVE TRIAGE QUEUE — real Supabase rows, the Tier 3 gate,
                   and the dynamic jurisdiction watermark. */}
-              <DiegoTriageQueue tickets={diegoTickets} kpis={diegoKpis} localeOptions={localeOptions} />
+              <DiegoTriageQueue
+                tickets={liveDiegoTickets}
+                kpis={liveDiegoKpis}
+                localeOptions={localeOptions}
+                focusTicketId={focusTicketId}
+              />
               </div>
               )}
 
@@ -1762,7 +1973,14 @@ export function LandlordDashboard({
               {/* SUB-NAVIGATION — underline tabs, not filled pills */}
               <SubTabBar
                 tabs={[
-                  { key: "expedientes", label: `Expedientes & Anomalías (${renewalSoonCount})` },
+                  { key: "expedientes", label: `Locales y Contratos (${rentRoll.length})` },
+                  {
+                    key: "pendientes",
+                    label:
+                      marianaDecisionesCount + marianaExpedientesCount > 0
+                        ? `Pendientes (${marianaDecisionesCount} decisiones · ${marianaExpedientesCount} expedientes)`
+                        : "Pendientes",
+                  },
                   { key: "prospectos", label: "Viabilidad de Prospectos (Exclusividades)" },
                   { key: "marco_legal", label: "Marco Jurídico & Radar de Leyes (DOF & BC)" },
                 ]}
@@ -1770,7 +1988,11 @@ export function LandlordDashboard({
                 onChange={setLegalSubTab}
               />
 
-              {/* SUB-TAB 1: EXPEDIENTES & ANOMALÍAS (EXECUTIVE TABLE LEDGER WITH EXPANDABLE ROWS) */}
+              {/* SUB-TAB 1: LOCALES Y CONTRATOS (EXECUTIVE TABLE LEDGER WITH EXPANDABLE ROWS) —
+                  Mariana's default workspace: the familiar directory of locales, active
+                  contracts, anomalies, and renewal context. Internal key stays
+                  "expedientes" (unchanged from before this reorg) — only the tab
+                  label and its position in the bar changed. */}
               {legalSubTab === "expedientes" && (
                 <div className="space-y-4 animate-fadeIn">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1832,6 +2054,7 @@ export function LandlordDashboard({
                         void refreshPortfolio();
                         router.refresh();
                       }}
+                      focusDocumentId={focusDocumentId}
                     />
                   </div>
 
@@ -2037,6 +2260,26 @@ export function LandlordDashboard({
                       </tbody>
                     </table>
                   </div>
+                </div>
+              )}
+
+              {/* SUB-TAB 1b: PENDIENTES — a focused sub-view, not the
+                  default landing: decisions awaiting Mariana (lease
+                  applications, renewal drafts, Gate 1/2 document review),
+                  reached via SubTabBar or the sidebar's "Ver pendientes"
+                  badge (onTrailingClick). Deep links flip legalSubTab back
+                  to "expedientes" and set inspectedContractId/
+                  focusDocumentId — same mechanism as the rest of this file,
+                  just mounted from a sub-view instead of replacing the
+                  workspace it belongs inside. */}
+              {legalSubTab === "pendientes" && (
+                <div className="animate-fadeIn">
+                  <MarianaPendingPanel
+                    items={approvalQueue}
+                    onNavigate={handleApprovalNavigate}
+                    onRefresh={() => void refreshApprovals()}
+                    refreshing={refreshingApprovals}
+                  />
                 </div>
               )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { Inter } from "next/font/google";
 import { CONSOLE_ROOT_ID } from "@/components/hub/console-root";
 import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
@@ -13,6 +13,8 @@ import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
 import type { LeaseDocumentRow, Portfolio } from "@/lib/data/portfolio.server";
+import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
+import { HeaderAttentionBell, type AttentionCounts } from "@/components/hub/header-attention-bell";
 import { signOut } from "@/app/consola/actions";
 
 type ConsoleView = "propietario" | "inquilino";
@@ -47,6 +49,7 @@ export function ConsoleShell({
   corporateUsers,
   portfolio,
   activeLeaseDocuments,
+  leaseApplications,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -60,6 +63,7 @@ export function ConsoleShell({
   corporateUsers: CorporateUser[];
   portfolio: Portfolio;
   activeLeaseDocuments: LeaseDocumentRow[];
+  leaseApplications: PendingLeaseApplication[];
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -76,6 +80,20 @@ export function ConsoleShell({
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // HeaderAttentionBell's counts and click-through target. LandlordDashboard
+  // owns the live data these are derived from (tickets, lease applications,
+  // renewals, documents) and pushes counts up via onPendingCountsChange;
+  // navigateRequest travels back down so a bell click can flip
+  // LandlordDashboard's own tab/sub-tab state, the same way currency/
+  // copilotOpen/sidebarOpen already flow between these two components.
+  const [pendingCounts, setPendingCounts] = useState<AttentionCounts>({
+    diegoDecisiones: 0,
+    marianaDecisiones: 0,
+    marianaExpedientes: 0,
+  });
+  const [navigateRequest, setNavigateRequest] = useState<{ tab: "maint" | "legal"; subTab: string } | null>(null);
+  const clearNavigateRequest = useCallback(() => setNavigateRequest(null), []);
   const triggerToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3500);
@@ -159,6 +177,8 @@ export function ConsoleShell({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2.5">
+          {isOwner && <HeaderAttentionBell counts={pendingCounts} onNavigate={(tab, subTab) => setNavigateRequest({ tab, subTab })} />}
+
           {isOwner && (
             <>
               {/* CURRENCY TRANSLATION TOGGLE (MXN DEFAULT / USD AT 17.50 RATE) */}
@@ -341,6 +361,10 @@ export function ConsoleShell({
           corporateUsers={corporateUsers}
           portfolio={portfolio}
           activeLeaseDocuments={activeLeaseDocuments}
+          leaseApplications={leaseApplications}
+          onPendingCountsChange={setPendingCounts}
+          navigateRequest={navigateRequest}
+          onNavigateRequestHandled={clearNavigateRequest}
           currency={currency}
           copilotOpen={copilotOpen}
           setCopilotOpen={setCopilotOpen}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import { NewTicketForm } from "@/components/hub/new-ticket-form";
@@ -150,12 +150,21 @@ export function DiegoTriageQueue({
   tickets,
   kpis,
   localeOptions,
+  focusTicketId = null,
 }: {
   tickets: DiegoTicket[];
   kpis: DiegoKPIs;
   localeOptions: LocaleOption[];
+  /** Set by the approval inbox's "Ir a revisión" for a ticket row — opens
+   *  the same drawer a row-click would, so there's one selection mechanism
+   *  rather than two. */
+  focusTicketId?: string | null;
 }) {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (focusTicketId) setSelectedTicketId(focusTicketId);
+  }, [focusTicketId]);
 
   // Stable identity so the drawer's Escape-key listener subscribes once rather
   // than tearing down and re-adding on every parent render.

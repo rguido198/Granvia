@@ -175,6 +175,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       draftMarkdown: r.draft_markdown as string,
       skepticFlagged: r.skeptic_flagged as boolean,
       skepticConcerns: (r.skeptic_concerns as string[] | null) ?? [],
+      createdAt: r.created_at as string,
     });
     renewalsByLeaseId.set(r.source_lease_id as string, list);
   }
@@ -331,6 +332,7 @@ export type LeaseDocumentRow = {
   /** Set by promoteExtraction when the confirmed locale has no `leases` row to
    *  promote onto — the document is fine, there is just nothing to write to. */
   errorMessage: string | null;
+  createdAt: string;
 };
 
 /** `extracted_fields` is a bare jsonb column with no shape guarantee, and an
@@ -364,7 +366,7 @@ function tradeNameFromExtractedFields(extractedFields: unknown): string | null {
 const RESOLVED_DOCUMENT_HISTORY_LIMIT = 20;
 
 const LEASE_DOCUMENT_COLUMNS =
-  "id, original_filename, status, suggested_locale_id, match_confidence, locale_id, extracted_fields, extraction_verified_at, error_message";
+  "id, original_filename, status, suggested_locale_id, match_confidence, locale_id, extracted_fields, extraction_verified_at, error_message, created_at";
 
 /**
  * Every `kind = 'active_lease'` document that still needs a landlord's
@@ -443,6 +445,7 @@ export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
       extractedFields: r.extracted_fields as Record<string, unknown> | null,
       extractionVerifiedAt: r.extraction_verified_at,
       errorMessage: r.error_message,
+      createdAt: r.created_at,
     };
   });
 }
