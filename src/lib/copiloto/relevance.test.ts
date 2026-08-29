@@ -58,4 +58,15 @@ describe("isLeaseRelevantToQuestion", () => {
   it("does not match on a null or missing tradeName", () => {
     expect(isLeaseRelevantToQuestion("What about Cabanna?", { ...MINT, tradeName: null })).toBe(false);
   });
+
+  it("does not false-positive match a short unit code as a substring of an unrelated code", () => {
+    const SHORT = { tenantEntity: "Café del Puerto, S.A. de C.V.", unitCode: "P-1" };
+    // Normalized "p-1" sits inside "p-19" — a different unit entirely, but
+    // exactly the kind of substring a short unguarded code would catch.
+    expect(isLeaseRelevantToQuestion("Is P-19's ticket resolved yet?", SHORT)).toBe(false);
+  });
+
+  it("still matches a unit code at the minimum guarded length", () => {
+    expect(isLeaseRelevantToQuestion("How many open tickets for Local 66?", MINT)).toBe(true);
+  });
 });

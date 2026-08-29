@@ -1,5 +1,13 @@
 import { normalize } from "@/lib/ingest/fuzzy-match-tenant";
 
+// Same guard fuzzy-match-tenant.ts's prefixMatchScore applies to name
+// matching (MIN_PREFIX_MATCH_LENGTH) — a unit code this codebase carries
+// short ("A-1", "P-1") could otherwise containment-match into unrelated
+// question text and pull the wrong lease's raw_text into the model's
+// context. Not a real business-length floor, just enough that a two- or
+// three-character code can't match almost anything.
+const MIN_UNIT_CODE_MATCH_LENGTH = 4;
+
 /**
  * Does this question name the tenant or unit a digitized lease belongs to?
  * Substring containment on normalized (accent/punctuation/case-insensitive,
@@ -28,5 +36,8 @@ export function isLeaseRelevantToQuestion(
     .filter((n): n is string => !!n && n.trim().length > 0)
     .map(normalize);
   const unitNorm = normalize(lease.unitCode);
-  return names.some((n) => n.length > 0 && q.includes(n)) || (unitNorm.length > 0 && q.includes(unitNorm));
+  return (
+    names.some((n) => n.length > 0 && q.includes(n)) ||
+    (unitNorm.length >= MIN_UNIT_CODE_MATCH_LENGTH && q.includes(unitNorm))
+  );
 }
