@@ -26,6 +26,15 @@ import { isSameTenant } from "@/lib/ingest/fuzzy-match-tenant";
  * flight or dead, so it renders as a status line with no form to act on.
  */
 
+// Flip to false to resume. Set 2026-08-28: extraction/matching runs on
+// Opus, and the org's Claude API credits ran out mid-batch — later
+// documents in that batch got no tenant match not because none existed,
+// but because the extraction call itself failed. Uploads are paused here
+// (and mirrored server-side in src/app/api/ingest/route.ts) rather than
+// left open to keep producing more unmatchable documents until credits
+// are topped up.
+const LEASE_DIGITIZATION_PAUSED = true;
+
 export type DocumentRow = {
   id: string;
   originalFilename: string;
@@ -791,11 +800,17 @@ export function UploadContractButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
+        disabled={LEASE_DIGITIZATION_PAUSED}
+        title={
+          LEASE_DIGITIZATION_PAUSED
+            ? "Ingesta de contratos pausada temporalmente — sin crédito de API disponible."
+            : undefined
+        }
+        className="bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)] disabled:bg-ink-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
       >
-        Subir contrato(s)
+        {LEASE_DIGITIZATION_PAUSED ? "Ingesta pausada" : "Subir contrato(s)"}
       </button>
-      {open && (
+      {open && !LEASE_DIGITIZATION_PAUSED && (
         <ConsoleModal>
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"

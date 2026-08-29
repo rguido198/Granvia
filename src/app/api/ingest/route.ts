@@ -11,6 +11,10 @@ import { marianaScreeningWorkflow } from "@/workflows/mariana-screening";
 
 export const runtime = "nodejs"; // pdf-parse needs Node's Buffer, not the Edge runtime
 
+// See the matching flag in legal-documents-panel.tsx — same reason, same
+// on/off switch, flip both back together.
+const LEASE_DIGITIZATION_PAUSED = true;
+
 const ALLOWED_KINDS = ["maintenance_ticket", "lease_application", "active_lease"] as const;
 type IngestKind = (typeof ALLOWED_KINDS)[number];
 
@@ -57,6 +61,15 @@ export async function POST(request: NextRequest) {
     );
   }
   if (kind === "active_lease") {
+    // Mirrors LEASE_DIGITIZATION_PAUSED in legal-documents-panel.tsx, which
+    // hides/disables the upload button for the same reason — flip both back
+    // together when the org's Claude API credits are topped up.
+    if (LEASE_DIGITIZATION_PAUSED) {
+      return NextResponse.json(
+        { error: "Ingesta de contratos pausada temporalmente — sin crédito de API disponible." },
+        { status: 503 },
+      );
+    }
     // See the per-kind auth note above. Checked before the storage upload so
     // an unauthenticated caller can't even land bytes in the intake bucket.
     const profile = await getCurrentProfile();
