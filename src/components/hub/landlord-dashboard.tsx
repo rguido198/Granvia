@@ -2276,8 +2276,16 @@ export function LandlordDashboard({
                 <div className="animate-fadeIn">
                   <MarianaPendingPanel
                     items={approvalQueue}
+                    leaseApplications={liveLeaseApplications}
                     onNavigate={handleApprovalNavigate}
-                    onRefresh={() => void refreshApprovals()}
+                    onRefresh={() => {
+                      void refreshApprovals();
+                      // An approved application feeds fetchPortfolio()'s
+                      // approvedApplications (the Add-Tenant picker) — keep
+                      // that live too, same as LegalDocumentsPanel's own
+                      // onResolved already does for Gate 1/2.
+                      void refreshPortfolio();
+                    }}
                     refreshing={refreshingApprovals}
                   />
                 </div>

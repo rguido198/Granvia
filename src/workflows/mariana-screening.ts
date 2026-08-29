@@ -168,6 +168,12 @@ const MarianaDraftSchema = z.object({
   yield_score: z.number().nullable(),
   uncapped_yield_ratio: z.number().nullable(),
   term_stability_score: z.number().nullable(),
+  // Persisted verbatim to lease_applications.draft_markdown (a column that
+  // already existed, mirroring lease_renewals.draft_markdown, but was never
+  // populated) — an auditable evidence summary for the landlord's review
+  // panel, not raw chain-of-thought. .max() bounds worst-case model output
+  // before it's ever written to the DB, not just at render time.
+  draft_markdown: z.string().max(4000),
 });
 type MarianaDraft = z.infer<typeof MarianaDraftSchema>;
 
@@ -195,6 +201,8 @@ SCORING (only for MEDIO/BAJO, never ALTO) — leave all three score fields null 
 - category_fit_score: count active leases sharing the applicant's SUB-CATEGORY specifically (not top category). List which locale units you counted in category_fit_comparison_units, so a human can verify. 0 tenants=100, 1=60, 2=30, 3+=10.
 - yield_score: min(100, proposed_rent_per_sqm / plaza_avg_rent_per_sqm * 100). proposed_rent_per_sqm comes from the applicant's own "Renta ofrecida" line in the application text — if it's absent, leave yield_score and uncapped_yield_ratio null rather than inventing a figure. You are given the plaza average separately; also report the uncapped ratio.
 - term_stability_score: 1yr=20, 3yr=60, 5yr+=100, interpolate between.
+
+draft_markdown: a short evidence summary for a landlord's review panel — decision-support documentation, not legal advice and not your internal chain-of-thought. Cover, briefly: the applicant's stated business and products; which unit(s) and clause(s) you compared against; the exact matched product pairs (if any); the clause-breadth concern (if any); and the scoring inputs, including which locale units you counted for category_fit_score. Do not mention the skeptic pass — it hasn't run yet when you write this.
 
 Respond only with the structured fields requested — no prose outside them.`;
 
@@ -312,6 +320,16 @@ async function writeApplication(params: {
   // real doubt, not resolved doubt.
   const finalRiskLevel = skeptic.revised_risk_level ?? (skeptic.flagged ? "MEDIO" : draft.risk_level);
 
+  // draft.draft_markdown is written before the skeptic pass runs, so it
+  // can't mention skeptic findings — appended here in plain code instead of
+  // asking the model to write about a verdict it hasn't seen. The review
+  // panel also renders skeptic_concerns directly as its own callout; this
+  // section is what a landlord sees if they instead open the full evidence
+  // summary.
+  const finalMarkdown = skeptic.concerns.length
+    ? `${draft.draft_markdown}\n\n## Notas del auditor (Mariana IA)\n${skeptic.concerns.map((c) => `- ${c}`).join("\n")}`
+    : draft.draft_markdown;
+
   const { data: application, error } = await supabase
     .from("lease_applications")
     .insert({
@@ -342,6 +360,7 @@ async function writeApplication(params: {
           : 0.4 * draft.category_fit_score + 0.3 * draft.yield_score + 0.3 * draft.term_stability_score,
       skeptic_flagged: skeptic.flagged,
       skeptic_concerns: skeptic.concerns,
+      draft_markdown: finalMarkdown,
       jurisdiction_pack_ref: JURISDICTION_PACK_REF,
       unresolved_jd_keys: PACK_COUNSEL_VERIFIED ? [] : MARIANA_UNRESOLVED_JD_KEYS,
       workflow_run_id: workflowRunId,

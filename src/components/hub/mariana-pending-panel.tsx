@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { ApprovalQueueItem, ApprovalQueueItemKind } from "@/lib/approval-queue";
+import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
+import { LeaseApplicationCard } from "@/components/hub/lease-application-review";
 
 const KIND_LABEL: Record<ApprovalQueueItemKind, string> = {
   ticket: "Mantenimiento",
@@ -161,11 +163,19 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  */
 export function MarianaPendingPanel({
   items,
+  leaseApplications,
   onNavigate,
   onRefresh,
   refreshing,
 }: {
   items: ApprovalQueueItem[];
+  /** The full, un-lightened application records — the queue's own
+   *  ApprovalQueueItem shape drops applicationNumber/skepticFlagged
+   *  (cross-kind aggregation doesn't need them), but LeaseApplicationCard's
+   *  collapsed row does. Same underlying pending set as
+   *  items.filter(i => i.kind === "lease_application"); this is the
+   *  richer source for the one section that actually renders them. */
+  leaseApplications: PendingLeaseApplication[];
   onNavigate: (item: ApprovalQueueItem) => void;
   onRefresh: () => void;
   refreshing: boolean;
@@ -198,10 +208,10 @@ export function MarianaPendingPanel({
         </button>
       </div>
 
-      {applicationItems.length > 0 && (
-        <Section title={`Solicitudes de Arrendamiento (${applicationItems.length})`}>
-          {applicationItems.map((item) => (
-            <ItemRow key={`${item.kind}-${item.id}`} item={item} onNavigate={onNavigate} showKindBadge={false} />
+      {leaseApplications.length > 0 && (
+        <Section title={`Solicitudes de Arrendamiento (${leaseApplications.length})`}>
+          {leaseApplications.map((application) => (
+            <LeaseApplicationCard key={application.id} application={application} onResolved={onRefresh} />
           ))}
         </Section>
       )}
