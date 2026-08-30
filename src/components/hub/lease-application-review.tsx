@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LegalDraftMarkdown } from "@/components/hub/legal-draft-markdown";
 import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
 import type { LeaseApplicationDetail } from "@/lib/data/lease-application-detail.server";
 
@@ -156,7 +157,9 @@ function ApplicationDetailView({
       <details className="border-t border-hairline pt-2.5">
         <summary className="font-bold text-ink-700 cursor-pointer">Ver resumen de evidencia de Mariana</summary>
         {detail.draftMarkdown ? (
-          <pre className="text-ink-700 whitespace-pre-wrap font-sans leading-relaxed mt-2">{detail.draftMarkdown}</pre>
+          <div className="mt-2">
+            <LegalDraftMarkdown markdown={detail.draftMarkdown} />
+          </div>
         ) : (
           <p className="text-ink-500 font-medium mt-2">
             No se generó un resumen de evidencia para esta solicitud — los datos estructurados de arriba son el

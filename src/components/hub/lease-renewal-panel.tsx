@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ConsoleModal } from "@/components/hub/console-modal";
+import { LegalDraftMarkdown } from "@/components/hub/legal-draft-markdown";
 import type { LeaseRenewalSummary } from "@/lib/data/portfolio.server";
 
 // "Aprobado" alone reads as a finished decision — SKILL.md's own closing
@@ -159,7 +160,9 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
               </div>
               <details className="border-t border-hairline pt-2.5">
                 <summary className="text-xs font-bold text-ink-700 cursor-pointer">Ver texto completo del convenio</summary>
-                <pre className="text-xs text-ink-700 whitespace-pre-wrap font-sans leading-relaxed mt-2">{renewal.draftMarkdown}</pre>
+                <div className="mt-2 text-xs">
+                  <LegalDraftMarkdown markdown={renewal.draftMarkdown} />
+                </div>
               </details>
               {renewal.skepticConcerns.length > 0 && (
                 <div className="border-t border-hairline pt-2.5">
