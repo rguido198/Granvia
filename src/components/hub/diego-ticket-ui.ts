@@ -103,6 +103,7 @@ export function useResolveTicket(ticketId: string) {
           throw new Error(body.error ?? "HTTP " + res.status);
         }
         router.refresh();
+        setSubmitting(null);
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : "Error al resolver el ticket");
         setSubmitting(null);
@@ -140,6 +141,7 @@ export function useMarkTicketResolved(ticketId: string) {
           throw new Error(body.error ?? "HTTP " + res.status);
         }
         router.refresh();
+        setSubmitting(false);
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : "Error al registrar el trabajo terminado");
         setSubmitting(false);
@@ -169,6 +171,7 @@ function usePostTicketAction(ticketId: string, path: "redispatch" | "close-admin
         throw new Error(body.error ?? "HTTP " + res.status);
       }
       router.refresh();
+      setSubmitting(false);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Error al procesar la acción");
       setSubmitting(false);
