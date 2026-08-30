@@ -1019,6 +1019,13 @@ export function LandlordDashboard({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <a
+                    href="/api/portfolio/export"
+                    download
+                    className="bg-slate-100 border border-hairline hover:bg-slate-200 text-ink px-4 py-2.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    Exportar Reporte (.xlsx)
+                  </a>
                   <button
                     onClick={() => {
                       const nextState = !isEditingRentRoll;
