@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
   const kind = formData.get("kind");
   const sourceChannel = formData.get("source_channel");
   const localeId = formData.get("locale_id");
+  const leadId = formData.get("lead_id");
   const description = formData.get("description");
 
   if (!(file instanceof File)) {
@@ -247,10 +248,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (typeof localeId === "string") {
+      const leadIdStr = typeof leadId === "string" && leadId.trim() ? leadId.trim() : null;
       const run =
         kind === "maintenance_ticket"
           ? await start(diegoTriageWorkflow, [documentId, localeId])
-          : await start(marianaScreeningWorkflow, [documentId, localeId]);
+          : await start(marianaScreeningWorkflow, [documentId, localeId, leadIdStr]);
       await supabase
         .from("documents")
         .update({ workflow_run_id: run.runId })

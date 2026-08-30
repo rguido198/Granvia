@@ -18,6 +18,8 @@ import type { RenewalOutreachStatus } from "@/lib/data/renewal-outreach-types";
 import { HeaderAttentionBell, type AttentionCounts } from "@/components/hub/header-attention-bell";
 import { signOut } from "@/app/consola/actions";
 
+import type { LeadRow } from "@/lib/data/lead-types";
+
 type ConsoleView = "propietario" | "inquilino";
 type Currency = "MXN" | "USD";
 
@@ -52,6 +54,7 @@ export function ConsoleShell({
   activeLeaseDocuments,
   leaseApplications,
   renewalOutreachStatus,
+  leads,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -67,6 +70,7 @@ export function ConsoleShell({
   activeLeaseDocuments: LeaseDocumentRow[];
   leaseApplications: PendingLeaseApplication[];
   renewalOutreachStatus: Record<string, RenewalOutreachStatus>;
+  leads: LeadRow[];
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -366,6 +370,7 @@ export function ConsoleShell({
           activeLeaseDocuments={activeLeaseDocuments}
           leaseApplications={leaseApplications}
           renewalOutreachStatus={renewalOutreachStatus}
+          leads={leads}
           onPendingCountsChange={setPendingCounts}
           navigateRequest={navigateRequest}
           onNavigateRequestHandled={clearNavigateRequest}

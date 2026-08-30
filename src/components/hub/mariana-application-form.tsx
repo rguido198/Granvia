@@ -16,12 +16,34 @@ import type { LocaleOption } from "@/lib/data/tenant-portal.server";
  * not the category label," and that missing product detail should block
  * the audit rather than let it guess from a category name.
  */
-export function MarianaApplicationForm({ localeOptions }: { localeOptions: LocaleOption[] }) {
+export function MarianaApplicationForm({
+  localeOptions,
+  sourceLead,
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
+}: {
+  localeOptions: LocaleOption[];
+  sourceLead?: { id: string; applicantEntity: string; category: string; targetLocaleId: string | null } | null;
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [targetLocaleId, setTargetLocaleId] = useState(localeOptions[0]?.id ?? "");
-  const [applicantEntity, setApplicantEntity] = useState("");
-  const [category, setCategory] = useState(BUSINESS_CATEGORIES[0] ?? "");
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalIsOpen ?? internalOpen;
+  const setOpen = (value: boolean) => {
+    setInternalOpen(value);
+    if (!value && externalOnClose) externalOnClose();
+  };
+
+  const [targetLocaleId, setTargetLocaleId] = useState(
+    sourceLead?.targetLocaleId ?? localeOptions[0]?.id ?? "",
+  );
+  const [applicantEntity, setApplicantEntity] = useState(sourceLead?.applicantEntity ?? "");
+  const [category, setCategory] = useState(
+    sourceLead?.category && (BUSINESS_CATEGORIES as readonly string[]).includes(sourceLead.category)
+      ? sourceLead.category
+      : BUSINESS_CATEGORIES[0] ?? "",
+  );
   const [subcategory, setSubcategory] = useState("");
   const [productsText, setProductsText] = useState("");
   const [requestedSqm, setRequestedSqm] = useState("");
@@ -71,6 +93,9 @@ export function MarianaApplicationForm({ localeOptions }: { localeOptions: Local
     const body = new FormData();
     body.set("kind", "lease_application");
     body.set("locale_id", targetLocaleId);
+    if (sourceLead?.id) {
+      body.set("lead_id", sourceLead.id);
+    }
     body.set("source_channel", "consola_propietario");
     body.set("description", summary);
     body.set("file", new File([summary], "solicitud.txt", { type: "text/plain" }));

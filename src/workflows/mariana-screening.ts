@@ -310,10 +310,11 @@ async function writeApplication(params: {
   draft: MarianaDraft;
   skeptic: SkepticVerdict;
   workflowRunId: string;
+  leadId?: string | null;
 }): Promise<string> {
   "use step";
   const supabase = getSupabaseServiceClient();
-  const { context, draft, skeptic, workflowRunId } = params;
+  const { context, draft, skeptic, workflowRunId, leadId } = params;
 
   // Same "ambiguity is escalated, never guessed" principle as Diego's
   // skeptic handling — a flagged concern with no replacement verdict means
@@ -364,6 +365,7 @@ async function writeApplication(params: {
       jurisdiction_pack_ref: JURISDICTION_PACK_REF,
       unresolved_jd_keys: PACK_COUNSEL_VERIFIED ? [] : MARIANA_UNRESOLVED_JD_KEYS,
       workflow_run_id: workflowRunId,
+      source_lead_id: leadId ?? null,
     })
     .select("id")
     .single();
@@ -376,6 +378,30 @@ async function writeApplication(params: {
     .from("documents")
     .update({ status: "attached", workflow_run_id: workflowRunId })
     .eq("id", context.documentId);
+
+  if (leadId) {
+    // The lead can be converted from any stage — stages aren't gated — so
+    // from_stage has to be read, not assumed: a lead converted straight
+    // from "contacted" would otherwise get a history row falsely claiming
+    // it passed through "application_requested" first.
+    const { data: leadRow } = await supabase.from("leads").select("stage").eq("id", leadId).maybeSingle();
+
+    await supabase
+      .from("leads")
+      .update({
+        stage: "converted",
+        converted_application_id: application.id,
+      })
+      .eq("id", leadId);
+
+    await supabase.from("lead_stage_history").insert({
+      lead_id: leadId,
+      from_stage: leadRow?.stage ?? null,
+      to_stage: "converted",
+      note: "Convertido a solicitud de arrendamiento",
+      actor: "Mariana IA",
+    });
+  }
 
   return application.id as string;
 }
@@ -394,7 +420,7 @@ async function markReviewed(applicationId: string, approved: boolean) {
 
 // ── The workflow ─────────────────────────────────────────────────────────────
 
-export async function marianaScreeningWorkflow(documentId: string, targetLocaleId: string) {
+export async function marianaScreeningWorkflow(documentId: string, targetLocaleId: string, leadId?: string | null) {
   "use workflow";
 
   const context = await loadApplicationContext(documentId, targetLocaleId);
@@ -402,7 +428,7 @@ export async function marianaScreeningWorkflow(documentId: string, targetLocaleI
   const skeptic = await runSkeptic(context, draft);
 
   const { workflowRunId } = getWorkflowMetadata();
-  const applicationId = await writeApplication({ context, draft, skeptic, workflowRunId });
+  const applicationId = await writeApplication({ context, draft, skeptic, workflowRunId, leadId });
 
   // Tier 3 human gate (root CLAUDE.md §1) — SKILL.md's own scope boundary:
   // "this skill screens and proposes. It never signs, sends, or commits to

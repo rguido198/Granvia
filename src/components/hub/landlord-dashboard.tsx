@@ -27,6 +27,8 @@ import { RentRollAdminTools, TerminateTenantButton } from "@/components/hub/rent
 import { LeaseRenewalPanel } from "@/components/hub/lease-renewal-panel";
 import { RenewalWorkspace } from "@/components/hub/renewal-workspace";
 import type { RenewalOutreachStage, RenewalOutreachStatus } from "@/lib/data/renewal-outreach-types";
+import type { LeadRow } from "@/lib/data/lead-types";
+import { LeadPipeline } from "@/components/hub/lead-pipeline";
 import { TENANTS } from "@/content/tenants";
 import { TenantLogo } from "@/components/tenant-logo";
 
@@ -358,6 +360,7 @@ export function LandlordDashboard({
   activeLeaseDocuments,
   leaseApplications,
   renewalOutreachStatus,
+  leads,
   onPendingCountsChange,
   navigateRequest,
   onNavigateRequestHandled,
@@ -383,6 +386,7 @@ export function LandlordDashboard({
    *  .leaseRowId) — fetched once server-side alongside portfolio, since a
    *  Map isn't RSC-serializable across the client boundary. */
   renewalOutreachStatus: Record<string, RenewalOutreachStatus>;
+  leads: LeadRow[];
   /** Pushed up on every change so ConsoleShell's HeaderAttentionBell (its
    *  header bar, not this component's) can render a live count without
    *  duplicating the buildApprovalQueue() derivation up there. */
@@ -2364,9 +2368,23 @@ export function LandlordDashboard({
                 </div>
               )}
 
-              {/* SUB-TAB 2: EVALUADOR DE VIABILIDAD DE NUEVOS INQUILINOS (EXCLUSIVIDADES) */}
+              {/* SUB-TAB: PIPELINE DE PROSPECTOS & EVALUADOR DE VIABILIDAD */}
               {legalSubTab === "prospectos" && (
-                <div className="bg-slate-50/80 border border-hairline/90 rounded-2xl p-6 space-y-6 animate-fadeIn">
+                <div className="space-y-8 animate-fadeIn">
+                  {/* Live Lead-to-Lease Pipeline */}
+                  <LeadPipeline leads={leads} rentRoll={rentRoll} localeOptions={localeOptions} />
+
+                  {/* Labeled Divider separating live data from demo simulator */}
+                  <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-slate-300"></div>
+                    <span className="flex-shrink mx-4 text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                      Simulador de Exclusividad — Demostración
+                    </span>
+                    <div className="flex-grow border-t border-slate-300"></div>
+                  </div>
+
+                  {/* Illustrative Demo Simulator */}
+                  <div className="bg-slate-50/80 border border-hairline/90 rounded-2xl p-6 space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline/70 pb-4">
                     <div>
                       <div className="flex items-center gap-2">
@@ -2558,6 +2576,7 @@ export function LandlordDashboard({
                       </div>
                     );
                   })()}
+                  </div>
                 </div>
               )}
 

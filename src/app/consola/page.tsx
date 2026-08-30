@@ -11,6 +11,7 @@ import { fetchAuditLog } from "@/lib/platform/audit-log.server";
 import { fetchCorporateUsers } from "@/lib/platform/users.server";
 import { fetchActiveLeaseDocuments, fetchPortfolio } from "@/lib/data/portfolio.server";
 import { fetchRenewalOutreachStatus, type RenewalOutreachStatus } from "@/lib/data/renewal-workspace.server";
+import { fetchLeads } from "@/lib/data/leads.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -25,19 +26,6 @@ import { fetchRenewalOutreachStatus, type RenewalOutreachStatus } from "@/lib/da
  * exist: nothing on disk, nothing to serve by accident.
  */
 export const dynamic = "force-dynamic";
-// Was `runtime = "edge"` -- leftover from this app's Cloudflare Pages era
-// (see git history: explicitly removed once for an RSC response mismatch,
-// then re-added the same day for the Cloudflare migration, never cleaned up
-// after the later move to Vercel). Nothing in this page's chain needs
-// edge-specific APIs -- it's the same getSupabaseServiceClient() every
-// other route uses, several of which (src/app/api/ingest/route.ts) already
-// declare `runtime = "nodejs"` explicitly. Found live: a landlord uploading
-// a lease saw router.refresh() and the 3s in-flight poll (both confirmed
-// correct against live data) never actually update the rendered page --
-// Edge Runtime on Vercel has documented RSC/revalidation consistency
-// quirks force-dynamic doesn't fully route around. Node is a strict
-// superset of what Edge can do, so this can't regress anything that
-// worked before.
 
 export const metadata: Metadata = {
   title: "Consola de Asset Management | La Gran Vía Mexicali",
@@ -46,35 +34,21 @@ export const metadata: Metadata = {
 };
 
 export default async function ConsolaPage() {
-  // Computed here, on the server, once per authenticated request. The result
-  // travels to the browser on the RSC payload — which middleware gates — instead
-  // of being compiled into a chunk that /_next/static/ serves to anyone.
   const data = buildConsoleData();
 
-  // Diego's ticket queue is real Supabase data, not part of the illustrative
-  // ConsoleData mock object — kept as a sibling fetch/prop rather than merged
-  // into buildConsoleData() so the existing mock arrays stay untouched.
   const { tickets: diegoTickets, kpis: diegoKpis } = await fetchDiegoTickets();
   const localeOptions = await fetchLocaleOptions();
   const contractors = await fetchContractors();
-  // "Vista Inquilino" inside the console previews the same real portal a
-  // tenant would see — same data, same fetch, not a separate mock.
   const tenantPortal = await fetchTenantPortalData();
   const autonomyState = await fetchAutonomyState();
   const auditLog = await fetchAuditLog();
   const corporateUsers = await fetchCorporateUsers();
   const portfolio = await fetchPortfolio();
-  // Legal tab's lease-digitization pipeline — intake state, not part of the
-  // rent roll / lease ledger fetchPortfolio() returns.
   const activeLeaseDocuments = await fetchActiveLeaseDocuments();
-  // Approval Inbox's one genuinely new source — see
-  // approval-queue.server.ts's doc comment: no other fetch reaches pending
-  // lease_applications rows.
   const leaseApplications = await fetchPendingLeaseApplications();
-  // Contract Renewal Workspace's outreach log — Map isn't RSC-serializable
-  // across the client boundary, so it travels down as a plain object.
   const renewalOutreachStatusMap = await fetchRenewalOutreachStatus(portfolio.leases.map((l) => l.leaseRowId));
   const renewalOutreachStatus: Record<string, RenewalOutreachStatus> = Object.fromEntries(renewalOutreachStatusMap);
+  const leads = await fetchLeads();
 
   return (
     <PageFade>
@@ -93,6 +67,7 @@ export default async function ConsolaPage() {
         activeLeaseDocuments={activeLeaseDocuments}
         leaseApplications={leaseApplications}
         renewalOutreachStatus={renewalOutreachStatus}
+        leads={leads}
       />
     </PageFade>
   );
