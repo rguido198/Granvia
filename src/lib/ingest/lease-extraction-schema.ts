@@ -61,6 +61,30 @@ export const LeaseExtractedFieldsSchema = z
       })
       .strict(),
     notice_period_days: z.number().int().positive(),
+    // Promoted out of the special_clauses free-text bucket into their own
+    // named fields — these eight recur often enough across the portfolio
+    // (per the 82-lease synthetic eval set: estacionamiento reservado 15,
+    // publicidad en directorio 14, ampliación futura 13, horario extendido
+    // 10, señalización exterior 9, mascotas 9, subarrendamiento restringido
+    // 7, remodelación 5) that a landlord asking "how many tenants have X"
+    // needs a column to COUNT WHERE against, not free text a model would
+    // have to re-read every contract to find. Same nullable-text shape as
+    // exclusive_use_clause: null when the contract doesn't grant/mention it.
+    // .optional() alongside .nullable(), same reason as trade_name above —
+    // a document already sitting at Gate 1/2 under the pre-this-change
+    // schema has extracted_fields JSON with none of these keys at all, and
+    // .strict() rejects a whole object over one missing required key.
+    parking_clause: z.string().nullable().optional(),
+    directory_advertising_clause: z.string().nullable().optional(),
+    expansion_option_clause: z.string().nullable().optional(),
+    extended_hours_clause: z.string().nullable().optional(),
+    signage_clause: z.string().nullable().optional(),
+    pets_clause: z.string().nullable().optional(),
+    sublease_restriction_clause: z.string().nullable().optional(),
+    remodeling_clause: z.string().nullable().optional(),
+    // Catch-all for anything that doesn't fit one of the eight named clause
+    // fields above — a truly novel clause type, not one of the recurring
+    // ones already promoted to its own column.
     special_clauses: z.array(
       z.object({ label: z.string(), text: z.string() }).strict(),
     ),

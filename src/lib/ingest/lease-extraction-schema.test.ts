@@ -101,6 +101,64 @@ describe("LeaseExtractedFieldsSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts the eight named clause fields when present or explicitly null", () => {
+    const result = LeaseExtractedFieldsSchema.safeParse({
+      tenant_entity: "MINT Boutique, S.A. de C.V.",
+      trade_name: null,
+      start_date: "2024-01-15",
+      end_date: "2026-01-15",
+      base_rent_monthly: null,
+      area_sqm: null,
+      exclusive_use_clause: null,
+      permitted_use: null,
+      parking_clause: "El Arrendatario tiene derecho a dos cajones reservados frente al Local.",
+      directory_advertising_clause: null,
+      expansion_option_clause: null,
+      extended_hours_clause: null,
+      signage_clause: null,
+      pets_clause: null,
+      sublease_restriction_clause: null,
+      remodeling_clause: null,
+      responsibility_matrix: {
+        hvac: "landlord",
+        roof: "landlord",
+        plumbing: "tenant",
+        electrical: "tenant",
+        storefront_glass: "tenant",
+      },
+      notice_period_days: 90,
+      special_clauses: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a payload predating the eight named clause fields (all omitted)", () => {
+    // Same class of bug trade_name's .optional() already guards against: a
+    // document extracted under the pre-this-change schema has extracted_fields
+    // JSON with none of these keys at all, and .strict() must not reject it
+    // over missing (not merely null) keys.
+    const result = LeaseExtractedFieldsSchema.safeParse({
+      tenant_entity: "MINT Boutique, S.A. de C.V.",
+      trade_name: null,
+      start_date: "2024-01-15",
+      end_date: "2026-01-15",
+      base_rent_monthly: null,
+      area_sqm: null,
+      exclusive_use_clause: null,
+      permitted_use: null,
+      responsibility_matrix: {
+        hvac: "landlord",
+        roof: "landlord",
+        plumbing: "tenant",
+        electrical: "tenant",
+        storefront_glass: "tenant",
+      },
+      notice_period_days: 90,
+      special_clauses: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects an arbitrary hallucinated top-level key", () => {
     const result = LeaseExtractedFieldsSchema.safeParse({
       responsibility_matrix: {

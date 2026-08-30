@@ -31,7 +31,18 @@ Para la matriz de responsabilidad de mantenimiento, clasifica cada uno de estos 
 
 notice_period_days: días de aviso previo requeridos para terminación anticipada, según el contrato.
 
-special_clauses: cualquier cláusula fuera de lo estándar (uso de suelo específico, señalización, estacionamiento, restricciones de giro, elementos específicos de cocina/restaurante como trampa de grasa o campana de extracción, etc.) — no fuerces estos elementos en la matriz de responsabilidad universal, van aquí.
+Las siguientes ocho cláusulas se extraen cada una en su propio campo — transcribe el texto exacto de la cláusula cuando el contrato la otorgue o la mencione, o usa null si el contrato no la contempla en absoluto. No las repitas en special_clauses.
+
+parking_clause: cláusula de estacionamiento reservado o asignado para el arrendatario.
+directory_advertising_clause: cláusula de publicidad o mención en el directorio de la plaza (digital o físico).
+expansion_option_clause: cláusula de opción o derecho de ampliación futura del local.
+extended_hours_clause: cláusula que autoriza horario extendido de operación fuera del horario estándar de la plaza.
+signage_clause: cláusula de señalización exterior o de fachada.
+pets_clause: cláusula sobre mascotas (permitidas, prohibidas, o con condiciones).
+sublease_restriction_clause: cláusula que restringe o prohíbe el subarrendamiento.
+remodeling_clause: cláusula sobre derechos u obligaciones de remodelación del local.
+
+special_clauses: cualquier cláusula fuera de lo estándar que NO sea una de las ocho anteriores (uso de suelo específico, restricciones de giro, elementos específicos de cocina/restaurante como trampa de grasa o campana de extracción, etc.) — no fuerces estos elementos en la matriz de responsabilidad universal, van aquí.
 
 Responde solo con los campos estructurados solicitados.`;
 

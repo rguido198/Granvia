@@ -30,9 +30,10 @@ Reglas:
 - inquilino es la razón social (nombre legal registrado) del arrendatario. nombre_comercial es su marca u operación pública cuando el contrato distingue una de la otra (p. ej. inquilino "Restaurantes del Noroeste, S.A. de C.V.", nombre_comercial "Cabanna") — puede no compartir ninguna palabra con inquilino, no es una variante de ese mismo nombre. Si el propietario pregunta por el nombre comercial/marca, usa nombre_comercial; si pregunta por la razón social o RFC/facturación, usa inquilino. Si nombre_comercial es null, el contrato no distingue los dos y basta con inquilino.
 - La matriz de responsabilidad de mantenimiento (matriz_responsabilidad) y los días de aviso de terminación (dias_aviso_terminacion) provienen del contrato digitalizado y verificado por el propietario — cítalos como tales cuando los uses. Si son null, dilo explícitamente: ese contrato aún no ha sido digitalizado o verificado.
 - Cada contrato incluye estatus_contractual ("Vigente" / "Renovación Próxima" / "Vencido"), ya calculado a partir de la fecha de hoy que se te da al inicio del mensaje — úsalo directamente para cualquier pregunta sobre si un contrato está vigente, por vencer o vencido. No lo recalcules tú mismo a partir de "vencimiento": es el mismo estatus exacto que ve el propietario en la tabla de contratos, y un cálculo propio podría no coincidir.
-- Cuando un contrato incluya texto_completo_contrato (el documento digitalizado íntegro) o clausulas_especiales (cláusulas fuera de lo estándar detectadas en Gate 2), úsalos para responder cualquier pregunta sobre ese contrato que los campos estructurados no cubran — no te limites a matriz_responsabilidad/uso_permitido/clausula_exclusividad si la respuesta real está en el texto completo.
+- clausula_estacionamiento, clausula_publicidad_directorio, clausula_ampliacion_futura, clausula_horario_extendido, clausula_senalizacion, clausula_mascotas, clausula_restriccion_subarrendamiento y clausula_remodelacion son cláusulas ya extraídas del contrato digitalizado — úsalas directamente, no las busques en clausulas_especiales (esas ocho ya no aparecen ahí, se extraen aparte). null significa que el contrato no otorga ni menciona esa cláusula, no que falte digitalizar el contrato.
+- Cuando un contrato incluya texto_completo_contrato (el documento digitalizado íntegro) o clausulas_especiales (cláusulas fuera de lo estándar detectadas en Gate 2, distintas de las ocho cláusulas nombradas arriba), úsalos para responder cualquier pregunta sobre ese contrato que los campos estructurados no cubran — no te limites a matriz_responsabilidad/uso_permitido/clausula_exclusividad si la respuesta real está en el texto completo.
 - texto_completo_contrato solo se carga para el contrato al que la pregunta realmente se refiere (por inquilino o local nombrado) — no para toda la cartera en cada pregunta. Si texto_completo_contrato es null PERO matriz_responsabilidad o dias_aviso_terminacion NO son null, ese contrato SÍ está digitalizado — el texto completo simplemente no se cargó para esta pregunta porque no la nombraste; dilo así ("el contrato está digitalizado, pero no cargué el texto completo para esta pregunta — pregunta directamente sobre [inquilino/local] si necesitas ese detalle") en vez de decir que el contrato no ha sido digitalizado. Solo di "no ha sido digitalizado" cuando matriz_responsabilidad Y dias_aviso_terminacion sean ambos null también.
-- Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?"), usa directamente estadisticas_agregadas_contratos — nunca cuentes tú mismo recorriendo el arreglo de contratos_de_arrendamiento. Un conteo propio sobre docenas de registros es exactamente el tipo de tarea donde un modelo puede equivocarse en silencio; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema solo cuenta contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita (ej. "de los 3 contratos digitalizados, 2 tienen el HVAC a cargo del arrendatario; los otros 82 aún no han sido digitalizados").
+- Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?", "¿cuántos inquilinos tienen estacionamiento reservado?"), usa directamente estadisticas_agregadas_contratos — nunca cuentes tú mismo recorriendo el arreglo de contratos_de_arrendamiento. Un conteo propio sobre docenas de registros es exactamente el tipo de tarea donde un modelo puede equivocarse en silencio; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema y clausulas_nombradas_presentes solo cuentan contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita (ej. "de los 3 contratos digitalizados, 2 tienen el HVAC a cargo del arrendatario; los otros 82 aún no han sido digitalizados").
 - Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
 - No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema.`;
 
@@ -56,6 +57,17 @@ type PortfolioLeaseRecord = {
   renta_mensual_mxn: number | null;
   uso_permitido: string | null;
   clausula_exclusividad: string | null;
+  // Eight recurring clause types promoted out of clausulas_especiales into
+  // their own field — see lease-extraction-schema.ts for the frequency data.
+  // null when the contract doesn't grant/mention that clause.
+  clausula_estacionamiento: string | null;
+  clausula_publicidad_directorio: string | null;
+  clausula_ampliacion_futura: string | null;
+  clausula_horario_extendido: string | null;
+  clausula_senalizacion: string | null;
+  clausula_mascotas: string | null;
+  clausula_restriccion_subarrendamiento: string | null;
+  clausula_remodelacion: string | null;
   inicio: string;
   vencimiento: string;
   estatus_contractual: string;
@@ -76,6 +88,7 @@ type PortfolioDataBlock = {
     por_estatus: unknown;
     por_anio_vencimiento: unknown;
     responsabilidad_por_sistema: unknown;
+    clausulas_nombradas_presentes: unknown;
   };
   contratos_de_arrendamiento: PortfolioLeaseRecord[];
   tickets_de_mantenimiento: unknown[];
@@ -133,6 +146,14 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
     renta_mensual_mxn: l.rentMonthly,
     uso_permitido: l.permittedUse,
     clausula_exclusividad: l.exclusiveUseClause,
+    clausula_estacionamiento: l.parkingClause,
+    clausula_publicidad_directorio: l.directoryAdvertisingClause,
+    clausula_ampliacion_futura: l.expansionOptionClause,
+    clausula_horario_extendido: l.extendedHoursClause,
+    clausula_senalizacion: l.signageClause,
+    clausula_mascotas: l.petsClause,
+    clausula_restriccion_subarrendamiento: l.subleaseRestrictionClause,
+    clausula_remodelacion: l.remodelingClause,
     inicio: l.startDate,
     vencimiento: l.endDate,
     // Precomputed rather than left for the model to derive from
@@ -170,6 +191,7 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
       por_estatus: aggregates.porEstatus,
       por_anio_vencimiento: aggregates.porAnioVencimiento,
       responsabilidad_por_sistema: aggregates.responsabilidadPorSistema,
+      clausulas_nombradas_presentes: aggregates.clausulasNombradasPresentes,
     },
     contratos_de_arrendamiento: leasesBlock,
     tickets_de_mantenimiento: ticketsBlock,

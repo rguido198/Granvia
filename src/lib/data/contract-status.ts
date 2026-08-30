@@ -21,6 +21,17 @@ export type LeaseDetail = {
   rentMonthly: number;
   permittedUse: string | null;
   exclusiveUseClause: string | null;
+  /** Eight clause types promoted out of special_clauses into their own
+   *  columns — see lease-extraction-schema.ts for the frequency data behind
+   *  this list. null when the contract doesn't grant/mention that clause. */
+  parkingClause: string | null;
+  directoryAdvertisingClause: string | null;
+  expansionOptionClause: string | null;
+  extendedHoursClause: string | null;
+  signageClause: string | null;
+  petsClause: string | null;
+  subleaseRestrictionClause: string | null;
+  remodelingClause: string | null;
   responsibilityMatrix: Record<string, string> | null;
   noticePeriodDays: number | null;
   startDate: string;
@@ -193,6 +204,21 @@ export function tierForDays(days: number): ExpirationTierKey {
 const RESPONSIBILITY_SYSTEMS = ["hvac", "roof", "plumbing", "electrical", "storefront_glass"] as const;
 type ResponsibilityParty = "landlord" | "tenant" | "shared";
 
+// Same eight keys LeaseExtractedFieldsSchema's named clause fields use
+// (lease-extraction-schema.ts) — kept as a literal list here rather than
+// imported, same reasoning as RESPONSIBILITY_SYSTEMS above (one's a Zod
+// shape, this module has no DB/schema dependency by design).
+const NAMED_CLAUSES = [
+  "parkingClause",
+  "directoryAdvertisingClause",
+  "expansionOptionClause",
+  "extendedHoursClause",
+  "signageClause",
+  "petsClause",
+  "subleaseRestrictionClause",
+  "remodelingClause",
+] as const satisfies readonly (keyof LeaseDetail)[];
+
 export type ContractAggregates = {
   totalContratos: number;
   /** Leases with a responsibility matrix on file — i.e. actually
@@ -210,6 +236,11 @@ export type ContractAggregates = {
    *  assigns that party — only leases in contratosDigitalizados contribute
    *  here, since a null matrix has no assignment to count. */
   responsabilidadPorSistema: Record<(typeof RESPONSIBILITY_SYSTEMS)[number], Record<ResponsibilityParty, number>>;
+  /** Count of leases whose contract grants each of the eight named clauses
+   *  — answers "how many tenants have X" without the model re-reading every
+   *  contract. Counted against totalContratos (a lease with no source
+   *  document simply has null for all eight and doesn't contribute). */
+  clausulasNombradasPresentes: Record<(typeof NAMED_CLAUSES)[number], number>;
 };
 
 /**
@@ -226,6 +257,9 @@ export function computeContractAggregates(leases: LeaseDetail[]): ContractAggreg
   const responsabilidadPorSistema = Object.fromEntries(
     RESPONSIBILITY_SYSTEMS.map((system) => [system, { landlord: 0, tenant: 0, shared: 0 }]),
   ) as ContractAggregates["responsabilidadPorSistema"];
+  const clausulasNombradasPresentes = Object.fromEntries(
+    NAMED_CLAUSES.map((clause) => [clause, 0]),
+  ) as ContractAggregates["clausulasNombradasPresentes"];
 
   let contratosDigitalizados = 0;
 
@@ -236,6 +270,10 @@ export function computeContractAggregates(leases: LeaseDetail[]): ContractAggreg
 
     const year = lease.endDate.slice(0, 4);
     porAnioVencimiento[year] = (porAnioVencimiento[year] ?? 0) + 1;
+
+    for (const clause of NAMED_CLAUSES) {
+      if (lease[clause] !== null) clausulasNombradasPresentes[clause]++;
+    }
 
     if (lease.responsibilityMatrix) {
       contratosDigitalizados++;
@@ -254,5 +292,6 @@ export function computeContractAggregates(leases: LeaseDetail[]): ContractAggreg
     porEstatus,
     porAnioVencimiento,
     responsabilidadPorSistema,
+    clausulasNombradasPresentes,
   };
 }

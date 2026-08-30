@@ -128,7 +128,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: leaseRows, error: leasesError } = await supabase
     .from("leases")
     .select(
-      "id, locale_id, tenant_entity, trade_name, permitted_use, exclusive_use_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id",
+      "id, locale_id, tenant_entity, trade_name, permitted_use, exclusive_use_clause, parking_clause, directory_advertising_clause, expansion_option_clause, extended_hours_clause, signage_clause, pets_clause, sublease_restriction_clause, remodeling_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id",
     );
   if (leasesError) throw new Error(leasesError.message);
 
@@ -249,6 +249,14 @@ export async function fetchPortfolio(): Promise<Portfolio> {
         rentMonthly: Number(l.base_rent_monthly ?? 0),
         permittedUse: l.permitted_use,
         exclusiveUseClause: l.exclusive_use_clause,
+        parkingClause: l.parking_clause,
+        directoryAdvertisingClause: l.directory_advertising_clause,
+        expansionOptionClause: l.expansion_option_clause,
+        extendedHoursClause: l.extended_hours_clause,
+        signageClause: l.signage_clause,
+        petsClause: l.pets_clause,
+        subleaseRestrictionClause: l.sublease_restriction_clause,
+        remodelingClause: l.remodeling_clause,
         responsibilityMatrix: l.responsibility_matrix,
         noticePeriodDays: l.notice_period_days,
         startDate: l.start_date,

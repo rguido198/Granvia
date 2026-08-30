@@ -330,6 +330,14 @@ async function promoteExtraction(
         notice_period_days: finalFields.notice_period_days,
         exclusive_use_clause: finalFields.exclusive_use_clause,
         permitted_use: finalFields.permitted_use,
+        parking_clause: finalFields.parking_clause,
+        directory_advertising_clause: finalFields.directory_advertising_clause,
+        expansion_option_clause: finalFields.expansion_option_clause,
+        extended_hours_clause: finalFields.extended_hours_clause,
+        signage_clause: finalFields.signage_clause,
+        pets_clause: finalFields.pets_clause,
+        sublease_restriction_clause: finalFields.sublease_restriction_clause,
+        remodeling_clause: finalFields.remodeling_clause,
         source_document_id: documentId,
       })
       .select("id")
@@ -381,6 +389,14 @@ async function promoteExtraction(
         notice_period_days: finalFields.notice_period_days,
         exclusive_use_clause: finalFields.exclusive_use_clause,
         permitted_use: finalFields.permitted_use,
+        parking_clause: finalFields.parking_clause,
+        directory_advertising_clause: finalFields.directory_advertising_clause,
+        expansion_option_clause: finalFields.expansion_option_clause,
+        extended_hours_clause: finalFields.extended_hours_clause,
+        signage_clause: finalFields.signage_clause,
+        pets_clause: finalFields.pets_clause,
+        sublease_restriction_clause: finalFields.sublease_restriction_clause,
+        remodeling_clause: finalFields.remodeling_clause,
         source_document_id: documentId,
       })
       .eq("id", currentLeaseId);

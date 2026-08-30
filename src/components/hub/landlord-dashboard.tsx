@@ -2253,9 +2253,10 @@ export function LandlordDashboard({
                               </td>
                             </tr>
 
-                            {/* EXPANDABLE CLAUSE DETAIL ROW — only fields the real leases table has:
-                                exclusive_use_clause and permitted_use. No per-contract hash, no
-                                INPC/penalty clause columns exist in the schema, so none are shown. */}
+                            {/* EXPANDABLE CLAUSE DETAIL ROW — exclusive_use_clause, permitted_use,
+                                and the eight named clause columns the leases table has. No
+                                per-contract hash, no INPC/penalty clause columns exist in the
+                                schema, so none are shown. */}
                             {inspectedContractId === c.id && (
                               <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
                                 <td colSpan={4} className="p-5 space-y-4 text-sm">
@@ -2294,6 +2295,39 @@ export function LandlordDashboard({
                                       </p>
                                     </div>
                                   </div>
+
+                                  {/* Eight recurring clause types promoted out of special_clauses
+                                      into their own leases columns — see lease-extraction-schema.ts
+                                      for the frequency data behind this list. Present-only: most
+                                      leases have at most one or two of the eight, so a fixed grid of
+                                      always-visible "no aplica" cards (the exclusivity/permitted-use
+                                      pattern above) would mostly show empty state here. */}
+                                  {(() => {
+                                    const allNamedClauses: [string, string | null][] = [
+                                      ["Estacionamiento Reservado", c.parkingClause],
+                                      ["Publicidad en Directorio", c.directoryAdvertisingClause],
+                                      ["Ampliación Futura", c.expansionOptionClause],
+                                      ["Horario Extendido", c.extendedHoursClause],
+                                      ["Señalización Exterior", c.signageClause],
+                                      ["Mascotas", c.petsClause],
+                                      ["Restricción de Subarrendamiento", c.subleaseRestrictionClause],
+                                      ["Remodelación", c.remodelingClause],
+                                    ];
+                                    const namedClauses = allNamedClauses.filter(
+                                      (entry): entry is [string, string] => entry[1] !== null,
+                                    );
+                                    if (namedClauses.length === 0) return null;
+                                    return (
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {namedClauses.map(([label, text]) => (
+                                          <div key={label} className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
+                                            <p className="font-extrabold text-ink text-sm tracking-wide">{label}</p>
+                                            <p className="text-ink-700 text-sm leading-relaxed font-medium">{text}</p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    );
+                                  })()}
 
                                   <LeaseRenewalPanel
                                     leaseId={c.leaseRowId}
