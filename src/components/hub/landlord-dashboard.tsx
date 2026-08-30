@@ -25,6 +25,8 @@ import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
 import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
 import { RentRollAdminTools, TerminateTenantButton } from "@/components/hub/rent-roll-tools";
 import { LeaseRenewalPanel } from "@/components/hub/lease-renewal-panel";
+import { RenewalWorkspace } from "@/components/hub/renewal-workspace";
+import type { RenewalOutreachStage, RenewalOutreachStatus } from "@/lib/data/renewal-outreach-types";
 import { TENANTS } from "@/content/tenants";
 import { TenantLogo } from "@/components/tenant-logo";
 
@@ -355,6 +357,7 @@ export function LandlordDashboard({
   portfolio,
   activeLeaseDocuments,
   leaseApplications,
+  renewalOutreachStatus,
   onPendingCountsChange,
   navigateRequest,
   onNavigateRequestHandled,
@@ -376,6 +379,10 @@ export function LandlordDashboard({
   portfolio: Portfolio;
   activeLeaseDocuments: LeaseDocumentRow[];
   leaseApplications: PendingLeaseApplication[];
+  /** Latest outreach event per lease, keyed by leases.id (LeaseDetail
+   *  .leaseRowId) — fetched once server-side alongside portfolio, since a
+   *  Map isn't RSC-serializable across the client boundary. */
+  renewalOutreachStatus: Record<string, RenewalOutreachStatus>;
   /** Pushed up on every change so ConsoleShell's HeaderAttentionBell (its
    *  header bar, not this component's) can render a live count without
    *  duplicating the buildApprovalQueue() derivation up there. */
@@ -561,6 +568,37 @@ export function LandlordDashboard({
   useEffect(() => {
     setLiveLeaseApplications(leaseApplications);
   }, [leaseApplications]);
+
+  // Contract Renewal Workspace outreach log. No poll loop — the POST
+  // response already returns the new latest status for that one lease, so
+  // it's merged straight into local state instead of a round-trip refetch.
+  const [liveRenewalOutreachStatus, setLiveRenewalOutreachStatus] = useState(renewalOutreachStatus);
+  useEffect(() => {
+    setLiveRenewalOutreachStatus(renewalOutreachStatus);
+  }, [renewalOutreachStatus]);
+
+  const registerRenewalContact = useCallback(
+    async (leaseRowId: string, stage: RenewalOutreachStage, note: string) => {
+      try {
+        const res = await fetch(`/api/leases/${leaseRowId}/renewal-outreach`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage, note: note || undefined }),
+        });
+        if (!res.ok) {
+          const { error } = await res.json().catch(() => ({ error: "no se pudo registrar el contacto" }));
+          triggerToast(error ?? "no se pudo registrar el contacto");
+          return;
+        }
+        const { status } = (await res.json()) as { status: RenewalOutreachStatus };
+        setLiveRenewalOutreachStatus((prev) => ({ ...prev, [leaseRowId]: status }));
+        triggerToast("Contacto registrado.");
+      } catch {
+        triggerToast("no se pudo registrar el contacto — intenta de nuevo");
+      }
+    },
+    [triggerToast],
+  );
 
   const [refreshingApprovals, setRefreshingApprovals] = useState(false);
   const refreshApprovals = useCallback(async () => {
@@ -792,9 +830,9 @@ export function LandlordDashboard({
   // pending-decision queue. "pendientes" exists as a focused sub-view,
   // reached via the sidebar's dedicated "Ver pendientes" badge click
   // (onTrailingClick above) rather than by replacing the default.
-  const [legalSubTab, setLegalSubTab] = useState<"pendientes" | "expedientes" | "prospectos" | "marco_legal">(
-    "expedientes",
-  );
+  const [legalSubTab, setLegalSubTab] = useState<
+    "pendientes" | "expedientes" | "vencimientos" | "prospectos" | "marco_legal"
+  >("expedientes");
   const [lastLawScanDate, setLastLawScanDate] = useState("Hoy, 10 Ago 2026 · 06:00 hrs");
   const [selectedProspectIndex, setSelectedProspectIndex] = useState<number>(0);
   const [customProspectBrand, setCustomProspectBrand] = useState("");
@@ -1981,6 +2019,7 @@ export function LandlordDashboard({
               <SubTabBar
                 tabs={[
                   { key: "expedientes", label: `Locales y Contratos (${rentRoll.length})` },
+                  { key: "vencimientos", label: "Vencimientos y Renovaciones" },
                   {
                     key: "pendientes",
                     label:
@@ -2267,6 +2306,33 @@ export function LandlordDashboard({
                       </tbody>
                     </table>
                   </div>
+                </div>
+              )}
+
+              {/* SUB-TAB 1c: VENCIMIENTOS Y RENOVACIONES — Contract Renewal
+                  Workspace. A portfolio-wide lens grouped by the same
+                  expiration tiers the .xlsx export uses (tierForDays), not a
+                  second copy of renewal drafting: "Redactar/Ver Renovación"
+                  deep-links back into this tab's own LeaseRenewalPanel via
+                  setInspectedContractId, flipping legalSubTab back to
+                  "expedientes" first so the panel is actually mounted. */}
+              {legalSubTab === "vencimientos" && (
+                <div className="space-y-4 animate-fadeIn">
+                  <div>
+                    <h3 className="text-base font-bold text-ink">Vencimientos y Renovaciones</h3>
+                    <p className="text-xs text-ink-500 mt-0.5">
+                      Contratos agrupados por proximidad de vencimiento. Registra cada contacto con el inquilino sin salir de esta vista.
+                    </p>
+                  </div>
+                  <RenewalWorkspace
+                    leases={leases}
+                    outreachStatus={liveRenewalOutreachStatus}
+                    onRegisterContact={registerRenewalContact}
+                    onOpenContract={(localeId) => {
+                      setLegalSubTab("expedientes");
+                      setInspectedContractId(localeId);
+                    }}
+                  />
                 </div>
               )}
 

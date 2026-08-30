@@ -1,9 +1,20 @@
 import "server-only";
-import type { LeaseDetail } from "@/lib/data/contract-status";
+import {
+  tierForDays,
+  TIER_LABELS,
+  computeDaysRemaining,
+  type ExpirationTierKey,
+  type LeaseDetail,
+} from "@/lib/data/contract-status";
 import { isSameTenant } from "@/lib/ingest/fuzzy-match-tenant";
 import { TENANTS, PILLAR_LABELS, type Pillar } from "@/content/tenants";
 
-export type ExpirationTierKey = "expired" | "d30" | "d60" | "d90" | "d180" | "plus180";
+export type { ExpirationTierKey };
+// Re-exported for the existing import site (rent-roll-report.test.ts) and
+// the .xlsx export route — the real implementation now lives in
+// contract-status.ts alongside tierForDays, since the renewal workspace
+// ("use client") needs it too and this module carries a `server-only` guard.
+export { computeDaysRemaining };
 
 export type TierLeaseItem = {
   unitCode: string;
@@ -30,29 +41,16 @@ export type CategoryMixItem = {
 };
 
 /**
- * Calculates calendar days remaining until endDate relative to current time.
- */
-export function computeDaysRemaining(endDateStr: string, referenceDate: Date = new Date()): number {
-  const end = new Date(endDateStr);
-  if (Number.isNaN(end.getTime())) return 0;
-  // Reset time components for clean calendar day difference
-  const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-  const refMidnight = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
-  const diffMs = endMidnight.getTime() - refMidnight.getTime();
-  return Math.round(diffMs / (1000 * 60 * 60 * 24));
-}
-
-/**
  * Groups active and expired portfolio leases into expiration timeframe tiers.
  */
 export function computeExpirationTiers(leases: LeaseDetail[], referenceDate: Date = new Date()): ExpirationTierGroup[] {
   const groups: Record<ExpirationTierKey, ExpirationTierGroup> = {
-    expired: { key: "expired", label: "Vencidos", count: 0, leases: [] },
-    d30: { key: "d30", label: "Próximos 30 días", count: 0, leases: [] },
-    d60: { key: "d60", label: "31 a 60 días", count: 0, leases: [] },
-    d90: { key: "d90", label: "61 a 90 días", count: 0, leases: [] },
-    d180: { key: "d180", label: "91 a 180 días", count: 0, leases: [] },
-    plus180: { key: "plus180", label: "Más de 180 días", count: 0, leases: [] },
+    expired: { key: "expired", label: TIER_LABELS.expired, count: 0, leases: [] },
+    d30: { key: "d30", label: TIER_LABELS.d30, count: 0, leases: [] },
+    d60: { key: "d60", label: TIER_LABELS.d60, count: 0, leases: [] },
+    d90: { key: "d90", label: TIER_LABELS.d90, count: 0, leases: [] },
+    d180: { key: "d180", label: TIER_LABELS.d180, count: 0, leases: [] },
+    plus180: { key: "plus180", label: TIER_LABELS.plus180, count: 0, leases: [] },
   };
 
   for (const lease of leases) {
@@ -66,14 +64,7 @@ export function computeExpirationTiers(leases: LeaseDetail[], referenceDate: Dat
       rentMonthly: lease.rentMonthly,
     };
 
-    let targetKey: ExpirationTierKey;
-    if (days < 0) targetKey = "expired";
-    else if (days <= 30) targetKey = "d30";
-    else if (days <= 60) targetKey = "d60";
-    else if (days <= 90) targetKey = "d90";
-    else if (days <= 180) targetKey = "d180";
-    else targetKey = "plus180";
-
+    const targetKey = tierForDays(days);
     groups[targetKey].leases.push(item);
     groups[targetKey].count += 1;
   }

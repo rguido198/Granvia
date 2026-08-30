@@ -145,6 +145,45 @@ export function contractStatusLabel(lease: Pick<LeaseDetail, "isExpired" | "rene
   return "Vigente";
 }
 
+export type ExpirationTierKey = "expired" | "d30" | "d60" | "d90" | "d180" | "plus180";
+
+export const TIER_LABELS: Record<ExpirationTierKey, string> = {
+  expired: "Vencidos",
+  d30: "Próximos 30 días",
+  d60: "31 a 60 días",
+  d90: "61 a 90 días",
+  d180: "91 a 180 días",
+  plus180: "Más de 180 días",
+};
+
+/**
+ * Calendar days remaining until endDate relative to referenceDate. Pure
+ * date math, no DB dependency — moved here alongside tierForDays for the
+ * same reason: the renewal workspace ("use client") needs it too, and
+ * rent-roll-report.server.ts carries a `server-only` import that would
+ * break importing it from client code.
+ */
+export function computeDaysRemaining(endDateStr: string, referenceDate: Date = new Date()): number {
+  const end = new Date(endDateStr);
+  if (Number.isNaN(end.getTime())) return 0;
+  const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  const refMidnight = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+  const diffMs = endMidnight.getTime() - refMidnight.getTime();
+  return Math.round(diffMs / (1000 * 60 * 60 * 24));
+}
+
+/** Single source of truth for the expiration-tier boundary decision —
+ *  the rent-roll .xlsx export and the renewal workspace must never
+ *  quietly disagree about what counts as "31-60 days." */
+export function tierForDays(days: number): ExpirationTierKey {
+  if (days < 0) return "expired";
+  if (days <= 30) return "d30";
+  if (days <= 60) return "d60";
+  if (days <= 90) return "d90";
+  if (days <= 180) return "d180";
+  return "plus180";
+}
+
 // Same five keys LeaseExtractedFieldsSchema's responsibility_matrix uses
 // (lease-extraction-schema.ts) and legal-documents-panel.tsx's Gate 2 form
 // renders — not imported from either (one's a Zod shape, the other a

@@ -10,6 +10,7 @@ import { fetchAutonomyState } from "@/lib/platform/settings.server";
 import { fetchAuditLog } from "@/lib/platform/audit-log.server";
 import { fetchCorporateUsers } from "@/lib/platform/users.server";
 import { fetchActiveLeaseDocuments, fetchPortfolio } from "@/lib/data/portfolio.server";
+import { fetchRenewalOutreachStatus, type RenewalOutreachStatus } from "@/lib/data/renewal-workspace.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -70,6 +71,10 @@ export default async function ConsolaPage() {
   // approval-queue.server.ts's doc comment: no other fetch reaches pending
   // lease_applications rows.
   const leaseApplications = await fetchPendingLeaseApplications();
+  // Contract Renewal Workspace's outreach log — Map isn't RSC-serializable
+  // across the client boundary, so it travels down as a plain object.
+  const renewalOutreachStatusMap = await fetchRenewalOutreachStatus(portfolio.leases.map((l) => l.leaseRowId));
+  const renewalOutreachStatus: Record<string, RenewalOutreachStatus> = Object.fromEntries(renewalOutreachStatusMap);
 
   return (
     <PageFade>
@@ -87,6 +92,7 @@ export default async function ConsolaPage() {
         portfolio={portfolio}
         activeLeaseDocuments={activeLeaseDocuments}
         leaseApplications={leaseApplications}
+        renewalOutreachStatus={renewalOutreachStatus}
       />
     </PageFade>
   );

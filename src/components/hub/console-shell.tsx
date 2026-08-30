@@ -14,6 +14,7 @@ import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
 import type { LeaseDocumentRow, Portfolio } from "@/lib/data/portfolio.server";
 import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
+import type { RenewalOutreachStatus } from "@/lib/data/renewal-outreach-types";
 import { HeaderAttentionBell, type AttentionCounts } from "@/components/hub/header-attention-bell";
 import { signOut } from "@/app/consola/actions";
 
@@ -50,6 +51,7 @@ export function ConsoleShell({
   portfolio,
   activeLeaseDocuments,
   leaseApplications,
+  renewalOutreachStatus,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -64,6 +66,7 @@ export function ConsoleShell({
   portfolio: Portfolio;
   activeLeaseDocuments: LeaseDocumentRow[];
   leaseApplications: PendingLeaseApplication[];
+  renewalOutreachStatus: Record<string, RenewalOutreachStatus>;
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -362,6 +365,7 @@ export function ConsoleShell({
           portfolio={portfolio}
           activeLeaseDocuments={activeLeaseDocuments}
           leaseApplications={leaseApplications}
+          renewalOutreachStatus={renewalOutreachStatus}
           onPendingCountsChange={setPendingCounts}
           navigateRequest={navigateRequest}
           onNavigateRequestHandled={clearNavigateRequest}
