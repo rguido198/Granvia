@@ -81,7 +81,8 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
     .select(
       `
       id, ticket_number, status, priority, cost_bucket, estimated_cost,
-      raw_report, diagnosis_answer, created_at, unresolved_jd_keys,
+      raw_report, diagnosis_answer, created_at, updated_at,
+      work_performed, final_cost, unresolved_jd_keys,
       skeptic_flagged, skeptic_concerns,
       contractors ( name )
     `,
@@ -101,6 +102,9 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
     raw_report: string;
     diagnosis_answer: string | null;
     created_at: string;
+    updated_at: string;
+    work_performed: string | null;
+    final_cost: string | number | null;
     unresolved_jd_keys: string[] | null;
     skeptic_flagged: boolean;
     skeptic_concerns: string[] | null;
@@ -129,6 +133,12 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
       skepticFlagged: t.skeptic_flagged,
       skepticConcerns: t.skeptic_concerns ?? [],
       createdAt: t.created_at,
+      updatedAt: t.updated_at,
+      workPerformed: t.work_performed,
+      finalCost: t.final_cost !== null ? Number(t.final_cost) : null,
+      // Landlord-only escalation UI reads this — see its doc comment in
+      // diego-tickets.server.ts. The tenant portal never needs it.
+      pendingConfirmationSince: null,
     };
   });
 

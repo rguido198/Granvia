@@ -1,8 +1,53 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { NewTicketForm } from "@/components/hub/new-ticket-form";
 import type { DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { PortalLocale } from "@/lib/data/tenant-portal.server";
+
+function formatMxn(n: number) {
+  return `$${n.toLocaleString("es-MX")} MXN`;
+}
+
+/**
+ * "Simple" in-app notification, per the scope this was approved at: no
+ * email/SMS/WhatsApp channel exists (deferred elsewhere in this project),
+ * so this compares the ticket's own updatedAt against a per-ticket
+ * "last seen" timestamp in this tenant's own browser — viewer-local, no
+ * server round-trip, no cross-device sync. Starts at the "unknown"
+ * sentinel (not null) so the very first client render matches the server
+ * render exactly — localStorage doesn't exist during SSR, and reading it
+ * in a lazy useState initializer would throw there.
+ */
+function useIsUnseen(localeId: string, ticketId: string, updatedAt: string): boolean {
+  // Scoped by localeId, not just ticketId — a shared kiosk/browser logging
+  // in as two different tenants (different locales) would otherwise show
+  // one tenant's "seen" state as if it were the other's.
+  const storageKey = `gran-via-ticket-seen:${localeId}:${ticketId}`;
+  const [seenAt, setSeenAt] = useState<string | null | "unknown">("unknown");
+
+  useEffect(() => {
+    let current: string | null = null;
+    try {
+      current = localStorage.getItem(storageKey);
+    } catch {
+      // Private browsing / storage disabled — treat as never seen, but
+      // don't crash the portal over it.
+    }
+    setSeenAt(current);
+    // Being on this page IS having seen the current state — marks it seen
+    // for next visit rather than requiring a separate click.
+    try {
+      localStorage.setItem(storageKey, updatedAt);
+    } catch {
+      // Same as above — best-effort only.
+    }
+  }, [storageKey, updatedAt]);
+
+  if (seenAt === "unknown") return false;
+  return seenAt === null || new Date(updatedAt).getTime() > new Date(seenAt).getTime();
+}
 
 function formatContractDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-MX", { month: "long", year: "numeric" });
@@ -17,9 +62,170 @@ const STATUS_LABEL: Record<DiegoTicket["status"], string> = {
   needs_approval: "En Revisión del Propietario",
   dispatched: "Técnico Asignado",
   pending_confirmation: "Pendiente de Confirmación",
+  reopened: "Reportado de Nuevo",
   closed: "Cerrado",
   closed_administrative: "Cerrado",
 };
+
+/** One ticket row — status, the landlord's own record of the work once
+ *  mark-resolved has written it, and (only at pending_confirmation) the
+ *  tenant's own two actions — "Confirmar Resuelto" or "El problema
+ *  continúa" — the second half of the close diego-triage.ts's workflow
+ *  never built on its own. */
+function TicketCard({ ticket: t, localeId }: { ticket: DiegoTicket; localeId: string }) {
+  const router = useRouter();
+  const isUnseen = useIsUnseen(localeId, t.id, t.updatedAt);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [reopening, setReopening] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+  const [showReopenForm, setShowReopenForm] = useState(false);
+  const [reopenNote, setReopenNote] = useState("");
+
+  async function confirmResolved() {
+    setConfirming(true);
+    setConfirmError(null);
+    try {
+      const res = await fetch(`/api/tickets/${t.id}/confirm-resolved`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "No se pudo confirmar.");
+      }
+      router.refresh();
+    } catch (err) {
+      setConfirmError(err instanceof Error ? err.message : "No se pudo confirmar.");
+      setConfirming(false);
+    }
+  }
+
+  async function reportStillBroken() {
+    if (!reopenNote.trim()) {
+      setReopenError("Describe qué sigue mal.");
+      return;
+    }
+    setReopening(true);
+    setReopenError(null);
+    try {
+      const res = await fetch(`/api/tickets/${t.id}/reopen`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: reopenNote.trim() }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "No se pudo reportar.");
+      }
+      router.refresh();
+    } catch (err) {
+      setReopenError(err instanceof Error ? err.message : "No se pudo reportar.");
+      setReopening(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-slate-900">{t.ticketNumber}</span>
+          <span className="rounded-full bg-slate-100 border border-slate-300 px-2.5 py-0.5 text-xs font-bold text-slate-900">
+            {STATUS_LABEL[t.status]}
+          </span>
+          {isUnseen && (
+            <span
+              className="h-2 w-2 rounded-full bg-emerald-500"
+              title="Actualizado desde tu última visita"
+              aria-label="Actualizado"
+            />
+          )}
+        </div>
+        {t.contractorName && (
+          <span className="text-xs sm:text-sm text-slate-600 font-semibold">Asignado: {t.contractorName}</span>
+        )}
+      </div>
+      <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
+        <strong>Reporte:</strong> &ldquo;{t.rawReport}&rdquo;
+      </p>
+      {t.diagnosis && (
+        <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mt-1">
+          <strong>Diagnóstico:</strong> {t.diagnosis}
+        </p>
+      )}
+
+      {/* Only appears once the landlord has actually recorded it. Cost is
+       *  shown only for tenant-billed work — the same cost-bucket
+       *  vocabulary the landlord console already uses (COST_BUCKET_LABEL,
+       *  diego-ticket-ui.ts). Landlord/CAM-billed costs aren't the
+       *  tenant's business to see. */}
+      {t.workPerformed && (
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+          <p className="text-xs font-bold text-emerald-900">Trabajo realizado</p>
+          <p className="mt-0.5 text-xs text-emerald-900/90 leading-relaxed">{t.workPerformed}</p>
+          {t.finalCost !== null && t.costBucket === "INQUILINO" && (
+            <p className="mt-1 text-xs font-bold text-emerald-900">Costo: {formatMxn(t.finalCost)}</p>
+          )}
+        </div>
+      )}
+
+      {t.status === "pending_confirmation" && (
+        <div className="mt-3 space-y-2">
+          {!showReopenForm ? (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                disabled={confirming}
+                onClick={() => void confirmResolved()}
+                className="flex-1 rounded-xl bg-slate-900 py-2.5 text-xs sm:text-sm font-bold text-white cursor-pointer disabled:opacity-50"
+              >
+                {confirming ? "Confirmando…" : "Confirmar Resuelto"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReopenForm(true)}
+                className="flex-1 rounded-xl border border-slate-300 bg-white py-2.5 text-xs sm:text-sm font-bold text-slate-700 cursor-pointer hover:bg-slate-50"
+              >
+                El Problema Continúa
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <textarea
+                value={reopenNote}
+                onChange={(e) => setReopenNote(e.target.value)}
+                placeholder="¿Qué sigue mal? (requerido)"
+                rows={2}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={reopening || !reopenNote.trim()}
+                  onClick={() => void reportStillBroken()}
+                  className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs sm:text-sm font-bold text-white cursor-pointer disabled:opacity-50"
+                >
+                  {reopening ? "Enviando…" : "Reportar que Sigue Mal"}
+                </button>
+                <button
+                  type="button"
+                  disabled={reopening}
+                  onClick={() => {
+                    setShowReopenForm(false);
+                    setReopenNote("");
+                    setReopenError(null);
+                  }}
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 cursor-pointer disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+              {reopenError && <p className="text-[11px] font-semibold text-red-600">{reopenError}</p>}
+            </div>
+          )}
+          {confirmError && <p className="text-[11px] font-semibold text-red-600">{confirmError}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * A single tenant's own view: their lease, their tickets. No CAM ledger —
@@ -145,27 +351,7 @@ export function TenantPortal({
         ) : (
           <div className="space-y-3">
             {tickets.map((t) => (
-              <div key={t.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">{t.ticketNumber}</span>
-                    <span className="ml-2.5 rounded-full bg-slate-100 border border-slate-300 px-2.5 py-0.5 text-xs font-bold text-slate-900">
-                      {STATUS_LABEL[t.status]}
-                    </span>
-                  </div>
-                  {t.contractorName && (
-                    <span className="text-xs sm:text-sm text-slate-600 font-semibold">Asignado: {t.contractorName}</span>
-                  )}
-                </div>
-                <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
-                  <strong>Reporte:</strong> &ldquo;{t.rawReport}&rdquo;
-                </p>
-                {t.diagnosis && (
-                  <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mt-1">
-                    <strong>Diagnóstico:</strong> {t.diagnosis}
-                  </p>
-                )}
-              </div>
+              <TicketCard key={t.id} ticket={t} localeId={locale.id} />
             ))}
           </div>
         )}

@@ -11,8 +11,13 @@ import {
   STATUS_BADGE,
   STATUS_LABEL,
   formatMxn,
+  useCloseTicketAdministratively,
+  useMarkTicketResolved,
+  useRedispatchTicket,
   useResolveTicket,
 } from "@/components/hub/diego-ticket-ui";
+
+const OVERDUE_CONFIRMATION_MS = 48 * 60 * 60 * 1000;
 
 function formatTimestamp(iso: string) {
   const d = new Date(iso);
@@ -59,6 +64,28 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; onClose: () => void }) {
   const { submitting, errorMsg, resolve } = useResolveTicket(ticket.id);
+  const {
+    submitting: markingResolved,
+    errorMsg: markResolvedError,
+    markResolved,
+  } = useMarkTicketResolved(ticket.id);
+  const { submitting: redispatching, errorMsg: redispatchError, redispatch } = useRedispatchTicket(ticket.id);
+  const {
+    submitting: closingAdministratively,
+    errorMsg: closeAdministrativelyError,
+    closeAdministratively,
+  } = useCloseTicketAdministratively(ticket.id);
+  const [workPerformedInput, setWorkPerformedInput] = useState("");
+  // Prefilled from the pre-dispatch approval estimate — still fully
+  // editable, same "landlord-supplied, never guessed" rule NewLeaseForm's
+  // rent field already follows.
+  const [finalCostInput, setFinalCostInput] = useState(
+    ticket.estimatedCost !== null ? String(ticket.estimatedCost) : "",
+  );
+  // Separate from markResolvedError (server-side) — a non-empty,
+  // non-numeric finalCostInput used to silently submit as `null` ("no
+  // cost") instead of failing. Validated before the request ever fires.
+  const [finalCostInputError, setFinalCostInputError] = useState<string | null>(null);
   const [auditExpanded, setAuditExpanded] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -94,6 +121,13 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
   }, [onClose]);
 
   const awaitingApproval = ticket.status === "needs_approval";
+  const awaitingCompletion = ticket.status === "dispatched";
+  const awaitingConfirmation = ticket.status === "pending_confirmation";
+  const awaitingRedispatch = ticket.status === "reopened";
+  const overdueConfirmation =
+    awaitingConfirmation &&
+    !!ticket.pendingConfirmationSince &&
+    Date.now() - new Date(ticket.pendingConfirmationSince).getTime() > OVERDUE_CONFIRMATION_MS;
   const hasConcerns = ticket.skepticFlagged && ticket.skepticConcerns.length > 0;
 
   if (!host) return null;
@@ -201,6 +235,19 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
               &ldquo;{ticket.rawReport}&rdquo;
             </blockquote>
           </Card>
+
+          {/* Only renders once mark-resolved has actually written it — this
+           *  is the record of what was done, not a placeholder for it. */}
+          {ticket.workPerformed && (
+            <Card eyebrow="Registrado por el arrendador" title="Trabajo Realizado">
+              <p className="text-xs leading-relaxed text-slate-800">{ticket.workPerformed}</p>
+              {ticket.finalCost !== null && (
+                <p className="mt-2 text-xs font-bold text-slate-900">
+                  Costo final: {formatMxn(ticket.finalCost)}
+                </p>
+              )}
+            </Card>
+          )}
 
           {/* 2 · DIEGO IA DIAGNOSTIC CARD */}
           <Card eyebrow="Análisis automático" title="Diagnóstico de Diego IA">
@@ -316,6 +363,132 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                   : ticket.estimatedCost !== null
                     ? "Aprobar y Despachar · " + formatMxn(ticket.estimatedCost)
                     : "Aprobar y Despachar"}
+              </button>
+            </div>
+          </footer>
+        )}
+
+        {/* Landlord half of the two-step close — no resumeHook() involved,
+         *  diego-triage.ts's own Tier 3 gate already resolved at dispatch.
+         *  Flips to pending_confirmation; the tenant's own portal takes it
+         *  from there. */}
+        {awaitingCompletion && (
+          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-2">
+            {markResolvedError && (
+              <p className="text-[11px] font-semibold text-red-600">{markResolvedError}</p>
+            )}
+            {finalCostInputError && (
+              <p className="text-[11px] font-semibold text-red-600">{finalCostInputError}</p>
+            )}
+            <textarea
+              value={workPerformedInput}
+              onChange={(e) => setWorkPerformedInput(e.target.value)}
+              placeholder="¿Qué se hizo? (requerido)"
+              rows={2}
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
+            />
+            <div className="flex items-center gap-2.5">
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={finalCostInput}
+                onChange={(e) => {
+                  setFinalCostInput(e.target.value);
+                  setFinalCostInputError(null);
+                }}
+                placeholder="Costo final (MXN)"
+                className="w-36 rounded-xl border border-slate-200 px-3 py-2 text-xs"
+              />
+              <button
+                type="button"
+                disabled={markingResolved || !workPerformedInput.trim()}
+                onClick={() => {
+                  const trimmed = finalCostInput.trim();
+                  // A genuinely empty field means "no cost provided" and
+                  // submits null. Anything else that isn't a valid,
+                  // non-negative number blocks the submit with a visible
+                  // error instead of silently becoming null — the bug
+                  // this replaced let "abc" submit as "no cost."
+                  if (trimmed === "") {
+                    void markResolved(workPerformedInput.trim(), null);
+                    return;
+                  }
+                  const cost = Number(trimmed);
+                  if (!Number.isFinite(cost) || cost < 0) {
+                    setFinalCostInputError("El costo final debe ser un número válido, no negativo.");
+                    return;
+                  }
+                  void markResolved(workPerformedInput.trim(), cost);
+                }}
+                className="flex-1 cursor-pointer rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
+              >
+                {markingResolved ? "Registrando…" : "Marcar Trabajo Terminado"}
+              </button>
+            </div>
+          </footer>
+        )}
+
+        {/* pending_confirmation — waiting on the tenant. No push
+         *  notification exists, so "overdue" is purely visual (also
+         *  surfaced as DiegoKPIs.overdueConfirmationsCount in the Triage
+         *  KPI bar) — it doesn't gate the escalation button, which is
+         *  always available; it just makes the wait visible. */}
+        {awaitingConfirmation && (
+          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-2">
+            {closeAdministrativelyError && (
+              <p className="text-[11px] font-semibold text-red-600">{closeAdministrativelyError}</p>
+            )}
+            <p className={`text-[11px] font-semibold ${overdueConfirmation ? "text-amber-700" : "text-slate-500"}`}>
+              {ticket.pendingConfirmationSince
+                ? `Esperando confirmación del inquilino desde ${formatTimestamp(ticket.pendingConfirmationSince)}${
+                    overdueConfirmation ? " — más de 48 horas sin respuesta" : ""
+                  }.`
+                : "Esperando confirmación del inquilino."}
+            </p>
+            {overdueConfirmation && (
+              <button
+                type="button"
+                disabled={closingAdministratively}
+                onClick={() => void closeAdministratively()}
+                className="w-full cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-4 py-2.5 text-xs font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
+              >
+                {closingAdministratively ? "Cerrando…" : "Cerrar Administrativamente"}
+              </button>
+            )}
+          </footer>
+        )}
+
+        {/* reopened — the tenant said the fix didn't hold. Explicit about
+         *  who's being sent back out, not an ambiguous "despachar de
+         *  nuevo" — a landlord should never have to guess whether this
+         *  reassigns to someone new (it doesn't, in this pass). */}
+        {awaitingRedispatch && (
+          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-2">
+            {redispatchError && <p className="text-[11px] font-semibold text-red-600">{redispatchError}</p>}
+            {closeAdministrativelyError && (
+              <p className="text-[11px] font-semibold text-red-600">{closeAdministrativelyError}</p>
+            )}
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                disabled={redispatching}
+                onClick={() => void redispatch()}
+                className="flex-1 cursor-pointer rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
+              >
+                {redispatching
+                  ? "Reenviando…"
+                  : ticket.contractorName
+                    ? `Reenviar a ${ticket.contractorName}`
+                    : "Reenviar al Contratista"}
+              </button>
+              <button
+                type="button"
+                disabled={closingAdministratively}
+                onClick={() => void closeAdministratively()}
+                className="cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-4 py-2.5 text-xs font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
+              >
+                Cerrar Administrativamente
               </button>
             </div>
           </footer>

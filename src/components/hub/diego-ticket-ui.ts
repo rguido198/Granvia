@@ -23,6 +23,7 @@ export const STATUS_LABEL: Record<DiegoTicket["status"], string> = {
   needs_approval: "Requiere Aprobación",
   dispatched: "Despachado",
   pending_confirmation: "Pendiente de Confirmación",
+  reopened: "Reabierto por Inquilino",
   closed: "Cerrado",
   closed_administrative: "Cerrado (Administrativo)",
 };
@@ -36,6 +37,9 @@ export const STATUS_BADGE: Record<DiegoTicket["status"], string> = {
   needs_approval: "bg-amber-100 text-amber-900 border border-amber-300",
   dispatched: "bg-emerald-100 text-emerald-800 border border-emerald-300",
   pending_confirmation: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+  // Amber/red, not dispatched's green — reopened reads as an escalation
+  // (the tenant explicitly said the fix didn't hold), not routine progress.
+  reopened: "bg-red-100 text-red-800 border border-red-300",
   closed: "bg-slate-100 text-slate-500 border border-slate-200",
   closed_administrative: "bg-slate-100 text-slate-500 border border-slate-200",
 };
@@ -108,4 +112,81 @@ export function useResolveTicket(ticketId: string) {
   );
 
   return { submitting, errorMsg, resolve };
+}
+
+/**
+ * The landlord half of the two-step close — dispatched -> pending_confirmation.
+ * Same shape as useResolveTicket (submitting/errorMsg, router.refresh() on
+ * success), different route/payload since this is a direct DB write, not a
+ * resumeHook() call — the workflow's own hook already resolved at dispatch.
+ */
+export function useMarkTicketResolved(ticketId: string) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const markResolved = useCallback(
+    async (workPerformed: string, finalCost: number | null) => {
+      setSubmitting(true);
+      setErrorMsg(null);
+      try {
+        const res = await fetch(`/api/tickets/${ticketId}/mark-resolved`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ workPerformed, finalCost }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "HTTP " + res.status);
+        }
+        router.refresh();
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : "Error al registrar el trabajo terminado");
+        setSubmitting(false);
+      }
+    },
+    [ticketId, router],
+  );
+
+  return { submitting, errorMsg, markResolved };
+}
+
+/** Shared shape for the two no-body landlord actions below — same
+ *  submitting/errorMsg/router.refresh() contract as useResolveTicket and
+ *  useMarkTicketResolved, just without a payload to collect first. */
+function usePostTicketAction(ticketId: string, path: "redispatch" | "close-administratively") {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const run = useCallback(async () => {
+    setSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/${path}`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "HTTP " + res.status);
+      }
+      router.refresh();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Error al procesar la acción");
+      setSubmitting(false);
+    }
+  }, [ticketId, path, router]);
+
+  return { submitting, errorMsg, run };
+}
+
+/** reopened -> dispatched, same contractor, fresh dispatched_at. */
+export function useRedispatchTicket(ticketId: string) {
+  const { submitting, errorMsg, run } = usePostTicketAction(ticketId, "redispatch");
+  return { submitting, errorMsg, redispatch: run };
+}
+
+/** pending_confirmation | reopened -> closed_administrative — the
+ *  no-tenant-response escalation path (diego-ticket-drawer.tsx). */
+export function useCloseTicketAdministratively(ticketId: string) {
+  const { submitting, errorMsg, run } = usePostTicketAction(ticketId, "close-administratively");
+  return { submitting, errorMsg, closeAdministratively: run };
 }

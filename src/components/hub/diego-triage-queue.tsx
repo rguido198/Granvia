@@ -193,6 +193,18 @@ export function DiegoTriageQueue({
           <span className="bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200">
             {formatMxn(kpis.dispatchedCostInFlight)} en Curso
           </span>
+          {/* No email/SMS exists to remind anyone — this chip IS the
+           *  reminder, visible the moment a landlord opens Triage. See
+           *  DiegoTicket.pendingConfirmationSince's own doc comment for
+           *  why 48h is measured from ticket_status_history, not
+           *  updated_at. */}
+          {kpis.overdueConfirmationsCount > 0 && (
+            <span className="bg-red-100 text-red-800 px-3 py-1 rounded-lg border border-red-300">
+              {kpis.overdueConfirmationsCount} Confirmación
+              {kpis.overdueConfirmationsCount === 1 ? "" : "es"} Vencida
+              {kpis.overdueConfirmationsCount === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
       </div>
 
