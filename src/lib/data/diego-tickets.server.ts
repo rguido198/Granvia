@@ -20,6 +20,11 @@ export type DiegoTicket = {
   costBucket: "ARRENDADOR" | "INQUILINO" | "CAM" | "PENDIENTE" | null;
   estimatedCost: number | null;
   tenantEntity: string | null;
+  /** Free-text name of whoever actually reported the fault — distinct from
+   *  tenantEntity, which names the business, not the person. Null on
+   *  intake channels that never collect one (see the migration's own
+   *  comment). */
+  reporterName: string | null;
   rawReport: string;
   diagnosis: string | null;
   unitNumber: string;
@@ -73,7 +78,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     .select(
       `
       id, ticket_number, status, priority, cost_bucket, estimated_cost,
-      tenant_entity, raw_report, diagnosis_answer, created_at, updated_at,
+      tenant_entity, reporter_name, raw_report, diagnosis_answer, created_at, updated_at,
       work_performed, final_cost, unresolved_jd_keys,
       skeptic_flagged, skeptic_concerns,
       locales ( unit_number, properties ( name ) ),
@@ -92,6 +97,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     cost_bucket: DiegoTicket["costBucket"];
     estimated_cost: string | number | null;
     tenant_entity: string | null;
+    reporter_name: string | null;
     raw_report: string;
     diagnosis_answer: string | null;
     created_at: string;
@@ -138,6 +144,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       costBucket: t.cost_bucket,
       estimatedCost: t.estimated_cost !== null ? Number(t.estimated_cost) : null,
       tenantEntity: t.tenant_entity,
+      reporterName: t.reporter_name,
       rawReport: t.raw_report,
       diagnosis: t.diagnosis_answer,
       unitNumber: t.locales?.unit_number ?? "?",

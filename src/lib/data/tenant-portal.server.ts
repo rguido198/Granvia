@@ -81,7 +81,7 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
     .select(
       `
       id, ticket_number, status, priority, cost_bucket, estimated_cost,
-      raw_report, diagnosis_answer, created_at, updated_at,
+      reporter_name, raw_report, diagnosis_answer, created_at, updated_at,
       work_performed, final_cost, unresolved_jd_keys,
       skeptic_flagged, skeptic_concerns,
       contractors ( name )
@@ -99,6 +99,7 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
     priority: DiegoTicket["priority"];
     cost_bucket: DiegoTicket["costBucket"];
     estimated_cost: string | number | null;
+    reporter_name: string | null;
     raw_report: string;
     diagnosis_answer: string | null;
     created_at: string;
@@ -123,6 +124,7 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
       // The tenant portal's own tickets are always this tenant's — reuse the
       // resolved locale's name rather than adding a redundant select column.
       tenantEntity: locale.tenantEntity,
+      reporterName: t.reporter_name,
       rawReport: t.raw_report,
       diagnosis: t.diagnosis_answer,
       unitNumber: locale.unitNumber,

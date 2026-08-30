@@ -20,6 +20,13 @@ import {
 
 const OVERDUE_CONFIRMATION_MS = 48 * 60 * 60 * 1000;
 
+type HistoryEntry = {
+  from_status: DiegoTicket["status"] | null;
+  to_status: DiegoTicket["status"];
+  changed_at: string;
+  note: string | null;
+};
+
 function formatTimestamp(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -30,6 +37,14 @@ function formatTimestamp(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatDuration(ms: number): string {
+  const hours = Math.floor(ms / (60 * 60 * 1000));
+  if (hours < 1) return "menos de 1 hora";
+  if (hours < 24) return `${hours} hora${hours === 1 ? "" : "s"}`;
+  const days = Math.floor(hours / 24);
+  return `${days} día${days === 1 ? "" : "s"}`;
 }
 
 function Card({
@@ -95,6 +110,8 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
   // cost") instead of failing. Validated before the request ever fires.
   const [finalCostInputError, setFinalCostInputError] = useState<string | null>(null);
   const [auditExpanded, setAuditExpanded] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[] | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -127,6 +144,31 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
+
+  // Fetched once per ticket, not baked into the bulk queue query — the
+  // full transition log is only ever useful for the one ticket someone
+  // actually opened, not all of them on every page load.
+  useEffect(() => {
+    let cancelled = false;
+    setHistory(null);
+    setHistoryError(null);
+    fetch(`/api/tickets/${ticket.id}/history`)
+      .then(async (res) => {
+        const json = (await res.json().catch(() => ({}))) as { history?: HistoryEntry[]; error?: string };
+        if (cancelled) return;
+        if (!res.ok) {
+          setHistoryError(json.error ?? "No se pudo cargar el historial.");
+          return;
+        }
+        setHistory(json.history ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setHistoryError("No se pudo cargar el historial.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ticket.id]);
 
   const awaitingApproval = ticket.status === "needs_approval";
   const awaitingCompletion = ticket.status === "dispatched";
@@ -236,12 +278,53 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
               <Field label="Ubicación">
                 {ticket.propertyName} · {ticket.unitNumber}
               </Field>
+              {ticket.reporterName && <Field label="Reportado por">{ticket.reporterName}</Field>}
               <Field label="Recibido">{formatTimestamp(ticket.createdAt)}</Field>
               <Field label="Prioridad">{ticket.priority ?? "Sin asignar"}</Field>
             </dl>
             <blockquote className="mt-3.5 rounded-lg border-l-2 border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-800">
               &ldquo;{ticket.rawReport}&rdquo;
             </blockquote>
+          </Card>
+
+          {/* 1b · STATUS HISTORY — answers "has this been sitting untouched?"
+           *  at a glance, per-transition, rather than making a landlord infer
+           *  it from a single updated_at timestamp. Fetched on demand (see
+           *  the effect above), not baked into the bulk queue query. */}
+          <Card eyebrow="Trazabilidad" title="Historial del Ticket">
+            {historyError ? (
+              <p className="text-xs text-red-600">{historyError}</p>
+            ) : history === null ? (
+              <p className="text-xs text-slate-500">Cargando historial…</p>
+            ) : history.length === 0 ? (
+              <p className="text-xs text-slate-500">Sin cambios de estado registrados todavía.</p>
+            ) : (
+              <ol className="space-y-3">
+                {history.map((h, i) => {
+                  const isCurrent = i === history.length - 1;
+                  const intervalEndMs = isCurrent ? Date.now() : new Date(history[i + 1].changed_at).getTime();
+                  const durationMs = intervalEndMs - new Date(h.changed_at).getTime();
+                  return (
+                    <li key={i} className="flex gap-3">
+                      <div
+                        className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${isCurrent ? "bg-slate-900" : "bg-slate-300"}`}
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-800">{STATUS_LABEL[h.to_status]}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatTimestamp(h.changed_at)}
+                          {" — "}
+                          {isCurrent
+                            ? `en este estado desde hace ${formatDuration(durationMs)}`
+                            : `duró ${formatDuration(durationMs)}`}
+                        </p>
+                        {h.note && <p className="mt-1 text-xs italic text-slate-500">{h.note}</p>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </Card>
 
           {/* Only renders once mark-resolved has actually written it — this
@@ -319,29 +402,31 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
               <span className="text-xs font-bold text-slate-400">{auditExpanded ? "▴" : "▾"}</span>
             </button>
             {auditExpanded && (
-              <dl className="space-y-2.5 border-t border-slate-100 px-5 py-4 font-mono text-[11px] text-slate-600">
+              <dl className="space-y-2.5 border-t border-slate-100 px-5 py-4 text-xs text-slate-600">
                 <div>
-                  <dt className="text-[11px] font-bold text-slate-400">ticket_id</dt>
-                  <dd className="break-all text-slate-700">{ticket.id}</dd>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Creado</dt>
+                  <dd className="text-slate-700">{formatTimestamp(ticket.createdAt)}</dd>
                 </div>
                 <div>
-                  <dt className="font-bold text-slate-400">status</dt>
-                  <dd className="text-slate-700">{ticket.status}</dd>
-                </div>
-                <div>
-                  <dt className="font-bold text-slate-400">created_at</dt>
-                  <dd className="text-slate-700">{ticket.createdAt}</dd>
-                </div>
-                <div>
-                  <dt className="font-bold text-slate-400">unresolved_jd_keys</dt>
-                  <dd className="break-all text-slate-700">
-                    {ticket.unresolvedKeys.length > 0 ? ticket.unresolvedKeys.join(", ") : "[]"}
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Auditoría de Diego IA
+                  </dt>
+                  <dd className="text-slate-700">
+                    {ticket.skepticFlagged
+                      ? `El auditor marcó ${ticket.skepticConcerns.length} observación${
+                          ticket.skepticConcerns.length === 1 ? "" : "es"
+                        } (ver arriba).`
+                      : "Sin observaciones del auditor."}
                   </dd>
                 </div>
-                <div>
-                  <dt className="font-bold text-slate-400">skeptic_flagged</dt>
-                  <dd className="text-slate-700">{String(ticket.skepticFlagged)}</dd>
-                </div>
+                {ticket.unresolvedKeys.length > 0 && (
+                  <div>
+                    <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Claves de jurisdicción sin resolver
+                    </dt>
+                    <dd className="text-slate-700">{ticket.unresolvedKeys.join(", ")}</dd>
+                  </div>
+                )}
               </dl>
             )}
           </div>

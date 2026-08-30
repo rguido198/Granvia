@@ -38,6 +38,7 @@ export function NewTicketForm({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [localeId, setLocaleId] = useState(fixedLocaleId ?? localeOptions?.[0]?.id ?? "");
+  const [reporterName, setReporterName] = useState("");
   const [category, setCategory] = useState<CategoryKey | null>(null);
   const [urgent, setUrgent] = useState(false);
   const [description, setDescription] = useState("");
@@ -73,6 +74,7 @@ export function NewTicketForm({
     body.set("locale_id", localeId);
     body.set("source_channel", sourceChannel);
     body.set("description", fullReport);
+    if (reporterName.trim()) body.set("reporter_name", reporterName.trim());
 
     if (file) {
       // Sent alongside description above — /api/ingest uses the typed text
@@ -95,6 +97,7 @@ export function NewTicketForm({
       setCategory(null);
       setUrgent(false);
       setDescription("");
+      setReporterName("");
       setFile(null);
       router.refresh();
     } catch (err) {
@@ -150,6 +153,17 @@ export function NewTicketForm({
           </select>
         </div>
       )}
+
+      <div className="space-y-1">
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">¿Quién reporta? (opcional)</label>
+        <input
+          type="text"
+          value={reporterName}
+          onChange={(e) => setReporterName(e.target.value)}
+          placeholder="Nombre de la persona que reporta"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white"
+        />
+      </div>
 
       <div className="space-y-1.5">
         <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">¿Qué tipo de falla es?</label>

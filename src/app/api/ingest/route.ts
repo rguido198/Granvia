@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
   const localeId = formData.get("locale_id");
   const leadId = formData.get("lead_id");
   const description = formData.get("description");
+  const reporterName = formData.get("reporter_name");
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file is required" }, { status: 400 });
@@ -174,6 +175,7 @@ export async function POST(request: NextRequest) {
     .insert({
       kind,
       source_channel: typeof sourceChannel === "string" ? sourceChannel : null,
+      reporter_name: typeof reporterName === "string" && reporterName.trim() ? reporterName.trim() : null,
       original_filename: file.name,
       storage_path: storagePath,
       mime_type: file.type,

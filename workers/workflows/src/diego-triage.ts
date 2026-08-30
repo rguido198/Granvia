@@ -32,6 +32,7 @@ type TicketContext = {
   documentId: string;
   documentKind: string;
   rawText: string | null;
+  reporterName: string | null;
   locale: { id: string; unit_number: string; tenant_entity: string | null };
   property: { id: string; jurisdiction_id: string; autonomy_frozen: boolean };
   lease: {
@@ -57,7 +58,7 @@ async function loadTicketContextForLocale(
 
   const { data: document, error: documentError } = await supabase
     .from("documents")
-    .select("id, kind, raw_text, status")
+    .select("id, kind, raw_text, reporter_name, status")
     .eq("id", documentId)
     .single();
   if (documentError || !document) {
@@ -105,6 +106,7 @@ async function loadTicketContextForLocale(
     documentId,
     documentKind: document.kind,
     rawText: document.raw_text,
+    reporterName: document.reporter_name,
     locale: {
       id: locale.id,
       unit_number: locale.unit_number,
@@ -368,6 +370,7 @@ async function writeTicket(
     .insert({
       locale_id: context.locale.id,
       tenant_entity: context.locale.tenant_entity ?? "desconocido",
+      reporter_name: context.reporterName,
       channel: context.documentKind,
       raw_report: context.rawText ?? "(evidencia visual, sin texto)",
       priority: draft.priority,
