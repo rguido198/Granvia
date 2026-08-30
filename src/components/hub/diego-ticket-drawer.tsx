@@ -157,7 +157,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
         aria-modal="true"
         aria-label={"Expediente del ticket " + ticket.ticketNumber}
         style={{ marginTop: 0 }}
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col border-l border-slate-200 bg-slate-50 shadow-2xl animate-fadeIn"
+        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-4xl flex-col border-l border-slate-200 bg-slate-50 shadow-2xl animate-fadeIn"
       >
         {/* HEADER */}
         <header className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-6 py-5">
