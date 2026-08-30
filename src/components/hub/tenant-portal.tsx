@@ -49,8 +49,12 @@ function useIsUnseen(localeId: string, ticketId: string, updatedAt: string): boo
   return seenAt === null || new Date(updatedAt).getTime() > new Date(seenAt).getTime();
 }
 
+/** timeZone: "UTC" is load-bearing here — see the identical helper's
+ *  comment in landlord-dashboard.tsx for why a bare "YYYY-MM-DD" string
+ *  needs it to avoid rolling back a day (or a month, near a boundary) in
+ *  negative-UTC-offset timezones like Mexicali's. */
 function formatContractDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+  return new Date(iso).toLocaleDateString("es-MX", { month: "long", year: "numeric", timeZone: "UTC" });
 }
 
 const STATUS_LABEL: Record<DiegoTicket["status"], string> = {

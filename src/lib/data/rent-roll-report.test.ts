@@ -40,7 +40,10 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
 }
 
 describe("rent-roll-report logic", () => {
-  const refDate = new Date("2026-08-01T00:00:00Z");
+  // Local-time constructor, matching computeDaysRemaining's default `new Date()`
+  // ("now" is a real instant read via local getters) — a UTC ISO string here
+  // reads back a day off in negative-UTC-offset zones like Mexicali's.
+  const refDate = new Date(2026, 7, 1);
 
   describe("computeDaysRemaining", () => {
     it("computes positive calendar day differences correctly", () => {

@@ -26,10 +26,14 @@ const RENEWAL_STATUS_LABEL: Record<"needs_landlord_review" | "approved" | "rejec
 const TIER_ORDER: ExpirationTierKey[] = ["expired", "d30", "d60", "d90", "d180", "plus180"];
 const DEFAULT_EXPANDED = new Set<ExpirationTierKey>(["expired", "d30"]);
 
+/** timeZone: "UTC" is load-bearing — lease.endDate is a bare "YYYY-MM-DD"
+ *  string, which parses as UTC midnight; without an explicit zone,
+ *  toLocaleDateString() renders in the viewer's local timezone and rolls
+ *  the date back a day in negative-UTC-offset zones like Mexicali's. */
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" });
+  return d.toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
 function ContactForm({

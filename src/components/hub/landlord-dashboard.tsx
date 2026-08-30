@@ -325,9 +325,15 @@ function formatAuditTimestamp(iso: string) {
   });
 }
 
-/** Format a lease's ISO end_date for display. */
+/** Format a lease's ISO end_date (date-only, no time component) for display.
+ *  timeZone: "UTC" is load-bearing — a bare "YYYY-MM-DD" string parses as
+ *  UTC midnight, and toLocaleDateString() without an explicit zone renders
+ *  in the viewer's own local timezone. Mexicali is UTC-7/-8, so an
+ *  unrelated viewer or CI machine on a negative-offset timezone rolled
+ *  every lease's displayed vencimiento back a day (e.g. "2028-08-31"
+ *  showing as "30 ago 2028"). Format in UTC to match how it was parsed. */
 function formatContractDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
 /**
@@ -1402,7 +1408,12 @@ export function LandlordDashboard({
                           <td className="p-3.5 text-right text-ink-500 tabular-nums">{formatVal(t.lastRentMonthly)}</td>
                           <td className="p-3.5 text-ink-500">
                             {t.leaseEndDate !== "—"
-                              ? new Date(t.leaseEndDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
+                              ? new Date(t.leaseEndDate).toLocaleDateString("es-MX", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                  timeZone: "UTC",
+                                })
                               : "—"}
                           </td>
                           <td className="p-3.5 text-right">

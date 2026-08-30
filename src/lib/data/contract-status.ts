@@ -125,8 +125,23 @@ export type LeaseRenewalSummary = {
   createdAt: string;
 };
 
+/** Parses a bare "YYYY-MM-DD" calendar date directly from its components,
+ *  in local time — not via `new Date(dateStr)`, which parses a date-only
+ *  string as UTC midnight. Getting the year/month/day back out of that
+ *  with the local-timezone accessors (.getFullYear() etc.) silently rolls
+ *  the calendar date back a day (or a month, near a boundary) in any
+ *  negative-UTC-offset timezone, including Mexicali's — this function runs
+ *  both server-side (Node/Workers, UTC by default — no bug there) and
+ *  client-side (the renewal workspace is "use client", real viewer
+ *  timezone), so the client path was silently misclassifying which
+ *  expiration tier a lease near a boundary falls into. */
+function parseDateOnly(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function monthsUntil(dateStr: string): number {
-  const end = new Date(dateStr);
+  const end = parseDateOnly(dateStr);
   const now = new Date();
   return (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth());
 }
@@ -175,7 +190,7 @@ export const TIER_LABELS: Record<ExpirationTierKey, string> = {
  * break importing it from client code.
  */
 export function computeDaysRemaining(endDateStr: string, referenceDate: Date = new Date()): number {
-  const end = new Date(endDateStr);
+  const end = parseDateOnly(endDateStr);
   if (Number.isNaN(end.getTime())) return 0;
   const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate());
   const refMidnight = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
