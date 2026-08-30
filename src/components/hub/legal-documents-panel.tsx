@@ -9,6 +9,11 @@ import {
 } from "@/lib/ingest/lease-extraction-schema";
 import { isSameTenant } from "@/lib/ingest/fuzzy-match-tenant";
 import { isDocumentActionable } from "@/lib/data/document-status";
+import {
+  DocumentTriageToolbar,
+  type DocumentKindFilter,
+  type DocumentSortBy,
+} from "@/components/hub/document-triage-toolbar";
 
 /**
  * Legal-tab UI for the active-lease document pipeline: bulk upload, the
@@ -299,6 +304,7 @@ function DocumentCard({
   allUnits,
   onResolved,
   highlighted = false,
+  onHide,
 }: {
   doc: DocumentRow;
   allUnits: UnitOption[];
@@ -306,6 +312,10 @@ function DocumentCard({
   /** True for the one doc, if any, the approval inbox's "Ir a revisión"
    *  navigated here for — see LegalDocumentsPanel's focusDocumentId. */
   highlighted?: boolean;
+  /** Session-only "hide for now" — only passed from the active/resolved
+   *  lists (LegalDocumentsPanel), never from inFlight (nothing pending
+   *  there to hide). Never persisted; see DocumentTriageToolbar. */
+  onHide?: (id: string) => void;
 }) {
   const fields = parseExtractedFields(doc.extractedFields);
   return (
@@ -332,11 +342,23 @@ function DocumentCard({
               : (STATUS_LABELS[doc.status] ?? doc.status)}
           </p>
         </div>
-        {!doc.extractionVerifiedAt && (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
-            EXTRACCIÓN NO VERIFICADA
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {!doc.extractionVerifiedAt && (
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+              EXTRACCIÓN NO VERIFICADA
+            </span>
+          )}
+          {onHide && (
+            <button
+              type="button"
+              onClick={() => onHide(doc.id)}
+              title="Ocultar por ahora — solo en esta sesión, no cambia el estado real del documento."
+              className="text-[11px] font-semibold text-ink-400 hover:text-ink-700 underline cursor-pointer"
+            >
+              Ocultar
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Written by promoteExtraction when the confirmed locale has no
@@ -441,6 +463,15 @@ function DocumentCard({
   );
 }
 
+/** Which of DocumentTriageToolbar's three buckets an actionable document
+ *  falls into — same status split isDocumentActionable already checks,
+ *  named for the filter/metrics UI rather than the predicate. */
+function documentKind(doc: DocumentRow): "match" | "extraction" | "new_lease" {
+  if (doc.status === "ready_for_triage") return "match";
+  if (doc.status === "needs_new_lease") return "new_lease";
+  return "extraction";
+}
+
 export function LegalDocumentsPanel({
   documents,
   allUnits,
@@ -470,6 +501,21 @@ export function LegalDocumentsPanel({
     return () => clearTimeout(timer);
   }, [focusDocumentId]);
 
+  // Bulk-triage view state — session-only, never persisted, never sent
+  // anywhere. Real backlog counts (DocumentTriageToolbar's metrics row)
+  // always read off the unfiltered `active` list below, not this.
+  const [kindFilter, setKindFilter] = useState<DocumentKindFilter>("all");
+  const [textFilter, setTextFilter] = useState("");
+  const [sortBy, setSortBy] = useState<DocumentSortBy>("oldest");
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [showHidden, setShowHidden] = useState(false);
+  const hideDocument = (id: string) => setHiddenIds((prev) => new Set(prev).add(id));
+
+  const [bulkThreshold, setBulkThreshold] = useState(95);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [bulkResult, setBulkResult] = useState<{ ok: number; failed: number } | null>(null);
+
   if (documents.length === 0) {
     return (
       <p className="text-xs text-ink-500 font-medium">
@@ -481,6 +527,87 @@ export function LegalDocumentsPanel({
   const inFlight = documents.filter(isInFlight);
   const active = documents.filter(isActionable);
   const resolved = documents.filter((d) => !isInFlight(d) && !isActionable(d));
+
+  const kindCounts = {
+    match: active.filter((d) => documentKind(d) === "match").length,
+    extraction: active.filter((d) => documentKind(d) === "extraction").length,
+    newLease: active.filter((d) => documentKind(d) === "new_lease").length,
+  };
+  const hasGate1 = kindCounts.match > 0;
+
+  // Bulk-confirm eligibility — computed from the FULL Gate 1 set, not
+  // whatever kind/text filter is currently applied (see
+  // document-triage-toolbar.tsx's doc comment for why): a suggestion must
+  // exist, its confidence must clear the threshold, and confirming it must
+  // not silently overwrite a different tenant's active lease. Mirrors
+  // MatchReviewForm's own isOverwriteRisk exactly — same isSameTenant call,
+  // same "vacant suggestion is never a risk" rule.
+  const bulkEligible = active.filter((d) => {
+    if (documentKind(d) !== "match") return false;
+    if (!d.suggestedLocaleUnit) return false;
+    if (d.matchConfidence === null || d.matchConfidence * 100 < bulkThreshold) return false;
+    const overwriteRisk =
+      !!d.suggestedLocaleTenant &&
+      !!d.documentTenantName &&
+      !isSameTenant(d.suggestedLocaleTenant, d.documentTenantName, undefined, d.documentTradeName);
+    return !overwriteRisk;
+  });
+
+  async function runBulkConfirm() {
+    const targets = bulkEligible;
+    setBulkRunning(true);
+    setBulkResult(null);
+    setBulkProgress({ done: 0, total: targets.length });
+    let ok = 0;
+    let failed = 0;
+    // Small concurrency cap — 3 at a time — so a 60-document run doesn't
+    // fire 60 simultaneous requests at the same route a single click
+    // already uses one at a time.
+    const CONCURRENCY = 3;
+    let cursor = 0;
+    async function worker() {
+      while (cursor < targets.length) {
+        const doc = targets[cursor++];
+        try {
+          const res = await fetch("/api/workflow/confirm-lease-match", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ documentId: doc.id, confirmed: true }),
+          });
+          if (res.ok) ok++;
+          else failed++;
+        } catch {
+          failed++;
+        }
+        setBulkProgress({ done: ok + failed, total: targets.length });
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker));
+    setBulkResult({ ok, failed });
+    setBulkRunning(false);
+    onResolved();
+  }
+
+  const visibleActive = active
+    .filter((d) => showHidden || !hiddenIds.has(d.id))
+    .filter((d) => kindFilter === "all" || documentKind(d) === kindFilter)
+    .filter((d) => {
+      if (!textFilter.trim()) return true;
+      const needle = textFilter.trim().toLowerCase();
+      return [d.originalFilename, d.documentTenantName, d.documentTradeName, d.suggestedLocaleUnit, d.localeUnit]
+        .filter(Boolean)
+        .some((v) => v!.toLowerCase().includes(needle));
+    })
+    .sort((a, b) => {
+      if (sortBy === "confidence_asc" || sortBy === "confidence_desc") {
+        const ca = a.matchConfidence ?? -1;
+        const cb = b.matchConfidence ?? -1;
+        return sortBy === "confidence_asc" ? ca - cb : cb - ca;
+      }
+      const ta = new Date(a.createdAt).getTime();
+      const tb = new Date(b.createdAt).getTime();
+      return sortBy === "oldest" ? ta - tb : tb - ta;
+    });
 
   return (
     <div className="space-y-3">
@@ -495,13 +622,37 @@ export function LegalDocumentsPanel({
         <DocumentCard key={doc.id} doc={doc} allUnits={allUnits} onResolved={onResolved} />
       ))}
 
-      {active.map((doc) => (
+      {active.length > 0 && (
+        <DocumentTriageToolbar
+          counts={{ ...kindCounts, resolvedRecent: resolved.length }}
+          kindFilter={kindFilter}
+          setKindFilter={setKindFilter}
+          textFilter={textFilter}
+          setTextFilter={setTextFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          hasGate1={hasGate1}
+          hiddenCount={hiddenIds.size}
+          showHidden={showHidden}
+          setShowHidden={setShowHidden}
+          bulkThreshold={bulkThreshold}
+          setBulkThreshold={setBulkThreshold}
+          bulkEligibleCount={bulkEligible.length}
+          bulkRunning={bulkRunning}
+          bulkProgress={bulkProgress}
+          bulkResult={bulkResult}
+          onBulkConfirm={() => void runBulkConfirm()}
+        />
+      )}
+
+      {visibleActive.map((doc) => (
         <DocumentCard
           key={doc.id}
           doc={doc}
           allUnits={allUnits}
           onResolved={onResolved}
           highlighted={doc.id === highlightedId}
+          onHide={hideDocument}
         />
       ))}
 
