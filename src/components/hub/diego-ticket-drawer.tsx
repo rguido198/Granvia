@@ -43,13 +43,13 @@ function Card({
 }) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white">
-      <header className="border-b border-slate-100 px-4 py-2.5">
+      <header className="border-b border-slate-100 px-5 py-3">
         {eyebrow && (
-          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{eyebrow}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{eyebrow}</p>
         )}
-        <h4 className="text-xs font-bold text-slate-900">{title}</h4>
+        <h4 className="text-sm font-bold text-slate-900">{title}</h4>
       </header>
-      <div className="px-4 py-3">{children}</div>
+      <div className="px-5 py-4">{children}</div>
     </section>
   );
 }
@@ -57,8 +57,8 @@ function Card({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{label}</dt>
-      <dd className="mt-0.5 text-xs font-semibold text-slate-800">{children}</dd>
+      <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</dt>
+      <dd className="mt-1 text-sm font-semibold text-slate-800">{children}</dd>
     </div>
   );
 }
@@ -157,17 +157,17 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
         aria-modal="true"
         aria-label={"Expediente del ticket " + ticket.ticketNumber}
         style={{ marginTop: 0 }}
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l border-slate-200 bg-slate-50 shadow-2xl animate-fadeIn"
+        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col border-l border-slate-200 bg-slate-50 shadow-2xl animate-fadeIn"
       >
         {/* HEADER */}
-        <header className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
-          <div className="space-y-1.5">
+        <header className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-6 py-5">
+          <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-bold text-slate-900">{ticket.ticketNumber}</span>
+              <span className="text-base font-bold text-slate-900">{ticket.ticketNumber}</span>
               {ticket.priority && (
                 <span
                   className={
-                    "rounded-full px-2 py-0.5 text-[10px] font-bold " + PRIORITY_BADGE[ticket.priority]
+                    "rounded-full px-2.5 py-1 text-xs font-bold " + PRIORITY_BADGE[ticket.priority]
                   }
                 >
                   {ticket.priority}
@@ -175,14 +175,14 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
               )}
               <span
                 className={
-                  "rounded-full px-2.5 py-0.5 text-[10px] font-bold whitespace-nowrap " +
+                  "rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap " +
                   STATUS_BADGE[ticket.status]
                 }
               >
                 {STATUS_LABEL[ticket.status]}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-sm text-slate-500">
               {ticket.propertyName} · {ticket.unitNumber}
             </p>
           </div>
@@ -191,35 +191,35 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
             type="button"
             onClick={onClose}
             aria-label="Cerrar expediente"
-            className="shrink-0 cursor-pointer rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--console-accent)]"
+            className="shrink-0 cursor-pointer rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--console-accent)]"
           >
             Cerrar ✕
           </button>
         </header>
 
         {/* BODY */}
-        <div className="flex-1 space-y-3.5 overflow-y-auto p-5">
+        <div className="flex-1 space-y-4 overflow-y-auto p-6">
           {/* LEGAL CAUTION BANNER — the raw watermark string, rendered for a human.
               Governance §4 requires the unresolved keys be named at runtime, not
               hardcoded; this reformats them, it does not soften them. */}
           {ticket.showWatermark && (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
-              <p className="text-xs font-bold text-amber-900">
+            <div className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-4">
+              <p className="text-sm font-bold text-amber-900">
                 Borrador — pendiente de firma del abogado del arrendador
               </p>
-              <p className="mt-1 text-[11px] leading-relaxed text-amber-900/90">
+              <p className="mt-1.5 text-xs leading-relaxed text-amber-900/90">
                 Este expediente cita parámetros de jurisdicción que aún no han sido verificados por el
                 abogado del arrendador. No constituye asesoría legal.
               </p>
               {ticket.unresolvedKeys.length > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
                     Claves sin resolver
                   </span>
                   {ticket.unresolvedKeys.map((key) => (
                     <span
                       key={key}
-                      className="rounded border border-amber-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-amber-900"
+                      className="rounded border border-amber-300 bg-white px-2 py-1 text-[11px] font-semibold text-amber-900"
                     >
                       {key}
                     </span>
@@ -239,7 +239,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
               <Field label="Recibido">{formatTimestamp(ticket.createdAt)}</Field>
               <Field label="Prioridad">{ticket.priority ?? "Sin asignar"}</Field>
             </dl>
-            <blockquote className="mt-3 rounded-lg border-l-2 border-slate-300 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-800">
+            <blockquote className="mt-3.5 rounded-lg border-l-2 border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-800">
               &ldquo;{ticket.rawReport}&rdquo;
             </blockquote>
           </Card>
@@ -248,9 +248,9 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
            *  is the record of what was done, not a placeholder for it. */}
           {ticket.workPerformed && (
             <Card eyebrow="Registrado por el arrendador" title="Trabajo Realizado">
-              <p className="text-xs leading-relaxed text-slate-800">{ticket.workPerformed}</p>
+              <p className="text-sm leading-relaxed text-slate-800">{ticket.workPerformed}</p>
               {ticket.finalCost !== null && (
-                <p className="mt-2 text-xs font-bold text-slate-900">
+                <p className="mt-2 text-sm font-bold text-slate-900">
                   Costo final: {formatMxn(ticket.finalCost)}
                 </p>
               )}
@@ -260,13 +260,13 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
           {/* 2 · DIEGO IA DIAGNOSTIC CARD */}
           <Card eyebrow="Análisis automático" title="Diagnóstico de Diego IA">
             {ticket.diagnosis ? (
-              <p className="text-xs leading-relaxed text-slate-800">{ticket.diagnosis}</p>
+              <p className="text-sm leading-relaxed text-slate-800">{ticket.diagnosis}</p>
             ) : (
-              <p className="text-xs italic text-slate-500">
+              <p className="text-sm italic text-slate-500">
                 Diego aún no ha emitido diagnóstico para este ticket.
               </p>
             )}
-            <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+            <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
               <Field label="Costo estimado">
                 {ticket.estimatedCost !== null ? formatMxn(ticket.estimatedCost) : "Sin estimar"}
               </Field>
@@ -274,7 +274,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                 {ticket.costBucket ? (
                   <span
                     className={
-                      "inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold " +
+                      "inline-block rounded-full px-3 py-1 text-xs font-bold " +
                       COST_BUCKET_BADGE[ticket.costBucket]
                     }
                   >
@@ -295,7 +295,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                 {ticket.skepticConcerns.map((concern, i) => (
                   <li
                     key={i}
-                    className="rounded-lg border border-red-100 border-l-2 border-l-red-400 bg-red-50/60 px-3 py-2 text-xs leading-relaxed text-slate-800"
+                    className="rounded-lg border border-red-100 border-l-2 border-l-red-400 bg-red-50/60 px-4 py-3 text-sm leading-relaxed text-slate-800"
                   >
                     {concern}
                   </li>
@@ -311,17 +311,17 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
               type="button"
               onClick={() => setAuditExpanded((v) => !v)}
               aria-expanded={auditExpanded}
-              className="flex w-full cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-left"
+              className="flex w-full cursor-pointer items-center justify-between gap-2 px-5 py-3 text-left"
             >
-              <span className="text-[11px] font-semibold text-slate-600">
+              <span className="text-sm font-semibold text-slate-600">
                 Mostrar detalles de auditoría técnica
               </span>
-              <span className="text-[11px] font-bold text-slate-400">{auditExpanded ? "▴" : "▾"}</span>
+              <span className="text-xs font-bold text-slate-400">{auditExpanded ? "▴" : "▾"}</span>
             </button>
             {auditExpanded && (
-              <dl className="space-y-2 border-t border-slate-100 px-4 py-3 font-mono text-[10px] text-slate-600">
+              <dl className="space-y-2.5 border-t border-slate-100 px-5 py-4 font-mono text-[11px] text-slate-600">
                 <div>
-                  <dt className="font-bold text-slate-400">ticket_id</dt>
+                  <dt className="text-[11px] font-bold text-slate-400">ticket_id</dt>
                   <dd className="break-all text-slate-700">{ticket.id}</dd>
                 </div>
                 <div>
@@ -349,14 +349,14 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
 
         {/* STICKY ACTION BAR — the Tier 3 human gate, same endpoint as the queue row. */}
         {awaitingApproval && (
-          <footer className="border-t border-slate-200 bg-white px-5 py-3.5">
-            {errorMsg && <p className="mb-2 text-[11px] font-semibold text-red-600">{errorMsg}</p>}
+          <footer className="border-t border-slate-200 bg-white px-6 py-4">
+            {errorMsg && <p className="mb-2 text-xs font-semibold text-red-600">{errorMsg}</p>}
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => resolve(false)}
                 disabled={submitting !== null}
-                className="cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-4 py-2.5 text-xs font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
+                className="cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-5 py-3 text-sm font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
               >
                 {submitting === "reject" ? "Rechazando…" : "Rechazar"}
               </button>
@@ -364,7 +364,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                 type="button"
                 onClick={() => resolve(true)}
                 disabled={submitting !== null}
-                className="flex-1 cursor-pointer rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-ink px-5 py-3 text-sm font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
               >
                 {submitting === "approve"
                   ? "Despachando…"
@@ -381,28 +381,28 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
          *  Flips to pending_confirmation; the tenant's own portal takes it
          *  from there. */}
         {awaitingCompletion && (
-          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-3">
+          <footer className="border-t border-slate-200 bg-white px-6 py-4 space-y-3">
             {/* Contractor Execution Link Generator */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700">Enlace de Ejecución para Contratista</span>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-bold text-slate-700">Enlace de Ejecución para Contratista</span>
                 <button
                   type="button"
                   disabled={generatingContractorLink}
                   onClick={() => void generateContractorLink()}
-                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-100 cursor-pointer disabled:opacity-50"
+                  className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 hover:bg-slate-100 cursor-pointer disabled:opacity-50"
                 >
                   {generatingContractorLink ? "Generando…" : contractorLinkUrl ? "Regenerar Enlace" : "Generar Enlace"}
                 </button>
               </div>
 
               {contractorLinkError && (
-                <p className="text-[11px] font-semibold text-red-600">{contractorLinkError}</p>
+                <p className="text-xs font-semibold text-red-600">{contractorLinkError}</p>
               )}
 
               {contractorLinkUrl && (
-                <div className="space-y-1.5 pt-1">
-                  <p className="text-[10px] text-slate-500 font-medium">
+                <div className="space-y-2 pt-1">
+                  <p className="text-xs text-slate-500 font-medium">
                     Comparte este enlace con {ticket.contractorName ?? "el contratista"} (válido por 14 días):
                   </p>
                   <div className="flex items-center gap-2">
@@ -410,7 +410,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                       type="text"
                       readOnly
                       value={contractorLinkUrl}
-                      className="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-mono text-slate-700 select-all"
+                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono text-slate-700 select-all"
                     />
                     <button
                       type="button"
@@ -419,7 +419,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                         setCopiedLink(true);
                         setTimeout(() => setCopiedLink(false), 2000);
                       }}
-                      className="rounded-lg bg-slate-900 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer hover:bg-slate-800 shrink-0"
+                      className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white cursor-pointer hover:bg-slate-800 shrink-0"
                     >
                       {copiedLink ? "¡Copiado!" : "Copiar"}
                     </button>
@@ -429,19 +429,19 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
             </div>
 
             {/* Manual Landlord Work Completion Form */}
-            <div className="space-y-2 border-t border-slate-100 pt-2">
+            <div className="space-y-2.5 border-t border-slate-100 pt-3">
               {markResolvedError && (
-                <p className="text-[11px] font-semibold text-red-600">{markResolvedError}</p>
+                <p className="text-xs font-semibold text-red-600">{markResolvedError}</p>
               )}
               {finalCostInputError && (
-                <p className="text-[11px] font-semibold text-red-600">{finalCostInputError}</p>
+                <p className="text-xs font-semibold text-red-600">{finalCostInputError}</p>
               )}
               <textarea
                 value={workPerformedInput}
                 onChange={(e) => setWorkPerformedInput(e.target.value)}
                 placeholder="O bien, registra el trabajo manualmente: ¿qué se hizo? (requerido)"
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
               />
               <div className="flex items-center gap-2.5">
                 <input
@@ -454,7 +454,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                     setFinalCostInputError(null);
                   }}
                   placeholder="Costo final (MXN)"
-                  className="w-36 rounded-xl border border-slate-200 px-3 py-2 text-xs"
+                  className="w-40 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
                 />
                 <button
                   type="button"
@@ -472,7 +472,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                     }
                     void markResolved(workPerformedInput.trim(), cost);
                   }}
-                  className="flex-1 cursor-pointer rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
+                  className="flex-1 cursor-pointer rounded-xl bg-ink px-5 py-3 text-sm font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
                 >
                   {markingResolved ? "Registrando…" : "Marcar Trabajo Terminado"}
                 </button>
@@ -487,11 +487,11 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
          *  KPI bar) — it doesn't gate the escalation button, which is
          *  always available; it just makes the wait visible. */}
         {awaitingConfirmation && (
-          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-2">
+          <footer className="border-t border-slate-200 bg-white px-6 py-4 space-y-2">
             {closeAdministrativelyError && (
-              <p className="text-[11px] font-semibold text-red-600">{closeAdministrativelyError}</p>
+              <p className="text-xs font-semibold text-red-600">{closeAdministrativelyError}</p>
             )}
-            <p className={`text-[11px] font-semibold ${overdueConfirmation ? "text-amber-700" : "text-slate-500"}`}>
+            <p className={`text-xs font-semibold ${overdueConfirmation ? "text-amber-700" : "text-slate-500"}`}>
               {ticket.pendingConfirmationSince
                 ? `Esperando confirmación del inquilino desde ${formatTimestamp(ticket.pendingConfirmationSince)}${
                     overdueConfirmation ? " — más de 48 horas sin respuesta" : ""
@@ -503,7 +503,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                 type="button"
                 disabled={closingAdministratively}
                 onClick={() => void closeAdministratively()}
-                className="w-full cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-4 py-2.5 text-xs font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
+                className="w-full cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-5 py-3 text-sm font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
               >
                 {closingAdministratively ? "Cerrando…" : "Cerrar Administrativamente"}
               </button>
@@ -516,17 +516,17 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
          *  nuevo" — a landlord should never have to guess whether this
          *  reassigns to someone new (it doesn't, in this pass). */}
         {awaitingRedispatch && (
-          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-2">
-            {redispatchError && <p className="text-[11px] font-semibold text-red-600">{redispatchError}</p>}
+          <footer className="border-t border-slate-200 bg-white px-6 py-4 space-y-2">
+            {redispatchError && <p className="text-xs font-semibold text-red-600">{redispatchError}</p>}
             {closeAdministrativelyError && (
-              <p className="text-[11px] font-semibold text-red-600">{closeAdministrativelyError}</p>
+              <p className="text-xs font-semibold text-red-600">{closeAdministrativelyError}</p>
             )}
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 disabled={redispatching}
                 onClick={() => void redispatch()}
-                className="flex-1 cursor-pointer rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-ink px-5 py-3 text-sm font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
               >
                 {redispatching
                   ? "Reenviando…"
@@ -538,7 +538,7 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                 type="button"
                 disabled={closingAdministratively}
                 onClick={() => void closeAdministratively()}
-                className="cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-4 py-2.5 text-xs font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
+                className="cursor-pointer rounded-xl border border-[var(--console-accent)] bg-white px-5 py-3 text-sm font-bold text-[var(--console-accent)] transition-all hover:bg-[var(--console-accent-soft)] disabled:cursor-default disabled:opacity-50"
               >
                 Cerrar Administrativamente
               </button>
