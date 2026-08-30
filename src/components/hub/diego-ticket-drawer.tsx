@@ -241,17 +241,22 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
 
         {/* BODY */}
         <div className="flex-1 space-y-4 overflow-y-auto p-6">
-          {/* LEGAL CAUTION BANNER — the raw watermark string, rendered for a human.
-              Governance §4 requires the unresolved keys be named at runtime, not
-              hardcoded; this reformats them, it does not soften them. */}
+          {/* COST-ATTRIBUTION CAUTION BANNER — distinct from Mariana/lease-
+              renewal's jurisdiction-pack watermark (root CLAUDE.md §4), which
+              this used to reuse verbatim even though Diego's
+              unresolved_jd_keys means something unrelated: not a
+              counsel-unverified JD-01..JD-08 reference, but a free-text
+              question the model couldn't resolve from the lease clause,
+              responsibility matrix, or JD-05 default (see
+              workers/workflows/src/diego-triage.ts's DIEGO_SYSTEM_PROMPT).
+              A landlord's factual call, not a lawyer's — wording says so. */}
           {ticket.showWatermark && (
             <div className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-4">
-              <p className="text-sm font-bold text-amber-900">
-                Borrador — pendiente de firma del abogado del arrendador
-              </p>
+              <p className="text-sm font-bold text-amber-900">Atribución de costo sin resolver</p>
               <p className="mt-1.5 text-xs leading-relaxed text-amber-900/90">
-                Este expediente cita parámetros de jurisdicción que aún no han sido verificados por el
-                abogado del arrendador. No constituye asesoría legal.
+                Diego no pudo determinar quién cubre este costo a partir del contrato, la matriz de
+                responsabilidad o el criterio jurisdiccional por defecto. Requiere una decisión del
+                arrendador, no una revisión legal.
               </p>
               {ticket.unresolvedKeys.length > 0 && (
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
