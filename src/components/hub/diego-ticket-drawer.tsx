@@ -12,6 +12,7 @@ import {
   STATUS_LABEL,
   formatMxn,
   useCloseTicketAdministratively,
+  useGenerateContractorLink,
   useMarkTicketResolved,
   useRedispatchTicket,
   useResolveTicket,
@@ -75,6 +76,13 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
     errorMsg: closeAdministrativelyError,
     closeAdministratively,
   } = useCloseTicketAdministratively(ticket.id);
+  const {
+    submitting: generatingContractorLink,
+    errorMsg: contractorLinkError,
+    generatedUrl: contractorLinkUrl,
+    generateLink: generateContractorLink,
+  } = useGenerateContractorLink(ticket.id);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [workPerformedInput, setWorkPerformedInput] = useState("");
   // Prefilled from the pre-dispatch approval estimate — still fully
   // editable, same "landlord-supplied, never guessed" rule NewLeaseForm's
@@ -373,58 +381,102 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
          *  Flips to pending_confirmation; the tenant's own portal takes it
          *  from there. */}
         {awaitingCompletion && (
-          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-2">
-            {markResolvedError && (
-              <p className="text-[11px] font-semibold text-red-600">{markResolvedError}</p>
-            )}
-            {finalCostInputError && (
-              <p className="text-[11px] font-semibold text-red-600">{finalCostInputError}</p>
-            )}
-            <textarea
-              value={workPerformedInput}
-              onChange={(e) => setWorkPerformedInput(e.target.value)}
-              placeholder="¿Qué se hizo? (requerido)"
-              rows={2}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
-            />
-            <div className="flex items-center gap-2.5">
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={finalCostInput}
-                onChange={(e) => {
-                  setFinalCostInput(e.target.value);
-                  setFinalCostInputError(null);
-                }}
-                placeholder="Costo final (MXN)"
-                className="w-36 rounded-xl border border-slate-200 px-3 py-2 text-xs"
+          <footer className="border-t border-slate-200 bg-white px-5 py-3.5 space-y-3">
+            {/* Contractor Execution Link Generator */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700">Enlace de Ejecución para Contratista</span>
+                <button
+                  type="button"
+                  disabled={generatingContractorLink}
+                  onClick={() => void generateContractorLink()}
+                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-100 cursor-pointer disabled:opacity-50"
+                >
+                  {generatingContractorLink ? "Generando…" : contractorLinkUrl ? "Regenerar Enlace" : "Generar Enlace"}
+                </button>
+              </div>
+
+              {contractorLinkError && (
+                <p className="text-[11px] font-semibold text-red-600">{contractorLinkError}</p>
+              )}
+
+              {contractorLinkUrl && (
+                <div className="space-y-1.5 pt-1">
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    Comparte este enlace con {ticket.contractorName ?? "el contratista"} (válido por 14 días):
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={contractorLinkUrl}
+                      className="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-mono text-slate-700 select-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(contractorLinkUrl);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      className="rounded-lg bg-slate-900 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer hover:bg-slate-800 shrink-0"
+                    >
+                      {copiedLink ? "¡Copiado!" : "Copiar"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Manual Landlord Work Completion Form */}
+            <div className="space-y-2 border-t border-slate-100 pt-2">
+              {markResolvedError && (
+                <p className="text-[11px] font-semibold text-red-600">{markResolvedError}</p>
+              )}
+              {finalCostInputError && (
+                <p className="text-[11px] font-semibold text-red-600">{finalCostInputError}</p>
+              )}
+              <textarea
+                value={workPerformedInput}
+                onChange={(e) => setWorkPerformedInput(e.target.value)}
+                placeholder="O bien, registra el trabajo manualmente: ¿qué se hizo? (requerido)"
+                rows={2}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
               />
-              <button
-                type="button"
-                disabled={markingResolved || !workPerformedInput.trim()}
-                onClick={() => {
-                  const trimmed = finalCostInput.trim();
-                  // A genuinely empty field means "no cost provided" and
-                  // submits null. Anything else that isn't a valid,
-                  // non-negative number blocks the submit with a visible
-                  // error instead of silently becoming null — the bug
-                  // this replaced let "abc" submit as "no cost."
-                  if (trimmed === "") {
-                    void markResolved(workPerformedInput.trim(), null);
-                    return;
-                  }
-                  const cost = Number(trimmed);
-                  if (!Number.isFinite(cost) || cost < 0) {
-                    setFinalCostInputError("El costo final debe ser un número válido, no negativo.");
-                    return;
-                  }
-                  void markResolved(workPerformedInput.trim(), cost);
-                }}
-                className="flex-1 cursor-pointer rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
-              >
-                {markingResolved ? "Registrando…" : "Marcar Trabajo Terminado"}
-              </button>
+              <div className="flex items-center gap-2.5">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={finalCostInput}
+                  onChange={(e) => {
+                    setFinalCostInput(e.target.value);
+                    setFinalCostInputError(null);
+                  }}
+                  placeholder="Costo final (MXN)"
+                  className="w-36 rounded-xl border border-slate-200 px-3 py-2 text-xs"
+                />
+                <button
+                  type="button"
+                  disabled={markingResolved || !workPerformedInput.trim()}
+                  onClick={() => {
+                    const trimmed = finalCostInput.trim();
+                    if (trimmed === "") {
+                      void markResolved(workPerformedInput.trim(), null);
+                      return;
+                    }
+                    const cost = Number(trimmed);
+                    if (!Number.isFinite(cost) || cost < 0) {
+                      setFinalCostInputError("El costo final debe ser un número válido, no negativo.");
+                      return;
+                    }
+                    void markResolved(workPerformedInput.trim(), cost);
+                  }}
+                  className="flex-1 cursor-pointer rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-ink-700 disabled:cursor-default disabled:opacity-50"
+                >
+                  {markingResolved ? "Registrando…" : "Marcar Trabajo Terminado"}
+                </button>
+              </div>
             </div>
           </footer>
         )}

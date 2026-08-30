@@ -36,7 +36,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(CONSOLE_LOGIN_PATH) ||
     pathname.startsWith(TENANT_LOGIN_PATH) ||
     pathname.startsWith("/auth/") ||
-    pathname.startsWith("/api/")
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/contratista/")
   ) {
     return NextResponse.next();
   }

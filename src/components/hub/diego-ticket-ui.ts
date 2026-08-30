@@ -190,3 +190,30 @@ export function useCloseTicketAdministratively(ticketId: string) {
   const { submitting, errorMsg, run } = usePostTicketAction(ticketId, "close-administratively");
   return { submitting, errorMsg, closeAdministratively: run };
 }
+
+/** Generates a single-dispatch contractor execution link. */
+export function useGenerateContractorLink(ticketId: string) {
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+
+  const generateLink = useCallback(async () => {
+    setSubmitting(true);
+    setErrorMsg(null);
+    setGeneratedUrl(null);
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/contractor-link`, { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.error ?? "HTTP " + res.status);
+      }
+      setGeneratedUrl(body.url as string);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Error al generar el enlace");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [ticketId]);
+
+  return { submitting, errorMsg, generatedUrl, generateLink };
+}
