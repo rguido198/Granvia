@@ -397,6 +397,22 @@ async function writeTicket(
     throw new NonRetryableError(`failed to write ticket: ${error?.message}`);
   }
 
+  // The RPC-layer transitions (approve/mark-resolved/confirm/reopen/close)
+  // each log their own ticket_status_history row — but Diego's own initial
+  // triage decision (this insert, above) never did, leaving every ticket's
+  // timeline starting mid-story with no record of when/why it first landed
+  // at needs_approval or auto-dispatched. from_status is null here — there
+  // is no prior status, this row IS the creation event.
+  await supabase.from("ticket_status_history").insert({
+    ticket_id: ticket.id,
+    from_status: null,
+    to_status: status,
+    note:
+      status === "dispatched"
+        ? "Triado y auto-despachado por Diego IA"
+        : "Triado por Diego IA — requiere aprobación del arrendador",
+  });
+
   await supabase.from("agent_decisions").insert({
     skill: "maintenance-dispatcher",
     ticket_id: ticket.id,
