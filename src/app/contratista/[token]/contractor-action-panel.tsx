@@ -37,7 +37,7 @@ export function ContractorActionPanel({
     setArrivalError(null);
     try {
       const res = await fetch(`/api/contratista/${token}/arrived`, { method: "POST" });
-      const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         throw new Error(body.error ?? "No se pudo registrar la llegada.");
       }
@@ -76,7 +76,7 @@ export function ContractorActionPanel({
           finalCost: parsedCost,
         }),
       });
-      const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         throw new Error(body.error ?? "No se pudo registrar el trabajo.");
       }

@@ -590,7 +590,9 @@ export function LandlordDashboard({
           body: JSON.stringify({ stage, note: note || undefined }),
         });
         if (!res.ok) {
-          const { error } = await res.json().catch(() => ({ error: "no se pudo registrar el contacto" }));
+          const { error } = (await res.json().catch(() => ({ error: "no se pudo registrar el contacto" }))) as {
+            error?: string;
+          };
           triggerToast(error ?? "no se pudo registrar el contacto");
           return;
         }
@@ -3257,7 +3259,7 @@ export function LandlordDashboard({
                     signal: controller.signal,
                   });
                   if (!res.ok) {
-                    const json = await res.json().catch(() => ({}));
+                    const json = (await res.json().catch(() => ({}))) as { error?: string };
                     throw new Error(json.error ?? "Error desconocido");
                   }
                   if (!res.body) throw new Error("Error de conexión con el agente.");

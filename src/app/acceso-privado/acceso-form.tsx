@@ -23,7 +23,7 @@ export function AccesoForm() {
         body: JSON.stringify({ password }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { success?: boolean; error?: string };
 
       if (res.ok && data.success) {
         router.push("/");

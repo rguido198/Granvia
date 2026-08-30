@@ -1,41 +1,35 @@
-import { createHook, FatalError, getWorkflowMetadata } from "workflow";
+import {
+  WorkflowEntrypoint,
+  type WorkflowStep,
+  type WorkflowEvent,
+} from "cloudflare:workers";
+import { NonRetryableError } from "cloudflare:workflows";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { wrapUntrustedContent } from "@/lib/llm/untrusted-content";
+import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
+import { wrapUntrustedContent } from "../../../src/lib/llm/untrusted-content";
+import { hydrateProcessEnv, type WorkflowsEnv } from "./env";
 
 /**
- * Mariana (lease-screener) as a durable state machine, mirroring
- * diego-triage.ts's shape deliberately — same pattern, different domain.
- * Source of truth for the mechanics below: .claude/skills/lease-screener/SKILL.md
- * in the OS repo — this file implements it, it doesn't restate it in full.
- *
- * Scoped to §2B (exclusive-use overlap audit) and §2C (scoring) — the risk
- * classification and Match Score. It does not draft the full Case A/B
- * commercial-terms document (§4); that needs every JD key Mariana consumes
- * (JD-01/02/03/04/06/07/08), most of which are unresolved or partial in
- * mx.md today, and templating an unresolved-key placeholder into a legal
- * document is worse than not drafting it. The console renders Case A/B
- * framing from the structured verdict fields this workflow writes.
+ * Mariana (lease-screener) as a durable state machine, on Cloudflare
+ * Workflows. Ported from src/workflows/mariana-screening.ts (the Vercel
+ * `workflow` SDK version) — business logic unchanged; only the durable-
+ * execution primitives differ. Source of truth for the mechanics below:
+ * .claude/skills/lease-screener/SKILL.md in the OS repo — this file
+ * implements it, it doesn't restate it in full.
  */
 
-// ── Jurisdiction status — mechanical, not LLM-reported ──────────────────────
-//
-// Diego's warranty check is pure DB because a model shouldn't be trusted on
-// dates it wasn't given full context for; this is the same principle for
-// jurisdiction compliance. mx.md's own coverage index (read at authoring
-// time, not hardcoded from a stale copy — see SKILL.md §0's own warning
-// about that) currently has JD-01 and JD-08 fully unanswered and JD-06
-// partial (capital/audit window). The pack itself is not counsel-verified,
-// which alone forces the watermark per SKILL.md §0 regardless of which
-// specific key a given run touches.
+type Params = {
+  documentId: string;
+  targetLocaleId: string;
+  leadId: string | null;
+};
+
 const JURISDICTION_PACK_REF = "México · mx.md v1.0 (2026-08-04)";
 const PACK_COUNSEL_VERIFIED = false;
 const MARIANA_UNRESOLVED_JD_KEYS = ["JD-01", "JD-06", "JD-08"];
-
-// ── Step 1: load everything the draft pass needs ────────────────────────────
 
 type ActiveLease = {
   localeId: string;
@@ -51,7 +45,12 @@ type ActiveLease = {
 type ApplicationContext = {
   documentId: string;
   rawApplication: string;
-  targetLocale: { id: string; unitNumber: string; areaSqm: number | null; status: string };
+  targetLocale: {
+    id: string;
+    unitNumber: string;
+    areaSqm: number | null;
+    status: string;
+  };
   property: { id: string; jurisdictionId: string };
   activeLeases: ActiveLease[];
   plazaAvgRentPerSqm: number | null;
@@ -62,7 +61,6 @@ async function loadApplicationContext(
   documentId: string,
   targetLocaleId: string,
 ): Promise<ApplicationContext> {
-  "use step";
   const supabase = getSupabaseServiceClient();
 
   const { data: document, error: documentError } = await supabase
@@ -71,7 +69,9 @@ async function loadApplicationContext(
     .eq("id", documentId)
     .single();
   if (documentError || !document) {
-    throw new FatalError(`document ${documentId} not found: ${documentError?.message}`);
+    throw new NonRetryableError(
+      `document ${documentId} not found: ${documentError?.message}`,
+    );
   }
 
   const { data: targetLocale, error: localeError } = await supabase
@@ -80,7 +80,9 @@ async function loadApplicationContext(
     .eq("id", targetLocaleId)
     .single();
   if (localeError || !targetLocale) {
-    throw new FatalError(`locale ${targetLocaleId} not found: ${localeError?.message}`);
+    throw new NonRetryableError(
+      `locale ${targetLocaleId} not found: ${localeError?.message}`,
+    );
   }
 
   const { data: property, error: propertyError } = await supabase
@@ -89,14 +91,11 @@ async function loadApplicationContext(
     .eq("id", targetLocale.property_id)
     .single();
   if (propertyError || !property) {
-    throw new FatalError(`property for locale ${targetLocaleId} not found`);
+    throw new NonRetryableError(
+      `property for locale ${targetLocaleId} not found`,
+    );
   }
 
-  // Two plain queries rather than an embedded-resource filter
-  // (locales!inner(...) + dot-notation .eq on the embed) — that pattern
-  // silently returned null area_sqm for every row in testing (confirmed:
-  // the same data joins fine in raw SQL), so it's not worth the fragility
-  // for what's a small, cacheable lookup either way.
   const today = new Date().toISOString().slice(0, 10);
   const { data: propertyLocales } = await supabase
     .from("locales")
@@ -106,7 +105,9 @@ async function loadApplicationContext(
 
   const { data: leaseRows } = await supabase
     .from("leases")
-    .select("locale_id, tenant_entity, exclusive_use_clause, permitted_use, end_date, base_rent_monthly")
+    .select(
+      "locale_id, tenant_entity, exclusive_use_clause, permitted_use, end_date, base_rent_monthly",
+    )
     .in("locale_id", [...localesById.keys()])
     .gte("end_date", today);
 
@@ -124,10 +125,15 @@ async function loadApplicationContext(
     };
   });
 
-  const rentSamples = activeLeases.filter((l) => l.baseRentMonthly && l.areaSqm);
+  const rentSamples = activeLeases.filter(
+    (l) => l.baseRentMonthly && l.areaSqm,
+  );
   const plazaAvgRentPerSqm =
     rentSamples.length > 0
-      ? rentSamples.reduce((sum, l) => sum + l.baseRentMonthly! / l.areaSqm!, 0) / rentSamples.length
+      ? rentSamples.reduce(
+          (sum, l) => sum + l.baseRentMonthly! / l.areaSqm!,
+          0,
+        ) / rentSamples.length
       : null;
 
   return {
@@ -145,8 +151,6 @@ async function loadApplicationContext(
     plazaAvgRentSampleSize: rentSamples.length,
   };
 }
-
-// ── Step 2: Mariana's draft pass (Opus 5) ───────────────────────────────────
 
 const MarianaDraftSchema = z.object({
   applicant_entity: z.string(),
@@ -168,11 +172,6 @@ const MarianaDraftSchema = z.object({
   yield_score: z.number().nullable(),
   uncapped_yield_ratio: z.number().nullable(),
   term_stability_score: z.number().nullable(),
-  // Persisted verbatim to lease_applications.draft_markdown (a column that
-  // already existed, mirroring lease_renewals.draft_markdown, but was never
-  // populated) — an auditable evidence summary for the landlord's review
-  // panel, not raw chain-of-thought. .max() bounds worst-case model output
-  // before it's ever written to the DB, not just at render time.
   draft_markdown: z.string().max(4000),
 });
 type MarianaDraft = z.infer<typeof MarianaDraftSchema>;
@@ -206,8 +205,9 @@ draft_markdown: a short evidence summary for a landlord's review panel — decis
 
 Respond only with the structured fields requested — no prose outside them.`;
 
-async function draftScreening(context: ApplicationContext): Promise<MarianaDraft> {
-  "use step";
+async function draftScreening(
+  context: ApplicationContext,
+): Promise<MarianaDraft> {
   const client = new Anthropic();
 
   const userContent = [
@@ -234,18 +234,22 @@ async function draftScreening(context: ApplicationContext): Promise<MarianaDraft
   const response = await client.messages.parse({
     model: "claude-opus-5",
     max_tokens: 4000,
-    system: [{ type: "text", text: MARIANA_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+    system: [
+      {
+        type: "text",
+        text: MARIANA_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [{ role: "user", content: userContent }],
     output_config: { format: zodOutputFormat(MarianaDraftSchema) },
   });
 
   if (!response.parsed_output) {
-    throw new FatalError("Mariana draft pass returned no parsed output");
+    throw new NonRetryableError("Mariana draft pass returned no parsed output");
   }
   return response.parsed_output;
 }
-
-// ── Step 3: skeptic pass (Opus 5) — re-audits the draft's own tests ────────
 
 const SkepticVerdictSchema = z.object({
   flagged: z.boolean(),
@@ -260,7 +264,6 @@ async function runSkeptic(
   context: ApplicationContext,
   draft: MarianaDraft,
 ): Promise<SkepticVerdict> {
-  "use step";
   const client = new Anthropic();
 
   const response = await client.messages.parse({
@@ -271,15 +274,6 @@ async function runSkeptic(
       {
         role: "user",
         content: [
-          // Same full context the draft step received (§2B testing note:
-          // "re-run the tests against the text you just drafted" only
-          // works if the skeptic can check the same facts the draft had.
-          // Two rounds of this bug already: v1 gave it exclusive_use_clause
-          // only (flagged tenant/permitted_use/expiry as unverified); v2
-          // added those but still omitted target-locale status/area_sqm,
-          // which the draft is also given directly — flagged again on the
-          // second live test. Every field in ApplicationContext the draft
-          // sees now goes to the skeptic too.
           `Local objetivo: ${context.targetLocale.unitNumber}, ${context.targetLocale.areaSqm ?? "?"} m², estatus ${context.targetLocale.status}.`,
           "",
           "Contratos activos citables:",
@@ -298,12 +292,10 @@ async function runSkeptic(
   });
 
   if (!response.parsed_output) {
-    throw new FatalError("skeptic pass returned no parsed output");
+    throw new NonRetryableError("skeptic pass returned no parsed output");
   }
   return response.parsed_output;
 }
-
-// ── Step 4: persist ──────────────────────────────────────────────────────────
 
 async function writeApplication(params: {
   context: ApplicationContext;
@@ -312,21 +304,13 @@ async function writeApplication(params: {
   workflowRunId: string;
   leadId?: string | null;
 }): Promise<string> {
-  "use step";
   const supabase = getSupabaseServiceClient();
   const { context, draft, skeptic, workflowRunId, leadId } = params;
 
-  // Same "ambiguity is escalated, never guessed" principle as Diego's
-  // skeptic handling — a flagged concern with no replacement verdict means
-  // real doubt, not resolved doubt.
-  const finalRiskLevel = skeptic.revised_risk_level ?? (skeptic.flagged ? "MEDIO" : draft.risk_level);
+  const finalRiskLevel =
+    skeptic.revised_risk_level ??
+    (skeptic.flagged ? "MEDIO" : draft.risk_level);
 
-  // draft.draft_markdown is written before the skeptic pass runs, so it
-  // can't mention skeptic findings — appended here in plain code instead of
-  // asking the model to write about a verdict it hasn't seen. The review
-  // panel also renders skeptic_concerns directly as its own callout; this
-  // section is what a landlord sees if they instead open the full evidence
-  // summary.
   const finalMarkdown = skeptic.concerns.length
     ? `${draft.draft_markdown}\n\n## Notas del auditor (Mariana IA)\n${skeptic.concerns.map((c) => `- ${c}`).join("\n")}`
     : draft.draft_markdown;
@@ -346,24 +330,32 @@ async function writeApplication(params: {
       status: "needs_landlord_review",
       risk_level: finalRiskLevel,
       matched_locale_id:
-        context.activeLeases.find((l) => l.unitNumber === draft.matched_locale_unit)?.localeId ?? null,
+        context.activeLeases.find(
+          (l) => l.unitNumber === draft.matched_locale_unit,
+        )?.localeId ?? null,
       matched_clause_text: draft.matched_clause_text,
       matched_product_pairs: draft.matched_product_pairs,
-      category_fit_score: finalRiskLevel === "ALTO" ? null : draft.category_fit_score,
+      category_fit_score:
+        finalRiskLevel === "ALTO" ? null : draft.category_fit_score,
       yield_score: finalRiskLevel === "ALTO" ? null : draft.yield_score,
-      term_stability_score: finalRiskLevel === "ALTO" ? null : draft.term_stability_score,
+      term_stability_score:
+        finalRiskLevel === "ALTO" ? null : draft.term_stability_score,
       match_score:
         finalRiskLevel === "ALTO" ||
         draft.category_fit_score === null ||
         draft.yield_score === null ||
         draft.term_stability_score === null
           ? null
-          : 0.4 * draft.category_fit_score + 0.3 * draft.yield_score + 0.3 * draft.term_stability_score,
+          : 0.4 * draft.category_fit_score +
+            0.3 * draft.yield_score +
+            0.3 * draft.term_stability_score,
       skeptic_flagged: skeptic.flagged,
       skeptic_concerns: skeptic.concerns,
       draft_markdown: finalMarkdown,
       jurisdiction_pack_ref: JURISDICTION_PACK_REF,
-      unresolved_jd_keys: PACK_COUNSEL_VERIFIED ? [] : MARIANA_UNRESOLVED_JD_KEYS,
+      unresolved_jd_keys: PACK_COUNSEL_VERIFIED
+        ? []
+        : MARIANA_UNRESOLVED_JD_KEYS,
       workflow_run_id: workflowRunId,
       source_lead_id: leadId ?? null,
     })
@@ -371,7 +363,9 @@ async function writeApplication(params: {
     .single();
 
   if (error || !application) {
-    throw new FatalError(`failed to write lease_application: ${error?.message}`);
+    throw new NonRetryableError(
+      `failed to write lease_application: ${error?.message}`,
+    );
   }
 
   await supabase
@@ -380,18 +374,15 @@ async function writeApplication(params: {
     .eq("id", context.documentId);
 
   if (leadId) {
-    // The lead can be converted from any stage — stages aren't gated — so
-    // from_stage has to be read, not assumed: a lead converted straight
-    // from "contacted" would otherwise get a history row falsely claiming
-    // it passed through "application_requested" first.
-    const { data: leadRow } = await supabase.from("leads").select("stage").eq("id", leadId).maybeSingle();
+    const { data: leadRow } = await supabase
+      .from("leads")
+      .select("stage")
+      .eq("id", leadId)
+      .maybeSingle();
 
     await supabase
       .from("leads")
-      .update({
-        stage: "converted",
-        converted_application_id: application.id,
-      })
+      .update({ stage: "converted", converted_application_id: application.id })
       .eq("id", leadId);
 
     await supabase.from("lead_stage_history").insert({
@@ -407,40 +398,62 @@ async function writeApplication(params: {
 }
 
 async function markReviewed(applicationId: string, approved: boolean) {
-  "use step";
   const supabase = getSupabaseServiceClient();
-  // reviewed_by/reviewed_at are set directly by /api/workflow/approve-lease
-  // before it calls resumeHook — same split as Diego's approved_by, this
-  // step only advances status once the workflow itself wakes back up.
   await supabase
     .from("lease_applications")
     .update({ status: approved ? "approved" : "rejected" })
     .eq("id", applicationId);
 }
 
-// ── The workflow ─────────────────────────────────────────────────────────────
+export class MarianaScreeningWorkflow extends WorkflowEntrypoint<
+  WorkflowsEnv,
+  Params
+> {
+  async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
+    hydrateProcessEnv(this.env);
+    const { documentId, targetLocaleId, leadId } = event.payload;
 
-export async function marianaScreeningWorkflow(documentId: string, targetLocaleId: string, leadId?: string | null) {
-  "use workflow";
+    const context = await step.do("load application context", () =>
+      loadApplicationContext(documentId, targetLocaleId),
+    );
+    const draft = await step.do("draft screening", () =>
+      draftScreening(context),
+    );
+    const skeptic = await step.do("run skeptic", () =>
+      runSkeptic(context, draft),
+    );
 
-  const context = await loadApplicationContext(documentId, targetLocaleId);
-  const draft = await draftScreening(context);
-  const skeptic = await runSkeptic(context, draft);
+    const workflowRunId = event.instanceId;
+    const applicationId = await step.do("write application", () =>
+      writeApplication({ context, draft, skeptic, workflowRunId, leadId }),
+    );
 
-  const { workflowRunId } = getWorkflowMetadata();
-  const applicationId = await writeApplication({ context, draft, skeptic, workflowRunId, leadId });
-
-  // Tier 3 human gate (root CLAUDE.md §1) — SKILL.md's own scope boundary:
-  // "this skill screens and proposes. It never signs, sends, or commits to
-  // a lease." There is no auto-approve tier here, unlike Diego's — every
-  // outcome, including BAJO with a clean score, suspends for a landlord
-  // decision. Woken by Phase 3's review UI calling
-  // resumeHook(`lease-application-review:${applicationId}`, ...).
-  const hook = createHook<{ approved: boolean }>({
-    token: `lease-application-review:${applicationId}`,
-  });
-  const decision = await hook;
-  await markReviewed(applicationId, decision.approved);
-
-  return { applicationId, status: decision.approved ? "approved" : "rejected" };
+    // Tier 3 human gate (root CLAUDE.md §1) — SKILL.md's own scope boundary:
+    // "this skill screens and proposes. It never signs, sends, or commits to
+    // a lease." There is no auto-approve tier here, unlike Diego's — every
+    // outcome, including BAJO with a clean score, suspends for a landlord
+    // decision. Woken by the review UI sending an event of type
+    // `lease-application-review-${applicationId}`.
+    try {
+      const reviewEvent = await step.waitForEvent<{ approved: boolean }>(
+        "await application review",
+        {
+          type: `lease-application-review-${applicationId}`,
+          timeout: "30 days",
+        },
+      );
+      const decision = reviewEvent.payload;
+      await step.do("mark reviewed", () =>
+        markReviewed(applicationId, decision.approved),
+      );
+      return {
+        applicationId,
+        status: decision.approved
+          ? ("approved" as const)
+          : ("rejected" as const),
+      };
+    } catch {
+      return { applicationId, status: "needs_landlord_review" as const };
+    }
+  }
 }

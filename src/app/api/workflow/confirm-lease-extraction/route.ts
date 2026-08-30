@@ -1,11 +1,12 @@
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse, type NextRequest } from "next/server";
-import { resumeHook, start } from "workflow/api";
-import { HookNotFoundError } from "workflow/internal/errors";
 
 import { getCurrentProfile } from "@/lib/auth/server";
-import { LeaseExtractedFieldsSchema, NewLeaseDetailsSchema } from "@/lib/ingest/lease-extraction-schema";
+import {
+  LeaseExtractedFieldsSchema,
+  NewLeaseDetailsSchema,
+} from "@/lib/ingest/lease-extraction-schema";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { leaseDigitizationWorkflow } from "@/workflows/lease-digitization";
 
 /**
  * Wakes leaseDigitizationWorkflow's Gate 2 (extraction accuracy) —
@@ -41,7 +42,10 @@ export async function POST(request: NextRequest) {
     (action !== "confirm" && action !== "rescan" && action !== "reject")
   ) {
     return NextResponse.json(
-      { error: "documentId and a valid action ('confirm' | 'rescan' | 'reject') are required" },
+      {
+        error:
+          "documentId and a valid action ('confirm' | 'rescan' | 'reject') are required",
+      },
       { status: 400 },
     );
   }
@@ -90,7 +94,7 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabaseServiceClient();
   const { data: document, error: fetchError } = await supabase
     .from("documents")
-    .select("id, status")
+    .select("id, status, workflow_run_id")
     .eq("id", documentId)
     .single();
 
@@ -108,7 +112,32 @@ export async function POST(request: NextRequest) {
       `confirm-lease-extraction: document ${documentId} is '${document.status}', not 'attached' or 'needs_new_lease'`,
     );
     return NextResponse.json(
-      { error: "Esta extracción ya fue validada o el contrato cambió de estado. Actualiza la vista." },
+      {
+        error:
+          "Esta extracción ya fue validada o el contrato cambió de estado. Actualiza la vista.",
+      },
+      { status: 409 },
+    );
+  }
+
+  const { env } = getCloudflareContext();
+
+  if (!document.workflow_run_id) {
+    console.warn(
+      `confirm-lease-extraction: document ${documentId} has no workflow run on record, restarting at Gate 1`,
+    );
+    const instance = await env.LEASE_DIGITIZATION_WORKFLOW.create({
+      params: { documentId },
+    });
+    await supabase
+      .from("documents")
+      .update({ workflow_run_id: instance.id, status: "ready_for_triage" })
+      .eq("id", documentId);
+    return NextResponse.json(
+      {
+        error:
+          "Este documento no tenía un proceso de fondo asociado y se está reprocesando desde cero — volverá a pedirte confirmar el local (Gate 1) antes de validar la extracción de nuevo.",
+      },
       { status: 409 },
     );
   }
@@ -117,19 +146,25 @@ export async function POST(request: NextRequest) {
     // Same rule as the Gate 1 route: `verifiedById` comes from the
     // authenticated session, never the request body. promoteExtraction writes
     // it to documents.extraction_verified_by_id (root CLAUDE.md §3).
-    const result = await resumeHook(`lease-doc-extraction:${documentId}`, {
-      action,
-      correctedFields: parsedFields,
-      newLeaseDetails: parsedNewLeaseDetails,
-      verifiedById: profile.id,
+    const instance = await env.LEASE_DIGITIZATION_WORKFLOW.get(
+      document.workflow_run_id as string,
+    );
+    await instance.sendEvent({
+      type: `lease-doc-extraction-${documentId}`,
+      payload: {
+        action,
+        correctedFields: parsedFields,
+        newLeaseDetails: parsedNewLeaseDetails,
+        verifiedById: profile.id,
+      },
     });
-    return NextResponse.json({ ok: true, runId: result.runId });
+    return NextResponse.json({ ok: true, runId: document.workflow_run_id });
   } catch (error) {
-    // Unlike Gate 1 (confirm-lease-match/route.ts), a dead hook here can't
-    // self-heal into another live Gate 2 hook: a fresh run always begins at
-    // Gate 1 (loadDocumentContext → extraction → the match hook), so
-    // restarting necessarily flips this already-`attached` document's status
-    // back to `ready_for_triage` — undoing the Gate 1 confirmation a
+    // Unlike Gate 1 (confirm-lease-match/route.ts), a dead instance here
+    // can't self-heal into another live Gate 2 wait: a fresh run always
+    // begins at Gate 1 (loadDocumentContext → extraction → the match wait),
+    // so restarting necessarily flips this already-`attached` document's
+    // status back to `ready_for_triage` — undoing the Gate 1 confirmation a
     // landlord already made, not just re-running the step they were about to
     // redo. locale_id itself is untouched (recordSuggestion only ever
     // touches suggested_locale_id), so the very likely outcome is the same
@@ -137,26 +172,26 @@ export async function POST(request: NextRequest) {
     // it is still a real extra step, so this says so plainly instead of
     // silently doing it and leaving the landlord to notice the document
     // reappeared at Gate 1 on its own.
-    if (HookNotFoundError.is(error)) {
-      console.warn(
-        `confirm-lease-extraction: hook gone for document ${documentId}, re-starting the workflow`,
-        error,
-      );
-      const run = await start(leaseDigitizationWorkflow, [documentId]);
-      await supabase.from("documents").update({ workflow_run_id: run.runId }).eq("id", documentId);
-      return NextResponse.json(
-        {
-          error:
-            "Este documento perdió su proceso de fondo y se está reprocesando desde cero — no se perdió ningún dato, pero volverá a pedirte confirmar el local (Gate 1) antes de validar la extracción de nuevo. Espera unos segundos y actualiza la vista.",
-        },
-        { status: 409 },
-      );
-    }
-
-    // Never echo the raw resumeHook error — it embeds the internal hook token.
-    console.error(`confirm-lease-extraction: resumeHook failed for document ${documentId}`, error);
+    //
+    // Same caveat as confirm-lease-match/route.ts: this restarts on ANY
+    // error from .get()/.sendEvent(), not just "instance not found" —
+    // narrow once the real Cloudflare error shape is confirmed live.
+    console.warn(
+      `confirm-lease-extraction: workflow instance gone for document ${documentId}, re-starting the workflow`,
+      error,
+    );
+    const instance = await env.LEASE_DIGITIZATION_WORKFLOW.create({
+      params: { documentId },
+    });
+    await supabase
+      .from("documents")
+      .update({ workflow_run_id: instance.id })
+      .eq("id", documentId);
     return NextResponse.json(
-      { error: "Esta extracción ya fue validada o el contrato cambió de estado. Actualiza la vista." },
+      {
+        error:
+          "Este documento perdió su proceso de fondo y se está reprocesando desde cero — no se perdió ningún dato, pero volverá a pedirte confirmar el local (Gate 1) antes de validar la extracción de nuevo. Espera unos segundos y actualiza la vista.",
+      },
       { status: 409 },
     );
   }

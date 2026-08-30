@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+workers/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -34,8 +35,15 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
+# vercel (retained: some historical deploy config/scripts still reference it)
 .vercel
+
+# cloudflare
+.open-next/
+.wrangler/
+worker-configuration.d.ts
+workers/workflows/.dev.vars*
+!workers/workflows/.dev.vars.example
 
 # git worktrees (agentic dev isolation)
 .claude/worktrees/

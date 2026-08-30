@@ -8,8 +8,6 @@ import {
 } from "@/lib/site-session";
 import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 
-export const runtime = "edge";
-
 export async function POST(request: Request) {
   if (!siteAuthConfigured()) {
     // Fail closed: no SITE_PASSWORD/SITE_SESSION_SECRET means the gate can
@@ -35,7 +33,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { password } = await request.json();
+    const { password } = (await request.json()) as { password?: string };
 
     if (!password || typeof password !== "string") {
       return NextResponse.json({ error: "Introduce la contraseña" }, { status: 400 });

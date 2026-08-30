@@ -1,0 +1,46 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "la-gran-via",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  // Cross-worker bindings into la-gran-via-workflows (workers/workflows/) —
+  // that worker defines these four WorkflowEntrypoint classes; this app only
+  // ever talks to them via .create()/.get() on these bindings, per
+  // Cloudflare's documented pattern for a Workflow class a framework-
+  // generated worker (OpenNext, here) can't host directly.
+  "workflows": [
+    {
+      "name": "diego-triage",
+      "binding": "DIEGO_TRIAGE_WORKFLOW",
+      "class_name": "DiegoTriageWorkflow",
+      "script_name": "la-gran-via-workflows",
+    },
+    {
+      "name": "lease-digitization",
+      "binding": "LEASE_DIGITIZATION_WORKFLOW",
+      "class_name": "LeaseDigitizationWorkflow",
+      "script_name": "la-gran-via-workflows",
+    },
+    {
+      "name": "lease-renewal",
+      "binding": "LEASE_RENEWAL_WORKFLOW",
+      "class_name": "LeaseRenewalWorkflow",
+      "script_name": "la-gran-via-workflows",
+    },
+    {
+      "name": "mariana-screening",
+      "binding": "MARIANA_SCREENING_WORKFLOW",
+      "class_name": "MarianaScreeningWorkflow",
+      "script_name": "la-gran-via-workflows",
+    },
+  ],
+  // Secrets (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY,
+  // INTERNAL_WORKER_SECRET, plus whatever getCurrentProfile()'s Supabase Auth
+  // setup needs) are set via `wrangler secret put <NAME>`, not committed here
+  // — same discipline as the .env.example this app already keeps out of git.
+}

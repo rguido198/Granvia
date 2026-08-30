@@ -1,11 +1,11 @@
-import { resumeHook } from "workflow/api";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 /**
- * Wakes leaseRenewalWorkflow's Tier 3 gate for a renewal draft sitting at
+ * Wakes LeaseRenewalWorkflow's Tier 3 gate for a renewal draft sitting at
  * needs_landlord_review — mirrors /api/workflow/approve-lease exactly
  * (Mariana's lease-application equivalent), separate route since the two
  * tables/status enums don't overlap.
@@ -17,34 +17,60 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { renewalId, approved } = body as { renewalId?: string; approved?: boolean };
+  const { renewalId, approved } = body as {
+    renewalId?: string;
+    approved?: boolean;
+  };
   if (typeof renewalId !== "string" || typeof approved !== "boolean") {
-    return NextResponse.json({ error: "renewalId (string) and approved (boolean) are required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "renewalId (string) and approved (boolean) are required" },
+      { status: 400 },
+    );
   }
 
   const supabase = getSupabaseServiceClient();
   const { data: renewal, error: fetchError } = await supabase
     .from("lease_renewals")
-    .select("id, status")
+    .select("id, status, workflow_run_id")
     .eq("id", renewalId)
     .single();
 
   if (fetchError || !renewal) {
-    return NextResponse.json({ error: "renewal draft not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "renewal draft not found" },
+      { status: 404 },
+    );
   }
   if (renewal.status !== "needs_landlord_review") {
     return NextResponse.json(
-      { error: `renewal is '${renewal.status}', not 'needs_landlord_review' — already resolved` },
+      {
+        error: `renewal is '${renewal.status}', not 'needs_landlord_review' — already resolved`,
+      },
       { status: 409 },
+    );
+  }
+  if (!renewal.workflow_run_id) {
+    return NextResponse.json(
+      { error: "renewal has no workflow run on record" },
+      { status: 404 },
     );
   }
 
   try {
-    const result = await resumeHook(`lease-renewal-review:${renewalId}`, { approved, reviewedById: profile.id });
-    return NextResponse.json({ runId: result.runId });
+    const { env } = getCloudflareContext();
+    const instance = await env.LEASE_RENEWAL_WORKFLOW.get(
+      renewal.workflow_run_id as string,
+    );
+    await instance.sendEvent({
+      type: `lease-renewal-review-${renewalId}`,
+      payload: { approved, reviewedById: profile.id },
+    });
+    return NextResponse.json({ runId: renewal.workflow_run_id });
   } catch (error) {
     return NextResponse.json(
-      { error: `workflow hook not found or already resolved: ${error instanceof Error ? error.message : error}` },
+      {
+        error: `workflow instance not found or already resolved: ${error instanceof Error ? error.message : error}`,
+      },
       { status: 404 },
     );
   }

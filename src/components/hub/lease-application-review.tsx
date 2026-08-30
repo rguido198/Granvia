@@ -251,7 +251,7 @@ export function LeaseApplicationCard({
     setLoadError(null);
     fetch(`/api/leases/applications/${application.id}`, { cache: "no-store" })
       .then(async (res) => {
-        const json = await res.json().catch(() => ({}));
+        const json = (await res.json().catch(() => ({}))) as { error?: string; application?: unknown };
         if (!res.ok) {
           setLoadError(json.error ?? "No se pudo cargar el expediente.");
           return;
@@ -272,12 +272,12 @@ export function LeaseApplicationCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ applicationId: application.id, approved }),
       });
-      const json = await res.json().catch(() => ({}));
+      const json = (await res.json().catch(() => ({}))) as { error?: string; warning?: string };
       if (!res.ok) {
         setError(json.error ?? "No se pudo registrar la decisión.");
         return;
       }
-      // A 200 here means resumeHook() delivered the decision to the
+      // A 200 here means sendEvent() delivered the decision to the
       // workflow — not that lease_applications.status has flipped yet
       // (markReviewed runs after this response, asynchronously). The
       // card marks itself submitted immediately regardless of what the

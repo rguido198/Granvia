@@ -1,23 +1,24 @@
 import { randomUUID } from "node:crypto";
-import { after, NextResponse, type NextRequest } from "next/server";
-import { start } from "workflow/api";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { extractText } from "@/lib/ingest/extract-text";
 import { matchesDeclaredType } from "@/lib/ingest/file-signature";
 import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { diegoTriageWorkflow } from "@/workflows/diego-triage";
-import { leaseDigitizationWorkflow } from "@/workflows/lease-digitization";
-import { marianaScreeningWorkflow } from "@/workflows/mariana-screening";
 
-export const runtime = "nodejs"; // pdf-parse needs Node's Buffer, not the Edge runtime
+export const runtime = "nodejs"; // unpdf and the Supabase/Anthropic SDKs need Node's Buffer, not the Edge runtime
 
 // See the matching flag in legal-documents-panel.tsx — same reason, same
 // on/off switch, flip both back together.
 const LEASE_DIGITIZATION_PAUSED = false;
 
-const ALLOWED_KINDS = ["maintenance_ticket", "lease_application", "active_lease"] as const;
+const ALLOWED_KINDS = [
+  "maintenance_ticket",
+  "lease_application",
+  "active_lease",
+] as const;
 type IngestKind = (typeof ALLOWED_KINDS)[number];
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -36,7 +37,10 @@ const MAX_FILE_BYTES = 25 * 1024 * 1024;
 // caller with no session at all can hit this endpoint as fast as it wants.
 // active_lease is already gated by landlord auth, which is a much stronger
 // throttle on its own.
-const RATE_LIMITED_KINDS: ReadonlySet<IngestKind> = new Set(["maintenance_ticket", "lease_application"]);
+const RATE_LIMITED_KINDS: ReadonlySet<IngestKind> = new Set([
+  "maintenance_ticket",
+  "lease_application",
+]);
 
 /**
  * Single-file intake for Diego and Mariana. A landlord's ZIP of N lease
@@ -92,7 +96,10 @@ export async function POST(request: NextRequest) {
       windowMs: 10 * 60 * 1000,
     });
     if (!rateLimit.allowed) {
-      return NextResponse.json({ error: "too many uploads — try again shortly" }, { status: 429 });
+      return NextResponse.json(
+        { error: "too many uploads — try again shortly" },
+        { status: 429 },
+      );
     }
   }
   if (kind === "active_lease") {
@@ -101,7 +108,10 @@ export async function POST(request: NextRequest) {
     // together when the org's Claude API credits are topped up.
     if (LEASE_DIGITIZATION_PAUSED) {
       return NextResponse.json(
-        { error: "Ingesta de contratos pausada temporalmente — sin crédito de API disponible." },
+        {
+          error:
+            "Ingesta de contratos pausada temporalmente — sin crédito de API disponible.",
+        },
         { status: 503 },
       );
     }
@@ -181,84 +191,106 @@ export async function POST(request: NextRequest) {
 
   const documentId = document.id as string;
 
-  // Scheduled via next/server's after() — guaranteed to run to completion
-  // even though the response below is already on its way to the client.
-  // On Vercel this is backed by waitUntil(), not a bare unawaited promise
-  // that a frozen serverless invocation could drop.
-  after(async () => {
-    if (kind === "active_lease") {
-      // Deliberately NO extractText() here.
-      //
-      // pdf-parse's bundled pdf.js throws `FormatError: bad XRef entry` as an
-      // *unhandled promise rejection* — not a catchable synchronous throw — on
-      // a real subset (~32%) of clean, valid lease PDFs. An unhandled
-      // rejection isn't reliably scoped to the request that triggered it: with
-      // concurrent bulk uploads it can be attributed to a different document's
-      // try/catch, or kill the invocation outright and strand documents with
-      // no error_message at all.
-      //
-      // The row is already inserted at status 'extracting', so dispatching the
-      // workflow with raw_text still null is the whole fix: loadDocumentContext
-      // reads null, extractDocument's `hasNativeText` is correctly false, and
-      // it falls through to the Claude-vision path — which Task 12 showed
-      // handles even the skewed scan that broke tesseract. Vision also carries
-      // its own deterministic legibility gate, which pdf-parse never had.
-      //
-      // Side effect worth knowing: 'ready_for_triage' is now written exactly
-      // once, by the workflow's recordSuggestion step, instead of twice.
-      //
-      // The maintenance_ticket / lease_application path below is untouched —
-      // that bug's blast radius is this kind only, and those flows depend on
-      // raw_text landing synchronously before their workflows start.
-      const run = await start(leaseDigitizationWorkflow, [documentId]);
-      await supabase
-        .from("documents")
-        .update({ workflow_run_id: run.runId })
-        .eq("id", documentId);
-      return;
-    }
+  const { env, ctx } = getCloudflareContext();
 
-    try {
-      // A photo carries no extractable text (extractText correctly returns
-      // null for image/*) — but a tenant who attaches one usually also typed
-      // what's wrong. Prefer that description over losing it silently.
-      const rawText =
-        file.type.startsWith("image/") && typeof description === "string" && description.trim()
-          ? description.trim()
-          : await extractText(bytes, file.type);
-      await supabase
-        .from("documents")
-        .update({
-          raw_text: rawText,
-          status: "ready_for_triage",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", documentId);
-    } catch (error) {
-      console.error(`documents.${documentId} extraction failed`, error);
-      await supabase
-        .from("documents")
-        .update({
-          status: "failed",
-          error_message: error instanceof Error ? error.message : "extraction failed",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", documentId);
-      return;
-    }
+  // Scheduled via the Workers runtime's own ctx.waitUntil() — guaranteed to
+  // run to completion even though the response below is already on its way
+  // to the client, unlike a bare unawaited promise a recycled isolate could
+  // drop. Deliberately NOT next/server's after(): @opennextjs/cloudflare has
+  // an open reliability bug where after() callbacks are sometimes cut off
+  // before completing (https://github.com/opennextjs/opennextjs-cloudflare/issues/912)
+  // — calling ctx.waitUntil() directly is the real underlying primitive and
+  // what this route's correctness actually depends on.
+  ctx.waitUntil(
+    (async () => {
+      if (kind === "active_lease") {
+        // Deliberately NO extractText() here.
+        //
+        // pdf-parse's bundled pdf.js throws `FormatError: bad XRef entry` as an
+        // *unhandled promise rejection* — not a catchable synchronous throw — on
+        // a real subset (~32%) of clean, valid lease PDFs. An unhandled
+        // rejection isn't reliably scoped to the request that triggered it: with
+        // concurrent bulk uploads it can be attributed to a different document's
+        // try/catch, or kill the invocation outright and strand documents with
+        // no error_message at all.
+        //
+        // The row is already inserted at status 'extracting', so dispatching the
+        // workflow with raw_text still null is the whole fix: loadDocumentContext
+        // reads null, extractDocument's `hasNativeText` is correctly false, and
+        // it falls through to the Claude-vision path — which Task 12 showed
+        // handles even the skewed scan that broke tesseract. Vision also carries
+        // its own deterministic legibility gate, which pdf-parse never had.
+        //
+        // Side effect worth knowing: 'ready_for_triage' is now written exactly
+        // once, by the workflow's recordSuggestion step, instead of twice.
+        //
+        // The maintenance_ticket / lease_application path below is untouched —
+        // that bug's blast radius is this kind only, and those flows depend on
+        // raw_text landing synchronously before their workflows start.
+        const instance = await env.LEASE_DIGITIZATION_WORKFLOW.create({
+          params: { documentId },
+        });
+        await supabase
+          .from("documents")
+          .update({ workflow_run_id: instance.id })
+          .eq("id", documentId);
+        return;
+      }
 
-    if (typeof localeId === "string") {
-      const leadIdStr = typeof leadId === "string" && leadId.trim() ? leadId.trim() : null;
-      const run =
-        kind === "maintenance_ticket"
-          ? await start(diegoTriageWorkflow, [documentId, localeId])
-          : await start(marianaScreeningWorkflow, [documentId, localeId, leadIdStr]);
-      await supabase
-        .from("documents")
-        .update({ workflow_run_id: run.runId })
-        .eq("id", documentId);
-    }
-  });
+      try {
+        // A photo carries no extractable text (extractText correctly returns
+        // null for image/*) — but a tenant who attaches one usually also typed
+        // what's wrong. Prefer that description over losing it silently.
+        const rawText =
+          file.type.startsWith("image/") &&
+          typeof description === "string" &&
+          description.trim()
+            ? description.trim()
+            : await extractText(bytes, file.type);
+        await supabase
+          .from("documents")
+          .update({
+            raw_text: rawText,
+            status: "ready_for_triage",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", documentId);
+      } catch (error) {
+        console.error(`documents.${documentId} extraction failed`, error);
+        await supabase
+          .from("documents")
+          .update({
+            status: "failed",
+            error_message:
+              error instanceof Error ? error.message : "extraction failed",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", documentId);
+        return;
+      }
+
+      if (typeof localeId === "string") {
+        const leadIdStr =
+          typeof leadId === "string" && leadId.trim() ? leadId.trim() : null;
+        const instance =
+          kind === "maintenance_ticket"
+            ? await env.DIEGO_TRIAGE_WORKFLOW.create({
+                params: { documentId, localeId },
+              })
+            : await env.MARIANA_SCREENING_WORKFLOW.create({
+                params: {
+                  documentId,
+                  targetLocaleId: localeId,
+                  leadId: leadIdStr,
+                },
+              });
+        await supabase
+          .from("documents")
+          .update({ workflow_run_id: instance.id })
+          .eq("id", documentId);
+      }
+    })(),
+  );
 
   return NextResponse.json({ documentId }, { status: 202 });
 }

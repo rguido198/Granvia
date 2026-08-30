@@ -1,0 +1,19 @@
+# Local dev secrets for la-gran-via-workflows. Copy to .dev.vars and fill in
+# real values — same discipline as the root app's .env.example.
+#
+# Production: set via `wrangler secret put <NAME>` from inside
+# workers/workflows/, one at a time.
+
+# Same Supabase project as the root app's SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY
+# (this worker runs the actual DB-writing steps for all four workflows).
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Same value as the root app's ANTHROPIC_API_KEY — the draft/skeptic passes
+# for all four workflows run here now, not in the Next.js app.
+ANTHROPIC_API_KEY=
+
+# Must match the root app's INTERNAL_WORKER_SECRET exactly — see this
+# worker's src/env.ts (notifyCopilotoCacheStale) and the root app's
+# src/app/api/internal/revalidate-copiloto/route.ts.
+INTERNAL_WORKER_SECRET=

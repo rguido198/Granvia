@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => null);
+  const body = (await request.json().catch(() => null)) as { stage?: string; note?: string } | null;
   const stage = body?.stage as string | undefined;
   const note = typeof body?.note === "string" && body.note.trim() ? body.note.trim() : null;
 

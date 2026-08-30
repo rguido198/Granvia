@@ -1,9 +1,8 @@
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse, type NextRequest } from "next/server";
-import { start } from "workflow/api";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { leaseRenewalWorkflow } from "@/workflows/lease-renewal";
 
 /**
  * Starts leaseRenewalWorkflow for an existing lease — the "Redactar
@@ -33,16 +32,31 @@ export async function POST(request: NextRequest) {
   };
 
   if (typeof leaseId !== "string" || !leaseId) {
-    return NextResponse.json({ error: "leaseId es requerido" }, { status: 400 });
+    return NextResponse.json(
+      { error: "leaseId es requerido" },
+      { status: 400 },
+    );
   }
-  if (typeof newEndDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(newEndDate)) {
-    return NextResponse.json({ error: "newEndDate debe ser una fecha ISO (YYYY-MM-DD)" }, { status: 400 });
+  if (
+    typeof newEndDate !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(newEndDate)
+  ) {
+    return NextResponse.json(
+      { error: "newEndDate debe ser una fecha ISO (YYYY-MM-DD)" },
+      { status: 400 },
+    );
   }
-  const hasPct = typeof escalationPct === "number" && Number.isFinite(escalationPct);
-  const hasFlatRent = typeof newBaseRentMonthly === "number" && Number.isFinite(newBaseRentMonthly) && newBaseRentMonthly > 0;
+  const hasPct =
+    typeof escalationPct === "number" && Number.isFinite(escalationPct);
+  const hasFlatRent =
+    typeof newBaseRentMonthly === "number" &&
+    Number.isFinite(newBaseRentMonthly) &&
+    newBaseRentMonthly > 0;
   if (hasPct === hasFlatRent) {
     return NextResponse.json(
-      { error: "Especifica exactamente uno: escalationPct o newBaseRentMonthly" },
+      {
+        error: "Especifica exactamente uno: escalationPct o newBaseRentMonthly",
+      },
       { status: 400 },
     );
   }
@@ -54,11 +68,17 @@ export async function POST(request: NextRequest) {
     .eq("id", leaseId)
     .single();
   if (leaseError || !lease) {
-    return NextResponse.json({ error: "contrato no encontrado" }, { status: 404 });
+    return NextResponse.json(
+      { error: "contrato no encontrado" },
+      { status: 404 },
+    );
   }
   if (new Date(newEndDate) <= new Date(lease.end_date)) {
     return NextResponse.json(
-      { error: "La nueva fecha de vencimiento debe ser posterior a la vigencia actual del contrato" },
+      {
+        error:
+          "La nueva fecha de vencimiento debe ser posterior a la vigencia actual del contrato",
+      },
       { status: 400 },
     );
   }
@@ -73,24 +93,30 @@ export async function POST(request: NextRequest) {
   } else {
     if (!lease.base_rent_monthly) {
       return NextResponse.json(
-        { error: "Este contrato no tiene renta base en registro — especifica newBaseRentMonthly en vez de un porcentaje." },
+        {
+          error:
+            "Este contrato no tiene renta base en registro — especifica newBaseRentMonthly en vez de un porcentaje.",
+        },
         { status: 400 },
       );
     }
-    resolvedRent = Number((lease.base_rent_monthly * (1 + escalationPct! / 100)).toFixed(2));
+    resolvedRent = Number(
+      (lease.base_rent_monthly * (1 + escalationPct! / 100)).toFixed(2),
+    );
     escalationMethod = "fixed_pct";
     resolvedPct = escalationPct!;
   }
 
-  const run = await start(leaseRenewalWorkflow, [
-    {
+  const { env } = getCloudflareContext();
+  const instance = await env.LEASE_RENEWAL_WORKFLOW.create({
+    params: {
       leaseId,
       newEndDate,
       newBaseRentMonthly: resolvedRent,
       escalationMethod,
       escalationPct: resolvedPct,
     },
-  ]);
+  });
 
-  return NextResponse.json({ ok: true, runId: run.runId, resolvedRent });
+  return NextResponse.json({ ok: true, runId: instance.id, resolvedRent });
 }

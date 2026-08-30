@@ -1,0 +1,46 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "la-gran-via-workflows",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "workflows_preserve_non_retryable_error_message",
+  ],
+  // The shared src/lib/... files this worker reuses (Supabase client, lease
+  // extraction, exclusivity check) import "server-only" — a guard against
+  // landing in a Next.js browser bundle that throws unless the bundler sets
+  // Next's "react-server" resolve condition. This worker has no browser
+  // bundle to guard, so the guard is neutralized here instead of forking
+  // those files. See src/noop-server-only.ts.
+  "alias": {
+    "server-only": "./src/noop-server-only.ts",
+  },
+  "workflows": [
+    {
+      "name": "diego-triage",
+      "binding": "DIEGO_TRIAGE_WORKFLOW",
+      "class_name": "DiegoTriageWorkflow",
+    },
+    {
+      "name": "lease-digitization",
+      "binding": "LEASE_DIGITIZATION_WORKFLOW",
+      "class_name": "LeaseDigitizationWorkflow",
+    },
+    {
+      "name": "lease-renewal",
+      "binding": "LEASE_RENEWAL_WORKFLOW",
+      "class_name": "LeaseRenewalWorkflow",
+    },
+    {
+      "name": "mariana-screening",
+      "binding": "MARIANA_SCREENING_WORKFLOW",
+      "class_name": "MarianaScreeningWorkflow",
+    },
+  ],
+  // Service binding back to the main app worker — used only by
+  // notifyCopilotoCacheStale() in src/env.ts to invalidate the Next.js data
+  // cache, which can't be done from this worker directly (next/cache doesn't
+  // exist outside a Next.js runtime). See src/env.ts's own comment.
+  "services": [{ "binding": "APP_WORKER", "service": "la-gran-via" }],
+}

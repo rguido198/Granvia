@@ -11,9 +11,11 @@ export async function extractText(
   mimeType: string,
 ): Promise<string | null> {
   if (mimeType === "application/pdf") {
-    const { default: pdfParse } = await import("pdf-parse");
-    const result = await pdfParse(Buffer.from(bytes));
-    return result.text.trim();
+    const { extractText: extractPdfText, getDocumentProxy } =
+      await import("unpdf");
+    const pdf = await getDocumentProxy(bytes);
+    const { text } = await extractPdfText(pdf, { mergePages: true });
+    return text.trim();
   }
 
   if (mimeType.startsWith("text/")) {

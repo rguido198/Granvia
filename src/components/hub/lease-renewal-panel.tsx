@@ -83,7 +83,7 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
         body: JSON.stringify({ renewalId: renewal.id, approved }),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
         setError(json.error ?? "No se pudo registrar la decisión.");
         return;
       }
@@ -240,7 +240,7 @@ function DraftRenewalForm({
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
         setError(json.error ?? "No se pudo iniciar la redacción.");
         return;
       }

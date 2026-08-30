@@ -5,17 +5,17 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 // instance — vi.resetModules() + a dynamic import, not a static one.
 async function loadSiteSession(env: { password?: string; secret?: string }) {
   vi.resetModules();
-  if (env.password === undefined) delete process.env.SITE_PASSWORD;
+  if (env.password === undefined) Reflect.deleteProperty(process.env, "SITE_PASSWORD");
   else process.env.SITE_PASSWORD = env.password;
-  if (env.secret === undefined) delete process.env.SITE_SESSION_SECRET;
+  if (env.secret === undefined) Reflect.deleteProperty(process.env, "SITE_SESSION_SECRET");
   else process.env.SITE_SESSION_SECRET = env.secret;
   return import("./site-session");
 }
 
 describe("site-session", () => {
   afterEach(() => {
-    delete process.env.SITE_PASSWORD;
-    delete process.env.SITE_SESSION_SECRET;
+    Reflect.deleteProperty(process.env, "SITE_PASSWORD");
+    Reflect.deleteProperty(process.env, "SITE_SESSION_SECRET");
   });
 
   it("fails closed when SITE_PASSWORD/SITE_SESSION_SECRET are unset — no fallback password", async () => {

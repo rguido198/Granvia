@@ -162,8 +162,8 @@ export function DocumentViewerButton({
     setLoading(true);
     try {
       const res = await fetch(`/api/documents/${documentId}/signed-url`);
-      const json = await res.json();
-      if (res.ok) setViewerUrl(json.url);
+      const json = (await res.json()) as { url?: string; error?: string };
+      if (res.ok) setViewerUrl(json.url ?? null);
       else setViewerError(json.error ?? "No se pudo abrir el documento.");
     } catch {
       setViewerError("No se pudo abrir el documento.");
@@ -275,7 +275,7 @@ function FailedExtractionFallback({
         body: JSON.stringify({ documentId, action: "reject" }),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
         setError(json.error ?? "No se pudo rechazar el documento.");
         return;
       }
@@ -1148,13 +1148,13 @@ export function MatchReviewForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ unitNumber: trimmed, areaSqm: sqm }),
       });
-      const json = await res.json().catch(() => ({}));
+      const json = (await res.json().catch(() => ({}))) as { error?: string; id?: string; unitNumber?: string };
       if (!res.ok) {
         setError(json.error ?? "No se pudo crear el local.");
         return;
       }
-      setCreatedUnit({ id: json.id, unitNumber: json.unitNumber });
-      setSelectedLocaleId(json.id);
+      setCreatedUnit({ id: json.id!, unitNumber: json.unitNumber! });
+      setSelectedLocaleId(json.id!);
       setOverwriteAcknowledged(false);
       setCreatingNewUnit(false);
     } finally {
@@ -1179,7 +1179,7 @@ export function MatchReviewForm({
         }),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
         setError(json.error ?? "No se pudo confirmar la coincidencia.");
         return;
       }
@@ -1469,7 +1469,7 @@ export function ExtractionReviewForm({
         body: JSON.stringify({ documentId, action, correctedFields: action === "confirm" ? fields : undefined }),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
         setError(json.error ?? "No se pudo registrar la decisión.");
         return;
       }
@@ -1627,7 +1627,7 @@ export function NewLeaseForm({
         body: JSON.stringify({ documentId, action, newLeaseDetails }),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
         setError(json.error ?? "No se pudo registrar la decisión.");
         return;
       }

@@ -67,7 +67,7 @@ describe("POST /api/tickets/[id]/mark-resolved", () => {
     mockRpc.mockResolvedValue({ data: { ok: false, reason: "invalid_status", previous_status: "closed" }, error: null });
     const res = await POST(makeRequest({ workPerformed: "Reemplacé la válvula." }), params);
     expect(res.status).toBe(409);
-    const body = await res.json();
+    const body = (await res.json()) as { error?: string };
     expect(body.error).toContain("closed");
   });
 

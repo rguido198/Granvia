@@ -88,7 +88,7 @@ function TicketCard({ ticket: t, localeId }: { ticket: DiegoTicket; localeId: st
     try {
       const res = await fetch(`/api/tickets/${t.id}/confirm-resolved`, { method: "POST" });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "No se pudo confirmar.");
       }
       router.refresh();
@@ -112,7 +112,7 @@ function TicketCard({ ticket: t, localeId }: { ticket: DiegoTicket; localeId: st
         body: JSON.stringify({ note: reopenNote.trim() }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "No se pudo reportar.");
       }
       router.refresh();

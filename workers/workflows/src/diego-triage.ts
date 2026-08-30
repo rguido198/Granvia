@@ -1,19 +1,32 @@
-import { createHook, FatalError, getWorkflowMetadata } from "workflow";
+import {
+  WorkflowEntrypoint,
+  type WorkflowStep,
+  type WorkflowEvent,
+} from "cloudflare:workers";
+import { NonRetryableError } from "cloudflare:workflows";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
-import { wrapUntrustedContent } from "@/lib/llm/untrusted-content";
+import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
+import { wrapUntrustedContent } from "../../../src/lib/llm/untrusted-content";
+import {
+  hydrateProcessEnv,
+  notifyCopilotoCacheStale,
+  type WorkflowsEnv,
+} from "./env";
 
 /**
- * Diego (maintenance-dispatcher) as a durable state machine.
+ * Diego (maintenance-dispatcher) as a durable state machine, on Cloudflare
+ * Workflows. Ported from src/workflows/diego-triage.ts (the Vercel `workflow`
+ * SDK version) — business logic below is unchanged; only the durable-
+ * execution primitives differ (step.do() instead of "use step" functions,
+ * step.waitForEvent() instead of createHook()/await hook).
  * Source of truth for the mechanics below: .claude/skills/maintenance-dispatcher/SKILL.md
  * in the OS repo — this file implements it, it doesn't restate it in full.
  */
 
-// ── Step 1: load everything the draft pass needs ───────────────────────────
+type Params = { documentId: string; localeId: string };
 
 type TicketContext = {
   documentId: string;
@@ -24,13 +37,6 @@ type TicketContext = {
   lease: {
     maintenance_clause: string | null;
     exclusive_use_clause: string | null;
-    // Per-system, human-confirmed assignment from the lease-digitization
-    // pipeline (Gate 2) — a different, newer field than maintenance_clause
-    // above (free text, never written by that pipeline). Previously never
-    // selected here at all: a digitized lease's matrix sat unused on the
-    // same row Diego was already reading, and every ticket fell through to
-    // JD-05 or PENDIENTE regardless of whether the matrix already had the
-    // answer.
     responsibility_matrix: Record<string, string> | null;
   } | null;
   assets: {
@@ -43,14 +49,10 @@ type TicketContext = {
   }[];
 };
 
-// The uploader names the locale explicitly (Phase 1's /api/ingest form,
-// or Phase 4's dashboard) until a future pass resolves it from free text —
-// so the loader takes it as an argument rather than inferring it.
 async function loadTicketContextForLocale(
   documentId: string,
   localeId: string,
 ): Promise<TicketContext> {
-  "use step";
   const supabase = getSupabaseServiceClient();
 
   const { data: document, error: documentError } = await supabase
@@ -59,7 +61,9 @@ async function loadTicketContextForLocale(
     .eq("id", documentId)
     .single();
   if (documentError || !document) {
-    throw new FatalError(`document ${documentId} not found: ${documentError?.message}`);
+    throw new NonRetryableError(
+      `document ${documentId} not found: ${documentError?.message}`,
+    );
   }
 
   const { data: locale, error: localeError } = await supabase
@@ -68,7 +72,9 @@ async function loadTicketContextForLocale(
     .eq("id", localeId)
     .single();
   if (localeError || !locale) {
-    throw new FatalError(`locale ${localeId} not found: ${localeError?.message}`);
+    throw new NonRetryableError(
+      `locale ${localeId} not found: ${localeError?.message}`,
+    );
   }
 
   const { data: property, error: propertyError } = await supabase
@@ -77,19 +83,9 @@ async function loadTicketContextForLocale(
     .eq("id", locale.property_id)
     .single();
   if (propertyError || !property) {
-    throw new FatalError(`property for locale ${localeId} not found`);
+    throw new NonRetryableError(`property for locale ${localeId} not found`);
   }
 
-  // Latest (by end_date) lease row for this locale, NOT filtered to
-  // start_date <= today <= end_date — the same "current lease" definition
-  // portfolio.server.ts already uses for the SSOT table, applied here too.
-  // Found live: MINT Boutique's own real, digitized lease is "Vencido"
-  // (end_date already past, no renewal on file yet) — the old date-range
-  // filter excluded it entirely, so a maintenance ticket for that locale saw
-  // no lease, no clause, no responsibility_matrix at all, and fell straight
-  // to JD-05. An expired lease with no renewal on file is still the
-  // tenant's lease of record for maintenance purposes; they haven't left,
-  // there's just no newer contract yet.
   const { data: lease } = await supabase
     .from("leases")
     .select("maintenance_clause, exclusive_use_clause, responsibility_matrix")
@@ -100,7 +96,9 @@ async function loadTicketContextForLocale(
 
   const { data: assets } = await supabase
     .from("assets")
-    .select("id, make, model, warranty_expiry, service_contract_provider, manual_url")
+    .select(
+      "id, make, model, warranty_expiry, service_contract_provider, manual_url",
+    )
     .eq("locale_id", localeId);
 
   return {
@@ -112,19 +110,26 @@ async function loadTicketContextForLocale(
       unit_number: locale.unit_number,
       tenant_entity: locale.tenant_entity,
     },
-    property: { id: property.id, jurisdiction_id: property.jurisdiction_id, autonomy_frozen: property.autonomy_frozen },
+    property: {
+      id: property.id,
+      jurisdiction_id: property.jurisdiction_id,
+      autonomy_frozen: property.autonomy_frozen,
+    },
     lease: lease ?? null,
     assets: assets ?? [],
   };
 }
 
-// ── Step 2: Diego's draft pass (Opus 5) ─────────────────────────────────────
-
 const DiegoDraftSchema = z.object({
   priority: z.enum(["P1", "P2", "P3", "P4"]),
   priority_rationale: z.string(),
   diagnosis: z.string(),
-  diagnosis_source: z.enum(["manual", "asset_register", "photo", "tenant_report"]),
+  diagnosis_source: z.enum([
+    "manual",
+    "asset_register",
+    "photo",
+    "tenant_report",
+  ]),
   diagnostic_question_asked: z.string().nullable(),
   matched_asset_id: z.string().nullable(),
   cost_bucket: z.enum(["ARRENDADOR", "INQUILINO", "PENDIENTE"]),
@@ -132,7 +137,13 @@ const DiegoDraftSchema = z.object({
   jd05_applied: z.boolean(),
   unresolved_jd_keys: z.array(z.string()),
   estimated_cost_mxn: z.number().nullable(),
-  recommended_trade: z.enum(["HVAC", "plomeria", "electrico", "seguridad", "refrigeracion"]),
+  recommended_trade: z.enum([
+    "HVAC",
+    "plomeria",
+    "electrico",
+    "seguridad",
+    "refrigeracion",
+  ]),
 });
 type DiegoDraft = z.infer<typeof DiegoDraftSchema>;
 
@@ -165,10 +176,6 @@ TRADE: recommended_trade must be exactly one of HVAC, plomeria, electrico, segur
 
 Respond only with the structured fields requested — no prose outside them.`;
 
-// Same five keys and Spanish labels legal-documents-panel.tsx's Gate 2 form
-// renders (SYSTEM_LABELS) — kept as the same literal mapping rather than
-// imported, matching how this codebase already handles this exact
-// duplication (see contract-status.ts's own note on the same five keys).
 const MATRIX_SYSTEM_LABELS: Record<string, string> = {
   hvac: "HVAC / Clima",
   roof: "Techo / Impermeabilización",
@@ -177,15 +184,17 @@ const MATRIX_SYSTEM_LABELS: Record<string, string> = {
   storefront_glass: "Cristalería de fachada",
 };
 
-function formatResponsibilityMatrix(matrix: Record<string, string> | null): string {
-  if (!matrix) return "(sin matriz — contrato no digitalizado o sin contrato activo cargado)";
+function formatResponsibilityMatrix(
+  matrix: Record<string, string> | null,
+): string {
+  if (!matrix)
+    return "(sin matriz — contrato no digitalizado o sin contrato activo cargado)";
   return Object.entries(MATRIX_SYSTEM_LABELS)
     .map(([key, label]) => `- ${label}: ${matrix[key] ?? "(no especificado)"}`)
     .join("\n");
 }
 
 async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
-  "use step";
   const client = new Anthropic();
 
   const userContent = [
@@ -209,24 +218,27 @@ async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
   const response = await client.messages.parse({
     model: "claude-opus-5",
     max_tokens: 4000,
-    system: [{ type: "text", text: DIEGO_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+    system: [
+      {
+        type: "text",
+        text: DIEGO_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [{ role: "user", content: userContent }],
     output_config: { format: zodOutputFormat(DiegoDraftSchema) },
   });
 
   if (!response.parsed_output) {
-    throw new FatalError("Diego draft pass returned no parsed output");
+    throw new NonRetryableError("Diego draft pass returned no parsed output");
   }
   return response.parsed_output;
 }
-
-// ── Step 3: warranty check (pure DB — never trust the model on dates) ──────
 
 async function checkWarranty(
   context: TicketContext,
   draft: DiegoDraft,
 ): Promise<{ covered: boolean; provider: string | null }> {
-  "use step";
   if (!draft.matched_asset_id) return { covered: false, provider: null };
 
   const asset = context.assets.find((a) => a.id === draft.matched_asset_id);
@@ -237,17 +249,20 @@ async function checkWarranty(
     : false;
 
   if (underWarranty || asset.service_contract_provider) {
-    return { covered: true, provider: asset.service_contract_provider ?? "warranty" };
+    return {
+      covered: true,
+      provider: asset.service_contract_provider ?? "warranty",
+    };
   }
   return { covered: false, provider: null };
 }
 
-// ── Step 4: skeptic pass (Opus 5) — re-audits the draft, not the raw report ─
-
 const SkepticVerdictSchema = z.object({
   flagged: z.boolean(),
   concerns: z.array(z.string()),
-  revised_cost_bucket: z.enum(["ARRENDADOR", "INQUILINO", "PENDIENTE"]).nullable(),
+  revised_cost_bucket: z
+    .enum(["ARRENDADOR", "INQUILINO", "PENDIENTE"])
+    .nullable(),
 });
 type SkepticVerdict = z.infer<typeof SkepticVerdictSchema>;
 
@@ -257,7 +272,6 @@ async function runSkeptic(
   context: TicketContext,
   draft: DiegoDraft,
 ): Promise<SkepticVerdict> {
-  "use step";
   const client = new Anthropic();
 
   const response = await client.messages.parse({
@@ -278,12 +292,10 @@ async function runSkeptic(
   });
 
   if (!response.parsed_output) {
-    throw new FatalError("skeptic pass returned no parsed output");
+    throw new NonRetryableError("skeptic pass returned no parsed output");
   }
   return response.parsed_output;
 }
-
-// ── Step 5: contractor + approval-tier matching (pure DB) ──────────────────
 
 async function matchContractorAndTier(
   propertyId: string,
@@ -293,7 +305,6 @@ async function matchContractorAndTier(
   contractorId: string | null;
   approvalLevel: "AUTO" | "GERENTE" | "DIRECCION";
 }> {
-  "use step";
   const supabase = getSupabaseServiceClient();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -323,28 +334,34 @@ async function matchContractorAndTier(
   return { contractorId: contractor?.id ?? null, approvalLevel };
 }
 
-// ── Step 6: persist ─────────────────────────────────────────────────────────
-
-async function writeTicket(params: {
-  context: TicketContext;
-  draft: DiegoDraft;
-  warranty: { covered: boolean; provider: string | null };
-  skeptic: SkepticVerdict;
-  contractorId: string | null;
-  approvalLevel: "AUTO" | "GERENTE" | "DIRECCION";
-  status: "dispatched" | "needs_approval";
-  workflowRunId: string;
-}): Promise<string> {
-  "use step";
+async function writeTicket(
+  env: WorkflowsEnv,
+  params: {
+    context: TicketContext;
+    draft: DiegoDraft;
+    warranty: { covered: boolean; provider: string | null };
+    skeptic: SkepticVerdict;
+    contractorId: string | null;
+    approvalLevel: "AUTO" | "GERENTE" | "DIRECCION";
+    status: "dispatched" | "needs_approval";
+    workflowRunId: string;
+  },
+): Promise<string> {
   const supabase = getSupabaseServiceClient();
-  const { context, draft, warranty, skeptic, contractorId, approvalLevel, status, workflowRunId } = params;
+  const {
+    context,
+    draft,
+    warranty,
+    skeptic,
+    contractorId,
+    approvalLevel,
+    status,
+    workflowRunId,
+  } = params;
 
-  // A flagged skeptic pass with no replacement bucket means real doubt, not
-  // resolved doubt — escalating to PENDIENTE rather than silently keeping the
-  // draft's now-disputed bucket. "Ambiguity is escalated, never guessed" per
-  // maintenance-dispatcher/SKILL.md §2C — that principle applies to the
-  // skeptic's own uncertainty, not just the draft's.
-  const finalCostBucket = skeptic.revised_cost_bucket ?? (skeptic.flagged ? "PENDIENTE" : draft.cost_bucket);
+  const finalCostBucket =
+    skeptic.revised_cost_bucket ??
+    (skeptic.flagged ? "PENDIENTE" : draft.cost_bucket);
 
   const { data: ticket, error } = await supabase
     .from("tickets")
@@ -374,7 +391,7 @@ async function writeTicket(params: {
     .single();
 
   if (error || !ticket) {
-    throw new FatalError(`failed to write ticket: ${error?.message}`);
+    throw new NonRetryableError(`failed to write ticket: ${error?.message}`);
   }
 
   await supabase.from("agent_decisions").insert({
@@ -386,25 +403,31 @@ async function writeTicket(params: {
 
   await supabase
     .from("documents")
-    .update({ status: "attached", ticket_id: ticket.id, workflow_run_id: workflowRunId })
+    .update({
+      status: "attached",
+      ticket_id: ticket.id,
+      workflow_run_id: workflowRunId,
+    })
     .eq("id", context.documentId);
 
-  invalidateCopilotoCache();
+  await notifyCopilotoCacheStale(env);
   return ticket.id as string;
 }
 
-async function markDispatched(ticketId: string) {
-  "use step";
+async function markDispatched(env: WorkflowsEnv, ticketId: string) {
   const supabase = getSupabaseServiceClient();
   await supabase
     .from("tickets")
     .update({ status: "dispatched", dispatched_at: new Date().toISOString() })
     .eq("id", ticketId);
-  invalidateCopilotoCache();
+  await notifyCopilotoCacheStale(env);
 }
 
-async function markApprovalResolved(ticketId: string, approved: boolean) {
-  "use step";
+async function markApprovalResolved(
+  env: WorkflowsEnv,
+  ticketId: string,
+  approved: boolean,
+) {
   const supabase = getSupabaseServiceClient();
   await supabase
     .from("tickets")
@@ -413,57 +436,95 @@ async function markApprovalResolved(ticketId: string, approved: boolean) {
       dispatched_at: approved ? new Date().toISOString() : null,
     })
     .eq("id", ticketId);
-  invalidateCopilotoCache();
+  await notifyCopilotoCacheStale(env);
 }
 
-// ── The workflow ─────────────────────────────────────────────────────────
+export class DiegoTriageWorkflow extends WorkflowEntrypoint<
+  WorkflowsEnv,
+  Params
+> {
+  async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
+    hydrateProcessEnv(this.env);
+    const { documentId, localeId } = event.payload;
 
-export async function diegoTriageWorkflow(documentId: string, localeId: string) {
-  "use workflow";
+    const context = await step.do("load ticket context", () =>
+      loadTicketContextForLocale(documentId, localeId),
+    );
+    const draft = await step.do("draft diego ticket", () =>
+      draftDiegoTicket(context),
+    );
+    const warranty = await step.do("check warranty", () =>
+      checkWarranty(context, draft),
+    );
+    const skeptic = await step.do("run skeptic", () =>
+      runSkeptic(context, draft),
+    );
 
-  const context = await loadTicketContextForLocale(documentId, localeId);
-  const draft = await draftDiegoTicket(context);
-  const warranty = await checkWarranty(context, draft);
-  const skeptic = await runSkeptic(context, draft);
+    const { contractorId, approvalLevel } = await step.do(
+      "match contractor and tier",
+      () =>
+        matchContractorAndTier(
+          context.property.id,
+          draft.recommended_trade,
+          warranty.covered ? 0 : draft.estimated_cost_mxn,
+        ),
+    );
 
-  const { contractorId, approvalLevel } = await matchContractorAndTier(
-    context.property.id,
-    draft.recommended_trade,
-    warranty.covered ? 0 : draft.estimated_cost_mxn,
-  );
+    const workflowRunId = event.instanceId;
+    // The RBAC tab's emergency kill-switch (properties.autonomy_frozen) overrides
+    // every auto-dispatch path, warranty claims included — while it's active, every
+    // ticket lands in needs_approval regardless of tier or warranty coverage.
+    const status: "dispatched" | "needs_approval" = context.property
+      .autonomy_frozen
+      ? "needs_approval"
+      : warranty.covered || approvalLevel === "AUTO"
+        ? "dispatched"
+        : "needs_approval";
 
-  const { workflowRunId } = getWorkflowMetadata();
-  // The RBAC tab's emergency kill-switch (properties.autonomy_frozen) overrides
-  // every auto-dispatch path, warranty claims included — while it's active, every
-  // ticket lands in needs_approval regardless of tier or warranty coverage.
-  const status = context.property.autonomy_frozen
-    ? "needs_approval"
-    : warranty.covered || approvalLevel === "AUTO"
-      ? "dispatched"
-      : "needs_approval";
+    const ticketId = await step.do("write ticket", () =>
+      writeTicket(this.env, {
+        context,
+        draft,
+        warranty,
+        skeptic,
+        contractorId,
+        approvalLevel,
+        status,
+        workflowRunId,
+      }),
+    );
 
-  const ticketId = await writeTicket({
-    context,
-    draft,
-    warranty,
-    skeptic,
-    contractorId,
-    approvalLevel,
-    status,
-    workflowRunId,
-  });
+    if (status === "needs_approval") {
+      // Tier 3 human gate (root CLAUDE.md §1) — suspends here until the
+      // approve route calls (await env.DIEGO_TRIAGE_WORKFLOW.get(instanceId))
+      // .sendEvent({ type: `ticket-approval-${ticketId}`, payload: {...} }).
+      // 30-day timeout: generous enough that a slow landlord never loses the
+      // decision outright, unlike Vercel createHook's unbounded wait.
+      try {
+        const approvalEvent = await step.waitForEvent<{ approved: boolean }>(
+          "await ticket approval",
+          {
+            type: `ticket-approval-${ticketId}`,
+            timeout: "30 days",
+          },
+        );
+        const decision = approvalEvent.payload;
+        await step.do("mark approval resolved", () =>
+          markApprovalResolved(this.env, ticketId, decision.approved),
+        );
+        return {
+          ticketId,
+          status: decision.approved ? "dispatched" : "closed_administrative",
+        };
+      } catch {
+        // Timed out waiting for a landlord decision — leave the ticket at
+        // needs_approval; a human can still resolve it manually, this just
+        // stops the workflow instance from staying alive forever.
+        return { ticketId, status: "needs_approval" as const };
+      }
+    }
 
-  if (status === "needs_approval") {
-    // Tier 3 human gate (root CLAUDE.md §1) — suspends here at zero cost
-    // until Phase 4's approval UI calls resumeHook(`ticket-approval:${ticketId}`, ...).
-    const hook = createHook<{ approved: boolean }>({
-      token: `ticket-approval:${ticketId}`,
-    });
-    const decision = await hook;
-    await markApprovalResolved(ticketId, decision.approved);
-    return { ticketId, status: decision.approved ? "dispatched" : "closed_administrative" };
+    await step.do("mark dispatched", () => markDispatched(this.env, ticketId));
+    return { ticketId, status: "dispatched" as const };
   }
-
-  await markDispatched(ticketId);
-  return { ticketId, status: "dispatched" };
 }

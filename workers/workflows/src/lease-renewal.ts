@@ -1,43 +1,41 @@
-import { createHook, FatalError, getWorkflowMetadata } from "workflow";
+import {
+  WorkflowEntrypoint,
+  type WorkflowStep,
+  type WorkflowEvent,
+} from "cloudflare:workers";
+import { NonRetryableError } from "cloudflare:workflows";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
+import { hydrateProcessEnv, type WorkflowsEnv } from "./env";
 
 /**
- * Mariana's renewal-drafting as a durable state machine — mirrors
- * mariana-screening.ts's shape (draft + skeptic + Tier 3 hook) deliberately,
- * same pattern, different domain. Source of truth for the mechanics:
+ * Mariana's renewal-drafting as a durable state machine, on Cloudflare
+ * Workflows. Ported from src/workflows/lease-renewal.ts (the Vercel
+ * `workflow` SDK version) — business logic unchanged; only the durable-
+ * execution primitives differ. Source of truth for the mechanics:
  * .claude/skills/lease-renewal-drafter/SKILL.md in the OS repo — this file
  * implements it, it doesn't restate it in full.
  *
  * Scope boundary (SKILL.md's own words): this drafts a Convenio
  * Modificatorio for a landlord to review. It never signs, sends, or writes
- * onto the real `leases` row — applying an approved renewal once the tenant
- * has actually countersigned is a separate, later action, same as how
- * approving a Mariana screening doesn't itself onboard a tenant either.
+ * onto the real `leases` row.
  */
 
-// ── Jurisdiction status — mechanical, not LLM-reported (same principle as
-// mariana-screening.ts's JURISDICTION_PACK_REF block) ───────────────────────
-//
-// This skill consumes a narrower key set than lease-screener — JD-01
-// (statutory notice periods), JD-04 (exclusivity re-audit on extension),
-// JD-07 (tax treatment on adjusted rent). Per mx.md's own coverage index:
-// JD-01 is unanswered, JD-04 and JD-07 are answered — so only JD-01 is
-// actually unresolved for the keys *this* skill relies on, even though the
-// pack has other gaps (JD-06/JD-08) that a different skill would care about.
+type Params = {
+  leaseId: string;
+  newEndDate: string;
+  newBaseRentMonthly: number;
+  escalationMethod: string;
+  escalationPct: number | null;
+};
+
 const JURISDICTION_PACK_REF = "México · mx.md v1.0 (2026-08-04)";
 const PACK_COUNSEL_VERIFIED = false;
 const RENEWAL_UNRESOLVED_JD_KEYS = ["JD-01"];
-// The full key set this skill cites in its closing reference line — not just
-// the unresolved ones. Given to BOTH the draft and skeptic steps so the
-// skeptic doesn't mistake "JD-04/JD-07 in the citation" for an invented key
-// just because only JD-01 was in the unresolved list.
 const RENEWAL_CONSUMED_JD_KEYS = ["JD-01", "JD-04", "JD-07"];
-
-// ── Step 1: load the source lease's real terms ──────────────────────────────
 
 type RenewalContext = {
   leaseId: string;
@@ -59,16 +57,15 @@ type RenewalContext = {
   draftedOn: string;
 };
 
-async function loadRenewalContext(params: {
-  leaseId: string;
-  newEndDate: string;
-  newBaseRentMonthly: number;
-  escalationMethod: string;
-  escalationPct: number | null;
-}): Promise<RenewalContext> {
-  "use step";
+async function loadRenewalContext(params: Params): Promise<RenewalContext> {
   const supabase = getSupabaseServiceClient();
-  const { leaseId, newEndDate, newBaseRentMonthly, escalationMethod, escalationPct } = params;
+  const {
+    leaseId,
+    newEndDate,
+    newBaseRentMonthly,
+    escalationMethod,
+    escalationPct,
+  } = params;
 
   const { data: lease, error: leaseError } = await supabase
     .from("leases")
@@ -78,7 +75,9 @@ async function loadRenewalContext(params: {
     .eq("id", leaseId)
     .single();
   if (leaseError || !lease) {
-    throw new FatalError(`lease ${leaseId} not found: ${leaseError?.message}`);
+    throw new NonRetryableError(
+      `lease ${leaseId} not found: ${leaseError?.message}`,
+    );
   }
 
   const { data: locale, error: localeError } = await supabase
@@ -87,11 +86,11 @@ async function loadRenewalContext(params: {
     .eq("id", lease.locale_id)
     .single();
   if (localeError || !locale) {
-    throw new FatalError(`locale for lease ${leaseId} not found: ${localeError?.message}`);
+    throw new NonRetryableError(
+      `locale for lease ${leaseId} not found: ${localeError?.message}`,
+    );
   }
 
-  // A Convenio Modificatorio prorogates the existing term — the new period
-  // starts the day after the current one ends, no gap and no overlap.
   const currentEnd = new Date(lease.end_date);
   const newStart = new Date(currentEnd);
   newStart.setDate(newStart.getDate() + 1);
@@ -104,7 +103,10 @@ async function loadRenewalContext(params: {
     tenantEntity: lease.tenant_entity as string,
     currentEndDate: lease.end_date as string,
     currentBaseRentMonthly: lease.base_rent_monthly as number | null,
-    responsibilityMatrix: lease.responsibility_matrix as Record<string, string> | null,
+    responsibilityMatrix: lease.responsibility_matrix as Record<
+      string,
+      string
+    > | null,
     noticePeriodDays: lease.notice_period_days as number | null,
     exclusiveUseClause: lease.exclusive_use_clause as string | null,
     permittedUse: lease.permitted_use as string | null,
@@ -116,8 +118,6 @@ async function loadRenewalContext(params: {
     draftedOn: new Date().toISOString().slice(0, 10),
   };
 }
-
-// ── Step 2: Mariana's draft pass (Opus 5) ───────────────────────────────────
 
 const RenewalDraftSchema = z.object({ draft_markdown: z.string() });
 type RenewalDraft = z.infer<typeof RenewalDraftSchema>;
@@ -144,12 +144,15 @@ Close with a citation line naming the jurisdiction pack reference and, verbatim,
 Do not invent any clause, date, or figure not given to you. Where information is missing, say so in the relevant section rather than filling a plausible-sounding placeholder.`;
 
 async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
-  "use step";
   const client = new Anthropic();
 
   const pctChange =
     context.currentBaseRentMonthly && context.currentBaseRentMonthly > 0
-      ? (((context.newBaseRentMonthly - context.currentBaseRentMonthly) / context.currentBaseRentMonthly) * 100).toFixed(1)
+      ? (
+          ((context.newBaseRentMonthly - context.currentBaseRentMonthly) /
+            context.currentBaseRentMonthly) *
+          100
+        ).toFixed(1)
       : null;
 
   const userContent = [
@@ -161,10 +164,14 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
     `Renta actual: ${context.currentBaseRentMonthly !== null ? `$${context.currentBaseRentMonthly} MXN/mes` : "(no está en registro)"}.`,
     `Renta nueva (dato del arrendador, no lo recalcules): $${context.newBaseRentMonthly} MXN/mes.`,
     `Método de escalación: ${context.escalationMethod}${context.escalationPct !== null ? ` (${context.escalationPct}%)` : ""}.`,
-    pctChange !== null ? `Cambio calculado: ${pctChange}% respecto a la renta actual.` : "",
+    pctChange !== null
+      ? `Cambio calculado: ${pctChange}% respecto a la renta actual.`
+      : "",
     "",
     "Matriz de responsabilidad de mantenimiento vigente:",
-    context.responsibilityMatrix ? JSON.stringify(context.responsibilityMatrix) : "(no está en registro)",
+    context.responsibilityMatrix
+      ? JSON.stringify(context.responsibilityMatrix)
+      : "(no está en registro)",
     `Días de aviso de terminación vigentes: ${context.noticePeriodDays ?? "(no está en registro)"}.`,
     `Cláusula de exclusividad vigente: ${context.exclusiveUseClause ?? "(ninguna)"}.`,
     `Uso permitido vigente: ${context.permittedUse ?? "(no especificado)"}.`,
@@ -181,20 +188,27 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
   const response = await client.messages.parse({
     model: "claude-opus-5",
     max_tokens: 3000,
-    system: [{ type: "text", text: RENEWAL_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+    system: [
+      {
+        type: "text",
+        text: RENEWAL_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [{ role: "user", content: userContent }],
     output_config: { format: zodOutputFormat(RenewalDraftSchema) },
   });
 
   if (!response.parsed_output) {
-    throw new FatalError("renewal draft pass returned no parsed output");
+    throw new NonRetryableError("renewal draft pass returned no parsed output");
   }
   return response.parsed_output;
 }
 
-// ── Step 3: skeptic pass (Opus 5) — checks clause fidelity, not legal advice ─
-
-const SkepticVerdictSchema = z.object({ flagged: z.boolean(), concerns: z.array(z.string()) });
+const SkepticVerdictSchema = z.object({
+  flagged: z.boolean(),
+  concerns: z.array(z.string()),
+});
 type SkepticVerdict = z.infer<typeof SkepticVerdictSchema>;
 
 const SKEPTIC_SYSTEM_PROMPT = `You audit a lease-renewal draft before it reaches a landlord. Check specifically:
@@ -207,8 +221,10 @@ const SKEPTIC_SYSTEM_PROMPT = `You audit a lease-renewal draft before it reaches
 - Does any OTHER figure, date, or clause appear in the draft that wasn't in the source context below (an invented number or term)?
 Flag only real problems — do not invent uncertainty that isn't there. This is not a legal-soundness review (that's the landlord's counsel's job) — it's a fidelity check against the source lease and the given instructions.`;
 
-async function runRenewalSkeptic(context: RenewalContext, draft: RenewalDraft): Promise<SkepticVerdict> {
-  "use step";
+async function runRenewalSkeptic(
+  context: RenewalContext,
+  draft: RenewalDraft,
+): Promise<SkepticVerdict> {
   const client = new Anthropic();
 
   const response = await client.messages.parse({
@@ -239,12 +255,12 @@ async function runRenewalSkeptic(context: RenewalContext, draft: RenewalDraft): 
   });
 
   if (!response.parsed_output) {
-    throw new FatalError("renewal skeptic pass returned no parsed output");
+    throw new NonRetryableError(
+      "renewal skeptic pass returned no parsed output",
+    );
   }
   return response.parsed_output;
 }
-
-// ── Step 4: persist ──────────────────────────────────────────────────────────
 
 async function writeRenewal(params: {
   context: RenewalContext;
@@ -252,7 +268,6 @@ async function writeRenewal(params: {
   skeptic: SkepticVerdict;
   workflowRunId: string;
 }): Promise<string> {
-  "use step";
   const supabase = getSupabaseServiceClient();
   const { context, draft, skeptic, workflowRunId } = params;
 
@@ -273,7 +288,9 @@ async function writeRenewal(params: {
       skeptic_flagged: skeptic.flagged,
       skeptic_concerns: skeptic.concerns,
       jurisdiction_pack_ref: JURISDICTION_PACK_REF,
-      unresolved_jd_keys: PACK_COUNSEL_VERIFIED ? [] : RENEWAL_UNRESOLVED_JD_KEYS,
+      unresolved_jd_keys: PACK_COUNSEL_VERIFIED
+        ? []
+        : RENEWAL_UNRESOLVED_JD_KEYS,
       status: "needs_landlord_review",
       workflow_run_id: workflowRunId,
     })
@@ -281,13 +298,18 @@ async function writeRenewal(params: {
     .single();
 
   if (error || !renewal) {
-    throw new FatalError(`failed to write lease_renewal: ${error?.message}`);
+    throw new NonRetryableError(
+      `failed to write lease_renewal: ${error?.message}`,
+    );
   }
   return renewal.id as string;
 }
 
-async function markReviewed(renewalId: string, approved: boolean, reviewedById: string | undefined) {
-  "use step";
+async function markReviewed(
+  renewalId: string,
+  approved: boolean,
+  reviewedById: string | undefined,
+) {
   const supabase = getSupabaseServiceClient();
   await supabase
     .from("lease_renewals")
@@ -299,33 +321,51 @@ async function markReviewed(renewalId: string, approved: boolean, reviewedById: 
     .eq("id", renewalId);
 }
 
-// ── The workflow ─────────────────────────────────────────────────────────────
+export class LeaseRenewalWorkflow extends WorkflowEntrypoint<
+  WorkflowsEnv,
+  Params
+> {
+  async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
+    hydrateProcessEnv(this.env);
+    const params = event.payload;
 
-export async function leaseRenewalWorkflow(params: {
-  leaseId: string;
-  newEndDate: string;
-  newBaseRentMonthly: number;
-  escalationMethod: string;
-  escalationPct: number | null;
-}): Promise<{ renewalId: string; status: "approved" | "rejected" }> {
-  "use workflow";
+    const context = await step.do("load renewal context", () =>
+      loadRenewalContext(params),
+    );
+    const draft = await step.do("draft renewal", () => draftRenewal(context));
+    const skeptic = await step.do("run renewal skeptic", () =>
+      runRenewalSkeptic(context, draft),
+    );
 
-  const context = await loadRenewalContext(params);
-  const draft = await draftRenewal(context);
-  const skeptic = await runRenewalSkeptic(context, draft);
+    const workflowRunId = event.instanceId;
+    const renewalId = await step.do("write renewal", () =>
+      writeRenewal({ context, draft, skeptic, workflowRunId }),
+    );
 
-  const { workflowRunId } = getWorkflowMetadata();
-  const renewalId = await writeRenewal({ context, draft, skeptic, workflowRunId });
-
-  // Tier 3 human gate (root CLAUDE.md §1) — SKILL.md §"Landlord Guardrails":
-  // renewal terms and addendums must be formally approved by the landlord
-  // before being presented to the tenant. Woken by the review UI calling
-  // resumeHook(`lease-renewal-review:${renewalId}`, ...).
-  const hook = createHook<{ approved: boolean; reviewedById?: string }>({
-    token: `lease-renewal-review:${renewalId}`,
-  });
-  const decision = await hook;
-  await markReviewed(renewalId, decision.approved, decision.reviewedById);
-
-  return { renewalId, status: decision.approved ? "approved" : "rejected" };
+    // Tier 3 human gate (root CLAUDE.md §1) — SKILL.md §"Landlord Guardrails":
+    // renewal terms and addendums must be formally approved by the landlord
+    // before being presented to the tenant. Woken by the review UI sending
+    // an event of type `lease-renewal-review-${renewalId}`.
+    try {
+      const reviewEvent = await step.waitForEvent<{
+        approved: boolean;
+        reviewedById?: string;
+      }>("await renewal review", {
+        type: `lease-renewal-review-${renewalId}`,
+        timeout: "30 days",
+      });
+      const decision = reviewEvent.payload;
+      await step.do("mark reviewed", () =>
+        markReviewed(renewalId, decision.approved, decision.reviewedById),
+      );
+      return {
+        renewalId,
+        status: decision.approved
+          ? ("approved" as const)
+          : ("rejected" as const),
+      };
+    } catch {
+      return { renewalId, status: "needs_landlord_review" as const };
+    }
+  }
 }

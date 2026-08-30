@@ -99,7 +99,7 @@ export function useResolveTicket(ticketId: string) {
           body: JSON.stringify({ ticketId, approved }),
         });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(body.error ?? "HTTP " + res.status);
         }
         router.refresh();
@@ -136,7 +136,7 @@ export function useMarkTicketResolved(ticketId: string) {
           body: JSON.stringify({ workPerformed, finalCost }),
         });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(body.error ?? "HTTP " + res.status);
         }
         router.refresh();
@@ -165,7 +165,7 @@ function usePostTicketAction(ticketId: string, path: "redispatch" | "close-admin
     try {
       const res = await fetch(`/api/tickets/${ticketId}/${path}`, { method: "POST" });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "HTTP " + res.status);
       }
       router.refresh();
@@ -203,7 +203,7 @@ export function useGenerateContractorLink(ticketId: string) {
     setGeneratedUrl(null);
     try {
       const res = await fetch(`/api/tickets/${ticketId}/contractor-link`, { method: "POST" });
-      const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
       if (!res.ok) {
         throw new Error(body.error ?? "HTTP " + res.status);
       }

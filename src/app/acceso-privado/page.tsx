@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { PageFade } from "@/components/ui";
 import { AccesoForm } from "./acceso-form";
 
-export const runtime = "edge";
-
 
 export const metadata: Metadata = {
   title: "Acceso Privado al Proyecto | La Gran Vía Mexicali",

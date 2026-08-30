@@ -58,7 +58,7 @@ export function NewLeadForm({
         }),
       });
 
-      const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         throw new Error(body.error ?? "No se pudo registrar el prospecto.");
       }

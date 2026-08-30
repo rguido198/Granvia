@@ -1,8 +1,7 @@
-import { start } from "workflow/api";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentProfile } from "@/lib/auth/server";
-import { diegoTriageWorkflow } from "@/workflows/diego-triage";
 
 /**
  * Manual/external trigger for Diego's triage workflow — mainly for testing
@@ -21,12 +20,21 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { documentId, localeId } = body as { documentId?: string; localeId?: string };
+  const { documentId, localeId } = body as {
+    documentId?: string;
+    localeId?: string;
+  };
 
   if (!documentId || !localeId) {
-    return NextResponse.json({ error: "documentId and localeId are required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "documentId and localeId are required" },
+      { status: 400 },
+    );
   }
 
-  const run = await start(diegoTriageWorkflow, [documentId, localeId]);
-  return NextResponse.json({ runId: run.runId }, { status: 202 });
+  const { env } = getCloudflareContext();
+  const instance = await env.DIEGO_TRIAGE_WORKFLOW.create({
+    params: { documentId, localeId },
+  });
+  return NextResponse.json({ runId: instance.id }, { status: 202 });
 }

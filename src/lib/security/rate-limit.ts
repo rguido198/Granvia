@@ -1,7 +1,5 @@
 import "server-only";
 
-import { ipAddress } from "@vercel/functions";
-
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 type RateLimitResult = { allowed: boolean };
@@ -43,17 +41,17 @@ export async function checkRateLimit(
 }
 
 /**
- * Vercel's own header extraction — not a hand-rolled `x-forwarded-for`
- * split, which trusts whatever value a client sent first in a
- * comma-separated list a client fully controls unless the platform in
- * front of the function is known to overwrite/append it. `ipAddress()`
- * reads the platform-set header for the request's actual TCP peer, so a
- * caller can't just set their own `x-forwarded-for` to someone else's IP
- * to dodge or frame another bucket.
+ * Cloudflare's own header, not a hand-rolled `x-forwarded-for` split, which
+ * trusts whatever value a client sent first in a comma-separated list a
+ * client fully controls unless the platform in front of the function is
+ * known to overwrite/append it. `cf-connecting-ip` is set by Cloudflare's
+ * edge for the request's actual TCP peer and cannot be spoofed by the
+ * client, so a caller can't just set their own `x-forwarded-for` to
+ * someone else's IP to dodge or frame another bucket.
  *
- * Returns "unknown" outside Vercel (local dev has no untrusted edge in
+ * Returns "unknown" outside Cloudflare (local dev has no untrusted edge in
  * front of it, so a single shared bucket there is fine).
  */
 export function getClientIp(request: Request): string {
-  return ipAddress(request) ?? "unknown";
+  return request.headers.get("cf-connecting-ip") ?? "unknown";
 }
