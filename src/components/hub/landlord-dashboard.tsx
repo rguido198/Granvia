@@ -348,6 +348,78 @@ function formatMxn(val: number, decimals = 0) {
   }).format(val);
 }
 
+function formatInlineMarkdown(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={index} className="font-semibold text-ink-900">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return (
+        <em key={index} className="italic text-ink-800">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return part;
+  });
+}
+
+function renderFormattedMarkdown(content: string) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("### ")) {
+      elements.push(
+        <h4 key={idx} className="font-bold text-[13px] text-ink border-b border-hairline pb-1 mt-3 mb-1.5 leading-snug">
+          {formatInlineMarkdown(trimmed.slice(4))}
+        </h4>
+      );
+    } else if (trimmed.startsWith("#### ")) {
+      elements.push(
+        <h5 key={idx} className="font-bold text-xs text-ink-800 mt-2 mb-1 leading-snug">
+          {formatInlineMarkdown(trimmed.slice(5))}
+        </h5>
+      );
+    } else if (trimmed === "---") {
+      elements.push(<hr key={idx} className="border-t border-hairline my-2.5" />);
+    } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+      elements.push(
+        <div key={idx} className="flex gap-2 pl-1.5 my-0.5 text-xs text-ink-700 leading-relaxed">
+          <span className="text-[var(--console-accent)] font-bold select-none">•</span>
+          <span>{formatInlineMarkdown(trimmed.slice(2))}</span>
+        </div>
+      );
+    } else if (/^\d+\.\s/.test(trimmed)) {
+      const dotIdx = trimmed.indexOf(".");
+      const num = trimmed.slice(0, dotIdx + 1);
+      const rest = trimmed.slice(dotIdx + 1).trim();
+      elements.push(
+        <div key={idx} className="flex gap-2 pl-1 my-1 text-xs text-ink-700 leading-relaxed">
+          <span className="font-bold text-ink-900 select-none min-w-[1.2rem]">{num}</span>
+          <span>{formatInlineMarkdown(rest)}</span>
+        </div>
+      );
+    } else if (trimmed === "") {
+      elements.push(<div key={idx} className="h-1" />);
+    } else {
+      elements.push(
+        <p key={idx} className="text-xs text-ink-700 leading-relaxed my-0.5">
+          {formatInlineMarkdown(line)}
+        </p>
+      );
+    }
+  });
+
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
 
 
 /**
@@ -3507,7 +3579,11 @@ export function LandlordDashboard({
                       : "bg-white text-ink-700 border border-hairline rounded-bl-xs shadow-2xs space-y-2"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {msg.role === "user" ? (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  ) : (
+                    renderFormattedMarkdown(msg.content)
+                  )}
                 </div>
               </div>
             ))}
