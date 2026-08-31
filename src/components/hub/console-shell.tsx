@@ -168,22 +168,32 @@ export function ConsoleShell({
               </svg>
             </button>
           )}
-          <span className="h-2.5 w-2.5 rounded-full bg-slate-900" aria-hidden="true" />
-          <span className="sr-only">Sesión autenticada.</span>
-          {/* "Consola de Control" dropped — the sidebar's own brand block
-           *  ("Asset Management Hub · Consola") already says this. And for
-           *  the owner view, "Vista Propietario" is now dropped too — the
-           *  Propietario/Vista Inquilino toggle in this same bar already
-           *  shows which view is active, so the text restated it. Kept for
-           *  the tenant view: that one names which specific locale is
-           *  theirs, real information the toggle alone doesn't carry. */}
-          {!isOwner && (
-            <span className="min-w-0">
+          {/* The brand mark used to live twice — once here as a plain text
+           *  label ("La Gran Vía · Consola de Control"), once again in the
+           *  sidebar as the real logo + "Asset Management Hub · Consola"
+           *  caption. Dropping the header's copy left this side of the bar
+           *  empty (just a decorative dot) while the sidebar's own copy sat
+           *  isolated above a mostly-blank block — worse on both counts.
+           *  The logo now lives here, once, doing double duty as the bar's
+           *  content; the sidebar's copy is gone. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/la-gran-via-logo-horizontal.png"
+            alt="La Gran Vía Mexicali"
+            className="h-8 w-auto object-contain shrink-0"
+          />
+          <span className="min-w-0">
+            <span className="block text-slate-500 font-semibold">Asset Management Hub · Consola</span>
+            {/* Owner view: the Propietario/Vista Inquilino toggle already
+             *  shows which view is active, so no second line is needed.
+             *  Tenant view: names the specific locale, real information the
+             *  toggle alone doesn't carry. */}
+            {!isOwner && (
               <span className="block text-slate-600 font-semibold">
                 {`Vista Arrendatario (${tenantPortalLocale?.unitNumber ?? "?"})`}
               </span>
-            </span>
-          )}
+            )}
+          </span>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2.5">

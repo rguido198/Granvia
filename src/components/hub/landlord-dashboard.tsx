@@ -945,21 +945,9 @@ export function LandlordDashboard({
               ✕
             </button>
           </div>
-          {/* Brand Header — pulled tight top-to-bottom (no vertical padding
-           *  of its own, logo/caption at space-y-1) so it sits close under
-           *  the sidebar's own top edge instead of floating in the middle
-           *  of a tall empty block. */}
-          <div className="px-1 space-y-1">
-            <div className="inline-block bg-slate-50 px-2.5 py-1.5 rounded-xl border border-hairline shadow-2xs">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/brand/la-gran-via-logo-horizontal.png"
-                alt="La Gran Vía Mexicali"
-                className="h-10 w-auto object-contain"
-              />
-            </div>
-            <p className="text-xs text-ink-500 font-semibold px-0.5">Asset Management Hub · Consola</p>
-          </div>
+          {/* Brand block removed from here — it now lives once, in the
+           *  console header bar (console-shell.tsx), instead of duplicated
+           *  in both places. */}
 
           {/* Navigation Links — a lighter three-group structure survives here
               rather than PrimeStay's single flat "MENU" list on purpose:
