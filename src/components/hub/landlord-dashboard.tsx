@@ -445,8 +445,18 @@ export function LandlordDashboard({
     }
   }, []);
 
-  const { rentRoll, leases, formerTenants, approvedApplications, plazaTotalGla, leasedSqm, contractedRent } =
+  const [masterPlazaGlaOverride, setMasterPlazaGlaOverride] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("granvia_master_plaza_gla");
+      return saved ? Number(saved) : null;
+    }
+    return null;
+  });
+
+  const { rentRoll, leases, formerTenants, approvedApplications, plazaTotalGla: defaultPlazaTotalGla, leasedSqm, contractedRent } =
     livePortfolio;
+
+  const plazaTotalGla = masterPlazaGlaOverride && masterPlazaGlaOverride > 0 ? masterPlazaGlaOverride : defaultPlazaTotalGla;
 
   // Per-row lookup for the SSOT table's "Ver contrato" icon and Mariana
   // badge — leases is already fetched for the Legal tab's own table, so this
@@ -1191,9 +1201,29 @@ export function LandlordDashboard({
                   <OccupancyRing percent={(leasedSqm / plazaTotalGla) * 100} />
                   <div className="space-y-1 min-w-0">
                     <p className="text-xs font-bold text-ink-500 tracking-wide">Ocupación GLA</p>
-                    <p className="text-xs text-ink-500 font-medium">
-                      {leasedSqm.toLocaleString("es-MX")} de {plazaTotalGla.toLocaleString("es-MX")} m² totales
-                    </p>
+                    {isEditingRentRoll ? (
+                      <div className="flex items-center gap-1.5 text-xs text-ink-700 font-medium">
+                        <span>{leasedSqm.toLocaleString("es-MX")} de</span>
+                        <input
+                          type="number"
+                          value={masterPlazaGlaOverride ?? defaultPlazaTotalGla}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setMasterPlazaGlaOverride(val);
+                            if (typeof window !== "undefined") {
+                              localStorage.setItem("granvia_master_plaza_gla", String(val));
+                            }
+                          }}
+                          aria-label="GLA Total de la plaza en metros cuadrados"
+                          className="w-20 bg-white border border-hairline-strong rounded px-1.5 py-0.5 font-bold text-ink focus:border-[var(--console-accent)] focus:outline-none"
+                        />
+                        <span>m² totales</span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-ink-500 font-medium">
+                        {leasedSqm.toLocaleString("es-MX")} de {plazaTotalGla.toLocaleString("es-MX")} m² totales
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -245,7 +245,8 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
     creado: t.createdAt,
   }));
 
-  const aggregates = computeContractAggregates(leases);
+  const masterGlaEnv = process.env.MASTER_PLAZA_GLA_SQM ? Number(process.env.MASTER_PLAZA_GLA_SQM) : undefined;
+  const aggregates = computeContractAggregates(leases, masterGlaEnv);
   return {
     estadisticas_agregadas_contratos: {
       total_contratos: aggregates.totalContratos,

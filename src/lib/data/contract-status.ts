@@ -243,6 +243,7 @@ export type ContractAggregates = {
    *  no matrix at all. */
   contratosDigitalizados: number;
   totalGlaM2: number;
+  leasedGlaM2: number;
   totalRentaMensualMxn: number;
   porEstatus: Record<"vigente" | "renovacionProxima" | "vencido", number>;
   /** Count of leases per calendar year of end_date — "how many contracts
@@ -268,7 +269,7 @@ export type ContractAggregates = {
  * Deterministic code can't drift the same way, so any question shaped like
  * "how many X" gets answered from this instead.
  */
-export function computeContractAggregates(leases: LeaseDetail[]): ContractAggregates {
+export function computeContractAggregates(leases: LeaseDetail[], masterPlazaGlaM2?: number): ContractAggregates {
   const porEstatus = { vigente: 0, renovacionProxima: 0, vencido: 0 };
   const porAnioVencimiento: Record<string, number> = {};
   const responsabilidadPorSistema = Object.fromEntries(
@@ -279,11 +280,11 @@ export function computeContractAggregates(leases: LeaseDetail[]): ContractAggreg
   ) as ContractAggregates["clausulasNombradasPresentes"];
 
   let contratosDigitalizados = 0;
-  let totalGlaM2 = 0;
+  let leasedGlaM2 = 0;
   let totalRentaMensualMxn = 0;
 
   for (const lease of leases) {
-    totalGlaM2 += lease.sqm ?? 0;
+    leasedGlaM2 += lease.sqm ?? 0;
     totalRentaMensualMxn += lease.rentMonthly ?? 0;
 
     if (lease.isExpired) porEstatus.vencido++;
@@ -308,10 +309,13 @@ export function computeContractAggregates(leases: LeaseDetail[]): ContractAggreg
     }
   }
 
+  const totalGlaM2 = masterPlazaGlaM2 && masterPlazaGlaM2 > 0 ? masterPlazaGlaM2 : leasedGlaM2;
+
   return {
     totalContratos: leases.length,
     contratosDigitalizados,
     totalGlaM2,
+    leasedGlaM2,
     totalRentaMensualMxn,
     porEstatus,
     porAnioVencimiento,
