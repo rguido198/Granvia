@@ -75,7 +75,7 @@ export async function checkExclusivityConflicts(
 
   const client = new Anthropic();
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-sonnet-5",
     max_tokens: 2000,
     system: SYSTEM_PROMPT,
     messages: [

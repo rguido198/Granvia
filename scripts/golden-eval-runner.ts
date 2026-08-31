@@ -61,7 +61,7 @@ type JudgeVerdict = { pass: boolean; reasoning: string };
 async function judgeGrounding(anchor: string, answer: string): Promise<JudgeVerdict> {
   const client = new Anthropic();
   const response = await client.messages.create({
-    model: "claude-opus-5",
+    model: "claude-sonnet-5",
     // 500 was enough for the original 3 single-fact-lookup cases' short
     // verdicts, but a judgment/conflict-detection case (eval_004) needs the
     // judge to reason over a much longer real answer — it hit the cap

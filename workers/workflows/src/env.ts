@@ -2,6 +2,7 @@ export type WorkflowsEnv = {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   ANTHROPIC_API_KEY: string;
+  GEMINI_API_KEY: string;
   INTERNAL_WORKER_SECRET: string;
   // Service binding to the main `la-gran-via` app worker — used only to ask
   // it to invalidate its own in-process Next.js data cache (revalidateTag
@@ -23,6 +24,7 @@ export function hydrateProcessEnv(env: WorkflowsEnv): void {
   process.env.SUPABASE_URL = env.SUPABASE_URL;
   process.env.SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
   process.env.ANTHROPIC_API_KEY = env.ANTHROPIC_API_KEY;
+  process.env.GEMINI_API_KEY = env.GEMINI_API_KEY;
 }
 
 /**

@@ -50,7 +50,7 @@ export async function extractFromText(rawText: string): Promise<LeaseExtractedFi
   const client = new Anthropic();
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-sonnet-5",
     max_tokens: 4000,
     system: EXTRACTION_SYSTEM_PROMPT,
     messages: [{ role: "user", content: `Texto del contrato:\n${rawText}` }],
@@ -99,7 +99,7 @@ export async function extractFromVision(
   const base64 = Buffer.from(bytes).toString("base64");
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-sonnet-5",
     max_tokens: 6000,
     system: VISION_SYSTEM_PROMPT,
     messages: [

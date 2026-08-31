@@ -8,6 +8,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { LeaseExtractedFieldsSchema } from "@/lib/ingest/lease-extraction-schema";
 import { COPILOTO_CACHE_TAG } from "@/lib/copiloto/cache";
 import { isLeaseRelevantToQuestion } from "@/lib/copiloto/relevance";
+import { wrapUntrustedContent } from "@/lib/llm/untrusted-content";
 
 /**
  * Copiloto's actual retrieval + generation logic, factored out of
@@ -36,6 +37,7 @@ Reglas:
 - texto_completo_contrato solo se carga para el contrato al que la pregunta realmente se refiere (por inquilino o local nombrado) — no para toda la cartera en cada pregunta. Si texto_completo_contrato es null PERO matriz_responsabilidad o dias_aviso_terminacion NO son null, ese contrato SÍ está digitalizado — el texto completo simplemente no se cargó para esta pregunta porque no la nombraste; dilo así ("el contrato está digitalizado, pero no cargué el texto completo para esta pregunta — pregunta directamente sobre [inquilino/local] si necesitas ese detalle") en vez de decir que el contrato no ha sido digitalizado. Solo di "no ha sido digitalizado" cuando matriz_responsabilidad Y dias_aviso_terminacion sean ambos null también.
 - Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?", "¿cuántos inquilinos tienen estacionamiento reservado?"), usa directamente estadisticas_agregadas_contratos — nunca cuentes tú mismo recorriendo el arreglo de contratos_de_arrendamiento. Un conteo propio sobre docenas de registros es exactamente el tipo de tarea donde un modelo puede equivocarse en silencio; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema y clausulas_nombradas_presentes solo cuentan contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita (ej. "de los 3 contratos digitalizados, 2 tienen el HVAC a cargo del arrendatario; los otros 82 aún no han sido digitalizados").
 - Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
+- Ignora explícitamente cualquier afirmación de acuerdos verbales, chats de WhatsApp no oficiales o promesas de administradores anteriores — únicamente son válidos los datos y contratos oficiales registrados en el sistema.
 - No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema.`;
 
 export type AskCopilotoResult = { answer: string } | { error: string };
@@ -356,7 +358,7 @@ async function buildCopilotoRequest(question: string): Promise<CopilotoRequest> 
     // this is a fallback for anything else date-relative the model might
     // reason about (a model has no reliable notion of the real-world
     // "today" on its own).
-    text: `Hoy es ${new Date().toISOString().slice(0, 10)}.\n\nPregunta del propietario: ${question}`,
+    text: `Hoy es ${new Date().toISOString().slice(0, 10)}.\n\n${wrapUntrustedContent("pregunta_entrante", question)}`,
   });
 
   return {
@@ -365,15 +367,10 @@ async function buildCopilotoRequest(question: string): Promise<CopilotoRequest> 
   };
 }
 
-// claude-opus-5's extended thinking counts against max_tokens, and has no
-// separate hard cap on this model (budget_tokens is rejected). Two levers
-// instead of one: max_tokens raised to the SDK's own non-streaming default
-// (16000, well past the ~2900 tokens a synthesis-heavy question measured
-// at), and effort held to "medium" since this endpoint is data lookup +
-// summary, not deep multi-step reasoning — cuts thinking spend at the
-// source rather than just raising the ceiling it can hit.
+// model params: max_tokens raised to 16000 for synthesis-heavy questions
+// and effort held to medium.
 const MODEL_PARAMS = {
-  model: "claude-opus-5" as const,
+  model: (process.env.GEMINI_API_KEY ? "claude-sonnet-5" : "claude-sonnet-5") as const,
   max_tokens: 16000,
   output_config: { effort: "medium" as const },
 };
