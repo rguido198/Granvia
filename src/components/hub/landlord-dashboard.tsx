@@ -850,8 +850,19 @@ export function LandlordDashboard({
         });
 
         if (!res.ok) {
-          const json = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(json.error ?? "Error de respuesta del servidor.");
+          const errorText = await res.text().catch(() => "");
+          let parsedError = "";
+          try {
+            const json = JSON.parse(errorText) as { error?: string };
+            if (json.error) parsedError = json.error;
+          } catch {
+            // text was not JSON
+          }
+
+          if (res.status === 401 || parsedError === "unauthorized") {
+            throw new Error("Tu sesión ha expirado. Por favor recarga la página para volver a ingresar.");
+          }
+          throw new Error(parsedError || errorText.slice(0, 150) || `Error ${res.status} del servidor.`);
         }
         if (!res.body) throw new Error("Error de conexión con el agente.");
 
