@@ -945,8 +945,9 @@ export function LandlordDashboard({
               ✕
             </button>
           </div>
-          {/* Brand Header */}
-          <div className="px-1 py-1 space-y-2">
+          {/* Brand Header — logo and caption pulled close together (space-y-1,
+           *  not -2) so they read as one unit instead of two stacked blocks. */}
+          <div className="px-1 py-1 space-y-1">
             <div className="inline-block bg-slate-50 px-3 py-2 rounded-xl border border-hairline shadow-2xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

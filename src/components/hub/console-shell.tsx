@@ -173,11 +173,10 @@ export function ConsoleShell({
           {/* Title over role rather than side by side: keeps this group's
               max-content narrow enough that the control cluster opposite it
               still resolves to a single row on a normal desktop width. */}
+          {/* "Consola de Control" dropped too — the sidebar's own brand
+           *  block ("Asset Management Hub · Consola") already says this;
+           *  the role line below is the only thing this bar needs to add. */}
           <span className="min-w-0">
-            {/* Plaza name dropped here — the sidebar's own logo block already
-             *  carries that brand identity; repeating it in text next to it
-             *  read as pure redundancy. */}
-            <span className="block font-bold text-slate-900 uppercase tracking-wide">Consola de Control</span>
             <span className="block text-slate-600 font-semibold">
               {isOwner
                 ? "Vista Propietario (Plaza Completa)"
