@@ -17,17 +17,23 @@ import { askCopilotoStream } from "@/lib/copiloto/ask-copiloto";
  * entire generation.
  */
 export async function POST(request: NextRequest) {
-  const profile = await getCurrentProfile();
-  if (!profile || profile.role !== "landlord") {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  try {
+    const profile = await getCurrentProfile();
+    if (!profile || profile.role !== "landlord") {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
 
-  const body = await request.json();
-  const { question, masterGla } = body as { question?: string; masterGla?: number };
-  if (typeof question !== "string" || !question.trim()) {
-    return NextResponse.json({ error: "question is required" }, { status: 400 });
-  }
+    const body = await request.json();
+    const { question, masterGla } = body as { question?: string; masterGla?: number };
+    if (typeof question !== "string" || !question.trim()) {
+      return NextResponse.json({ error: "question is required" }, { status: 400 });
+    }
 
-  const stream = await askCopilotoStream(question, typeof masterGla === "number" ? masterGla : undefined);
-  return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    const stream = await askCopilotoStream(question, typeof masterGla === "number" ? masterGla : undefined);
+    return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("Error in /api/copiloto/ask:", errorMsg);
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
+  }
 }

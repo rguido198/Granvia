@@ -353,12 +353,22 @@ const MODEL_PARAMS = {
   max_tokens: 8000,
 };
 
+function getAnthropicClient(): Anthropic {
+  const apiKey =
+    process.env.ANTHROPIC_API_KEY ||
+    (globalThis as unknown as { env?: Record<string, string> }).env?.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("Clave de API (ANTHROPIC_API_KEY) no configurada en las variables del servidor.");
+  }
+  return new Anthropic({ apiKey });
+}
+
 // Non-streaming — kept for scripts/golden-eval-runner.ts, which grades a
 // complete answer against a golden reasoning anchor and has no UI to stream
 // tokens into.
 export async function askCopiloto(question: string, masterGla?: number): Promise<AskCopilotoResult> {
   const request = await buildCopilotoRequest(question, masterGla);
-  const client = new Anthropic();
+  const client = getAnthropicClient();
   const response = await client.messages.create({ ...MODEL_PARAMS, ...request });
 
   const answer = response.content.find((block) => block.type === "text")?.text ?? "";
@@ -380,7 +390,7 @@ export async function askCopiloto(question: string, masterGla?: number): Promise
 // before anything renders.
 export async function askCopilotoStream(question: string, masterGla?: number): Promise<ReadableStream<Uint8Array>> {
   const request = await buildCopilotoRequest(question, masterGla);
-  const client = new Anthropic();
+  const client = getAnthropicClient();
   const anthropicStream = client.messages.stream({ ...MODEL_PARAMS, ...request });
 
   let sawText = false;
