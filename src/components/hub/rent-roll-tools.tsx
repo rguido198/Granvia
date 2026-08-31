@@ -57,9 +57,11 @@ type TenantDraft = {
 function AddTenantForm({
   onDone,
   approvedApplications,
+  mode,
 }: {
   onDone: () => void;
   approvedApplications: ApprovedApplication[];
+  mode: "mariana" | "manual";
 }) {
   const [state, formAction, pending] = useActionState<RentRollActionState, FormData>(addTenantAction, FORM_INITIAL);
   const [step, setStep] = useState<"form" | "confirm">("form");
@@ -84,25 +86,67 @@ function AddTenantForm({
     );
   }
 
+  const isMariana = mode === "mariana";
+
   const canReview =
     draft.tenantName.trim() !== "" &&
     draft.unitNumber.trim() !== "" &&
     draft.areaSqm !== "" &&
     Number(draft.areaSqm) > 0 &&
     draft.baseRentMonthly !== "" &&
-    Number(draft.baseRentMonthly) >= 0;
+    Number(draft.baseRentMonthly) >= 0 &&
+    (!isMariana || draft.applicationId !== "");
+
+  const selectApplication = (applicationId: string) => {
+    const app = approvedApplications.find((a) => a.id === applicationId);
+    setDraft((d) => ({
+      ...d,
+      applicationId,
+      tenantName: app ? app.applicantEntity : d.tenantName,
+      unitNumber: app ? app.targetUnitCode : d.unitNumber,
+    }));
+  };
 
   if (step === "form") {
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
-        <p className="text-xs font-bold text-slate-700">+ Agregar Inquilino al Rent Roll</p>
+        <p className="text-xs font-bold text-slate-700">
+          {isMariana ? "+ Agregar Inquilino desde Mariana IA" : "+ Agregar Inquilino Manualmente"}
+        </p>
+
+        {isMariana ? (
+          <>
+            <Field label="Solicitud aprobada de Mariana IA">
+              <select value={draft.applicationId} onChange={(e) => selectApplication(e.target.value)} className={INPUT_CLS}>
+                <option value="">-- selecciona una solicitud --</option>
+                {approvedApplications.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.applicationNumber} — {a.applicantEntity} ({a.targetUnitCode})
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <p className="text-[11px] text-slate-500">
+              Nombre y local se toman de la solicitud aprobada — ya pasaron el filtro de exclusividad de Mariana IA. Solo
+              superficie, renta y fechas de contrato quedan por confirmar.
+            </p>
+          </>
+        ) : (
+          <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 font-semibold">
+            Este alta no pasa por el filtro de exclusividad de Mariana IA — úsalo solo para inquilinos existentes,
+            migraciones o contratos cerrados fuera de sistema. Cuando exista una solicitud, prefiere &ldquo;Agregar desde
+            Mariana IA&rdquo;.
+          </p>
+        )}
+
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nombre del inquilino">
             <input
               value={draft.tenantName}
               onChange={(e) => setDraft((d) => ({ ...d, tenantName: e.target.value }))}
               placeholder="Ej. Café Tino"
-              className={INPUT_CLS}
+              disabled={isMariana && draft.applicationId !== ""}
+              className={`${INPUT_CLS} disabled:bg-slate-100 disabled:text-slate-500`}
             />
           </Field>
           <Field label="Número de local">
@@ -110,7 +154,8 @@ function AddTenantForm({
               value={draft.unitNumber}
               onChange={(e) => setDraft((d) => ({ ...d, unitNumber: e.target.value }))}
               placeholder="Ej. 9-90"
-              className={INPUT_CLS}
+              disabled={isMariana && draft.applicationId !== ""}
+              className={`${INPUT_CLS} disabled:bg-slate-100 disabled:text-slate-500`}
             />
           </Field>
           <Field label="Superficie (m²)">
@@ -148,22 +193,6 @@ function AddTenantForm({
             />
           </Field>
         </div>
-        {approvedApplications.length > 0 && (
-          <Field label="Vincular a solicitud aprobada de Mariana (opcional)">
-            <select
-              value={draft.applicationId}
-              onChange={(e) => setDraft((d) => ({ ...d, applicationId: e.target.value }))}
-              className={INPUT_CLS}
-            >
-              <option value="">-- sin vincular --</option>
-              {approvedApplications.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.applicationNumber} — {a.applicantEntity} ({a.targetUnitCode})
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
         <p className="text-[11px] text-slate-500">
           Fechas precargadas a 5 años desde hoy (plazo ilustrativo) si todavía no hay contrato firmado — ajústalas si ya
           existe una fecha real. Si el número de local corresponde a una unidad actualmente vacante, este formulario la
@@ -225,6 +254,13 @@ function AddTenantForm({
           </>
         )}
       </dl>
+
+      {!draft.applicationId && (
+        <p className="text-[11px] text-slate-600">
+          Sin documento de contrato escaneado en el sistema, este local aparecerá en el Rent Roll con el estatus
+          &ldquo;Vigente&rdquo; — no &ldquo;Vigente SSOT&rdquo; — hasta que se adjunte uno.
+        </p>
+      )}
 
       {state.error && <p className="text-[11px] text-red-600 font-semibold">{state.error}</p>}
 
@@ -590,17 +626,36 @@ function BulkImportPanel({ onDone }: { onDone: () => void }) {
 // ─────────────────────────────────────────────────────────────────────────
 
 export function RentRollAdminTools({ approvedApplications }: { approvedApplications: ApprovedApplication[] }) {
-  const [panel, setPanel] = useState<"none" | "add" | "import">("none");
+  const [panel, setPanel] = useState<"none" | "add-mariana" | "add-manual" | "import">("none");
+  const hasApproved = approvedApplications.length > 0;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
+        {/* Mariana IA is the screened path — the only one that guarantees the
+            exclusive-use audit already ran — so it gets the primary button
+            whenever there's an approved application waiting. Manual stays
+            available as the escape hatch (backfill, off-system deals) but
+            never as the default. */}
+        {hasApproved && (
+          <button
+            type="button"
+            onClick={() => setPanel(panel === "add-mariana" ? "none" : "add-mariana")}
+            className="bg-ink hover:bg-ink-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          >
+            + Agregar desde Mariana IA ({approvedApplications.length})
+          </button>
+        )}
         <button
           type="button"
-          onClick={() => setPanel(panel === "add" ? "none" : "add")}
-          className="bg-white border border-slate-300 hover:border-[var(--console-accent)] text-slate-800 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+          onClick={() => setPanel(panel === "add-manual" ? "none" : "add-manual")}
+          className={
+            hasApproved
+              ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              : "bg-white border border-slate-300 hover:border-[var(--console-accent)] text-slate-800 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+          }
         >
-          + Agregar Inquilino
+          + Agregar Inquilino Manualmente
         </button>
         <button
           type="button"
@@ -611,8 +666,11 @@ export function RentRollAdminTools({ approvedApplications }: { approvedApplicati
         </button>
       </div>
 
-      {panel === "add" && (
-        <AddTenantForm onDone={() => setPanel("none")} approvedApplications={approvedApplications} />
+      {panel === "add-mariana" && (
+        <AddTenantForm onDone={() => setPanel("none")} approvedApplications={approvedApplications} mode="mariana" />
+      )}
+      {panel === "add-manual" && (
+        <AddTenantForm onDone={() => setPanel("none")} approvedApplications={approvedApplications} mode="manual" />
       )}
       {panel === "import" && <BulkImportPanel onDone={() => setPanel("none")} />}
     </div>

@@ -188,47 +188,6 @@ export function ConsoleShell({
 
           {isOwner && (
             <>
-              {/* CURRENCY TRANSLATION TOGGLE (MXN DEFAULT / USD AT 17.50 RATE) */}
-              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrency("MXN");
-                    triggerToast("Moneda establecida en Pesos (MXN).");
-                  }}
-                  aria-pressed={currency === "MXN"}
-                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                    currency === "MXN" ? "bg-slate-900 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  MXN ($)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrency("USD");
-                    triggerToast("Moneda traducida a Dólares (USD @ $17.50 MXN/USD).");
-                  }}
-                  aria-pressed={currency === "USD"}
-                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                    currency === "USD" ? "bg-slate-900 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  USD ($17.50)
-                </button>
-              </div>
-
-              <select
-                aria-label="Periodo de reporte"
-                className="bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
-              >
-                <option value="ago-2026">Agosto 2026 (Actual)</option>
-                <option value="jul-2026">Julio 2026</option>
-                <option value="jun-2026">Junio 2026</option>
-                <option value="q3-2026">Q3 2026</option>
-                <option value="y-2026">Año 2026 (Full)</option>
-              </select>
-
               <button
                 type="button"
                 onClick={() => setCopilotOpen(!copilotOpen)}
@@ -281,8 +240,8 @@ export function ConsoleShell({
           <details className="relative shrink-0">
             <summary
               className="list-none flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 [&::-webkit-details-marker]:hidden"
-              title="Ajustes de visualización"
-              aria-label="Ajustes de visualización"
+              title="Ajustes"
+              aria-label="Ajustes"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path
@@ -294,7 +253,65 @@ export function ConsoleShell({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </summary>
-            <div className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-md">
+            <div className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-md space-y-3">
+              {isOwner && (
+                <>
+                  {/* CURRENCY TRANSLATION TOGGLE (MXN DEFAULT / USD AT 17.50 RATE) —
+                      moved here from the main header row, which had grown to 8
+                      controls in a single line. Currency/period are configuration,
+                      not frequent actions, so they belong in the settings menu
+                      alongside text size, not competing for row space with
+                      Consulta IA / the bell / the view toggle. */}
+                  <div>
+                    <p className="mb-1.5 text-xs font-bold text-slate-900">Moneda</p>
+                    <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrency("MXN");
+                          triggerToast("Moneda establecida en Pesos (MXN).");
+                        }}
+                        aria-pressed={currency === "MXN"}
+                        className={`flex-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                          currency === "MXN" ? "bg-slate-900 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        MXN ($)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrency("USD");
+                          triggerToast("Moneda traducida a Dólares (USD @ $17.50 MXN/USD).");
+                        }}
+                        aria-pressed={currency === "USD"}
+                        className={`flex-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                          currency === "USD" ? "bg-slate-900 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        USD ($17.50)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-900" htmlFor="report-period">
+                      Periodo de reporte
+                    </label>
+                    <select
+                      id="report-period"
+                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
+                    >
+                      <option value="ago-2026">Agosto 2026 (Actual)</option>
+                      <option value="jul-2026">Julio 2026</option>
+                      <option value="jun-2026">Junio 2026</option>
+                      <option value="q3-2026">Q3 2026</option>
+                      <option value="y-2026">Año 2026 (Full)</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
               <p className="mb-2 text-xs font-bold text-slate-900">Tamaño de texto</p>
               <div
                 className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 text-xs font-bold"

@@ -1006,6 +1006,59 @@ export function LandlordDashboard({
               Control de Acceso RBAC
             </SidebarNavItem>
           </nav>
+
+          {/* Portfolio Pulse — fills the space between a 5-item nav and the
+              footer session card with numbers the page already computes for
+              the Rent Roll KPI cards and the header's attention bell (no new
+              calc introduced here). Each row jumps to the tab that explains
+              it, same click-through pattern as HeaderAttentionBell. */}
+          <div className="space-y-1.5 rounded-xl border border-hairline bg-slate-50 p-3.5 text-left">
+            <p className="px-0.5 text-[11px] font-bold text-ink-400 tracking-wider mb-1">Pulso del Portafolio</p>
+
+            <button
+              type="button"
+              onClick={() => selectTab("rentroll")}
+              className="flex w-full items-center justify-between rounded-lg px-1.5 py-1.5 text-left hover:bg-slate-100 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-ink-600">Ocupación GLA</span>
+              <span className="text-xs font-bold text-ink">
+                {plazaTotalGla > 0 ? Math.round((leasedSqm / plazaTotalGla) * 100) : 0}%
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => selectTab("rentroll")}
+              className="flex w-full items-center justify-between rounded-lg px-1.5 py-1.5 text-left hover:bg-slate-100 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-ink-600">Renovación próxima</span>
+              <span className={`text-xs font-bold ${renewalSoonCount > 0 ? "text-caution" : "text-ink"}`}>
+                {renewalSoonCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => selectTab("legal")}
+              className="flex w-full items-center justify-between rounded-lg px-1.5 py-1.5 text-left hover:bg-slate-100 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-ink-600">Pendientes Mariana IA</span>
+              <span className={`text-xs font-bold ${marianaDecisionesCount + marianaExpedientesCount > 0 ? "text-caution" : "text-ink"}`}>
+                {marianaDecisionesCount + marianaExpedientesCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => selectTab("maint")}
+              className="flex w-full items-center justify-between rounded-lg px-1.5 py-1.5 text-left hover:bg-slate-100 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-ink-600">Pendientes Diego IA</span>
+              <span className={`text-xs font-bold ${liveDiegoKpis.pendingApprovalsCount > 0 ? "text-caution" : "text-ink"}`}>
+                {liveDiegoKpis.pendingApprovalsCount}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Footer Session Badge — avatar (real initials, no fabricated photo)
@@ -1351,9 +1404,22 @@ export function LandlordDashboard({
                                 <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                                   Vacante
                                 </span>
-                              ) : (
-                                <span className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                              ) : r.sourceDocumentId ? (
+                                // "SSOT" is only earned once a scanned contract backs the
+                                // row — otherwise this badge would claim a verification
+                                // that never happened (dashboard-builder §1 honesty rule).
+                                <span
+                                  className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                                  title="Respaldado por un contrato escaneado en el sistema"
+                                >
                                   Vigente SSOT
+                                </span>
+                              ) : (
+                                <span
+                                  className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                                  title="Ocupado y bajo contrato, pero sin un documento escaneado en el sistema todavía"
+                                >
+                                  Vigente
                                 </span>
                               )}
                               {!r.vacant && r.leaseId && (
