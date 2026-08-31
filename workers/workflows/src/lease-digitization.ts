@@ -235,6 +235,58 @@ async function markDocumentRejected(documentId: string): Promise<void> {
     .eq("id", documentId);
 }
 
+/** Shared by both promoteExtraction branches that create a lease row —
+ *  a brand-new tenancy, and a matched-existing-tenant locale that turns out
+ *  to have no lease row on file yet (see the isNewTenancy===false branch
+ *  below for why that second case is real, not hypothetical). */
+async function insertLeaseRow(
+  supabase: ReturnType<typeof getSupabaseServiceClient>,
+  params: {
+    localeId: string;
+    unitNumber: string;
+    tenantEntity: string;
+    tradeName: string | null;
+    startDate: string;
+    endDate: string;
+    baseRentMonthly: number | null;
+    fields: LeaseExtractedFields;
+    documentId: string;
+  },
+): Promise<string> {
+  const { data: newLease, error: insertError } = await supabase
+    .from("leases")
+    .insert({
+      lease_id: `LEASE-${params.unitNumber}-${Date.now()}`,
+      locale_id: params.localeId,
+      tenant_entity: params.tenantEntity,
+      trade_name: params.tradeName,
+      start_date: params.startDate,
+      end_date: params.endDate,
+      base_rent_monthly: params.baseRentMonthly,
+      responsibility_matrix: params.fields.responsibility_matrix,
+      notice_period_days: params.fields.notice_period_days,
+      exclusive_use_clause: params.fields.exclusive_use_clause,
+      permitted_use: params.fields.permitted_use,
+      parking_clause: params.fields.parking_clause,
+      directory_advertising_clause: params.fields.directory_advertising_clause,
+      expansion_option_clause: params.fields.expansion_option_clause,
+      extended_hours_clause: params.fields.extended_hours_clause,
+      signage_clause: params.fields.signage_clause,
+      pets_clause: params.fields.pets_clause,
+      sublease_restriction_clause: params.fields.sublease_restriction_clause,
+      remodeling_clause: params.fields.remodeling_clause,
+      source_document_id: params.documentId,
+    })
+    .select("id")
+    .single();
+  if (insertError || !newLease) {
+    throw new NonRetryableError(
+      `could not create lease for locale ${params.localeId}: ${insertError?.message ?? "no row returned"}`,
+    );
+  }
+  return newLease.id as string;
+}
+
 async function promoteExtraction(
   documentId: string,
   localeId: string,
@@ -316,38 +368,17 @@ async function promoteExtraction(
       base_rent_monthly: finalFields.base_rent_monthly,
     };
 
-    const { data: newLease, error: insertError } = await supabase
-      .from("leases")
-      .insert({
-        lease_id: `LEASE-${locale.unit_number}-${Date.now()}`,
-        locale_id: localeId,
-        tenant_entity: leaseDetails.tenant_entity,
-        trade_name: extractedTradeName,
-        start_date: leaseDetails.start_date,
-        end_date: leaseDetails.end_date,
-        base_rent_monthly: leaseDetails.base_rent_monthly,
-        responsibility_matrix: finalFields.responsibility_matrix,
-        notice_period_days: finalFields.notice_period_days,
-        exclusive_use_clause: finalFields.exclusive_use_clause,
-        permitted_use: finalFields.permitted_use,
-        parking_clause: finalFields.parking_clause,
-        directory_advertising_clause: finalFields.directory_advertising_clause,
-        expansion_option_clause: finalFields.expansion_option_clause,
-        extended_hours_clause: finalFields.extended_hours_clause,
-        signage_clause: finalFields.signage_clause,
-        pets_clause: finalFields.pets_clause,
-        sublease_restriction_clause: finalFields.sublease_restriction_clause,
-        remodeling_clause: finalFields.remodeling_clause,
-        source_document_id: documentId,
-      })
-      .select("id")
-      .single();
-    if (insertError || !newLease) {
-      throw new NonRetryableError(
-        `could not create lease for locale ${localeId}: ${insertError?.message ?? "no row returned"}`,
-      );
-    }
-    currentLeaseId = newLease.id as string;
+    currentLeaseId = await insertLeaseRow(supabase, {
+      localeId,
+      unitNumber: locale.unit_number,
+      tenantEntity: leaseDetails.tenant_entity,
+      tradeName: extractedTradeName,
+      startDate: leaseDetails.start_date,
+      endDate: leaseDetails.end_date,
+      baseRentMonthly: leaseDetails.base_rent_monthly,
+      fields: finalFields,
+      documentId,
+    });
 
     await supabase
       .from("locales")
@@ -377,29 +408,53 @@ async function promoteExtraction(
         .eq("id", localeId);
     }
 
-    await supabase
-      .from("leases")
-      .update({
-        tenant_entity: finalFields.tenant_entity,
-        trade_name: extractedTradeName,
-        start_date: finalFields.start_date,
-        end_date: finalFields.end_date,
-        base_rent_monthly: finalFields.base_rent_monthly,
-        responsibility_matrix: finalFields.responsibility_matrix,
-        notice_period_days: finalFields.notice_period_days,
-        exclusive_use_clause: finalFields.exclusive_use_clause,
-        permitted_use: finalFields.permitted_use,
-        parking_clause: finalFields.parking_clause,
-        directory_advertising_clause: finalFields.directory_advertising_clause,
-        expansion_option_clause: finalFields.expansion_option_clause,
-        extended_hours_clause: finalFields.extended_hours_clause,
-        signage_clause: finalFields.signage_clause,
-        pets_clause: finalFields.pets_clause,
-        sublease_restriction_clause: finalFields.sublease_restriction_clause,
-        remodeling_clause: finalFields.remodeling_clause,
-        source_document_id: documentId,
-      })
-      .eq("id", currentLeaseId);
+    if (currentLeaseId) {
+      await supabase
+        .from("leases")
+        .update({
+          tenant_entity: finalFields.tenant_entity,
+          trade_name: extractedTradeName,
+          start_date: finalFields.start_date,
+          end_date: finalFields.end_date,
+          base_rent_monthly: finalFields.base_rent_monthly,
+          responsibility_matrix: finalFields.responsibility_matrix,
+          notice_period_days: finalFields.notice_period_days,
+          exclusive_use_clause: finalFields.exclusive_use_clause,
+          permitted_use: finalFields.permitted_use,
+          parking_clause: finalFields.parking_clause,
+          directory_advertising_clause: finalFields.directory_advertising_clause,
+          expansion_option_clause: finalFields.expansion_option_clause,
+          extended_hours_clause: finalFields.extended_hours_clause,
+          signage_clause: finalFields.signage_clause,
+          pets_clause: finalFields.pets_clause,
+          sublease_restriction_clause: finalFields.sublease_restriction_clause,
+          remodeling_clause: finalFields.remodeling_clause,
+          source_document_id: documentId,
+        })
+        .eq("id", currentLeaseId);
+    } else {
+      // Matched to this locale's own tenant by name (isSameTenant), but no
+      // lease row exists yet — a landlord's roster commonly carries an
+      // occupied unit's tenant name (imported, or entered by hand) before
+      // that lease is ever digitized; fuzzy-match-tenant.ts's own PETCO/MINT
+      // Boutique examples are exactly this shape. Found live: Local
+      // 17/Donitas del Valle matched at 90% confidence, then this branch ran
+      // `.update(...).eq("id", undefined)` — Supabase matches zero rows with
+      // no error, so the locale's tenant/area synced above but no lease row
+      // was ever created, leaving the rent roll showing the tenant at $0
+      // rent with no contract attached.
+      await insertLeaseRow(supabase, {
+        localeId,
+        unitNumber: locale.unit_number,
+        tenantEntity: finalFields.tenant_entity,
+        tradeName: extractedTradeName,
+        startDate: finalFields.start_date,
+        endDate: finalFields.end_date,
+        baseRentMonthly: finalFields.base_rent_monthly,
+        fields: finalFields,
+        documentId,
+      });
+    }
   }
 
   const { data: occupiedLocaleRows } = await supabase
