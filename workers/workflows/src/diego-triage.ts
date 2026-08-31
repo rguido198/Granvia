@@ -268,7 +268,9 @@ const SkepticVerdictSchema = z.object({
 });
 type SkepticVerdict = z.infer<typeof SkepticVerdictSchema>;
 
-const SKEPTIC_SYSTEM_PROMPT = `You audit a maintenance-triage draft before it reaches a landlord. Find the weakest claim in the cost attribution: an uncited clause, a capital-vs-repair mixup, a bucket assigned without JD-05 support when the clause and the responsibility matrix are both silent, a bucket that ignores a matrix entry that actually covers the fault's system (the matrix outranks the freeform clause and JD-05 — see the draft prompt's ordering), or a priority that doesn't match the severity table. Flag only real problems — do not invent uncertainty that isn't there.`;
+const SKEPTIC_SYSTEM_PROMPT = `You audit a maintenance-triage draft before it reaches a landlord. Find the weakest claim in the cost attribution: an uncited clause, a capital-vs-repair mixup, a bucket assigned without JD-05 support when the clause and the responsibility matrix are both silent, a bucket that ignores a matrix entry that actually covers the fault's system (the matrix outranks the freeform clause and JD-05 — see the draft prompt's ordering), or a priority that doesn't match the severity table. Flag only real problems — do not invent uncertainty that isn't there.
+
+A matrix entry marked "shared" is not itself an unresolved bucket: this client has no CAM program, so a shared system's cost attributes entirely to ARRENDADOR (the landlord absorbs it uncharged, per the draft prompt's own CAM rule) — do not flag that resolution as missing JD-05 support, as an uncited inference, or as inconsistent with a "shared" matrix value. Only flag a shared-system bucket if it names something other than ARRENDADOR.`;
 
 async function runSkeptic(
   context: TicketContext,
