@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "eval:copiloto": "node --conditions=react-server --env-file=.env.local --import tsx scripts/golden-eval-runner.ts",
+    "eval:lease-extraction": "node --conditions=react-server --env-file=.env.local --import tsx scripts/eval-lease-extraction.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types"
