@@ -72,7 +72,7 @@ export async function callLLMTextForAgent(
   // Primary for High-Risk roles or Fallback for Gemini: Claude Sonnet 5
   const client = new Anthropic();
   const response = await client.messages.create({
-    model: isGemini ? "claude-sonnet-5" : modelName,
+    model: isGemini ? resolveModelName("claude-3-5-sonnet-latest") : modelName,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userContent }]
@@ -106,7 +106,7 @@ export async function callLLMStructuredForAgent<T>(
 
   const client = new Anthropic();
   const response = await client.messages.parse({
-    model: isGemini ? "claude-sonnet-5" : modelName,
+    model: isGemini ? resolveModelName("claude-3-5-sonnet-latest") : modelName,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userContent }],
