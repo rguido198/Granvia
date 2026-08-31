@@ -345,12 +345,12 @@ async function buildCopilotoRequest(question: string, masterGla?: number): Promi
   };
 }
 
-// model params: max_tokens raised to 16000 for synthesis-heavy questions
-// and effort held to medium.
+import { resolveModelName } from "@/lib/llm/provider";
+
+// model params: max_tokens raised to 8000 for synthesis-heavy questions
 const MODEL_PARAMS = {
-  model: "claude-sonnet-5" as const,
-  max_tokens: 16000,
-  output_config: { effort: "medium" as const },
+  model: process.env.MODEL_COPILOTO ? resolveModelName(process.env.MODEL_COPILOTO) : "claude-3-5-sonnet-20241022",
+  max_tokens: 8000,
 };
 
 // Non-streaming — kept for scripts/golden-eval-runner.ts, which grades a

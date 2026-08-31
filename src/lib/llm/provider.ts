@@ -3,16 +3,22 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
+export function resolveModelName(modelName: string): string {
+  if (modelName === "claude-sonnet-5") return "claude-3-5-sonnet-20241022";
+  if (modelName === "gemini-3.6-flash") return "gemini-2.5-flash";
+  return modelName;
+}
+
 /**
  * Per-Agent Model Configuration
- * High-Risk / Disputed Endpoints (Copiloto, Lease Extraction, Exclusivity) use Claude Sonnet 5
- * Low-Risk / High-Volume Triage & Template Generation use Gemini 3.6 Flash
+ * High-Risk / Disputed Endpoints (Copiloto, Lease Extraction, Exclusivity) use Claude 3.5 Sonnet
+ * Low-Risk / High-Volume Triage & Template Generation use Gemini 2.5 Flash
  */
 export const AGENT_MODELS = {
-  copiloto: process.env.MODEL_COPILOTO || "claude-sonnet-5",
-  extraction: process.env.MODEL_EXTRACTION || "claude-sonnet-5",
-  exclusivity: process.env.MODEL_EXCLUSIVITY || "claude-sonnet-5",
-  triage: process.env.MODEL_TRIAGE || "gemini-3.6-flash",
+  copiloto: process.env.MODEL_COPILOTO || "claude-3-5-sonnet-20241022",
+  extraction: process.env.MODEL_EXTRACTION || "claude-3-5-sonnet-20241022",
+  exclusivity: process.env.MODEL_EXCLUSIVITY || "claude-3-5-sonnet-20241022",
+  triage: process.env.MODEL_TRIAGE || "gemini-2.5-flash",
 } as const;
 
 export type AgentRole = keyof typeof AGENT_MODELS;
@@ -23,7 +29,7 @@ export async function callLLMTextForAgent(
   userContent: string,
   maxTokens: number = 4000
 ): Promise<string> {
-  const modelName = AGENT_MODELS[role];
+  const modelName = resolveModelName(AGENT_MODELS[role]);
   const isGemini = modelName.startsWith("gemini");
   const geminiKey = process.env.GEMINI_API_KEY;
 
