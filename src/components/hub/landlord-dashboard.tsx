@@ -814,14 +814,78 @@ export function LandlordDashboard({
   // Its open/closed state arrives as a prop because the button that toggles it
   // now lives in ConsoleShell's single header bar; the drawer itself, and every
   // conversation state below, still belong here.
-  const [queryResult, setQueryResult] = useState<string | null>(null);
   const [copilotQuestion, setCopilotQuestion] = useState("");
-  const [copilotAskedQuestion, setCopilotAskedQuestion] = useState<string | null>(null);
+  const [copilotHistory, setCopilotHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [copilotError, setCopilotError] = useState<string | null>(null);
-  // Cancels an in-flight ask if a new one is submitted before the previous
-  // one resolves, so a slow response can't land after a newer question's.
   const copilotAbortRef = useRef<AbortController | null>(null);
+  const copilotChatEndRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToChatBottom = useCallback(() => {
+    setTimeout(() => {
+      copilotChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  }, []);
+
+  const submitCopilotQuestion = useCallback(
+    async (textToSend: string) => {
+      const asked = textToSend.trim();
+      if (!asked || copilotLoading) return;
+
+      const controller = new AbortController();
+      copilotAbortRef.current = controller;
+      setCopilotLoading(true);
+      setCopilotError(null);
+      setCopilotQuestion("");
+
+      setCopilotHistory((prev) => [...prev, { role: "user", content: asked }]);
+      scrollToChatBottom();
+
+      try {
+        const res = await fetch("/api/copiloto/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: asked, masterGla: plazaTotalGla }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const json = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(json.error ?? "Error de respuesta del servidor.");
+        }
+        if (!res.body) throw new Error("Error de conexión con el agente.");
+
+        setCopilotHistory((prev) => [...prev, { role: "assistant", content: "" }]);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          setCopilotHistory((prev) => {
+            const updated = [...prev];
+            const lastIndex = updated.length - 1;
+            if (lastIndex >= 0 && updated[lastIndex].role === "assistant") {
+              updated[lastIndex] = {
+                role: "assistant",
+                content: updated[lastIndex].content + chunk,
+              };
+            }
+            return updated;
+          });
+          scrollToChatBottom();
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setCopilotError(err instanceof Error ? err.message : "Error de conexión con el agente.");
+      } finally {
+        if (copilotAbortRef.current === controller) setCopilotLoading(false);
+      }
+    },
+    [copilotLoading, plazaTotalGla, scrollToChatBottom],
+  );
 
   // Interactive AI Action States & Simulations
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
@@ -1411,9 +1475,13 @@ export function LandlordDashboard({
                                 <button
                                   onClick={() => {
                                     setCopilotOpen(true);
-                                    setQueryResult(
-                                      "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado."
-                                    );
+                                    setCopilotHistory([
+                                      {
+                                        role: "assistant",
+                                        content:
+                                          "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado.",
+                                      },
+                                    ]);
                                     triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                                   }}
                                   title="Ver auditoría de póliza asignada a Mariana IA"
@@ -3363,100 +3431,130 @@ export function LandlordDashboard({
 
       {/* AI ASSISTANT DRAWER / SLIDE-OVER PANEL */}
       {copilotOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[30rem] lg:w-[38rem] max-w-[92vw] bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
-          <div className="p-4 border-b border-hairline bg-ink text-white flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-ink-400" />
-              <h3 className="font-bold text-base">Consulta IA</h3>
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[32rem] lg:w-[40rem] max-w-[95vw] bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
+          {/* HEADER */}
+          <div className="p-4 border-b border-hairline bg-ink text-white flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded-lg bg-[var(--console-accent)]/20 border border-[var(--console-accent)]/40 flex items-center justify-center">
+                <span className="h-2 w-2 rounded-full bg-[var(--console-accent)] animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base leading-tight">Consulta IA</h3>
+                <p className="text-[11px] text-slate-300 font-medium">Copiloto Ejecutivo de Asset Management</p>
+              </div>
             </div>
             <button
               onClick={() => setCopilotOpen(false)}
-              className="text-ink-400 hover:text-white text-xs cursor-pointer font-bold"
+              className="text-slate-300 hover:text-white text-xs cursor-pointer font-bold bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg transition-colors"
             >
               Cerrar
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
-            <div className="bg-slate-50 border border-hairline rounded-xl p-3.5 space-y-2">
-              {copilotAskedQuestion ? (
-                <>
-                  <p className="font-bold text-ink text-sm">{copilotAskedQuestion}</p>
-                  <div className="bg-white p-3 rounded-lg border border-hairline text-ink-700 leading-relaxed text-sm font-medium shadow-2xs whitespace-pre-wrap">
-                    {queryResult}
+          {/* CHAT MESSAGES / BODY */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm bg-slate-50/50">
+            {copilotHistory.length === 0 && !copilotLoading && (
+              <div className="space-y-4 py-2">
+                <div className="bg-white border border-hairline rounded-xl p-4 shadow-2xs space-y-2">
+                  <p className="font-bold text-ink text-sm">¡Hola! Soy Consulta IA 🏛️</p>
+                  <p className="text-ink-500 text-xs leading-relaxed">
+                    Tu asesor ejecutivo comercial para La Gran Vía Mexicali. Puedo analizar el Rent Roll, calcular vacantes, revisar exclusividades de giro, evaluar tickets de mantenimiento y presupuestos CapEx.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-ink-500 uppercase tracking-wider">Preguntas sugeridas:</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      "¿Cuál es el porcentaje de ocupación y cuánta superficie vacante tenemos disponible?",
+                      "Hazme un resumen ejecutivo de contratos y próximos vencimientos",
+                      "¿Qué exclusividades de giro existen y qué marcas las tienen?",
+                      "¿Cuál es el estatus del mantenimiento y presupuesto CapEx pendiente?",
+                    ].map((suggested, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setCopilotQuestion(suggested);
+                          void submitCopilotQuestion(suggested);
+                        }}
+                        className="text-left bg-white hover:bg-slate-100 border border-hairline rounded-xl p-3 text-xs font-semibold text-ink-700 hover:text-ink transition-all cursor-pointer shadow-2xs"
+                      >
+                        💡 {suggested}
+                      </button>
+                    ))}
                   </div>
-                </>
-              ) : (
-                <p className="text-ink-500 text-sm leading-relaxed">
-                  Escribe una pregunta abajo sobre los contratos de arrendamiento o los tickets de mantenimiento reales de la plaza.
-                </p>
-              )}
-              {copilotError && <p className="text-red-600 text-sm font-semibold">{copilotError}</p>}
-            </div>
+                </div>
+              </div>
+            )}
+
+            {copilotHistory.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[88%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-ink text-white rounded-br-xs font-medium shadow-2xs"
+                      : "bg-white text-ink-700 border border-hairline rounded-bl-xs shadow-2xs space-y-2"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                </div>
+              </div>
+            ))}
+
+            {copilotLoading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-hairline rounded-2xl rounded-bl-xs p-3.5 text-xs text-ink-500 font-medium shadow-2xs flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[var(--console-accent)] animate-ping" />
+                  <span>Consultando a Claude 3.5 Sonnet…</span>
+                </div>
+              </div>
+            )}
+
+            {copilotError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs font-semibold text-red-700">
+                ⚠️ {copilotError}
+              </div>
+            )}
+
+            <div ref={copilotChatEndRef} />
           </div>
 
-          <div className="p-3 border-t border-hairline bg-slate-50">
+          {/* INPUT AREA — MULTI-LINE TEXTAREA */}
+          <div className="p-3 border-t border-hairline bg-white shrink-0">
             <form
-              onSubmit={async (e) => {
+              onSubmit={(e) => {
                 e.preventDefault();
-                if (!copilotQuestion.trim() || copilotLoading) return;
-                const asked = copilotQuestion;
-                const controller = new AbortController();
-                copilotAbortRef.current = controller;
-                setCopilotLoading(true);
-                setCopilotError(null);
-                try {
-                  const res = await fetch("/api/copiloto/ask", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ question: asked, masterGla: plazaTotalGla }),
-                    signal: controller.signal,
-                  });
-                  if (!res.ok) {
-                    const json = (await res.json().catch(() => ({}))) as { error?: string };
-                    throw new Error(json.error ?? "Error desconocido");
-                  }
-                  if (!res.body) throw new Error("Error de conexión con el agente.");
-
-                  setCopilotAskedQuestion(asked);
-                  setQueryResult("");
-                  setCopilotQuestion("");
-
-                  // Streamed plain text — append each chunk as Claude
-                  // generates it rather than waiting for res.json() on the
-                  // full response, so the drawer fills in live instead of
-                  // staying blank for the entire generation.
-                  const reader = res.body.getReader();
-                  const decoder = new TextDecoder();
-                  for (;;) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    setQueryResult((prev) => prev + decoder.decode(value, { stream: true }));
-                  }
-                } catch (err) {
-                  if (err instanceof DOMException && err.name === "AbortError") return;
-                  setCopilotError(err instanceof Error ? err.message : "Error de conexión con el agente.");
-                } finally {
-                  if (copilotAbortRef.current === controller) setCopilotLoading(false);
-                }
+                void submitCopilotQuestion(copilotQuestion);
               }}
-              className="flex gap-2"
+              className="flex flex-col gap-2"
             >
-              <input
-                type="text"
-                value={copilotQuestion}
-                onChange={(e) => setCopilotQuestion(e.target.value)}
-                placeholder="Pregunta a la IA sobre la plaza..."
-                disabled={copilotLoading}
-                className="flex-1 bg-white border border-hairline-strong rounded-xl px-3 py-2 text-sm text-ink-700 font-medium disabled:opacity-60"
-              />
-              <button
-                type="submit"
-                disabled={copilotLoading}
-                className="bg-ink text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-ink-700 transition-colors shadow-xs disabled:opacity-60 disabled:cursor-wait"
-              >
-                {copilotLoading ? "Consultando…" : "Enviar"}
-              </button>
+              <div className="relative flex items-end gap-2">
+                <textarea
+                  value={copilotQuestion}
+                  onChange={(e) => setCopilotQuestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void submitCopilotQuestion(copilotQuestion);
+                    }
+                  }}
+                  rows={2}
+                  placeholder="Escribe tu pregunta comercial o sobre la plaza (Enter para enviar, Shift+Enter para salto de línea)..."
+                  disabled={copilotLoading}
+                  className="w-full bg-slate-50 border border-hairline-strong rounded-xl p-3 text-xs text-ink-700 font-medium focus:bg-white focus:border-[var(--console-accent)] focus:outline-none resize-none disabled:opacity-60 leading-relaxed"
+                />
+                <button
+                  type="submit"
+                  disabled={copilotLoading || !copilotQuestion.trim()}
+                  className="bg-ink hover:bg-ink-700 text-white px-4 py-3 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs disabled:opacity-50 shrink-0"
+                >
+                  {copilotLoading ? "..." : "Enviar"}
+                </button>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-ink-400 font-medium px-1">
+                <span>Shift+Enter para salto de línea</span>
+                <span>Claude 3.5 Sonnet • Respuesta ejecutiva</span>
+              </div>
             </form>
           </div>
         </div>
