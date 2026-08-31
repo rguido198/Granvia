@@ -84,7 +84,7 @@ export async function callLLMStructuredForAgent<T>(
 
   if (isGemini && geminiKey) {
     try {
-      const jsonPrompt = `${systemPrompt}\n\nIMPORTANT: Respond strictly with a JSON object satisfying this schema:\n${JSON.stringify((schema as any)._def)}\n\n${userContent}`;
+      const jsonPrompt = `${systemPrompt}\n\nIMPORTANT: Respond strictly with a JSON object satisfying this schema:\n${JSON.stringify((schema as unknown as { _def: unknown })._def)}\n\n${userContent}`;
       const text = await callLLMTextForAgent(role, jsonPrompt, "", maxTokens);
       const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleaned);

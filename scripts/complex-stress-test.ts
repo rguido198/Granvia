@@ -173,7 +173,7 @@ async function main() {
         if (!verdict.pass) {
           console.log(`    ⚠️ Judge verdict reasoning: ${verdict.reasoning}`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(`  Model: ${m.name} ERRORED:`, err?.message || err);
       }
     }

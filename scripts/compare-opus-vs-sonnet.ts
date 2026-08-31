@@ -175,7 +175,7 @@ async function main() {
   console.log(" GRAN VÍA EMPIRICAL BENCHMARK: CLAUDE OPUS 5 vs CLAUDE SONNET 5");
   console.log("=========================================================================\n");
 
-  const results: Record<string, { passed: number; totalCost: number; avgLatency: number; caseDetails: any[] }> = {};
+  const results: Record<string, { passed: number; totalCost: number; avgLatency: number; caseDetails: unknown[] }> = {};
   for (const m of modelsToCompare) {
     results[m.id] = { passed: 0, totalCost: 0, avgLatency: 0, caseDetails: [] };
   }
@@ -209,7 +209,7 @@ async function main() {
         if (!verdict.pass) {
           console.log(`    ⚠️ Judge verdict reasoning: ${verdict.reasoning}`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(`  Model: ${m.name} ERRORED:`, err?.message || err);
       }
     }

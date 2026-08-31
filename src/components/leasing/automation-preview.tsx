@@ -73,7 +73,7 @@ function CallBranch() {
   );
 }
 
-export function AutomationPreview({ branch: _branch }: { branch?: "call" }) {
+export function AutomationPreview() {
   const activeBranch = "call";
   return (
     <div>

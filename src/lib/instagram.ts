@@ -29,7 +29,7 @@ export type InstagramResult = {
 
 // const FIELDS = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp";
 
-function _altFrom(caption: string | undefined, isVideo: boolean) {
+export function altFrom(caption: string | undefined, isVideo: boolean) {
   const clean = (caption ?? "")
     .replace(/#[\p{L}\p{N}_]+/gu, "")
     .replace(/\s+/g, " ")
