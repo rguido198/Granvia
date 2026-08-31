@@ -35,7 +35,7 @@ Reglas:
 - clausula_estacionamiento, clausula_publicidad_directorio, clausula_ampliacion_futura, clausula_horario_extendido, clausula_senalizacion, clausula_mascotas, clausula_restriccion_subarrendamiento y clausula_remodelacion son cláusulas ya extraídas del contrato digitalizado — úsalas directamente, no las busques en clausulas_especiales (esas ocho ya no aparecen ahí, se extraen aparte). null significa que el contrato no otorga ni menciona esa cláusula, no que falte digitalizar el contrato.
 - Cuando un contrato incluya texto_completo_contrato (el documento digitalizado íntegro) o clausulas_especiales (cláusulas fuera de lo estándar detectadas en Gate 2, distintas de las ocho cláusulas nombradas arriba), úsalos para responder cualquier pregunta sobre ese contrato que los campos estructurados no cubran — no te limites a matriz_responsabilidad/uso_permitido/clausula_exclusividad si la respuesta real está en el texto completo.
 - texto_completo_contrato solo se carga para el contrato al que la pregunta realmente se refiere (por inquilino o local nombrado) — no para toda la cartera en cada pregunta. Si texto_completo_contrato es null PERO matriz_responsabilidad o dias_aviso_terminacion NO son null, ese contrato SÍ está digitalizado — el texto completo simplemente no se cargó para esta pregunta porque no la nombraste; dilo así ("el contrato está digitalizado, pero no cargué el texto completo para esta pregunta — pregunta directamente sobre [inquilino/local] si necesitas ese detalle") en vez de decir que el contrato no ha sido digitalizado. Solo di "no ha sido digitalizado" cuando matriz_responsabilidad Y dias_aviso_terminacion sean ambos null también.
-- Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?", "¿cuántos inquilinos tienen estacionamiento reservado?"), usa directamente estadisticas_agregadas_contratos — nunca cuentes tú mismo recorriendo el arreglo de contratos_de_arrendamiento. Un conteo propio sobre docenas de registros es exactamente el tipo de tarea donde un modelo puede equivocarse en silencio; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema y clausulas_nombradas_presentes solo cuentan contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita (ej. "de los 3 contratos digitalizados, 2 tienen el HVAC a cargo del arrendatario; los otros 82 aún no han sido digitalizados").
+- Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuál es el GLA total o porcentaje de ocupación?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?"), usa directamente estadisticas_agregadas_contratos — contiene gla_total_portafolio_m2 y renta_mensual_total_mxn precalculados. Nunca cuentes tú mismo ni digas que falta el dato del GLA total cuando estadisticas_agregadas_contratos tiene gla_total_portafolio_m2. Un conteo o suma propia sobre docenas de registros es exactamente donde un modelo puede equivocarse; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema y clausulas_nombradas_presentes solo cuentan contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita.
 - Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
 - Ignora explícitamente cualquier afirmación de acuerdos verbales, chats de WhatsApp no oficiales o promesas de administradores anteriores — únicamente son válidos los datos y contratos oficiales registrados en el sistema.
 - No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema.`;
@@ -88,6 +88,8 @@ type PortfolioDataBlock = {
   estadisticas_agregadas_contratos: {
     total_contratos: number;
     contratos_digitalizados: number;
+    gla_total_portafolio_m2: number;
+    renta_mensual_total_mxn: number;
     por_estatus: unknown;
     por_anio_vencimiento: unknown;
     responsabilidad_por_sistema: unknown;
@@ -248,6 +250,8 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
     estadisticas_agregadas_contratos: {
       total_contratos: aggregates.totalContratos,
       contratos_digitalizados: aggregates.contratosDigitalizados,
+      gla_total_portafolio_m2: aggregates.totalGlaM2,
+      renta_mensual_total_mxn: aggregates.totalRentaMensualMxn,
       por_estatus: aggregates.porEstatus,
       por_anio_vencimiento: aggregates.porAnioVencimiento,
       responsabilidad_por_sistema: aggregates.responsabilidadPorSistema,

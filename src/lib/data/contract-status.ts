@@ -242,6 +242,8 @@ export type ContractAggregates = {
    *  most of this plaza's leases have never been digitized and simply carry
    *  no matrix at all. */
   contratosDigitalizados: number;
+  totalGlaM2: number;
+  totalRentaMensualMxn: number;
   porEstatus: Record<"vigente" | "renovacionProxima" | "vencido", number>;
   /** Count of leases per calendar year of end_date — "how many contracts
    *  are due this year" is a lookup against this, not something the model
@@ -277,8 +279,13 @@ export function computeContractAggregates(leases: LeaseDetail[]): ContractAggreg
   ) as ContractAggregates["clausulasNombradasPresentes"];
 
   let contratosDigitalizados = 0;
+  let totalGlaM2 = 0;
+  let totalRentaMensualMxn = 0;
 
   for (const lease of leases) {
+    totalGlaM2 += lease.sqm ?? 0;
+    totalRentaMensualMxn += lease.rentMonthly ?? 0;
+
     if (lease.isExpired) porEstatus.vencido++;
     else if (lease.renewalSoon) porEstatus.renovacionProxima++;
     else porEstatus.vigente++;
@@ -304,6 +311,8 @@ export function computeContractAggregates(leases: LeaseDetail[]): ContractAggreg
   return {
     totalContratos: leases.length,
     contratosDigitalizados,
+    totalGlaM2,
+    totalRentaMensualMxn,
     porEstatus,
     porAnioVencimiento,
     responsabilidadPorSistema,
