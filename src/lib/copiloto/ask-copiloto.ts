@@ -350,7 +350,7 @@ import { resolveModelName } from "@/lib/llm/provider";
 
 // model params: max_tokens raised to 8000 for synthesis-heavy questions
 const MODEL_PARAMS = {
-  model: process.env.MODEL_COPILOTO ? resolveModelName(process.env.MODEL_COPILOTO) : "claude-3-5-sonnet-20241022",
+  model: resolveModelName(process.env.MODEL_COPILOTO),
   max_tokens: 8000,
 };
 
@@ -391,6 +391,79 @@ export async function askCopiloto(question: string, masterGla?: number): Promise
 // before anything renders.
 export async function askCopilotoStream(question: string, masterGla?: number): Promise<ReadableStream<Uint8Array>> {
   const request = await buildCopilotoRequest(question, masterGla);
+  const geminiKey = process.env.GEMINI_API_KEY;
+
+  if (geminiKey) {
+    const systemPromptText = typeof request.system === "string" ? request.system : request.system?.[0]?.text ?? "";
+    const userPromptText = request.messages
+      .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
+      .join("\n\n");
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=${geminiKey}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: `${systemPromptText}\n\n${userPromptText}` }],
+          },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      throw new Error(`Error de proveedor LLM (status ${res.status}): ${errText.slice(0, 150)}`);
+    }
+
+    if (!res.body) throw new Error("No se pudo establecer el canal de datos con el motor IA.");
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const reader = res.body.getReader();
+
+    return new ReadableStream<Uint8Array>({
+      async start(controller) {
+        let buffer = "";
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const dataStr = line.slice(6).trim();
+                if (!dataStr || dataStr === "[DONE]") continue;
+                try {
+                  const json = JSON.parse(dataStr) as {
+                    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+                  };
+                  const textChunk = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                  if (textChunk) {
+                    controller.enqueue(encoder.encode(textChunk));
+                  }
+                } catch {
+                  // ignore incomplete JSON chunk boundaries
+                }
+              }
+            }
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
+      cancel() {
+        void reader.cancel();
+      },
+    });
+  }
+
+  // Fallback to Anthropic
   const client = getAnthropicClient();
   const anthropicStream = client.messages.stream({ ...MODEL_PARAMS, ...request });
 
@@ -403,15 +476,9 @@ export async function askCopilotoStream(question: string, masterGla?: number): P
         controller.enqueue(encoder.encode(delta));
       });
       anthropicStream.on("end", () => {
-        // Same "fail loudly, don't return a silent blank" principle as
-        // askCopiloto's empty-answer check above — mid-stream there's no
-        // status code left to change, so the explanation is sent as the
-        // only text the client ever receives instead.
         if (!sawText) {
           controller.enqueue(
-            encoder.encode(
-              "El agente no generó una respuesta. Intenta de nuevo o reformula la pregunta.",
-            ),
+            encoder.encode("El agente no generó una respuesta. Intenta de nuevo o reformula la pregunta."),
           );
         }
         controller.close();
