@@ -36,4 +36,4 @@ jobs:
         run: |
           cd workers/workflows
           npm ci
-          npx wrangler deploy
+          npx wrangler deploy --message "Commit ${{ github.sha }}"
