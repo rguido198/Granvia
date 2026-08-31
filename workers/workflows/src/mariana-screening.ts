@@ -268,7 +268,13 @@ async function runSkeptic(
 
   const response = await client.messages.parse({
     model: "claude-opus-5",
-    max_tokens: 2000,
+    // Found live: 2000 truncated the JSON mid-generation on a normal,
+    // multi-concern audit (unterminated string), and the retry returned no
+    // parsed_output at all — that throws NonRetryableError and silently
+    // kills the whole screening workflow with no error surfaced anywhere
+    // (the document just sits at ready_for_triage forever). Matches the
+    // draft call's own budget.
+    max_tokens: 4000,
     system: SKEPTIC_SYSTEM_PROMPT,
     messages: [
       {

@@ -280,7 +280,12 @@ async function runSkeptic(
 
   const response = await client.messages.parse({
     model: "claude-opus-5",
-    max_tokens: 2000,
+    // Found live: 2000 was too tight for a thorough multi-concern audit
+    // (mariana-screening.ts's identical skeptic call hit this exact wall —
+    // truncated/unterminated JSON, then no parsed_output at all on retry,
+    // which throws NonRetryableError and silently kills the whole workflow
+    // with no error surfaced anywhere). Matches the draft call's own budget.
+    max_tokens: 4000,
     system: SKEPTIC_SYSTEM_PROMPT,
     messages: [
       {
