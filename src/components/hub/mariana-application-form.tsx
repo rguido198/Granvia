@@ -21,11 +21,18 @@ export function MarianaApplicationForm({
   sourceLead,
   isOpen: externalIsOpen,
   onClose: externalOnClose,
+  onSubmitted,
 }: {
   localeOptions: LocaleOption[];
   sourceLead?: { id: string; applicantEntity: string; category: string; targetLocaleId: string | null } | null;
   isOpen?: boolean;
   onClose?: () => void;
+  /** /api/ingest returns 202 before Mariana's workflow (extraction + screening
+   *  call) has written the lease_applications row — router.refresh() below
+   *  fires too early to pick it up (same RSC-refresh unreliability already
+   *  worked around for tickets and active-lease documents). Callers use this
+   *  to trigger a JSON-endpoint poll burst instead of a one-shot refresh. */
+  onSubmitted?: () => void;
 }) {
   const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -108,6 +115,7 @@ export function MarianaApplicationForm({
       }
       setDone(true);
       router.refresh();
+      onSubmitted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al enviar la solicitud");
     } finally {

@@ -2034,7 +2034,7 @@ export function LandlordDashboard({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                  <MarianaApplicationForm localeOptions={localeOptions} />
+                  <MarianaApplicationForm localeOptions={localeOptions} onSubmitted={burstRefreshApprovals} />
                   <button
                     onClick={() => {
                       setCopilotOpen(true);
