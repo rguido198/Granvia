@@ -10,7 +10,7 @@ import { z } from "zod";
 
 import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
 import { wrapUntrustedContent } from "../../../src/lib/llm/untrusted-content";
-import { hydrateProcessEnv, type WorkflowsEnv } from "./env";
+import { hydrateProcessEnv, notifyCopilotoCacheStale, type WorkflowsEnv } from "./env";
 
 /**
  * Mariana (lease-screener) as a durable state machine, on Cloudflare
@@ -304,6 +304,7 @@ async function runSkeptic(
 }
 
 async function writeApplication(params: {
+  env: WorkflowsEnv;
   context: ApplicationContext;
   draft: MarianaDraft;
   skeptic: SkepticVerdict;
@@ -311,7 +312,7 @@ async function writeApplication(params: {
   leadId?: string | null;
 }): Promise<string> {
   const supabase = getSupabaseServiceClient();
-  const { context, draft, skeptic, workflowRunId, leadId } = params;
+  const { env, context, draft, skeptic, workflowRunId, leadId } = params;
 
   const finalRiskLevel =
     skeptic.revised_risk_level ??
@@ -400,15 +401,17 @@ async function writeApplication(params: {
     });
   }
 
+  await notifyCopilotoCacheStale(env);
   return application.id as string;
 }
 
-async function markReviewed(applicationId: string, approved: boolean) {
+async function markReviewed(env: WorkflowsEnv, applicationId: string, approved: boolean) {
   const supabase = getSupabaseServiceClient();
   await supabase
     .from("lease_applications")
     .update({ status: approved ? "approved" : "rejected" })
     .eq("id", applicationId);
+  await notifyCopilotoCacheStale(env);
 }
 
 export class MarianaScreeningWorkflow extends WorkflowEntrypoint<
@@ -431,7 +434,7 @@ export class MarianaScreeningWorkflow extends WorkflowEntrypoint<
 
     const workflowRunId = event.instanceId;
     const applicationId = await step.do("write application", () =>
-      writeApplication({ context, draft, skeptic, workflowRunId, leadId }),
+      writeApplication({ env: this.env, context, draft, skeptic, workflowRunId, leadId }),
     );
 
     // Tier 3 human gate (root CLAUDE.md §1) — SKILL.md's own scope boundary:
@@ -450,7 +453,7 @@ export class MarianaScreeningWorkflow extends WorkflowEntrypoint<
       );
       const decision = reviewEvent.payload;
       await step.do("mark reviewed", () =>
-        markReviewed(applicationId, decision.approved),
+        markReviewed(this.env, applicationId, decision.approved),
       );
       return {
         applicationId,

@@ -22,11 +22,12 @@ import { isLeaseRelevantToQuestion } from "@/lib/copiloto/relevance";
  * generation, no tool-use loop).
  */
 
-const SYSTEM_PROMPT = `Eres el Copiloto IA de La Gran Vía Mexicali — cubres tanto los contratos de arrendamiento (antes "Mariana") como los tickets de mantenimiento y CapEx (antes "Diego"). Respondes preguntas del propietario usando únicamente los datos reales que se te proporcionan a continuación.
+const SYSTEM_PROMPT = `Eres el Copiloto IA de La Gran Vía Mexicali — cubres los contratos de arrendamiento y la pantalla de exclusividades para prospectos (antes "Mariana"), los tickets de mantenimiento y CapEx (antes "Diego"), y las solicitudes de arrendamiento de nuevos inquilinos. Respondes preguntas del propietario usando únicamente los datos reales que se te proporcionan a continuación.
 
 Reglas:
 - Responde en español, de forma directa y ejecutiva.
-- Cita el inquilino y el local (ej. "Ashley Furniture, Local A-01") cuando refieras un contrato, y el número de ticket y el local (ej. "INC-006, Local LOC-12") cuando refieras un caso de mantenimiento.
+- Cita el inquilino y el local (ej. "Ashley Furniture, Local A-01") cuando refieras un contrato, el número de ticket y el local (ej. "INC-006, Local LOC-12") cuando refieras un caso de mantenimiento, y el número de solicitud (ej. "APP-006") cuando refieras una solicitud de arrendamiento.
+- solicitudes_de_arrendamiento contiene toda solicitud de un prospecto interesado en rentar un local (screening de exclusividad de Mariana) — estatus needs_landlord_review significa pendiente de tu revisión; approved/rejected ya fueron resueltas. Nunca digas que el sistema no maneja solicitudes de arrendamiento: sí las maneja, están en este arreglo.
 - inquilino es la razón social (nombre legal registrado) del arrendatario. nombre_comercial es su marca u operación pública cuando el contrato distingue una de la otra (p. ej. inquilino "Restaurantes del Noroeste, S.A. de C.V.", nombre_comercial "Cabanna") — puede no compartir ninguna palabra con inquilino, no es una variante de ese mismo nombre. Si el propietario pregunta por el nombre comercial/marca, usa nombre_comercial; si pregunta por la razón social o RFC/facturación, usa inquilino. Si nombre_comercial es null, el contrato no distingue los dos y basta con inquilino.
 - La matriz de responsabilidad de mantenimiento (matriz_responsabilidad) y los días de aviso de terminación (dias_aviso_terminacion) provienen del contrato digitalizado y verificado por el propietario — cítalos como tales cuando los uses. Si son null, dilo explícitamente: ese contrato aún no ha sido digitalizado o verificado.
 - Cada contrato incluye estatus_contractual ("Vigente" / "Renovación Próxima" / "Vencido"), ya calculado a partir de la fecha de hoy que se te da al inicio del mensaje — úsalo directamente para cualquier pregunta sobre si un contrato está vigente, por vencer o vencido. No lo recalcules tú mismo a partir de "vencimiento": es el mismo estatus exacto que ve el propietario en la tabla de contratos, y un cálculo propio podría no coincidir.
@@ -92,6 +93,7 @@ type PortfolioDataBlock = {
   };
   contratos_de_arrendamiento: PortfolioLeaseRecord[];
   tickets_de_mantenimiento: unknown[];
+  solicitudes_de_arrendamiento: unknown[];
 };
 
 // The Supabase retrieval + assembly below is identical for every question
@@ -112,8 +114,64 @@ type PortfolioDataBlock = {
 // regardless of portfolio size. buildCopilotoRequest splices in the one or
 // two relevant leases' raw_text separately, only when the question actually
 // names that tenant/unit.
+async function fetchLeaseApplicationsBlock(): Promise<unknown[]> {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("lease_applications")
+    .select(
+      `
+      application_number, applicant_entity, category, subcategory, products,
+      status, risk_level, matched_clause_text, matched_product_pairs,
+      skeptic_flagged, skeptic_concerns, created_at, reviewed_at,
+      locales!lease_applications_target_locale_id_fkey ( unit_number )
+    `,
+    )
+    .order("created_at", { ascending: false });
+
+  type Row = {
+    application_number: string;
+    applicant_entity: string;
+    category: string | null;
+    subcategory: string | null;
+    products: string[] | null;
+    status: string;
+    risk_level: "ALTO" | "MEDIO" | "BAJO" | null;
+    matched_clause_text: string | null;
+    matched_product_pairs: unknown;
+    skeptic_flagged: boolean;
+    skeptic_concerns: string[] | null;
+    created_at: string;
+    reviewed_at: string | null;
+    locales: { unit_number: string } | { unit_number: string }[] | null;
+  };
+
+  return ((data ?? []) as Row[]).map((r) => {
+    const locale = Array.isArray(r.locales) ? r.locales[0] : r.locales;
+    return {
+      solicitud: r.application_number,
+      solicitante: r.applicant_entity,
+      categoria: r.category,
+      subcategoria: r.subcategory,
+      productos: r.products,
+      local_objetivo: locale?.unit_number ?? null,
+      estatus: r.status,
+      nivel_riesgo: r.risk_level,
+      clausula_en_conflicto: r.matched_clause_text,
+      pares_de_producto_coincidentes: r.matched_product_pairs,
+      auditor_marco_dudas: r.skeptic_flagged,
+      dudas_del_auditor: r.skeptic_concerns,
+      creada: r.created_at,
+      revisada: r.reviewed_at,
+    };
+  });
+}
+
 async function fetchDataBlock(): Promise<PortfolioDataBlock> {
-  const [{ leases }, { tickets }] = await Promise.all([fetchPortfolio(), fetchDiegoTickets()]);
+  const [{ leases }, { tickets }, solicitudesBlock] = await Promise.all([
+    fetchPortfolio(),
+    fetchDiegoTickets(),
+    fetchLeaseApplicationsBlock(),
+  ]);
 
   const documentIds = [...new Set(leases.map((l) => l.sourceDocumentId).filter((id): id is string => id !== null))];
   const specialClausesByDocumentId = new Map<string, unknown>();
@@ -195,6 +253,7 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
     },
     contratos_de_arrendamiento: leasesBlock,
     tickets_de_mantenimiento: ticketsBlock,
+    solicitudes_de_arrendamiento: solicitudesBlock,
   };
 }
 
@@ -265,6 +324,7 @@ async function buildCopilotoRequest(question: string): Promise<CopilotoRequest> 
       ({ sourceDocumentId: _sourceDocumentId, texto_completo_contrato: _texto_completo_contrato, ...rest }) => rest,
     ),
     tickets_de_mantenimiento: data.tickets_de_mantenimiento,
+    solicitudes_de_arrendamiento: data.solicitudes_de_arrendamiento,
   });
 
   const content: Anthropic.Messages.TextBlockParam[] = [

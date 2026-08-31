@@ -3276,11 +3276,11 @@ export function LandlordDashboard({
 
       {/* AI ASSISTANT DRAWER / SLIDE-OVER PANEL */}
       {copilotOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[30rem] lg:w-[38rem] max-w-[92vw] bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
           <div className="p-4 border-b border-hairline bg-ink text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-ink-400" />
-              <h3 className="font-bold text-sm">Copiloto IA</h3>
+              <h3 className="font-bold text-base">Copiloto IA</h3>
             </div>
             <button
               onClick={() => setCopilotOpen(false)}
@@ -3290,21 +3290,21 @@ export function LandlordDashboard({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
             <div className="bg-slate-50 border border-hairline rounded-xl p-3.5 space-y-2">
               {copilotAskedQuestion ? (
                 <>
-                  <p className="font-bold text-ink text-xs">{copilotAskedQuestion}</p>
-                  <div className="bg-white p-3 rounded-lg border border-hairline text-ink-700 leading-relaxed text-xs font-medium shadow-2xs whitespace-pre-wrap">
+                  <p className="font-bold text-ink text-sm">{copilotAskedQuestion}</p>
+                  <div className="bg-white p-3 rounded-lg border border-hairline text-ink-700 leading-relaxed text-sm font-medium shadow-2xs whitespace-pre-wrap">
                     {queryResult}
                   </div>
                 </>
               ) : (
-                <p className="text-ink-500 text-xs leading-relaxed">
+                <p className="text-ink-500 text-sm leading-relaxed">
                   Escribe una pregunta abajo sobre los contratos de arrendamiento o los tickets de mantenimiento reales de la plaza.
                 </p>
               )}
-              {copilotError && <p className="text-red-600 text-xs font-semibold">{copilotError}</p>}
+              {copilotError && <p className="text-red-600 text-sm font-semibold">{copilotError}</p>}
             </div>
           </div>
 
@@ -3361,7 +3361,7 @@ export function LandlordDashboard({
                 onChange={(e) => setCopilotQuestion(e.target.value)}
                 placeholder="Pregunta a la IA sobre la plaza..."
                 disabled={copilotLoading}
-                className="flex-1 bg-white border border-hairline-strong rounded-xl px-3 py-2 text-xs text-ink-700 font-medium disabled:opacity-60"
+                className="flex-1 bg-white border border-hairline-strong rounded-xl px-3 py-2 text-sm text-ink-700 font-medium disabled:opacity-60"
               />
               <button
                 type="submit"
