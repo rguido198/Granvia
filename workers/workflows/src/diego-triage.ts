@@ -367,6 +367,20 @@ async function writeTicket(
     skeptic.revised_cost_bucket ??
     (skeptic.flagged ? "PENDIENTE" : draft.cost_bucket);
 
+  // unresolved_jd_keys is Diego's own draft output — the skeptic schema has
+  // no field to set it, so a skeptic override to PENDIENTE (draft.cost_bucket
+  // wasn't already PENDIENTE) can leave it empty. Found live: INC-0826-0004
+  // landed on cost_bucket=PENDIENTE via the skeptic override with
+  // unresolved_jd_keys still [], so the drawer's "Atribución de costo sin
+  // resolver" banner (driven solely by unresolved_jd_keys.length > 0) never
+  // showed despite a real unresolved attribution. Add a marker pointing at
+  // skeptic_concerns (already stored, already rendered) rather than trying
+  // to extract a structured key from its prose.
+  const finalUnresolvedKeys =
+    finalCostBucket === "PENDIENTE" && skeptic.flagged && draft.unresolved_jd_keys.length === 0
+      ? [...draft.unresolved_jd_keys, "Revisión del auditor IA — ver Dudas sin Resolver"]
+      : draft.unresolved_jd_keys;
+
   const { data: ticket, error } = await supabase
     .from("tickets")
     .insert({
@@ -387,7 +401,7 @@ async function writeTicket(
       estimated_cost: warranty.covered ? 0 : draft.estimated_cost_mxn,
       approval_level: approvalLevel,
       contractor_id: contractorId,
-      unresolved_jd_keys: draft.unresolved_jd_keys,
+      unresolved_jd_keys: finalUnresolvedKeys,
       skeptic_flagged: skeptic.flagged,
       skeptic_concerns: skeptic.concerns,
       workflow_run_id: workflowRunId,
