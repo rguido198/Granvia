@@ -3,26 +3,31 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-export function resolveModelName(modelName: string): string {
-  if (modelName === "claude-sonnet-5" || modelName === "claude-sonnet" || modelName === "claude-latest") {
-    return "claude-3-5-sonnet-latest";
+/**
+ * Canonical Auto-Updating Model Pointers
+ * Anthropic & Google route these aliases to their newest stable model releases automatically.
+ * Zero manual maintenance required by the landlord.
+ */
+export const CANONICAL_CLAUDE_MODEL = "claude-3-5-sonnet-latest";
+export const CANONICAL_GEMINI_MODEL = "gemini-2.5-flash";
+
+export function resolveModelName(modelName?: string): string {
+  if (!modelName) return CANONICAL_CLAUDE_MODEL;
+  const lower = modelName.toLowerCase();
+  if (lower.startsWith("claude") || lower.includes("sonnet") || lower.includes("opus")) {
+    return CANONICAL_CLAUDE_MODEL;
   }
-  if (modelName === "gemini-3.6-flash" || modelName === "gemini-flash") {
-    return "gemini-2.5-flash";
+  if (lower.startsWith("gemini") || lower.includes("flash")) {
+    return CANONICAL_GEMINI_MODEL;
   }
   return modelName;
 }
 
-/**
- * Per-Agent Model Configuration
- * High-Risk / Disputed Endpoints (Copiloto, Lease Extraction, Exclusivity) use Claude Sonnet (Auto-upgraded via -latest)
- * Low-Risk / High-Volume Triage & Template Generation use Gemini Flash
- */
 export const AGENT_MODELS = {
-  copiloto: process.env.MODEL_COPILOTO || "claude-3-5-sonnet-latest",
-  extraction: process.env.MODEL_EXTRACTION || "claude-3-5-sonnet-latest",
-  exclusivity: process.env.MODEL_EXCLUSIVITY || "claude-3-5-sonnet-latest",
-  triage: process.env.MODEL_TRIAGE || "gemini-2.5-flash",
+  copiloto: resolveModelName(process.env.MODEL_COPILOTO),
+  extraction: resolveModelName(process.env.MODEL_EXTRACTION),
+  exclusivity: resolveModelName(process.env.MODEL_EXCLUSIVITY),
+  triage: resolveModelName(process.env.MODEL_TRIAGE || CANONICAL_GEMINI_MODEL),
 } as const;
 
 export type AgentRole = keyof typeof AGENT_MODELS;
