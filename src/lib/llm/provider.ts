@@ -4,20 +4,24 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
 export function resolveModelName(modelName: string): string {
-  if (modelName === "claude-sonnet-5") return "claude-3-5-sonnet-20241022";
-  if (modelName === "gemini-3.6-flash") return "gemini-2.5-flash";
+  if (modelName === "claude-sonnet-5" || modelName === "claude-sonnet" || modelName === "claude-latest") {
+    return "claude-3-5-sonnet-latest";
+  }
+  if (modelName === "gemini-3.6-flash" || modelName === "gemini-flash") {
+    return "gemini-2.5-flash";
+  }
   return modelName;
 }
 
 /**
  * Per-Agent Model Configuration
- * High-Risk / Disputed Endpoints (Copiloto, Lease Extraction, Exclusivity) use Claude 3.5 Sonnet
- * Low-Risk / High-Volume Triage & Template Generation use Gemini 2.5 Flash
+ * High-Risk / Disputed Endpoints (Copiloto, Lease Extraction, Exclusivity) use Claude Sonnet (Auto-upgraded via -latest)
+ * Low-Risk / High-Volume Triage & Template Generation use Gemini Flash
  */
 export const AGENT_MODELS = {
-  copiloto: process.env.MODEL_COPILOTO || "claude-3-5-sonnet-20241022",
-  extraction: process.env.MODEL_EXTRACTION || "claude-3-5-sonnet-20241022",
-  exclusivity: process.env.MODEL_EXCLUSIVITY || "claude-3-5-sonnet-20241022",
+  copiloto: process.env.MODEL_COPILOTO || "claude-3-5-sonnet-latest",
+  extraction: process.env.MODEL_EXTRACTION || "claude-3-5-sonnet-latest",
+  exclusivity: process.env.MODEL_EXCLUSIVITY || "claude-3-5-sonnet-latest",
   triage: process.env.MODEL_TRIAGE || "gemini-2.5-flash",
 } as const;
 
