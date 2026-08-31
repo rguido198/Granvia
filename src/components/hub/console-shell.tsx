@@ -174,7 +174,10 @@ export function ConsoleShell({
               max-content narrow enough that the control cluster opposite it
               still resolves to a single row on a normal desktop width. */}
           <span className="min-w-0">
-            <span className="block font-bold text-slate-900 uppercase tracking-wide">La Gran Vía · Consola de Control</span>
+            {/* Plaza name dropped here — the sidebar's own logo block already
+             *  carries that brand identity; repeating it in text next to it
+             *  read as pure redundancy. */}
+            <span className="block font-bold text-slate-900 uppercase tracking-wide">Consola de Control</span>
             <span className="block text-slate-600 font-semibold">
               {isOwner
                 ? "Vista Propietario (Plaza Completa)"
@@ -184,23 +187,26 @@ export function ConsoleShell({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2.5">
-          {isOwner && <HeaderAttentionBell counts={pendingCounts} onNavigate={(tab, subTab) => setNavigateRequest({ tab, subTab })} />}
-
+          {/* Consulta IA leads the cluster and carries the console accent
+           *  color (every other control here is neutral slate) — it's the
+           *  main feature of this console, not one setting among several. */}
           {isOwner && (
-            <>
-              <button
-                type="button"
-                onClick={() => setCopilotOpen(!copilotOpen)}
-                aria-pressed={copilotOpen}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs text-white ${
-                  copilotOpen ? "bg-slate-700" : "bg-slate-900 hover:bg-slate-700"
-                }`}
-              >
-                <span className="h-2 w-2 rounded-full bg-slate-400" />
-                <span>Consulta IA</span>
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => setCopilotOpen(!copilotOpen)}
+              aria-pressed={copilotOpen}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-bold transition-all cursor-pointer shadow-xs text-white ${
+                copilotOpen
+                  ? "bg-[var(--console-accent-dark)]"
+                  : "bg-[var(--console-accent)] hover:bg-[var(--console-accent-dark)]"
+              }`}
+            >
+              <span className="h-2 w-2 rounded-full bg-white/70" />
+              <span>Consulta IA</span>
+            </button>
           )}
+
+          {isOwner && <HeaderAttentionBell counts={pendingCounts} onNavigate={(tab, subTab) => setNavigateRequest({ tab, subTab })} />}
 
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200" role="group" aria-label="Cambiar vista">
             <button
