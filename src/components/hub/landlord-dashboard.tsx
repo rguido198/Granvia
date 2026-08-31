@@ -636,6 +636,19 @@ export function LandlordDashboard({
     }
   }, []);
 
+  // Diego's workflow (extraction + triage Claude call) writes the ticket row
+  // well after /api/ingest's 202 response — a single refreshApprovals() call
+  // right after submit fires too early. Burst a handful of refetches over
+  // ~15s instead of guessing one exact delay.
+  const burstRefreshApprovals = useCallback(() => {
+    const delaysMs = [1500, 1500, 2000, 3000, 4000, 5000];
+    let elapsed = 0;
+    for (const d of delaysMs) {
+      elapsed += d;
+      setTimeout(() => void refreshApprovals(), elapsed);
+    }
+  }, [refreshApprovals]);
+
   const approvalQueue = useMemo(
     () =>
       buildApprovalQueue({
@@ -1486,6 +1499,7 @@ export function LandlordDashboard({
                 kpis={liveDiegoKpis}
                 localeOptions={localeOptions}
                 focusTicketId={focusTicketId}
+                onTicketSubmitted={burstRefreshApprovals}
               />
               </div>
               )}

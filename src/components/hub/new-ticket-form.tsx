@@ -30,10 +30,17 @@ export function NewTicketForm({
   localeOptions,
   fixedLocaleId,
   sourceChannel = "consola",
+  onSubmitted,
 }: {
   localeOptions?: LocaleOption[];
   fixedLocaleId?: string;
   sourceChannel?: string;
+  /** /api/ingest returns 202 before Diego's workflow (extraction + triage
+   *  call) has written the ticket row — router.refresh() below fires too
+   *  early to pick it up (same RSC-refresh unreliability already worked
+   *  around for active-lease documents). Callers use this to trigger a
+   *  JSON-endpoint poll burst instead of a one-shot refresh. */
+  onSubmitted?: () => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -100,6 +107,7 @@ export function NewTicketForm({
       setReporterName("");
       setFile(null);
       router.refresh();
+      onSubmitted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al enviar el reporte");
     } finally {

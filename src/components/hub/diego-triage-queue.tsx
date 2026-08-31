@@ -151,6 +151,7 @@ export function DiegoTriageQueue({
   kpis,
   localeOptions,
   focusTicketId = null,
+  onTicketSubmitted,
 }: {
   tickets: DiegoTicket[];
   kpis: DiegoKPIs;
@@ -159,6 +160,8 @@ export function DiegoTriageQueue({
    *  the same drawer a row-click would, so there's one selection mechanism
    *  rather than two. */
   focusTicketId?: string | null;
+  /** Forwarded to NewTicketForm — see its own onSubmitted doc comment. */
+  onTicketSubmitted?: () => void;
 }) {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
@@ -209,7 +212,11 @@ export function DiegoTriageQueue({
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
-        <NewTicketForm localeOptions={localeOptions} sourceChannel="consola_propietario" />
+        <NewTicketForm
+          localeOptions={localeOptions}
+          sourceChannel="consola_propietario"
+          onSubmitted={onTicketSubmitted}
+        />
         <InviteTenantForm localeOptions={localeOptions} />
       </div>
 

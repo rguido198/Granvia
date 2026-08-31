@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NewTicketForm } from "@/components/hub/new-ticket-form";
 import type { DiegoTicket } from "@/lib/data/diego-tickets.server";
@@ -252,6 +252,36 @@ export function TenantPortal({
   locale: PortalLocale | null;
   tickets: DiegoTicket[];
 }) {
+  // Diego's workflow (extraction + triage Claude call) writes the ticket row
+  // well after /api/ingest's 202 response — router.refresh() inside
+  // NewTicketForm fires too early to pick it up (same RSC-refresh
+  // unreliability landlord-dashboard.tsx already worked around for
+  // active-lease documents). Burst a handful of refetches over ~15s instead.
+  const [liveTickets, setLiveTickets] = useState(tickets);
+  useEffect(() => {
+    setLiveTickets(tickets);
+  }, [tickets]);
+
+  const refreshTickets = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tickets/mine", { cache: "no-store" });
+      if (!res.ok) return;
+      const { tickets: fresh } = (await res.json()) as { tickets: DiegoTicket[] };
+      setLiveTickets(fresh);
+    } catch {
+      // Transient network hiccup — the next burst tick tries again.
+    }
+  }, []);
+
+  const burstRefreshTickets = useCallback(() => {
+    const delaysMs = [1500, 1500, 2000, 3000, 4000, 5000];
+    let elapsed = 0;
+    for (const d of delaysMs) {
+      elapsed += d;
+      setTimeout(() => void refreshTickets(), elapsed);
+    }
+  }, [refreshTickets]);
+
   if (!locale) {
     return (
       <section className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs text-sm text-slate-600">
@@ -310,7 +340,11 @@ export function TenantPortal({
             </p>
           </div>
 
-          <NewTicketForm fixedLocaleId={locale.id} sourceChannel="consola_inquilino" />
+          <NewTicketForm
+            fixedLocaleId={locale.id}
+            sourceChannel="consola_inquilino"
+            onSubmitted={burstRefreshTickets}
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -350,11 +384,11 @@ export function TenantPortal({
         <h3 className="text-lg font-bold text-slate-900 mb-3">
           Mis Solicitudes &amp; Incidencias ({locale.unitNumber})
         </h3>
-        {tickets.length === 0 ? (
+        {liveTickets.length === 0 ? (
           <p className="text-xs sm:text-sm text-slate-500">Sin solicitudes registradas todavía.</p>
         ) : (
           <div className="space-y-3">
-            {tickets.map((t) => (
+            {liveTickets.map((t) => (
               <TicketCard key={t.id} ticket={t} localeId={locale.id} />
             ))}
           </div>
