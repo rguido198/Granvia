@@ -930,11 +930,11 @@ export function LandlordDashboard({
 
       {/* LEFT SIDEBAR NAVIGATION — off-canvas drawer on mobile, permanent column on lg+ */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-hairline/80 shrink-0 flex flex-col justify-between p-5 space-y-6 text-left transition-transform duration-200 lg:static lg:z-auto lg:w-72 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-hairline/80 shrink-0 flex flex-col justify-between p-4 space-y-4 text-left transition-transform duration-200 lg:static lg:z-auto lg:w-72 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex justify-end lg:hidden">
             <button
               type="button"
@@ -945,10 +945,12 @@ export function LandlordDashboard({
               ✕
             </button>
           </div>
-          {/* Brand Header — logo and caption pulled close together (space-y-1,
-           *  not -2) so they read as one unit instead of two stacked blocks. */}
-          <div className="px-1 py-1 space-y-1">
-            <div className="inline-block bg-slate-50 px-3 py-2 rounded-xl border border-hairline shadow-2xs">
+          {/* Brand Header — pulled tight top-to-bottom (no vertical padding
+           *  of its own, logo/caption at space-y-1) so it sits close under
+           *  the sidebar's own top edge instead of floating in the middle
+           *  of a tall empty block. */}
+          <div className="px-1 space-y-1">
+            <div className="inline-block bg-slate-50 px-2.5 py-1.5 rounded-xl border border-hairline shadow-2xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/la-gran-via-logo-horizontal.png"

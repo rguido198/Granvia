@@ -170,19 +170,20 @@ export function ConsoleShell({
           )}
           <span className="h-2.5 w-2.5 rounded-full bg-slate-900" aria-hidden="true" />
           <span className="sr-only">Sesión autenticada.</span>
-          {/* Title over role rather than side by side: keeps this group's
-              max-content narrow enough that the control cluster opposite it
-              still resolves to a single row on a normal desktop width. */}
-          {/* "Consola de Control" dropped too — the sidebar's own brand
-           *  block ("Asset Management Hub · Consola") already says this;
-           *  the role line below is the only thing this bar needs to add. */}
-          <span className="min-w-0">
-            <span className="block text-slate-600 font-semibold">
-              {isOwner
-                ? "Vista Propietario (Plaza Completa)"
-                : `Vista Arrendatario (${tenantPortalLocale?.unitNumber ?? "?"})`}
+          {/* "Consola de Control" dropped — the sidebar's own brand block
+           *  ("Asset Management Hub · Consola") already says this. And for
+           *  the owner view, "Vista Propietario" is now dropped too — the
+           *  Propietario/Vista Inquilino toggle in this same bar already
+           *  shows which view is active, so the text restated it. Kept for
+           *  the tenant view: that one names which specific locale is
+           *  theirs, real information the toggle alone doesn't carry. */}
+          {!isOwner && (
+            <span className="min-w-0">
+              <span className="block text-slate-600 font-semibold">
+                {`Vista Arrendatario (${tenantPortalLocale?.unitNumber ?? "?"})`}
+              </span>
             </span>
-          </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2.5">
