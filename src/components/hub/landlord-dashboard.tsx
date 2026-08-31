@@ -756,8 +756,10 @@ export function LandlordDashboard({
       return;
     }
     triggerToast(`${label} actualizado.`);
+    // No router.refresh() here — same reason LegalDocumentsPanel's
+    // onResolved skips it: an unawaited RSC refresh racing this client
+    // poll can land later with a stale prop and clobber the fresh state.
     void refreshPortfolio();
-    router.refresh();
   }
 
   // Rent Roll table sort/filter — text filter is pure client-side (rentRoll
@@ -2127,9 +2129,15 @@ export function LandlordDashboard({
                       documents={liveActiveLeaseDocuments}
                       allUnits={leaseDocumentUnits}
                       onResolved={() => {
+                        // No router.refresh() here — same reason
+                        // MarianaPendingPanel's onRefresh below skips it:
+                        // an unawaited RSC refresh racing these two client
+                        // polls can land later with a stale prop and
+                        // clobber the fresh state right back (confirmed
+                        // live — see liveActiveLeaseDocuments's own doc
+                        // comment above).
                         void refreshActiveLeaseDocuments();
                         void refreshPortfolio();
-                        router.refresh();
                       }}
                       focusDocumentId={focusDocumentId}
                     />
