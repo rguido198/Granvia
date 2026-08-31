@@ -123,7 +123,7 @@ async function runGeminiQuery(modelName: string, query: string): Promise<{ answe
     })
   });
   const latencyMs = Date.now() - startTime;
-  const data = await res.json();
+  const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
   const answer = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
   return { answer, latencyMs };
 }
@@ -181,7 +181,7 @@ async function main() {
           console.log(`    ⚠️ Judge verdict reasoning: ${verdict.reasoning}`);
         }
       } catch (err: unknown) {
-        console.error(`  [${c.id}] ERRORED:`, err?.message || err);
+        console.error(`  [${c.id}] ERRORED:`, err instanceof Error ? err.message : String(err));
       }
     }
     const avgLat = (totalLatency / cases.length / 1000).toFixed(2);

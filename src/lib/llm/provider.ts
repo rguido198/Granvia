@@ -49,7 +49,7 @@ export async function callLLMTextForAgent(
       );
 
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) return text;
       }

@@ -370,7 +370,7 @@ async function buildCopilotoRequest(question: string): Promise<CopilotoRequest> 
 // model params: max_tokens raised to 16000 for synthesis-heavy questions
 // and effort held to medium.
 const MODEL_PARAMS = {
-  model: (process.env.GEMINI_API_KEY ? "claude-sonnet-5" : "claude-sonnet-5") as const,
+  model: "claude-sonnet-5" as const,
   max_tokens: 16000,
   output_config: { effort: "medium" as const },
 };

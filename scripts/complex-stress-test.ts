@@ -174,7 +174,7 @@ async function main() {
           console.log(`    ⚠️ Judge verdict reasoning: ${verdict.reasoning}`);
         }
       } catch (err: unknown) {
-        console.error(`  Model: ${m.name} ERRORED:`, err?.message || err);
+        console.error(`  Model: ${m.name} ERRORED:`, err instanceof Error ? err.message : String(err));
       }
     }
     console.log();

@@ -108,7 +108,7 @@ async function runGeminiQuery(modelName: string, query: string): Promise<{ answe
     })
   });
   const latencyMs = Date.now() - startTime;
-  const data = await res.json();
+  const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
   const answer = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
   return { answer, latencyMs };
 }
@@ -172,7 +172,7 @@ async function main() {
           console.log(`    ⚠️ Judge verdict: ${verdict.reasoning}`);
         }
       } catch (err: unknown) {
-        console.error(`  Model: ${m.name} ERRORED:`, err?.message || err);
+        console.error(`  Model: ${m.name} ERRORED:`, err instanceof Error ? err.message : String(err));
       }
     }
     console.log();
