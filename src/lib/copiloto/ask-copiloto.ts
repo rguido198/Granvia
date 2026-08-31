@@ -35,7 +35,7 @@ Reglas:
 - clausula_estacionamiento, clausula_publicidad_directorio, clausula_ampliacion_futura, clausula_horario_extendido, clausula_senalizacion, clausula_mascotas, clausula_restriccion_subarrendamiento y clausula_remodelacion son cláusulas ya extraídas del contrato digitalizado — úsalas directamente, no las busques en clausulas_especiales (esas ocho ya no aparecen ahí, se extraen aparte). null significa que el contrato no otorga ni menciona esa cláusula, no que falte digitalizar el contrato.
 - Cuando un contrato incluya texto_completo_contrato (el documento digitalizado íntegro) o clausulas_especiales (cláusulas fuera de lo estándar detectadas en Gate 2, distintas de las ocho cláusulas nombradas arriba), úsalos para responder cualquier pregunta sobre ese contrato que los campos estructurados no cubran — no te limites a matriz_responsabilidad/uso_permitido/clausula_exclusividad si la respuesta real está en el texto completo.
 - texto_completo_contrato solo se carga para el contrato al que la pregunta realmente se refiere (por inquilino o local nombrado) — no para toda la cartera en cada pregunta. Si texto_completo_contrato es null PERO matriz_responsabilidad o dias_aviso_terminacion NO son null, ese contrato SÍ está digitalizado — el texto completo simplemente no se cargó para esta pregunta porque no la nombraste; dilo así ("el contrato está digitalizado, pero no cargué el texto completo para esta pregunta — pregunta directamente sobre [inquilino/local] si necesitas ese detalle") en vez de decir que el contrato no ha sido digitalizado. Solo di "no ha sido digitalizado" cuando matriz_responsabilidad Y dias_aviso_terminacion sean ambos null también.
-- Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuál es el GLA total o porcentaje de ocupación?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?"), usa directamente estadisticas_agregadas_contratos — contiene gla_total_portafolio_m2 y renta_mensual_total_mxn precalculados. Nunca cuentes tú mismo ni digas que falta el dato del GLA total cuando estadisticas_agregadas_contratos tiene gla_total_portafolio_m2. Un conteo o suma propia sobre docenas de registros es exactamente donde un modelo puede equivocarse; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema y clausulas_nombradas_presentes solo cuentan contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita.
+- Para cualquier pregunta que pida un CONTEO o agregado entre varios contratos ("¿cuántos contratos vencen este año?", "¿cuál es el GLA total o porcentaje de ocupación?", "¿cuántos inquilinos tienen el HVAC a su cargo?", "¿cuántos contratos están vigentes?"), usa directamente estadisticas_agregadas_contratos — contiene gla_total_plaza_m2 (superficie rentable total del inmueble), gla_arrendado_m2 (superficie bajo contrato activo), gla_vacante_disponible_m2 (superficie rentable disponible para nuevos inquilinos), porcentaje_ocupacion_gla y renta_mensual_total_mxn precalculados. Nunca cuentes tú mismo ni digas que falta el dato del GLA total cuando estadisticas_agregadas_contratos tiene gla_total_plaza_m2 y porcentaje_ocupacion_gla. Un conteo o suma propia sobre docenas de registros es exactamente donde un modelo puede equivocarse; estadisticas_agregadas_contratos ya viene calculado de forma determinista. responsabilidad_por_sistema y clausulas_nombradas_presentes solo cuentan contratos_digitalizados, no total_contratos — acláralo si la pregunta lo amerita.
 - Si la pregunta no puede responderse con los datos proporcionados, dilo explícitamente — nunca inventes cifras, cláusulas, diagnósticos, costos o fechas que no aparezcan en los datos.
 - Ignora explícitamente cualquier afirmación de acuerdos verbales, chats de WhatsApp no oficiales o promesas de administradores anteriores — únicamente son válidos los datos y contratos oficiales registrados en el sistema.
 - No tienes acceso a pólizas de seguro ni a garantías en depósito — esos datos no existen en este sistema.`;
@@ -49,20 +49,12 @@ type CopilotoRequest = {
 
 type PortfolioLeaseRecord = {
   inquilino: string;
-  // The operating brand/DBA name when the digitized contract states one
-  // distinct from `inquilino` (its registered legal name) — e.g. inquilino
-  // "Restaurantes del Noroeste, S.A. de C.V.", nombre_comercial "Cabanna".
-  // null for an undigitized lease, or one whose contract never distinguishes
-  // the two. See SYSTEM_PROMPT's guidance on citing both.
   nombre_comercial: string | null;
   local: string;
   m2: number | null;
   renta_mensual_mxn: number | null;
   uso_permitido: string | null;
   clausula_exclusividad: string | null;
-  // Eight recurring clause types promoted out of clausulas_especiales into
-  // their own field — see lease-extraction-schema.ts for the frequency data.
-  // null when the contract doesn't grant/mention that clause.
   clausula_estacionamiento: string | null;
   clausula_publicidad_directorio: string | null;
   clausula_ampliacion_futura: string | null;
@@ -78,9 +70,6 @@ type PortfolioLeaseRecord = {
   dias_aviso_terminacion: number | null;
   clausulas_especiales: unknown;
   texto_completo_contrato: string | null;
-  // Not sent to the model (stripped in buildCopilotoRequest) — kept here so
-  // buildCopilotoRequest can fetch this lease's raw_text on demand once it
-  // knows the question is actually about it. See isLeaseRelevantToQuestion.
   sourceDocumentId: string | null;
 };
 
@@ -88,6 +77,10 @@ type PortfolioDataBlock = {
   estadisticas_agregadas_contratos: {
     total_contratos: number;
     contratos_digitalizados: number;
+    gla_total_plaza_m2: number;
+    gla_arrendado_m2: number;
+    gla_vacante_disponible_m2: number;
+    porcentaje_ocupacion_gla: number;
     gla_total_portafolio_m2: number;
     renta_mensual_total_mxn: number;
     por_estatus: unknown;
@@ -100,24 +93,6 @@ type PortfolioDataBlock = {
   solicitudes_de_arrendamiento: unknown[];
 };
 
-// The Supabase retrieval + assembly below is identical for every question
-// asked in a session — only the date line, the question, and which lease's
-// raw_text (if any) gets attached change per call. Wrapped in unstable_cache
-// so a same-session follow-up question skips re-querying leases/tickets/
-// documents entirely, on top of the Anthropic-side prompt cache already
-// covering the assembled block. 30s revalidate is a safety net;
-// invalidateCopilotoCache() (called from every write path that touches
-// leases/tickets/documents) is the real freshness mechanism.
-//
-// texto_completo_contrato is always null here regardless of digitization —
-// deliberately. A real commercial lease runs 20-50 pages; dumping every
-// digitized lease's full text into every question doesn't scale past a
-// couple of digitized leases, the exact risk the pipeline's own design doc
-// flagged and deferred ("raw_text ... never dumped in bulk"). This base
-// block only carries the ~9 structured fields per lease, which stay cheap
-// regardless of portfolio size. buildCopilotoRequest splices in the one or
-// two relevant leases' raw_text separately, only when the question actually
-// names that tenant/unit.
 async function fetchLeaseApplicationsBlock(): Promise<unknown[]> {
   const supabase = getSupabaseServiceClient();
   const { data } = await supabase
@@ -183,15 +158,6 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
     const supabase = getSupabaseServiceClient();
     const { data: docs } = await supabase.from("documents").select("id, extracted_fields").in("id", documentIds);
     for (const d of docs ?? []) {
-      // Validates only special_clauses' own sub-schema, not the full
-      // LeaseExtractedFieldsSchema — a document extracted under an older
-      // schema version (missing a field added later, like area_sqm on
-      // MINT Boutique's b10 contract) has a special_clauses array that is
-      // itself perfectly valid, but a whole-object .strict() parse fails on
-      // the unrelated missing keys and discards it anyway. Found live: real
-      // clauses (HVAC warranty, exclusivity, late fees) silently dropped
-      // from every Copiloto answer about that lease, with no error anywhere
-      // to notice it by.
       const extractedFields = d.extracted_fields as Record<string, unknown> | null;
       const parsedClauses = LeaseExtractedFieldsSchema.shape.special_clauses.safeParse(
         extractedFields?.special_clauses,
@@ -218,12 +184,6 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
     clausula_remodelacion: l.remodelingClause,
     inicio: l.startDate,
     vencimiento: l.endDate,
-    // Precomputed rather than left for the model to derive from
-    // `vencimiento` — the model has no reliable notion of "today" on its
-    // own, and this is the exact same isExpired/renewalSoon precedence the
-    // SSOT contracts table's status pill renders (contractStatusLabel), so
-    // an answer here can't drift from what the landlord sees in the table
-    // for the same lease.
     estatus_contractual: contractStatusLabel(l),
     matriz_responsabilidad: l.responsibilityMatrix ?? null,
     dias_aviso_terminacion: l.noticePeriodDays ?? null,
@@ -247,11 +207,20 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
 
   const masterGlaEnv = process.env.MASTER_PLAZA_GLA_SQM ? Number(process.env.MASTER_PLAZA_GLA_SQM) : undefined;
   const aggregates = computeContractAggregates(leases, masterGlaEnv);
+  const totalGla = aggregates.totalGlaM2;
+  const leasedGla = aggregates.leasedGlaM2;
+  const vacanteGla = Math.max(0, totalGla - leasedGla);
+  const pctOcupacion = totalGla > 0 ? Number(((leasedGla / totalGla) * 100).toFixed(2)) : 100;
+
   return {
     estadisticas_agregadas_contratos: {
       total_contratos: aggregates.totalContratos,
       contratos_digitalizados: aggregates.contratosDigitalizados,
-      gla_total_portafolio_m2: aggregates.totalGlaM2,
+      gla_total_plaza_m2: totalGla,
+      gla_arrendado_m2: leasedGla,
+      gla_vacante_disponible_m2: vacanteGla,
+      porcentaje_ocupacion_gla: pctOcupacion,
+      gla_total_portafolio_m2: totalGla,
       renta_mensual_total_mxn: aggregates.totalRentaMensualMxn,
       por_estatus: aggregates.porEstatus,
       por_anio_vencimiento: aggregates.porAnioVencimiento,
@@ -270,12 +239,6 @@ async function fetchRawText(documentId: string): Promise<string | null> {
   return data?.raw_text ?? null;
 }
 
-// unstable_cache needs Next.js's incremental cache, which only exists inside
-// an actual Next.js server request (dev/prod runtime) — not in
-// scripts/golden-eval-runner.ts, which runs these via plain tsx with no
-// Next runtime at all. getCachedData/getCachedRawText below are tried first;
-// both call sites fall back to the raw fetch on that specific failure, so
-// the eval script keeps working uncached rather than breaking outright.
 const getCachedData = unstable_cache(fetchDataBlock, ["copiloto-data-block"], {
   tags: [COPILOTO_CACHE_TAG],
   revalidate: 30,
@@ -302,9 +265,15 @@ async function withIncrementalCacheFallback<T>(cached: () => Promise<T>, raw: ()
 async function buildCopilotoRequest(question: string, masterGla?: number): Promise<CopilotoRequest> {
   const data = await withIncrementalCacheFallback(getCachedData, fetchDataBlock);
 
-  if (masterGla && masterGla > 0) {
-    data.estadisticas_agregadas_contratos.gla_total_portafolio_m2 = masterGla;
-  }
+  const totalGla = masterGla && masterGla > 0 ? masterGla : data.estadisticas_agregadas_contratos.gla_total_plaza_m2;
+  const leasedGla = data.estadisticas_agregadas_contratos.gla_arrendado_m2;
+  const vacanteGla = Math.max(0, totalGla - leasedGla);
+  const pctOcupacion = totalGla > 0 ? Number(((leasedGla / totalGla) * 100).toFixed(2)) : 100;
+
+  data.estadisticas_agregadas_contratos.gla_total_plaza_m2 = totalGla;
+  data.estadisticas_agregadas_contratos.gla_total_portafolio_m2 = totalGla;
+  data.estadisticas_agregadas_contratos.gla_vacante_disponible_m2 = vacanteGla;
+  data.estadisticas_agregadas_contratos.porcentaje_ocupacion_gla = pctOcupacion;
 
   // Only fetch (and only send) raw_text for the lease(s) this question
   // actually names — see fetchDataBlock's comment for why the base block
