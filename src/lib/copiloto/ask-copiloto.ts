@@ -299,8 +299,12 @@ async function withIncrementalCacheFallback<T>(cached: () => Promise<T>, raw: ()
 // Shared by askCopiloto (non-streaming — used by scripts/golden-eval-runner.ts,
 // which needs a plain string to grade) and askCopilotoStream (the live
 // endpoint) so the two never drift on what data the model actually sees.
-async function buildCopilotoRequest(question: string): Promise<CopilotoRequest> {
+async function buildCopilotoRequest(question: string, masterGla?: number): Promise<CopilotoRequest> {
   const data = await withIncrementalCacheFallback(getCachedData, fetchDataBlock);
+
+  if (masterGla && masterGla > 0) {
+    data.estadisticas_agregadas_contratos.gla_total_portafolio_m2 = masterGla;
+  }
 
   // Only fetch (and only send) raw_text for the lease(s) this question
   // actually names — see fetchDataBlock's comment for why the base block
@@ -383,8 +387,8 @@ const MODEL_PARAMS = {
 // Non-streaming — kept for scripts/golden-eval-runner.ts, which grades a
 // complete answer against a golden reasoning anchor and has no UI to stream
 // tokens into.
-export async function askCopiloto(question: string): Promise<AskCopilotoResult> {
-  const request = await buildCopilotoRequest(question);
+export async function askCopiloto(question: string, masterGla?: number): Promise<AskCopilotoResult> {
+  const request = await buildCopilotoRequest(question, masterGla);
   const client = new Anthropic();
   const response = await client.messages.create({ ...MODEL_PARAMS, ...request });
 
@@ -405,8 +409,8 @@ export async function askCopiloto(question: string): Promise<AskCopilotoResult> 
 // differs, so the landlord sees the first tokens as soon as Claude produces
 // them instead of waiting for the entire ~2900+ token answer to finish
 // before anything renders.
-export async function askCopilotoStream(question: string): Promise<ReadableStream<Uint8Array>> {
-  const request = await buildCopilotoRequest(question);
+export async function askCopilotoStream(question: string, masterGla?: number): Promise<ReadableStream<Uint8Array>> {
+  const request = await buildCopilotoRequest(question, masterGla);
   const client = new Anthropic();
   const anthropicStream = client.messages.stream({ ...MODEL_PARAMS, ...request });
 

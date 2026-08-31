@@ -3409,7 +3409,7 @@ export function LandlordDashboard({
                   const res = await fetch("/api/copiloto/ask", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ question: asked }),
+                    body: JSON.stringify({ question: asked, masterGla: plazaTotalGla }),
                     signal: controller.signal,
                   });
                   if (!res.ok) {

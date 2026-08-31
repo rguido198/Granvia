@@ -23,11 +23,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { question } = body as { question?: string };
+  const { question, masterGla } = body as { question?: string; masterGla?: number };
   if (typeof question !== "string" || !question.trim()) {
     return NextResponse.json({ error: "question is required" }, { status: 400 });
   }
 
-  const stream = await askCopilotoStream(question);
+  const stream = await askCopilotoStream(question, typeof masterGla === "number" ? masterGla : undefined);
   return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }
