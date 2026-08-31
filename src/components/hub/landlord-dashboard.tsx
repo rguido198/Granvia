@@ -2038,12 +2038,12 @@ export function LandlordDashboard({
                   <button
                     onClick={() => {
                       setCopilotOpen(true);
-                      triggerToast("Abriendo Copiloto IA...");
+                      triggerToast("Abriendo Consulta IA...");
                     }}
                     className="bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)] px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
                   >
                     <span className="h-2 w-2 rounded-full bg-[var(--console-accent)]" />
-                    <span>Copiloto IA</span>
+                    <span>Consulta IA</span>
                   </button>
                 </div>
               </div>
@@ -3280,7 +3280,7 @@ export function LandlordDashboard({
           <div className="p-4 border-b border-hairline bg-ink text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-ink-400" />
-              <h3 className="font-bold text-base">Copiloto IA</h3>
+              <h3 className="font-bold text-base">Consulta IA</h3>
             </div>
             <button
               onClick={() => setCopilotOpen(false)}

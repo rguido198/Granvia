@@ -238,7 +238,7 @@ export function ConsoleShell({
                 }`}
               >
                 <span className="h-2 w-2 rounded-full bg-slate-400" />
-                <span>Copiloto IA</span>
+                <span>Consulta IA</span>
               </button>
             </>
           )}
