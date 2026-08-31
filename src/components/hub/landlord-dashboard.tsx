@@ -349,11 +349,11 @@ function formatMxn(val: number, decimals = 0) {
 }
 
 function formatInlineMarkdown(text: string): React.ReactNode[] {
-  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={index} className="font-semibold text-ink-900">
+        <strong key={index} className="font-bold text-ink-950">
           {part.slice(2, -2)}
         </strong>
       );
@@ -365,59 +365,142 @@ function formatInlineMarkdown(text: string): React.ReactNode[] {
         </em>
       );
     }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code key={index} className="bg-slate-100 px-1.5 py-0.5 rounded text-[12px] font-mono text-ink-800 border border-hairline">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
     return part;
   });
 }
 
 function renderFormattedMarkdown(content: string) {
-  const lines = content.split("\n");
-  const elements: React.ReactNode[] = [];
+  const rawLines = content.split("\n");
+  const blocks: React.ReactNode[] = [];
+  let i = 0;
 
-  lines.forEach((line, idx) => {
+  while (i < rawLines.length) {
+    const line = rawLines[i];
     const trimmed = line.trim();
+
+    // Markdown Table Detection (| Header 1 | Header 2 |)
+    if (trimmed.startsWith("|") && trimmed.endsWith("|") && i + 1 < rawLines.length && rawLines[i + 1].trim().startsWith("|")) {
+      const tableLines: string[] = [];
+      while (i < rawLines.length && rawLines[i].trim().startsWith("|")) {
+        tableLines.push(rawLines[i].trim());
+        i++;
+      }
+
+      const headerRow = tableLines[0].split("|").slice(1, -1).map((cell) => cell.trim());
+      const dataRowsStart = tableLines[1]?.includes("---") ? 2 : 1;
+      const dataRows = tableLines.slice(dataRowsStart).map((row) =>
+        row.split("|").slice(1, -1).map((cell) => cell.trim())
+      );
+
+      blocks.push(
+        <div key={`table-${i}`} className="my-4 overflow-x-auto border border-hairline-strong rounded-xl shadow-xs bg-white">
+          <table className="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-100 border-b border-hairline-strong text-ink-900 font-bold">
+                {headerRow.map((col, cIdx) => (
+                  <th key={cIdx} className="p-3 px-4 border-r border-hairline last:border-r-0 whitespace-nowrap bg-slate-100/90">
+                    {formatInlineMarkdown(col)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dataRows.map((row, rIdx) => (
+                <tr key={rIdx} className="border-b border-hairline/60 last:border-b-0 hover:bg-slate-50 transition-colors">
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} className="p-3 px-4 border-r border-hairline/60 last:border-r-0 text-ink-800 font-medium">
+                      {formatInlineMarkdown(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+
+    // Headings ###
     if (trimmed.startsWith("### ")) {
-      elements.push(
-        <h4 key={idx} className="font-bold text-[13px] text-ink border-b border-hairline pb-1 mt-3 mb-1.5 leading-snug">
+      blocks.push(
+        <h4 key={`h3-${i}`} className="font-bold text-base sm:text-lg text-ink border-b border-hairline pb-2 mt-6 mb-3 leading-snug">
           {formatInlineMarkdown(trimmed.slice(4))}
         </h4>
       );
-    } else if (trimmed.startsWith("#### ")) {
-      elements.push(
-        <h5 key={idx} className="font-bold text-xs text-ink-800 mt-2 mb-1 leading-snug">
+      i++;
+      continue;
+    }
+
+    // Subheadings ####
+    if (trimmed.startsWith("#### ")) {
+      blocks.push(
+        <h5 key={`h4-${i}`} className="font-bold text-sm sm:text-base text-ink-900 mt-4 mb-2 leading-snug">
           {formatInlineMarkdown(trimmed.slice(5))}
         </h5>
       );
-    } else if (trimmed === "---") {
-      elements.push(<hr key={idx} className="border-t border-hairline my-2.5" />);
-    } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-      elements.push(
-        <div key={idx} className="flex gap-2 pl-1.5 my-0.5 text-xs text-ink-700 leading-relaxed">
-          <span className="text-[var(--console-accent)] font-bold select-none">•</span>
+      i++;
+      continue;
+    }
+
+    // Horizontal Rule ---
+    if (trimmed === "---" || trimmed === "***") {
+      blocks.push(<hr key={`hr-${i}`} className="border-t border-hairline my-4" />);
+      i++;
+      continue;
+    }
+
+    // Bullet Lists
+    if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+      blocks.push(
+        <div key={`bullet-${i}`} className="flex gap-3 pl-2 my-1 text-sm sm:text-base text-ink-800 leading-relaxed">
+          <span className="text-[var(--console-accent)] font-bold select-none text-base">•</span>
           <span>{formatInlineMarkdown(trimmed.slice(2))}</span>
         </div>
       );
-    } else if (/^\d+\.\s/.test(trimmed)) {
+      i++;
+      continue;
+    }
+
+    // Numbered Lists
+    if (/^\d+\.\s/.test(trimmed)) {
       const dotIdx = trimmed.indexOf(".");
       const num = trimmed.slice(0, dotIdx + 1);
       const rest = trimmed.slice(dotIdx + 1).trim();
-      elements.push(
-        <div key={idx} className="flex gap-2 pl-1 my-1 text-xs text-ink-700 leading-relaxed">
-          <span className="font-bold text-ink-900 select-none min-w-[1.2rem]">{num}</span>
+      blocks.push(
+        <div key={`num-${i}`} className="flex gap-2.5 pl-2 my-1.5 text-sm sm:text-base text-ink-800 leading-relaxed">
+          <span className="font-bold text-ink-950 select-none min-w-[1.4rem]">{num}</span>
           <span>{formatInlineMarkdown(rest)}</span>
         </div>
       );
-    } else if (trimmed === "") {
-      elements.push(<div key={idx} className="h-1" />);
-    } else {
-      elements.push(
-        <p key={idx} className="text-xs text-ink-700 leading-relaxed my-0.5">
-          {formatInlineMarkdown(line)}
-        </p>
-      );
+      i++;
+      continue;
     }
-  });
 
-  return <div className="space-y-0.5">{elements}</div>;
+    // Empty Lines
+    if (trimmed === "") {
+      blocks.push(<div key={`empty-${i}`} className="h-2" />);
+      i++;
+      continue;
+    }
+
+    // Paragraphs
+    blocks.push(
+      <p key={`p-${i}`} className="text-sm sm:text-base text-ink-800 leading-relaxed my-1.5">
+        {formatInlineMarkdown(line)}
+      </p>
+    );
+    i++;
+  }
+
+  return <div className="space-y-1 text-sm sm:text-base">{blocks}</div>;
 }
 
 
@@ -3514,40 +3597,40 @@ export function LandlordDashboard({
 
       {/* AI ASSISTANT DRAWER / SLIDE-OVER PANEL */}
       {copilotOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[32rem] lg:w-[40rem] max-w-[95vw] bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
+        <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[48rem] lg:w-[56rem] xl:w-[64rem] max-w-[96vw] bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
           {/* HEADER */}
-          <div className="p-4 border-b border-hairline bg-ink text-white flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-lg bg-[var(--console-accent)]/20 border border-[var(--console-accent)]/40 flex items-center justify-center">
-                <span className="h-2 w-2 rounded-full bg-[var(--console-accent)] animate-pulse" />
+          <div className="p-4 sm:p-5 border-b border-hairline bg-ink text-white flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-[var(--console-accent)]/20 border border-[var(--console-accent)]/40 flex items-center justify-center">
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)] animate-pulse" />
               </div>
               <div>
-                <h3 className="font-bold text-base leading-tight">Consulta IA</h3>
-                <p className="text-[11px] text-slate-300 font-medium">Copiloto Ejecutivo de Asset Management</p>
+                <h3 className="font-bold text-base sm:text-lg leading-tight">Consulta IA</h3>
+                <p className="text-xs text-slate-300 font-medium">Copiloto Ejecutivo de Asset Management</p>
               </div>
             </div>
             <button
               onClick={() => setCopilotOpen(false)}
-              className="text-slate-300 hover:text-white text-xs cursor-pointer font-bold bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg transition-colors"
+              className="text-slate-300 hover:text-white text-xs sm:text-sm cursor-pointer font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
             >
               Cerrar
             </button>
           </div>
 
           {/* CHAT MESSAGES / BODY */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm bg-slate-50/50">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-sm sm:text-base bg-slate-50/50">
             {copilotHistory.length === 0 && !copilotLoading && (
               <div className="space-y-4 py-2">
-                <div className="bg-white border border-hairline rounded-xl p-4 shadow-2xs space-y-2">
-                  <p className="font-bold text-ink text-sm">¡Hola! Soy Consulta IA 🏛️</p>
-                  <p className="text-ink-500 text-xs leading-relaxed">
+                <div className="bg-white border border-hairline rounded-xl p-5 shadow-2xs space-y-2">
+                  <p className="font-bold text-ink text-base">¡Hola! Soy Consulta IA 🏛️</p>
+                  <p className="text-ink-600 text-xs sm:text-sm leading-relaxed">
                     Tu asesor ejecutivo comercial para La Gran Vía Mexicali. Puedo analizar el Rent Roll, calcular vacantes, revisar exclusividades de giro, evaluar tickets de mantenimiento y presupuestos CapEx.
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold text-ink-500 uppercase tracking-wider">Preguntas sugeridas:</p>
-                  <div className="grid grid-cols-1 gap-2">
+                  <p className="text-xs font-bold text-ink-500 uppercase tracking-wider">Preguntas sugeridas:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {[
                       "¿Cuál es el porcentaje de ocupación y cuánta superficie vacante tenemos disponible?",
                       "Hazme un resumen ejecutivo de contratos y próximos vencimientos",
@@ -3560,7 +3643,7 @@ export function LandlordDashboard({
                           setCopilotQuestion(suggested);
                           void submitCopilotQuestion(suggested);
                         }}
-                        className="text-left bg-white hover:bg-slate-100 border border-hairline rounded-xl p-3 text-xs font-semibold text-ink-700 hover:text-ink transition-all cursor-pointer shadow-2xs"
+                        className="text-left bg-white hover:bg-slate-100 border border-hairline rounded-xl p-3.5 text-xs sm:text-sm font-semibold text-ink-800 hover:text-ink transition-all cursor-pointer shadow-2xs"
                       >
                         💡 {suggested}
                       </button>
@@ -3573,10 +3656,10 @@ export function LandlordDashboard({
             {copilotHistory.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[88%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                  className={`max-w-[95%] sm:max-w-[92%] rounded-2xl p-4 sm:p-5 text-sm sm:text-base leading-relaxed ${
                     msg.role === "user"
                       ? "bg-ink text-white rounded-br-xs font-medium shadow-2xs"
-                      : "bg-white text-ink-700 border border-hairline rounded-bl-xs shadow-2xs space-y-2"
+                      : "bg-white text-ink-800 border border-hairline rounded-bl-xs shadow-2xs"
                   }`}
                 >
                   {msg.role === "user" ? (
