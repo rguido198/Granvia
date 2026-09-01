@@ -57,6 +57,7 @@ export function LegalDraftMarkdown({ markdown }: { markdown: string }) {
     const line = rawLine.trim();
     const h4 = line.match(/^####\s+(.*)/);
     const h3 = line.match(/^###\s+(.*)/);
+    const bullet = line.match(/^[-*]\s+(.*)/);
     if (h4) {
       flushParagraph(`p-${i}`);
       blocks.push(
@@ -70,6 +71,13 @@ export function LegalDraftMarkdown({ markdown }: { markdown: string }) {
         <h3 key={`h3-${i}`} className="mt-4 text-sm font-bold text-slate-900 first:mt-0">
           {renderInline(h3[1], `h3-${i}`)}
         </h3>,
+      );
+    } else if (bullet) {
+      flushParagraph(`p-${i}`);
+      blocks.push(
+        <li key={`li-${i}`} className="ml-4 text-xs text-ink-700 list-disc my-1">
+          {renderInline(bullet[1], `li-${i}`)}
+        </li>,
       );
     } else if (line === "") {
       flushParagraph(`p-${i}`);

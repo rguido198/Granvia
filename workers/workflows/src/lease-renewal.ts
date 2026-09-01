@@ -122,19 +122,26 @@ async function loadRenewalContext(params: Params): Promise<RenewalContext> {
 const RenewalDraftSchema = z.object({ draft_markdown: z.string() });
 type RenewalDraft = z.infer<typeof RenewalDraftSchema>;
 
-const RENEWAL_SYSTEM_PROMPT = `You are Mariana, the lease-renewal agent for a Mexican commercial plaza landlord. You draft a Convenio Modificatorio de Arrendamiento Comercial (lease extension addendum) for an expiring or expired lease.
+const RENEWAL_SYSTEM_PROMPT = `You are Mariana, the lease-renewal agent for a Mexican commercial plaza landlord. You draft a Convenio Modificatorio de Arrendamiento Comercial (lease extension addendum) for an expiring or expired lease, formatted specifically as a working draft for the landlord to present to their legal counsel.
 
 TEMPLATE — follow this structure and section numbering exactly (this is the template from lease-renewal-drafter/SKILL.md §3, do not deviate from its shape):
 
 [DRAFT — PENDING LANDLORD COUNSEL SIGN-OFF ON UNRESOLVED JURISDICTION KEYS: {unresolved_keys}]  ← prepend verbatim, with the real comma-separated key list, ONLY if unresolved keys were given below. Omit this line entirely if none were given.
-### CONVENIO MODIFICATORIO DE ARRENDAMIENTO COMERCIAL (BORRADOR) — MARIANA
+### CONVENIO MODIFICATORIO DE ARRENDAMIENTO COMERCIAL (BORRADOR PARA REVISIÓN DE ABOGADO) — MARIANA
 **Fecha:** {use the drafted_on date given below, verbatim}
 **Plaza:** La Gran Vía
 **Arrendatario:** {tenant_entity}
 **Local:** Local {unit_number} ({area_sqm} m²)
+**Aviso Legal:** Documento preliminar de trabajo para revisión del abogado / asesoría jurídica del arrendador. No constituye contrato definitivo ni oferta formal vinculante.
+
+#### RESUMEN COMPARATIVO DE MODIFICACIONES (CONTRATO ANTERIOR VS. VERSIÓN ACTUALIZADA)
+- **Vigencia:** Vigencia Anterior: {current_end_date} ➔ Nueva Vigencia: {new_start_date} a {new_end_date}
+- **Renta Base Mensual:** Renta Anterior: {current_base_rent_monthly} ➔ Renta Nueva: {new_base_rent_monthly} (Incremento/Ajuste: {escalation_pct} / {escalation_method})
+- **Cláusulas CAM y Mantenimiento:** Continuidad de matriz de responsabilidad de mantenimiento y días de aviso previa del contrato anterior.
+- **Disposiciones Inalteradas:** Salvo por vigencia y renta reajustada, la exclusividad, uso permitido y demás cláusulas del contrato original subsisten sin modificación.
 
 #### CLÁUSULAS DE PRÓRROGA
-1. **PRÓRROGA DE VIGENCIA:** states the extension period, from {new_start_date} to {new_end_date}.
+1. **PRÓRROGA DE VIGENCIA:** states the extension period, from {new_start_date} to {new_end_date}, explicitly comparing with the previous contract expiration date ({current_end_date}).
 2. **RENTA REAJUSTADA:** states the new monthly rent, the escalation method and percentage given below (both are supplied to you — state them as given, do not invent a different method or omit the one you were given), and the percentage change from the current rent (compute and state the % change from current_base_rent_monthly to new_base_rent_monthly — if current_base_rent_monthly is null, say the prior rent wasn't on record instead of inventing one).
 3. **MANTENIMIENTO Y CUOTA CAM:** this section title is fixed by the template — references the existing responsibility_matrix and notice_period_days given below, restated plainly. The CAM figure itself is not given to you; state plainly that it isn't available in this draft rather than inventing an amount or formula. Having the heading present without a figure is correct template behavior, not an invented term.
 4. **SUBSISTENCIA DE TÉRMINOS:** a clause stating all other terms of the original contract remain in force — this MUST be present verbatim in substance; the whole point of a Convenio Modificatorio is that it modifies only term and rent, not the rest of the contract. If exclusive_use_clause or permitted_use were given below, restate them here as terms that remain unchanged — do not silently drop them.
@@ -165,7 +172,7 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
     `Renta nueva (dato del arrendador, no lo recalcules): $${context.newBaseRentMonthly} MXN/mes.`,
     `Método de escalación: ${context.escalationMethod}${context.escalationPct !== null ? ` (${context.escalationPct}%)` : ""}.`,
     pctChange !== null
-      ? `Cambio calculado: ${pctChange}% respecto a la renta actual.`
+      ? `Cambio calculated: ${pctChange}% respecto a la renta actual.`
       : "",
     "",
     "Matriz de responsabilidad de mantenimiento vigente:",
@@ -213,6 +220,7 @@ type SkepticVerdict = z.infer<typeof SkepticVerdictSchema>;
 
 const SKEPTIC_SYSTEM_PROMPT = `You audit a lease-renewal draft before it reaches a landlord. Check specifically:
 - Is CLÁUSULA 4 (SUBSISTENCIA DE TÉRMINOS) actually present, and does it say the rest of the original contract remains in force?
+- Is the RESUMEN COMPARATIVO DE MODIFICACIONES present, clearly contrasting previous contract terms vs updated terms?
 - If an exclusive-use clause or permitted-use was given as context, does the draft restate it rather than silently dropping it?
 - Does CLÁUSULA 3 restate the given responsibility matrix / notice period rather than inventing new maintenance terms? The "CUOTA CAM" heading is required by the template and is NOT an invented term on its own — only flag it if the draft states a specific CAM amount or formula that wasn't given to it.
 - If unresolved jurisdiction keys were given, is the watermark banner present at the top, verbatim, with exactly those keys?

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ConsoleModal } from "@/components/hub/console-modal";
 import { LegalDraftMarkdown } from "@/components/hub/legal-draft-markdown";
 import type { LeaseRenewalSummary } from "@/lib/data/portfolio.server";
+import { downloadBlob, generateMockPdf, type PdfSection } from "@/lib/mock-pdf";
 
 // "Aprobado" alone reads as a finished decision — SKILL.md's own closing
 // disclaimer on every draft says the opposite: it's subject to the
@@ -30,6 +31,42 @@ function todayPlusYearsISO(startISO: string, years: number): string {
 
 function formatMxn(n: number): string {
   return `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
+}
+
+function downloadRenewalPdf(renewal: LeaseRenewalSummary) {
+  const sections: PdfSection[] = [
+    {
+      heading: "AVISO LEGAL IMPORTANTE",
+      body: [
+        "Borrador preliminar de trabajo preparado por Mariana IA para revisión del abogado / asesoría jurídica del arrendador.",
+        "Este documento no constituye un contrato definitivo ni una oferta formal vinculante.",
+      ],
+    },
+    {
+      heading: "RESUMEN COMPARATIVO DE MODIFICACIONES (CONTRATO ANTERIOR VS. NUEVA VERSIÓN)",
+      body: [
+        `Vigencia anterior: vence ${renewal.currentEndDate}`,
+        `Nueva vigencia: ${renewal.newStartDate} a ${renewal.newEndDate}`,
+        `Renta mensual anterior: ${renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)"}`,
+        `Renta mensual nueva: ${formatMxn(renewal.newBaseRentMonthly)} (Escalación: ${renewal.escalationPct !== null ? renewal.escalationPct + "%" : renewal.escalationMethod})`,
+        "Disposiciones inalteradas: Se ratifican mantenimiento, cuota CAM, exclusividad y uso permitido conforme al contrato anterior.",
+      ],
+    },
+    {
+      heading: "TEXTO COMPLETO DEL CONVENIO MODIFICATORIO (BORRADOR PARA ABOGADO)",
+      body: renewal.draftMarkdown
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0 && !l.startsWith("[") && !l.startsWith("###")),
+    },
+  ];
+
+  const blob = generateMockPdf(
+    `CONVENIO MODIFICATORIO DE ARRENDAMIENTO (BORRADOR)`,
+    sections,
+    "La Gran Vía · Mariana AI · Documento de Trabajo para Abogado",
+  );
+  downloadBlob(blob, `borrador_abogado_${renewal.renewalNumber.replace(/\s+/g, "_")}.pdf`);
 }
 
 /** The clear, scannable "what actually changes" block — separate from the
@@ -71,6 +108,7 @@ function RenewalSummary({ renewal }: { renewal: LeaseRenewalSummary }) {
 function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
   const router = useRouter();
   const [viewing, setViewing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [pending, setPending] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,6 +140,9 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_CLS[renewal.status]}`}>
             {STATUS_LABEL[renewal.status]}
           </span>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-blue-50 text-blue-800 border-blue-200">
+            Borrador para abogado
+          </span>
           {renewal.skepticFlagged && (
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200"
@@ -119,7 +160,7 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
       {renewal.status === "needs_landlord_review" && (
         <div className="space-y-1.5 pt-1">
           <p className="text-[10px] text-ink-500 font-medium">
-            Tu aprobación autoriza enviar este borrador a tu asesoría legal — no es la aprobación final del contrato.
+            Tu aprobación autoriza este borrador preliminar con el resumen de cambios para enviarlo a tu abogado.
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -150,7 +191,10 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <p className="font-bold text-sm text-ink">{renewal.renewalNumber} — borrador</p>
+                <div>
+                  <p className="font-bold text-sm text-ink">{renewal.renewalNumber} — borrador para abogado</p>
+                  <p className="text-[11px] text-ink-500">Documento preliminar con desglose de modificaciones respecto al contrato anterior.</p>
+                </div>
                 <button type="button" onClick={() => setViewing(false)} className="text-ink-500 font-bold cursor-pointer">
                   Cerrar
                 </button>
@@ -158,12 +202,34 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
               <div className="bg-slate-50 border border-hairline rounded-xl p-3">
                 <RenewalSummary renewal={renewal} />
               </div>
-              <details className="border-t border-hairline pt-2.5">
-                <summary className="text-xs font-bold text-ink-700 cursor-pointer">Ver texto completo del convenio</summary>
-                <div className="mt-2 text-xs">
+              <div className="border-t border-hairline pt-2.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-ink-700">Texto del Convenio Modificatorio (Borrador)</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => downloadRenewalPdf(renewal)}
+                      className="bg-slate-900 text-white px-2.5 py-1 rounded-lg font-bold text-xs hover:bg-slate-800 cursor-pointer"
+                    >
+                      Descargar PDF para Abogado
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(renewal.draftMarkdown);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="border border-hairline text-ink-700 px-2.5 py-1 rounded-lg font-bold text-xs hover:bg-slate-50 cursor-pointer"
+                    >
+                      {copied ? "✓ Copiado" : "Copiar texto"}
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs bg-white border border-hairline rounded-xl p-3 max-h-[40vh] overflow-y-auto">
                   <LegalDraftMarkdown markdown={renewal.draftMarkdown} />
                 </div>
-              </details>
+              </div>
               {renewal.skepticConcerns.length > 0 && (
                 <div className="border-t border-hairline pt-2.5">
                   <p className="text-xs font-bold text-amber-900 mb-1">Notas del auditor (Mariana IA)</p>
@@ -256,7 +322,12 @@ function DraftRenewalForm({
 
   return (
     <div className="border border-hairline rounded-lg p-2.5 space-y-2 bg-slate-50">
-      <p className="text-xs font-bold text-ink-700">Redactar Convenio Modificatorio (borrador)</p>
+      <div>
+        <p className="text-xs font-bold text-ink-700">Redactar Convenio Modificatorio (borrador para abogado)</p>
+        <p className="text-[11px] text-ink-500 font-medium">
+          Mariana IA redactará un borrador preliminar con el desglose comparativo de cambios respecto al contrato anterior para enviarlo a tu abogado.
+        </p>
+      </div>
       <div className="flex items-center gap-2">
         <label className="text-[11px] text-ink-500 font-medium">Nueva fecha de vencimiento</label>
         <input
