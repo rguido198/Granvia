@@ -234,6 +234,107 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const leasedSqm = rentRoll.filter((r) => !r.vacant).reduce((sum, r) => sum + r.sqm, 0);
   const contractedRent = rentRoll.reduce((sum, r) => sum + r.rent, 0);
 
+  // Auto-generate initial renewal proposal draft for any active lease that has
+  // crossed into the renewal window (<=6 months remaining or expired) and doesn't
+  // have a renewal draft on file yet.
+  let maxRenSeq = (renewalRows ?? []).reduce((max, r) => {
+    const m = (r.renewal_number as string).match(/REN-(\d+)/);
+    return m ? Math.max(max, Number(m[1])) : max;
+  }, 9);
+
+  for (const l of activeLeaseByLocale.values()) {
+    const isSoon = isRenewalSoon(l.end_date) || isExpired(l.end_date);
+    const existing = renewalsByLeaseId.get(l.id) ?? [];
+    if (isSoon && existing.length === 0) {
+      maxRenSeq++;
+      const renewalNumber = `REN-${String(maxRenSeq).padStart(3, "0")}`;
+      const locale = localesById.get(l.locale_id);
+      const currentRent = l.base_rent_monthly ? Number(l.base_rent_monthly) : 0;
+      const escalation = l.source_document_id
+        ? findEscalationClause(specialClausesByDocumentId.get(l.source_document_id) ?? null)
+        : null;
+      const escPct = escalation?.pct ?? 0;
+      const newRent = Number((currentRent * (1 + escPct / 100)).toFixed(2));
+
+      const currentEnd = new Date(l.end_date);
+      const newStart = new Date(currentEnd);
+      newStart.setDate(newStart.getDate() + 1);
+      const newStartDateStr = newStart.toISOString().slice(0, 10);
+      const newEnd = new Date(currentEnd);
+      newEnd.setFullYear(newEnd.getFullYear() + 3);
+      const newEndDateStr = newEnd.toISOString().slice(0, 10);
+
+      const unitStr = locale?.unit_number ? `Local ${locale.unit_number.replace(/^Local\s*/i, "")}` : "Local ?";
+      const areaStr = locale?.area_sqm ? `${locale.area_sqm} m²` : "";
+
+      const draftMarkdown = `[DRAFT — PENDING LANDLORD COUNSEL SIGN-OFF ON UNRESOLVED JURISDICTION KEYS: JD-01]
+### CONVENIO MODIFICATORIO DE ARRENDAMIENTO COMERCIAL (PROYECTO) — MARIANA
+**Fecha:** ${new Date().toISOString().slice(0, 10)}
+**Plaza:** La Gran Vía
+**Arrendatario:** ${l.tenant_entity}
+**Local:** ${unitStr} (${areaStr})
+
+#### CLÁUSULAS DE PRÓRROGA
+1. **PRÓRROGA DE VIGENCIA:** Las partes convienen en prorrogar la vigencia del contrato de arrendamiento respecto del ${unitStr}, cuya vigencia actual concluye el ${l.end_date}, por un nuevo período que iniciará el ${newStartDateStr} y concluirá el ${newEndDateStr}.
+
+2. **RENTA REAJUSTADA:** La renta mensual aplicable durante el período de prórroga será de $${newRent.toLocaleString("es-MX", {minimumFractionDigits: 2})} MXN mensuales, cantidad proporcionada por el ARRENDADOR. El método de escalación aplicable es del ${escPct}% (fixed_pct). Respecto de la renta actual de $${currentRent.toLocaleString("es-MX", {minimumFractionDigits: 2})} MXN mensuales, dicha cantidad representa un incremento del ${escPct}%.
+
+3. **MANTENIMIENTO Y CUOTA CAM:** Subsiste sin modificación la matriz de responsabilidad de mantenimiento vigente y los días de aviso previstos en el contrato original.
+
+4. **SUBSISTENCIA DE TÉRMINOS:** Todos los demás términos, condiciones, derechos y obligaciones del contrato de arrendamiento original permanecen en plena fuerza y vigor, sin modificación alguna, salvo exclusivamente lo relativo a vigencia y renta materia del presente convenio.
+
+---
+Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables: JD-01, JD-04, JD-07. El presente documento constituye un proyecto sujeto a revisión y aprobación del arrendador y de su asesoría legal.`;
+
+      const newRenewalObj: LeaseRenewalSummary = {
+        id: crypto.randomUUID(),
+        renewalNumber,
+        status: "needs_landlord_review",
+        currentEndDate: l.end_date,
+        newStartDate: newStartDateStr,
+        newEndDate: newEndDateStr,
+        currentBaseRentMonthly: currentRent,
+        newBaseRentMonthly: newRent,
+        escalationPct: escPct,
+        escalationMethod: "fixed_pct",
+        draftMarkdown,
+        skepticFlagged: false,
+        skepticConcerns: [],
+        createdAt: new Date().toISOString(),
+      };
+
+      // Persist asynchronously to DB so portfolio queries remain fast
+      supabase
+        .from("lease_renewals")
+        .insert({
+          id: newRenewalObj.id,
+          renewal_number: renewalNumber,
+          source_lease_id: l.id,
+          locale_id: l.locale_id,
+          tenant_entity: l.tenant_entity,
+          current_end_date: l.end_date,
+          new_start_date: newStartDateStr,
+          new_end_date: newEndDateStr,
+          current_base_rent_monthly: currentRent,
+          new_base_rent_monthly: newRent,
+          escalation_pct: escPct,
+          escalation_method: "fixed_pct",
+          draft_markdown: draftMarkdown,
+          skeptic_flagged: false,
+          skeptic_concerns: [],
+          jurisdiction_pack_ref: "México · mx.md v1.0 (2026-08-04)",
+          unresolved_jd_keys: ["JD-01"],
+          status: "needs_landlord_review",
+          workflow_run_id: `auto_renew_${renewalNumber.toLowerCase()}`,
+        })
+        .then(({ error }) => {
+          if (error) console.error("Failed to auto-insert lease_renewal:", error);
+        });
+
+      renewalsByLeaseId.set(l.id, [newRenewalObj]);
+    }
+  }
+
   const leases: LeaseDetail[] = [...activeLeaseByLocale.values()]
     .map((l) => {
       const locale = localesById.get(l.locale_id);

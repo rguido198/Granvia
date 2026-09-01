@@ -13,7 +13,7 @@ const STAGE_LABEL: Record<RenewalOutreachStage, string> = {
 };
 
 const RENEWAL_STATUS_LABEL: Record<"needs_landlord_review" | "approved" | "rejected", string> = {
-  needs_landlord_review: "Borrador — Revisión Pendiente",
+  needs_landlord_review: "Proyecto — Revisión Pendiente",
   approved: "Renovación Aprobada",
   rejected: "Renovación Rechazada",
 };
