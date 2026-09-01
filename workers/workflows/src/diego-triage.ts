@@ -218,7 +218,7 @@ async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
   ].join("\n");
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-3-7-sonnet-20250219",
     max_tokens: 4000,
     system: [
       {
@@ -279,7 +279,7 @@ async function runSkeptic(
   const client = new Anthropic();
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-3-7-sonnet-20250219",
     // Found live: 2000 was too tight for a thorough multi-concern audit
     // (mariana-screening.ts's identical skeptic call hit this exact wall —
     // truncated/unterminated JSON, then no parsed_output at all on retry,

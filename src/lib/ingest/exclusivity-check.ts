@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
+import { CANONICAL_CLAUDE_MODEL } from "@/lib/llm/provider";
+
 /**
  * Exclusivity-overlap audit for a lease's own permitted_use against the
  * rest of the portfolio's active exclusivity clauses — the reverse
@@ -75,7 +77,7 @@ export async function checkExclusivityConflicts(
 
   const client = new Anthropic();
   const response = await client.messages.parse({
-    model: "claude-sonnet-5",
+    model: CANONICAL_CLAUDE_MODEL,
     max_tokens: 2000,
     system: SYSTEM_PROMPT,
     messages: [

@@ -193,7 +193,7 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
     .join("\n");
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-3-7-sonnet-20250219",
     max_tokens: 3000,
     system: [
       {
@@ -236,7 +236,7 @@ async function runRenewalSkeptic(
   const client = new Anthropic();
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-3-7-sonnet-20250219",
     max_tokens: 4000,
     system: SKEPTIC_SYSTEM_PROMPT,
     messages: [

@@ -232,7 +232,7 @@ async function draftScreening(
   ].join("\n");
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-3-7-sonnet-20250219",
     max_tokens: 4000,
     system: [
       {
@@ -267,7 +267,7 @@ async function runSkeptic(
   const client = new Anthropic();
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-3-7-sonnet-20250219",
     // Found live: 2000 truncated the JSON mid-generation on a normal,
     // multi-concern audit (unterminated string), and the retry returned no
     // parsed_output at all — that throws NonRetryableError and silently

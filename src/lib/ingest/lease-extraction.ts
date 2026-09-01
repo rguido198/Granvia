@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
+import { CANONICAL_CLAUDE_MODEL } from "@/lib/llm/provider";
 import { LeaseExtractedFieldsSchema, type LeaseExtractedFields } from "./lease-extraction-schema";
 import { checkLegibility } from "./legibility-check";
 
@@ -50,7 +51,7 @@ export async function extractFromText(rawText: string): Promise<LeaseExtractedFi
   const client = new Anthropic();
 
   const response = await client.messages.parse({
-    model: "claude-sonnet-5",
+    model: CANONICAL_CLAUDE_MODEL,
     max_tokens: 4000,
     system: EXTRACTION_SYSTEM_PROMPT,
     messages: [{ role: "user", content: `Texto del contrato:\n${rawText}` }],
@@ -99,7 +100,7 @@ export async function extractFromVision(
   const base64 = Buffer.from(bytes).toString("base64");
 
   const response = await client.messages.parse({
-    model: "claude-sonnet-5",
+    model: CANONICAL_CLAUDE_MODEL,
     max_tokens: 6000,
     system: VISION_SYSTEM_PROMPT,
     messages: [

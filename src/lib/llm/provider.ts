@@ -10,7 +10,7 @@ import { z } from "zod";
  * strings you update yourself when you want a newer model; there is no
  * auto-updating pointer to fall back on here.
  */
-export const CANONICAL_CLAUDE_MODEL = "claude-sonnet-5";
+export const CANONICAL_CLAUDE_MODEL = "claude-3-7-sonnet-20250219";
 export const CANONICAL_GEMINI_MODEL = "gemini-2.5-flash";
 
 export function resolveModelName(modelName?: string): string {
@@ -70,16 +70,16 @@ export async function callLLMTextForAgent(
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) return text;
       }
-      console.warn(`Gemini API returned empty/non-OK (${res.status}), falling back to Claude Sonnet 5...`);
+      console.warn(`Gemini API returned empty/non-OK (${res.status}), falling back to Claude 3.7 Sonnet...`);
     } catch (err) {
-      console.warn("Gemini call failed, falling back to Claude Sonnet 5:", err);
+      console.warn("Gemini call failed, falling back to Claude 3.7 Sonnet:", err);
     }
   }
 
-  // Primary for High-Risk roles or Fallback for Gemini: Claude Sonnet 5
+  // Primary for High-Risk roles or Fallback for Gemini: Claude 3.7 Sonnet
   const client = new Anthropic();
   const response = await client.messages.create({
-    model: isGemini ? resolveModelName("claude-3-5-sonnet-latest") : modelName,
+    model: isGemini ? resolveModelName("claude-3-7-sonnet-20250219") : modelName,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userContent }]
@@ -113,7 +113,7 @@ export async function callLLMStructuredForAgent<T>(
 
   const client = new Anthropic();
   const response = await client.messages.parse({
-    model: isGemini ? resolveModelName("claude-3-5-sonnet-latest") : modelName,
+    model: isGemini ? resolveModelName("claude-3-7-sonnet-20250219") : modelName,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userContent }],
