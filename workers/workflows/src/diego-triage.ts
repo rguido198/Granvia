@@ -286,7 +286,17 @@ async function runSkeptic(
     // which throws NonRetryableError and silently kills the whole workflow
     // with no error surfaced anywhere). Matches the draft call's own budget.
     max_tokens: 4000,
-    system: SKEPTIC_SYSTEM_PROMPT,
+    // Same ephemeral cache_control the draft call above uses — this prompt
+    // is identical on every ticket, so leaving it as a plain string meant
+    // paying full input-token cost on every skeptic call instead of a cache
+    // hit after the first.
+    system: [
+      {
+        type: "text",
+        text: SKEPTIC_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [
       {
         role: "user",

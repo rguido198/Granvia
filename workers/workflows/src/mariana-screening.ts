@@ -275,7 +275,16 @@ async function runSkeptic(
     // (the document just sits at ready_for_triage forever). Matches the
     // draft call's own budget.
     max_tokens: 4000,
-    system: SKEPTIC_SYSTEM_PROMPT,
+    // Same ephemeral cache_control the draft call uses — this prompt is
+    // identical on every application, so a plain string paid full
+    // input-token cost on every skeptic call instead of a cache hit.
+    system: [
+      {
+        type: "text",
+        text: SKEPTIC_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [
       {
         role: "user",
