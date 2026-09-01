@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   WorkflowEntrypoint,
   type WorkflowStep,
@@ -487,6 +488,40 @@ async function markApprovalResolved(
     })
     .eq("id", ticketId);
   await notifyCopilotoCacheStale(env);
+}
+
+export async function runDiegoTriageDirect(params: Params): Promise<{ ticketId: string; status: string }> {
+  const { documentId, localeId } = params;
+  const context = await loadTicketContextForLocale(documentId, localeId);
+  const draft = await draftDiegoTicket(context);
+  const warranty = await checkWarranty(context, draft);
+  const skeptic = await runSkeptic(context, draft);
+
+  const { contractorId, approvalLevel } = await matchContractorAndTier(
+    context.property.id,
+    draft.recommended_trade,
+    warranty.covered ? 0 : draft.estimated_cost_mxn,
+  );
+
+  const workflowRunId = `direct-${randomUUID()}`;
+  const status: "dispatched" | "needs_approval" = context.property.autonomy_frozen
+    ? "needs_approval"
+    : warranty.covered || approvalLevel === "AUTO"
+      ? "dispatched"
+      : "needs_approval";
+
+  const ticketId = await writeTicket({} as WorkflowsEnv, {
+    context,
+    draft,
+    warranty,
+    skeptic,
+    contractorId,
+    approvalLevel,
+    status,
+    workflowRunId,
+  });
+
+  return { ticketId, status };
 }
 
 export class DiegoTriageWorkflow extends WorkflowEntrypoint<

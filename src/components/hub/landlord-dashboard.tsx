@@ -1896,15 +1896,6 @@ export function LandlordDashboard({
                     Control de pólizas de equipos pesados (HVAC, Elevadores, Subestaciones), bitácora preventiva y reclamación automática de garantías a proveedores.
                   </p>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                  <button
-                    onClick={() => triggerToast("Selecciona la Garantía, Póliza o Manual de Equipo (PDF/XML) para indexar en Diego IA...")}
-                    className="bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)] font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shadow-2xs"
-                  >
-                    + Cargar Garantía o Manual (PDF)
-                  </button>
-                </div>
               </div>
 
               {/* SUB-NAVIGATION — underline tabs, not filled pills */}

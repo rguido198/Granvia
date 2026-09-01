@@ -274,22 +274,41 @@ export async function POST(request: NextRequest) {
       if (typeof localeId === "string") {
         const leadIdStr =
           typeof leadId === "string" && leadId.trim() ? leadId.trim() : null;
-        const instance =
-          kind === "maintenance_ticket"
-            ? await env.DIEGO_TRIAGE_WORKFLOW.create({
-                params: { documentId, localeId },
-              })
-            : await env.MARIANA_SCREENING_WORKFLOW.create({
-                params: {
-                  documentId,
-                  targetLocaleId: localeId,
-                  leadId: leadIdStr,
-                },
-              });
-        await supabase
-          .from("documents")
-          .update({ workflow_run_id: instance.id })
-          .eq("id", documentId);
+        try {
+          if (env && "DIEGO_TRIAGE_WORKFLOW" in env && env.DIEGO_TRIAGE_WORKFLOW) {
+            const instance =
+              kind === "maintenance_ticket"
+                ? await env.DIEGO_TRIAGE_WORKFLOW.create({
+                    params: { documentId, localeId },
+                  })
+                : await env.MARIANA_SCREENING_WORKFLOW.create({
+                    params: {
+                      documentId,
+                      targetLocaleId: localeId,
+                      leadId: leadIdStr,
+                    },
+                  });
+            await supabase
+              .from("documents")
+              .update({ workflow_run_id: instance.id })
+              .eq("id", documentId);
+          } else {
+            if (kind === "maintenance_ticket") {
+              const { runDiegoTriageDirect } = await import(
+                "../../../../workers/workflows/src/diego-triage"
+              );
+              await runDiegoTriageDirect({ documentId, localeId });
+            }
+          }
+        } catch (err) {
+          console.warn("Workflow dispatch fallback to direct execution:", err);
+          if (kind === "maintenance_ticket") {
+            const { runDiegoTriageDirect } = await import(
+              "../../../../workers/workflows/src/diego-triage"
+            );
+            await runDiegoTriageDirect({ documentId, localeId });
+          }
+        }
       }
     })(),
   );
