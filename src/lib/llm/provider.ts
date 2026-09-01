@@ -4,11 +4,13 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
 /**
- * Canonical Auto-Updating Model Pointers
- * Anthropic & Google route these aliases to their newest stable model releases automatically.
- * Zero manual maintenance required by the landlord.
+ * Anthropic has no rolling "-latest" alias — "claude-3-5-sonnet-latest" is
+ * not a real model ID and returns a 404 on every call (confirmed live: this
+ * broke Consulta IA's Claude path entirely). Anthropic model IDs are fixed
+ * strings you update yourself when you want a newer model; there is no
+ * auto-updating pointer to fall back on here.
  */
-export const CANONICAL_CLAUDE_MODEL = "claude-3-5-sonnet-latest";
+export const CANONICAL_CLAUDE_MODEL = "claude-sonnet-5";
 export const CANONICAL_GEMINI_MODEL = "gemini-2.5-flash";
 
 export function resolveModelName(modelName?: string): string {

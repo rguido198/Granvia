@@ -346,7 +346,7 @@ async function buildCopilotoRequest(question: string, masterGla?: number): Promi
   };
 }
 
-import { resolveModelName } from "@/lib/llm/provider";
+import { CANONICAL_GEMINI_MODEL, resolveModelName } from "@/lib/llm/provider";
 
 // model params: max_tokens raised to 8000 for synthesis-heavy questions
 const MODEL_PARAMS = {
@@ -384,86 +384,82 @@ export async function askCopiloto(question: string, masterGla?: number): Promise
   return { answer };
 }
 
+/** Streams Gemini's SSE response into an already-open ReadableStream
+ *  controller — used only as a fallback when Claude fails before producing
+ *  any text (see askCopilotoStream below). Throws on any failure; the
+ *  caller decides what that means for the controller. */
+async function streamFromGemini(
+  request: CopilotoRequest,
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  encoder: TextEncoder,
+): Promise<void> {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey) throw new Error("GEMINI_API_KEY no configurada — no hay fallback disponible.");
+
+  const systemPromptText = typeof request.system === "string" ? request.system : request.system?.[0]?.text ?? "";
+  const userPromptText = request.messages
+    .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
+    .join("\n\n");
+
+  // Same constant resolveModelName() resolves any "gemini*"/"flash*" request
+  // to — previously hardcoded here as a second, different literal
+  // ("gemini-3.5-flash") that silently disagreed with CANONICAL_GEMINI_MODEL
+  // ("gemini-2.5-flash") elsewhere in this codebase.
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${CANONICAL_GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${geminiKey}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `${systemPromptText}\n\n${userPromptText}` }] }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Error de proveedor LLM de respaldo (status ${res.status}): ${errText.slice(0, 150)}`);
+  }
+  if (!res.body) throw new Error("No se pudo establecer el canal de datos con el motor IA de respaldo.");
+
+  const decoder = new TextDecoder();
+  const reader = res.body.getReader();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const dataStr = line.slice(6).trim();
+      if (!dataStr || dataStr === "[DONE]") continue;
+      try {
+        const json = JSON.parse(dataStr) as {
+          candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        };
+        const textChunk = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (textChunk) controller.enqueue(encoder.encode(textChunk));
+      } catch {
+        // ignore incomplete JSON chunk boundaries
+      }
+    }
+  }
+}
+
 // Streaming — what /api/copiloto/ask actually serves. Same retrieval, same
 // prompt, same model params as askCopiloto above; only the generation call
 // differs, so the landlord sees the first tokens as soon as Claude produces
 // them instead of waiting for the entire ~2900+ token answer to finish
 // before anything renders.
+//
+// Claude is always tried first. Gemini only runs as a fallback, and only
+// when Claude fails before producing a single token — if Claude has already
+// started streaming a real answer and then errors mid-stream, splicing in a
+// different model's output would read as one inconsistent answer, so that
+// case surfaces the error instead of silently switching providers.
 export async function askCopilotoStream(question: string, masterGla?: number): Promise<ReadableStream<Uint8Array>> {
   const request = await buildCopilotoRequest(question, masterGla);
-  const geminiKey = process.env.GEMINI_API_KEY;
-
-  if (geminiKey) {
-    const systemPromptText = typeof request.system === "string" ? request.system : request.system?.[0]?.text ?? "";
-    const userPromptText = request.messages
-      .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
-      .join("\n\n");
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=${geminiKey}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: `${systemPromptText}\n\n${userPromptText}` }],
-          },
-        ],
-      }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      throw new Error(`Error de proveedor LLM (status ${res.status}): ${errText.slice(0, 150)}`);
-    }
-
-    if (!res.body) throw new Error("No se pudo establecer el canal de datos con el motor IA.");
-
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-    const reader = res.body.getReader();
-
-    return new ReadableStream<Uint8Array>({
-      async start(controller) {
-        let buffer = "";
-        try {
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() ?? "";
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.slice(6).trim();
-                if (!dataStr || dataStr === "[DONE]") continue;
-                try {
-                  const json = JSON.parse(dataStr) as {
-                    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-                  };
-                  const textChunk = json.candidates?.[0]?.content?.parts?.[0]?.text;
-                  if (textChunk) {
-                    controller.enqueue(encoder.encode(textChunk));
-                  }
-                } catch {
-                  // ignore incomplete JSON chunk boundaries
-                }
-              }
-            }
-          }
-          controller.close();
-        } catch (err) {
-          controller.error(err);
-        }
-      },
-      cancel() {
-        void reader.cancel();
-      },
-    });
-  }
-
-  // Fallback to Anthropic
   const client = getAnthropicClient();
   const anthropicStream = client.messages.stream({ ...MODEL_PARAMS, ...request });
 
@@ -483,7 +479,20 @@ export async function askCopilotoStream(question: string, masterGla?: number): P
         }
         controller.close();
       });
-      anthropicStream.on("error", (err) => controller.error(err));
+      anthropicStream.on("error", (err) => {
+        if (sawText) {
+          controller.error(err);
+          return;
+        }
+        streamFromGemini(request, controller, encoder).then(
+          () => controller.close(),
+          (geminiErr) => {
+            const claudeMsg = err instanceof Error ? err.message : String(err);
+            const geminiMsg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
+            controller.error(new Error(`Claude falló (${claudeMsg}) y el respaldo Gemini también falló (${geminiMsg}).`));
+          },
+        );
+      });
     },
     cancel() {
       anthropicStream.abort();
