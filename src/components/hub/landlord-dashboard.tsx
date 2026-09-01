@@ -385,6 +385,45 @@ function renderFormattedMarkdown(content: string) {
     const line = rawLines[i];
     const trimmed = line.trim();
 
+    // Code Block / Monospace Diagram Detection (``` ... ```)
+    if (trimmed.startsWith("```")) {
+      const language = trimmed.slice(3).trim();
+      const codeLines: string[] = [];
+      i++;
+      while (i < rawLines.length && !rawLines[i].trim().startsWith("```")) {
+        codeLines.push(rawLines[i]);
+        i++;
+      }
+      if (i < rawLines.length) i++;
+
+      const codeText = codeLines.join("\n");
+      blocks.push(
+        <div key={`code-${i}`} className="my-3.5 border border-slate-800 rounded-xl overflow-hidden shadow-xs bg-slate-950">
+          {language && (
+            <div className="bg-slate-900 px-3.5 py-1.5 border-b border-slate-800 text-[11px] font-mono text-slate-400 flex items-center justify-between uppercase tracking-wider">
+              <span>{language}</span>
+              <span>Diagrama / Cronograma</span>
+            </div>
+          )}
+          <pre className="p-4 text-xs sm:text-sm font-mono text-emerald-400 overflow-x-auto leading-relaxed whitespace-pre">
+            {codeText}
+          </pre>
+        </div>
+      );
+      continue;
+    }
+
+    // Numbered Section Headings (e.g. "1. Diagnóstico...", "2. Rent Roll...", "3. Cronograma...")
+    if (/^\d+\.\s+[A-ZÁÉÍÓÚÑ]/.test(trimmed)) {
+      blocks.push(
+        <h4 key={`numh-${i}`} className="font-bold text-base sm:text-lg text-ink border-b border-hairline pb-2 mt-6 mb-3 leading-snug">
+          {formatInlineMarkdown(trimmed)}
+        </h4>
+      );
+      i++;
+      continue;
+    }
+
     // Markdown Table Detection (| Header 1 | Header 2 |)
     if (trimmed.startsWith("|") && trimmed.endsWith("|") && i + 1 < rawLines.length && rawLines[i + 1].trim().startsWith("|")) {
       const tableLines: string[] = [];
