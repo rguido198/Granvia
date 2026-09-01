@@ -111,6 +111,7 @@ export function findEscalationClause(clauses: SpecialClause[] | null): { pct: nu
 export type LeaseRenewalSummary = {
   id: string;
   renewalNumber: string;
+  tenantEntity?: string;
   status: "needs_landlord_review" | "approved" | "rejected";
   currentEndDate: string;
   newStartDate: string;

@@ -153,7 +153,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: renewalRows, error: renewalsError } = await supabase
     .from("lease_renewals")
     .select(
-      "id, renewal_number, source_lease_id, status, current_end_date, new_start_date, new_end_date, current_base_rent_monthly, new_base_rent_monthly, escalation_pct, escalation_method, draft_markdown, skeptic_flagged, skeptic_concerns, created_at",
+      "id, renewal_number, source_lease_id, tenant_entity, status, current_end_date, new_start_date, new_end_date, current_base_rent_monthly, new_base_rent_monthly, escalation_pct, escalation_method, draft_markdown, skeptic_flagged, skeptic_concerns, created_at",
     )
     .order("created_at", { ascending: false });
   if (renewalsError) throw new Error(renewalsError.message);
@@ -164,6 +164,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
     list.push({
       id: r.id as string,
       renewalNumber: r.renewal_number as string,
+      tenantEntity: r.tenant_entity as string,
       status: r.status as LeaseRenewalSummary["status"],
       currentEndDate: r.current_end_date as string,
       newStartDate: r.new_start_date as string,

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ConsoleModal } from "@/components/hub/console-modal";
 import { LegalDraftMarkdown } from "@/components/hub/legal-draft-markdown";
 import type { LeaseRenewalSummary } from "@/lib/data/portfolio.server";
-import { downloadBlob, generateMockPdf, type PdfSection } from "@/lib/mock-pdf";
+import { downloadBlob, generateContractPdf } from "@/lib/mock-pdf";
 
 // "Aprobado" alone reads as a finished decision — SKILL.md's own closing
 // disclaimer on every draft says the opposite: it's subject to the
@@ -34,39 +34,22 @@ function formatMxn(n: number): string {
 }
 
 function downloadRenewalPdf(renewal: LeaseRenewalSummary) {
-  const sections: PdfSection[] = [
-    {
-      heading: "AVISO LEGAL IMPORTANTE",
-      body: [
-        "Proyecto preliminar de trabajo preparado por Mariana IA para revisión del abogado / asesoría jurídica del arrendador.",
-        "Este documento no constituye un contrato definitivo ni una oferta formal vinculante.",
-      ],
-    },
-    {
-      heading: "RESUMEN COMPARATIVO DE MODIFICACIONES (CONTRATO ANTERIOR VS. NUEVA VERSIÓN)",
-      body: [
-        `Vigencia anterior: vence ${renewal.currentEndDate}`,
-        `Nueva vigencia: ${renewal.newStartDate} a ${renewal.newEndDate}`,
-        `Renta mensual anterior: ${renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)"}`,
-        `Renta mensual nueva: ${formatMxn(renewal.newBaseRentMonthly)} (Escalación: ${renewal.escalationPct !== null ? renewal.escalationPct + "%" : renewal.escalationMethod})`,
-        "Disposiciones inalteradas: Se ratifican mantenimiento, cuota CAM, exclusividad y uso permitido conforme al contrato anterior.",
-      ],
-    },
-    {
-      heading: "TEXTO COMPLETO DEL CONVENIO MODIFICATORIO (PROYECTO PARA ABOGADO)",
-      body: renewal.draftMarkdown
-        .split("\n")
-        .map((l) => l.trim())
-        .filter((l) => l.length > 0 && !l.startsWith("[") && !l.startsWith("###")),
-    },
-  ];
-
-  const blob = generateMockPdf(
-    `CONVENIO MODIFICATORIO DE ARRENDAMIENTO (PROYECTO)`,
-    sections,
-    "La Gran Vía · Mariana AI · Documento de Trabajo para Abogado",
-  );
-  downloadBlob(blob, `proyecto_abogado_${renewal.renewalNumber.replace(/\s+/g, "_")}.pdf`);
+  const blob = generateContractPdf({
+    documentTitle: "CONVENIO MODIFICATORIO DE ARRENDAMIENTO COMERCIAL",
+    subtitle: "PLAZA COMERCIAL LIFESTYLE LA GRAN VÍA — MEXICALI, BAJA CALIFORNIA",
+    tenantEntity: renewal.tenantEntity || "COMERCIALIZADORA DULCE AMANECER, S.A. DE C.V.",
+    tradeName: renewal.tenantEntity?.includes("DULCE AMANECER") ? "DONITAS DEL VALLE" : null,
+    unitCode: "Local 17",
+    sqm: 68,
+    currentEndDate: renewal.currentEndDate,
+    newStartDate: renewal.newStartDate,
+    newEndDate: renewal.newEndDate,
+    currentRent: renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)",
+    newRent: formatMxn(renewal.newBaseRentMonthly),
+    escalationPct: renewal.escalationPct !== null ? `${renewal.escalationPct}%` : renewal.escalationMethod,
+    clausesMarkdown: renewal.draftMarkdown,
+  });
+  downloadBlob(blob, `convenio_modificatorio_${renewal.renewalNumber.replace(/\s+/g, "_")}.pdf`);
 }
 
 /** The clear, scannable "what actually changes" block — separate from the
