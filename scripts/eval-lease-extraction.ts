@@ -173,11 +173,13 @@ async function runCase(entry: GroundTruthEntry): Promise<CaseResult> {
 async function main() {
   const limitArg = process.argv.find((a) => a.startsWith("--limit="));
   const limit = limitArg ? Number(limitArg.split("=")[1]) : undefined;
+  const noisyOnly = process.argv.includes("--noisy-only");
 
   const groundTruth: GroundTruthEntry[] = JSON.parse(
     readFileSync(path.join(FIXTURES_DIR, "ground_truth.json"), "utf-8"),
   );
-  const cases = limit ? groundTruth.slice(0, limit) : groundTruth;
+  const filtered = noisyOnly ? groundTruth.filter((e) => e.is_noisy_scan) : groundTruth;
+  const cases = limit ? filtered.slice(0, limit) : filtered;
 
   console.log(`Running ${cases.length} of ${groundTruth.length} fixtures through extractFromVision...\n`);
 
