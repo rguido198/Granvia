@@ -113,7 +113,7 @@ export async function callLLMStructuredForAgent<T>(
 
   const client = new Anthropic();
   const response = await client.messages.parse({
-    model: isGemini ? resolveModelName("claude-3-7-sonnet-20250219") : modelName,
+    model: isGemini ? resolveModelName(CANONICAL_CLAUDE_MODEL) : modelName,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userContent }],

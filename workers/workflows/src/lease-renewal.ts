@@ -8,6 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
+import { CANONICAL_CLAUDE_MODEL } from "../../../src/lib/llm/provider";
 import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
 import { hydrateProcessEnv, type WorkflowsEnv } from "./env";
 
@@ -267,7 +268,7 @@ async function runRenewalSkeptic(
   const client = new Anthropic();
 
   const response = await client.messages.parse({
-    model: "claude-3-7-sonnet-20250219",
+    model: CANONICAL_CLAUDE_MODEL,
     max_tokens: 4000,
     system: SKEPTIC_SYSTEM_PROMPT,
     messages: [
