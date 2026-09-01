@@ -112,7 +112,6 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
   const router = useRouter();
   const [viewing, setViewing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
   const [pending, setPending] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -168,36 +167,6 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
 
       {/* Metric Cards Grid */}
       <RenewalSummary renewal={renewal} />
-
-      {/* Auditor Note Collapsible Banner if present */}
-      {renewal.skepticConcerns.length > 0 && (
-        <div className="border border-amber-300 bg-amber-50/70 rounded-2xl overflow-hidden text-sm">
-          <button
-            type="button"
-            onClick={() => setShowNotes(!showNotes)}
-            className="w-full flex items-center justify-between p-3.5 font-bold text-amber-950 hover:bg-amber-100/60 transition-colors text-left cursor-pointer text-sm sm:text-base"
-          >
-            <span className="flex items-center gap-2 font-bold">
-              💡 Observaciones técnicas de Mariana IA ({renewal.skepticConcerns.length})
-            </span>
-            <span className="text-amber-900 text-xs sm:text-sm font-bold underline">
-              {showNotes ? "Ocultar ▲" : "Ver detalles ▼"}
-            </span>
-          </button>
-          {showNotes && (
-            <div className="p-4 pt-0 border-t border-amber-200 bg-white space-y-3">
-              <ul className="space-y-3 text-slate-800 text-sm sm:text-base leading-relaxed pt-3 font-sans">
-                {renewal.skepticConcerns.map((c, i) => (
-                  <li key={i} className="flex gap-2.5 items-start bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80">
-                    <span className="text-amber-700 font-bold text-lg">•</span>
-                    <span className="font-medium text-slate-900 leading-normal">{c}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Bottom Action Footer */}
       {isPending && (
