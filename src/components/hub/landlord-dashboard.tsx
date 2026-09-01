@@ -1009,11 +1009,32 @@ export function LandlordDashboard({
   // now lives in ConsoleShell's single header bar; the drawer itself, and every
   // conversation state below, still belong here.
   const [copilotQuestion, setCopilotQuestion] = useState("");
-  const [copilotHistory, setCopilotHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [copilotHistory, setCopilotHistory] = useState<{ role: "user" | "assistant"; content: string }[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("granvia_copilot_chat_history");
+      if (saved) return JSON.parse(saved) as { role: "user" | "assistant"; content: string }[];
+    } catch {
+      // localstorage unavailable
+    }
+    return [];
+  });
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [copilotError, setCopilotError] = useState<string | null>(null);
   const copilotAbortRef = useRef<AbortController | null>(null);
   const copilotChatEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    try {
+      if (copilotHistory.length > 0) {
+        localStorage.setItem("granvia_copilot_chat_history", JSON.stringify(copilotHistory));
+      } else {
+        localStorage.removeItem("granvia_copilot_chat_history");
+      }
+    } catch {
+      // localstorage quota or disabled
+    }
+  }, [copilotHistory]);
 
   const scrollToChatBottom = useCallback(() => {
     setTimeout(() => {
@@ -3648,12 +3669,31 @@ export function LandlordDashboard({
                 <p className="text-xs text-slate-300 font-medium">Copiloto Ejecutivo de Asset Management</p>
               </div>
             </div>
-            <button
-              onClick={() => setCopilotOpen(false)}
-              className="text-slate-300 hover:text-white text-xs sm:text-sm cursor-pointer font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Cerrar
-            </button>
+            <div className="flex items-center gap-2">
+              {copilotHistory.length > 0 && (
+                <button
+                  onClick={() => {
+                    setCopilotHistory([]);
+                    try {
+                      localStorage.removeItem("granvia_copilot_chat_history");
+                    } catch {
+                      // ignore
+                    }
+                    triggerToast("Nueva consulta iniciada.");
+                  }}
+                  className="text-slate-300 hover:text-white text-xs sm:text-sm cursor-pointer font-medium bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                  title="Reiniciar conversación"
+                >
+                  <span>✨ Nueva Consulta</span>
+                </button>
+              )}
+              <button
+                onClick={() => setCopilotOpen(false)}
+                className="text-slate-300 hover:text-white text-xs sm:text-sm cursor-pointer font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
 
           {/* CHAT MESSAGES / BODY */}
