@@ -235,6 +235,11 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const leasedSqm = rentRoll.filter((r) => !r.vacant).reduce((sum, r) => sum + r.sqm, 0);
   const contractedRent = rentRoll.reduce((sum, r) => sum + r.rent, 0);
 
+  // Fetch all maintenance tickets to cross-reference ticket history into renewal proposals
+  const { data: allTickets } = await supabase
+    .from("tickets")
+    .select("id, ticket_number, locale_id, cost_bucket, raw_report, diagnosis_answer");
+
   // Auto-generate initial renewal proposal draft for any active lease that has
   // crossed into the renewal window (<=6 months remaining or expired) and doesn't
   // have a renewal draft on file yet.
@@ -268,6 +273,18 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       const unitStr = locale?.unit_number ? `Local ${locale.unit_number.replace(/^Local\s*/i, "")}` : "Local ?";
       const areaStr = locale?.area_sqm ? `${locale.area_sqm} m²` : "";
 
+      const localeTickets = (allTickets ?? []).filter((t) => t.locale_id === l.locale_id);
+      let ticketClarification = "";
+      if (localeTickets.length > 0) {
+        const categories = localeTickets.map((t) => {
+          const raw = t.raw_report || "";
+          const match = raw.match(/Categoría:\s*([^.]+)/i);
+          return match ? match[1].trim() : "Mantenimiento general";
+        });
+        const categoriesStr = [...new Set(categories)].join(", ");
+        ticketClarification = `\n\n*Aclaración Técnica de Mantenimiento (basada en historial de ${localeTickets.length} ticket(s) en ${categoriesStr}):* Se precisa explícitamente que las instalaciones hidrosanitarias/eléctricas principales u ocultas en muros y losas son responsabilidad del ARRENDADOR; la trampa de grasa, llaves de paso locales, conectores bajo barra, accesorios visibles y equipos traídos por el Arrendatario corresponden al mantenimiento y costo exclusivo del ARRENDATARIO.`;
+      }
+
       const draftMarkdown = `[DRAFT — PENDING LANDLORD COUNSEL SIGN-OFF ON UNRESOLVED JURISDICTION KEYS: JD-01]
 ### CONVENIO MODIFICATORIO DE ARRENDAMIENTO COMERCIAL (PROYECTO) — MARIANA
 **Fecha:** ${new Date().toISOString().slice(0, 10)}
@@ -280,7 +297,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
 
 2. **RENTA REAJUSTADA:** La renta mensual aplicable durante el período de prórroga será de $${newRent.toLocaleString("es-MX", {minimumFractionDigits: 2})} MXN mensuales, cantidad proporcionada por el ARRENDADOR. El método de escalación aplicable es del ${escPct}% (fixed_pct). Respecto de la renta actual de $${currentRent.toLocaleString("es-MX", {minimumFractionDigits: 2})} MXN mensuales, dicha cantidad representa un incremento del ${escPct}%.
 
-3. **MANTENIMIENTO Y CUOTA CAM:** Subsiste sin modificación la matriz de responsabilidad de mantenimiento vigente y los días de aviso previstos en el contrato original.
+3. **MANTENIMIENTO Y CUOTA CAM:** Subsiste sin modificación la matriz de responsabilidad de mantenimiento vigente y los días de aviso previstos en el contrato original.${ticketClarification}
 
 4. **SUBSISTENCIA DE TÉRMINOS:** Todos los demás términos, condiciones, derechos y obligaciones del contrato de arrendamiento original permanecen en plena fuerza y vigor, sin modificación alguna, salvo exclusivamente lo relativo a vigencia y renta materia del presente convenio.
 

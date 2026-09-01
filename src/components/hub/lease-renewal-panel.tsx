@@ -68,41 +68,58 @@ function RenewalSummary({ renewal }: { renewal: LeaseRenewalSummary }) {
 
   const isSameRent = Number(pctChange ?? 0) === 0;
 
+  const hasTicketClarification =
+    renewal.draftMarkdown.includes("Aclaración Técnica") ||
+    renewal.draftMarkdown.includes("historial de") ||
+    renewal.draftMarkdown.includes("ticket");
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 my-3">
-      <div className="bg-slate-50 border border-hairline rounded-2xl p-4 space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Nueva Vigencia Propuesta</span>
-        <p className="text-base sm:text-lg font-extrabold text-slate-900">
-          {formatSpanishDate(renewal.newStartDate)} – {formatSpanishDate(renewal.newEndDate)}
-        </p>
-        <p className="text-xs sm:text-sm font-medium text-slate-600">
-          Vencimiento contrato actual: <span className="font-semibold text-slate-800">{formatSpanishDate(renewal.currentEndDate)}</span>
-        </p>
+    <div className="space-y-3.5 my-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="bg-slate-50 border border-hairline rounded-2xl p-4 space-y-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Nueva Vigencia Propuesta</span>
+          <p className="text-base sm:text-lg font-extrabold text-slate-900">
+            {formatSpanishDate(renewal.newStartDate)} – {formatSpanishDate(renewal.newEndDate)}
+          </p>
+          <p className="text-xs sm:text-sm font-medium text-slate-600">
+            Vencimiento contrato actual: <span className="font-semibold text-slate-800">{formatSpanishDate(renewal.currentEndDate)}</span>
+          </p>
+        </div>
+
+        <div className="bg-slate-50 border border-hairline rounded-2xl p-4 space-y-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Nueva Renta Mensual</span>
+          <div className="flex items-baseline gap-2.5">
+            <p className="text-base sm:text-lg font-extrabold text-slate-900">{formatMxn(renewal.newBaseRentMonthly)}</p>
+            <span
+              className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                Number(pctChange) > 0
+                  ? "bg-emerald-100 text-emerald-800"
+                  : Number(pctChange) < 0
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-slate-200 text-slate-700"
+              }`}
+            >
+              {isSameRent ? "Misma renta (0%)" : `${Number(pctChange) > 0 ? "+" : ""}${pctChange}%`}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm font-medium text-slate-600">
+            Renta anterior:{" "}
+            <span className="font-semibold text-slate-800">
+              {renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)"}
+            </span>
+          </p>
+        </div>
       </div>
 
-      <div className="bg-slate-50 border border-hairline rounded-2xl p-4 space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Nueva Renta Mensual</span>
-        <div className="flex items-baseline gap-2.5">
-          <p className="text-base sm:text-lg font-extrabold text-slate-900">{formatMxn(renewal.newBaseRentMonthly)}</p>
-          <span
-            className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-              Number(pctChange) > 0
-                ? "bg-emerald-100 text-emerald-800"
-                : Number(pctChange) < 0
-                ? "bg-amber-100 text-amber-800"
-                : "bg-slate-200 text-slate-700"
-            }`}
-          >
-            {isSameRent ? "Misma renta (0%)" : `${Number(pctChange) > 0 ? "+" : ""}${pctChange}%`}
-          </span>
+      {hasTicketClarification && (
+        <div className="bg-blue-50/80 border border-blue-200 rounded-xl px-4 py-2.5 flex items-start gap-2.5 text-xs text-blue-900">
+          <span className="text-sm">🛠️</span>
+          <div>
+            <span className="font-bold">Aclaración de Mantenimiento Proactiva:</span>{" "}
+            Este borrador analiza el historial de tickets de mantenimiento de Diego IA para este local e incluye precisiones técnicas explícitas en la Cláusula 3, eliminando ambigüedades de costo antes de la firma.
+          </div>
         </div>
-        <p className="text-xs sm:text-sm font-medium text-slate-600">
-          Renta anterior:{" "}
-          <span className="font-semibold text-slate-800">
-            {renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)"}
-          </span>
-        </p>
-      </div>
+      )}
     </div>
   );
 }

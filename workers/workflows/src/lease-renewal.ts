@@ -55,6 +55,12 @@ type RenewalContext = {
   escalationMethod: string;
   escalationPct: number | null;
   draftedOn: string;
+  maintenanceTickets?: Array<{
+    ticketNumber: string;
+    costBucket: string | null;
+    rawReport: string;
+    diagnosis: string | null;
+  }>;
 };
 
 async function loadRenewalContext(params: Params): Promise<RenewalContext> {
@@ -91,6 +97,19 @@ async function loadRenewalContext(params: Params): Promise<RenewalContext> {
     );
   }
 
+  // Fetch historical maintenance tickets for this locale to clarify any recurring disputes or system boundaries
+  const { data: ticketsData } = await supabase
+    .from("tickets")
+    .select("ticket_number, cost_bucket, raw_report, diagnosis_answer")
+    .eq("locale_id", lease.locale_id);
+
+  const maintenanceTickets = (ticketsData ?? []).map((t) => ({
+    ticketNumber: t.ticket_number as string,
+    costBucket: t.cost_bucket as string | null,
+    rawReport: t.raw_report as string,
+    diagnosis: t.diagnosis_answer as string | null,
+  }));
+
   const currentEnd = new Date(lease.end_date);
   const newStart = new Date(currentEnd);
   newStart.setDate(newStart.getDate() + 1);
@@ -116,6 +135,7 @@ async function loadRenewalContext(params: Params): Promise<RenewalContext> {
     escalationMethod,
     escalationPct,
     draftedOn: new Date().toISOString().slice(0, 10),
+    maintenanceTickets,
   };
 }
 
@@ -137,13 +157,13 @@ TEMPLATE — follow this structure and section numbering exactly (this is the te
 #### RESUMEN COMPARATIVO DE MODIFICACIONES (CONTRATO ANTERIOR VS. VERSIÓN ACTUALIZADA)
 - **Vigencia:** Vigencia Anterior: {current_end_date} ➔ Nueva Vigencia: {new_start_date} a {new_end_date}
 - **Renta Base Mensual:** Renta Anterior: {current_base_rent_monthly} ➔ Renta Nueva: {new_base_rent_monthly} (Incremento/Ajuste: {escalation_pct} / {escalation_method})
-- **Cláusulas CAM y Mantenimiento:** Continuidad de matriz de responsabilidad de mantenimiento y días de aviso previa del contrato anterior.
+- **Cláusulas CAM y Mantenimiento:** Continuidad de matriz de responsabilidad de mantenimiento y días de aviso previa del contrato anterior, incorporando precisiones técnicas derivadas del historial de tickets.
 - **Disposiciones Inalteradas:** Salvo por vigencia y renta reajustada, la exclusividad, uso permitido y demás cláusulas del contrato original subsisten sin modificación.
 
 #### CLÁUSULAS DE PRÓRROGA
 1. **PRÓRROGA DE VIGENCIA:** states the extension period, from {new_start_date} to {new_end_date}, explicitly comparing with the previous contract expiration date ({current_end_date}).
 2. **RENTA REAJUSTADA:** states the new monthly rent, the escalation method and percentage given below (both are supplied to you — state them as given, do not invent a different method or omit the one you were given), and the percentage change from the current rent (compute and state the % change from current_base_rent_monthly to new_base_rent_monthly — if current_base_rent_monthly is null, say the prior rent wasn't on record instead of inventing one).
-3. **MANTENIMIENTO Y CUOTA CAM:** this section title is fixed by the template — references the existing responsibility_matrix and notice_period_days given below, restated plainly. The CAM figure itself is not given to you; state plainly that it isn't available in this draft rather than inventing an amount or formula. Having the heading present without a figure is correct template behavior, not an invented term.
+3. **MANTENIMIENTO Y CUOTA CAM:** this section title is fixed by the template — references the existing responsibility_matrix and notice_period_days given below, restated plainly. If historical maintenance tickets are provided in the context below, review them for friction points or generic responsibilities (e.g., plumbing under sinks, tenant-owned equipment vs building HVAC/roof). Add an explicit technical clarification sub-clause ("Aclaración Técnica de Mantenimiento:") to resolve those boundaries clearly between Landlord and Tenant to prevent future disputes.
 4. **SUBSISTENCIA DE TÉRMINOS:** a clause stating all other terms of the original contract remain in force — this MUST be present verbatim in substance; the whole point of a Convenio Modificatorio is that it modifies only term and rent, not the rest of the contract. If exclusive_use_clause or permitted_use were given below, restate them here as terms that remain unchanged — do not silently drop them.
 
 Close with a citation line naming the jurisdiction pack reference and, verbatim, the exact JD key list given to you below as "claves citables" — do not add, drop, or guess at keys — plus the standing disclaimer that this is a draft subject to landlord and counsel review.
@@ -161,6 +181,16 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
           100
         ).toFixed(1)
       : null;
+
+  const ticketsText =
+    context.maintenanceTickets && context.maintenanceTickets.length > 0
+      ? context.maintenanceTickets
+          .map(
+            (t) =>
+              `- Ticket ${t.ticketNumber} [Responsable: ${t.costBucket ?? "Pendiente"}]: ${t.rawReport}${t.diagnosis ? ` | Diagnóstico: ${t.diagnosis}` : ""}`,
+          )
+          .join("\n")
+      : "(sin tickets de mantenimiento registrados)";
 
   const userContent = [
     `Fecha de elaboración (usar tal cual en el campo "Fecha"): ${context.draftedOn}.`,
@@ -180,6 +210,7 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
       ? JSON.stringify(context.responsibilityMatrix)
       : "(no está en registro)",
     `Días de aviso de terminación vigentes: ${context.noticePeriodDays ?? "(no está en registro)"}.`,
+    `Historial de tickets de mantenimiento de este local:\n${ticketsText}`,
     `Cláusula de exclusividad vigente: ${context.exclusiveUseClause ?? "(ninguna)"}.`,
     `Uso permitido vigente: ${context.permittedUse ?? "(no especificado)"}.`,
     "",
@@ -193,7 +224,7 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
     .join("\n");
 
   const response = await client.messages.parse({
-    model: "claude-3-7-sonnet-20250219",
+    model: "claude-sonnet-5",
     max_tokens: 3000,
     system: [
       {
@@ -222,7 +253,7 @@ const SKEPTIC_SYSTEM_PROMPT = `You audit a lease-renewal draft before it reaches
 - Is CLÁUSULA 4 (SUBSISTENCIA DE TÉRMINOS) actually present, and does it say the rest of the original contract remains in force?
 - Is the RESUMEN COMPARATIVO DE MODIFICACIONES present, clearly contrasting previous contract terms vs updated terms?
 - If an exclusive-use clause or permitted-use was given as context, does the draft restate it rather than silently dropping it?
-- Does CLÁUSULA 3 restate the given responsibility matrix / notice period rather than inventing new maintenance terms? The "CUOTA CAM" heading is required by the template and is NOT an invented term on its own — only flag it if the draft states a specific CAM amount or formula that wasn't given to it.
+- Does CLÁUSULA 3 restate the given responsibility matrix / notice period and incorporate any necessary maintenance clarification when ticket history was present? The "CUOTA CAM" heading is required by the template and is NOT an invented term on its own — only flag it if the draft states a specific CAM amount or formula that wasn't given to it.
 - If unresolved jurisdiction keys were given, is the watermark banner present at the top, verbatim, with exactly those keys?
 - Does the closing citation line list exactly the "claves citables" given below — no more, no fewer?
 - Does the escalation method/percentage in CLÁUSULA 2 match what was given below? It is legitimate context, not an invention, as long as it matches.
