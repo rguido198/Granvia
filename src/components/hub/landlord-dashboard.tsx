@@ -31,6 +31,7 @@ import type { LeadRow } from "@/lib/data/lead-types";
 import { LeadPipeline } from "@/components/hub/lead-pipeline";
 import { TENANTS } from "@/content/tenants";
 import { TenantLogo } from "@/components/tenant-logo";
+import type { EquipmentAsset, EquipmentAssetCategory } from "@/lib/data/equipment-assets.server";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
 
@@ -1115,6 +1116,58 @@ export function LandlordDashboard({
 
   // Interactive AI Action States & Simulations
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
+  const [equipmentAssets, setEquipmentAssets] = useState<EquipmentAsset[]>([]);
+  const [loadingAssets, setLoadingAssets] = useState<boolean>(true);
+  const [warrantyUploadModalOpen, setWarrantyUploadModalOpen] = useState<boolean>(false);
+  const [uploadingWarrantyFile, setUploadingWarrantyFile] = useState<boolean>(false);
+  const [warrantyUploadError, setWarrantyUploadError] = useState<string | null>(null);
+
+  const fetchAssetsFromApi = useCallback(async () => {
+    try {
+      setLoadingAssets(true);
+      const res = await fetch("/api/assets");
+      if (res.ok) {
+        const data = (await res.json()) as { assets?: EquipmentAsset[] };
+        if (data.assets) setEquipmentAssets(data.assets);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch equipment assets:", err);
+    } finally {
+      setLoadingAssets(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "maint") {
+      fetchAssetsFromApi();
+    }
+  }, [activeTab, fetchAssetsFromApi]);
+
+  const handleWarrantyPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingWarrantyFile(true);
+    setWarrantyUploadError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/assets/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        throw new Error(data.error || "Error al subir la garantía");
+      }
+      triggerToast(`Garantía "${file.name}" cargada e indexada exitosamente con IA.`);
+      setWarrantyUploadModalOpen(false);
+      await fetchAssetsFromApi();
+    } catch (err) {
+      setWarrantyUploadError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setUploadingWarrantyFile(false);
+    }
+  };
 
   // Diego IA Maintenance Calendar States
   const [eventNotified, setEventNotified] = useState<Record<string, boolean>>({});
@@ -2050,13 +2103,10 @@ export function LandlordDashboard({
                   </div>
                   <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                     <span className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1 rounded-lg border border-hairline shrink-0">
-                      8 Garantías Indexadas en Diego IA
+                      {equipmentAssets.length} Garantías Indexadas en Diego IA
                     </span>
-                    {/* Second entry point for the same upload action that lives at the top of
-                        the Diego tab — this is where a landlord is actually browsing the
-                        expediente, so the action has to be reachable from here too. */}
                     <button
-                      onClick={() => triggerToast("Selecciona la Garantía, Póliza o Manual de Equipo (PDF/XML) para indexar en Diego IA...")}
+                      onClick={() => setWarrantyUploadModalOpen(true)}
                       className="bg-ink hover:bg-ink-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0"
                     >
                       + Cargar Garantía o Manual (PDF)
@@ -2067,15 +2117,15 @@ export function LandlordDashboard({
                 {/* WARRANTY SYSTEM CATEGORY FILTER PILLS */}
                 <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
                   {[
-                    { id: "ALL", label: "Todos los Sistemas (8)" },
-                    { id: "HVAC", label: "HVAC & Climas (1)" },
-                    { id: "ELEVATOR", label: "Elevadores (1)" },
-                    { id: "POWER", label: "Eléctrico (1)" },
-                    { id: "ROOF", label: "Techos (1)" },
-                    { id: "FIRE", label: "Incendio (1)" },
-                    { id: "SOLAR", label: "Solar (1)" },
-                    { id: "SECURITY", label: "Seguridad (1)" },
-                    { id: "PLUMBING", label: "Hidráulico (1)" },
+                    { id: "ALL", label: `Todos los Sistemas (${equipmentAssets.length})` },
+                    { id: "HVAC", label: `HVAC & Climas (${equipmentAssets.filter((a) => a.category === "HVAC").length})` },
+                    { id: "ELEVATOR", label: `Elevadores (${equipmentAssets.filter((a) => a.category === "ELEVATOR").length})` },
+                    { id: "POWER", label: `Eléctrico (${equipmentAssets.filter((a) => a.category === "POWER").length})` },
+                    { id: "ROOF", label: `Techos (${equipmentAssets.filter((a) => a.category === "ROOF").length})` },
+                    { id: "FIRE", label: `Incendio (${equipmentAssets.filter((a) => a.category === "FIRE").length})` },
+                    { id: "SOLAR", label: `Solar (${equipmentAssets.filter((a) => a.category === "SOLAR").length})` },
+                    { id: "SECURITY", label: `Seguridad (${equipmentAssets.filter((a) => a.category === "SECURITY").length})` },
+                    { id: "PLANT", label: `Hidráulico (${equipmentAssets.filter((a) => a.category === "PLANT").length})` },
                   ].map((cat) => (
                     <button
                       key={cat.id}
@@ -2091,309 +2141,132 @@ export function LandlordDashboard({
                   ))}
                 </div>
 
-                {/* 8 CRITICAL INFRASTRUCTURE WARRANTY CARDS GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* WARRANTY CARD 1: CHILLER TRANE */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "HVAC") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              HVAC Climatización
+                {/* DYNAMIC EQUIPMENT ASSETS GRID (POSTGRESQL DATA) */}
+                {loadingAssets ? (
+                  <div className="p-8 text-center text-xs text-ink-500 bg-slate-50 rounded-2xl border border-hairline">
+                    Cargando expediente digital de equipos de infraestructura...
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {equipmentAssets
+                      .filter((asset) => warrantyCategoryFilter === "ALL" || asset.category === warrantyCategoryFilter)
+                      .map((asset) => (
+                        <div key={asset.id} className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
+                          <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
+                                  {asset.category === "HVAC" ? "HVAC Climatización" : asset.category === "ELEVATOR" ? "Elevadores & Movilidad" : asset.category === "POWER" ? "Subestación Eléctrica" : asset.category === "ROOF" ? "Impermeabilización Techos" : asset.category === "FIRE" ? "Protección Incendio" : asset.category === "SOLAR" ? "Energía Solar Fotovoltaica" : asset.category === "SECURITY" ? "Seguridad & Acceso" : asset.category === "PLANT" ? "Hidráulico & Planta PTAR" : "Infraestructura"}
+                                </span>
+                                {asset.serialNumber && (
+                                  <span className="text-[10px] font-bold text-ink-500">{asset.serialNumber}</span>
+                                )}
+                              </div>
+                              <h4 className="font-bold text-sm text-ink mt-1">{asset.name}</h4>
+                            </div>
+                            <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
+                              {asset.statusBadge}
                             </span>
-                            <span className="text-[10px] font-bold text-ink-500">Serie: TRN-2024-884</span>
                           </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Chiller Centravac Trane 150 Ton (Torre Central)</h4>
-                        </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía Activa ✓
-                        </span>
-                      </div>
 
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_trane_chiller_2024_2029.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>5 Años en Compresor, Condensador & Evaporador</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>Climas de Mexicali S.A. de C.V.</strong></p>
-                        <p>📅 Vencimiento de Garantía: <strong>14 de Noviembre de 2029</strong></p>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA generó carta de reclamo de garantía para Climas de Mexicali.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Generar Reclamo de Garantía →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Revisión Preventiva: Al Día</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* WARRANTY CARD 2: THYSSENKRUPP ELEVATOR */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "ELEVATOR") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              Elevadores & Movilidad
-                            </span>
-                            <span className="text-[10px] font-bold text-ink-500">Serie: TK-MEX-4410</span>
+                          <div className="text-xs space-y-1 font-medium text-ink-700">
+                            <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">{asset.docName}</code></p>
+                            <p>🛠️ Cobertura: <strong>{asset.coverageSummary}</strong></p>
+                            {asset.serviceContractProvider && (
+                              <p>🏢 Proveedor Autorizado: <strong>{asset.serviceContractProvider}</strong></p>
+                            )}
+                            {asset.warrantyExpiry && (
+                              <p>📅 Vencimiento de Garantía: <strong>{asset.warrantyExpiry}</strong></p>
+                            )}
                           </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Elevador Panorámico ThyssenKrupp (Zona A)</h4>
-                        </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía Activa ✓
-                        </span>
-                      </div>
 
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_mantenimiento_thyssenkrupp_2026.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>Atención de Urgencia 24/7 & Repuestos Originales</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>TK Elevator México</strong></p>
-                        <p>📅 Vencimiento de Póliza: <strong>31 de Diciembre de 2026</strong></p>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA solicitó inspección de rutina a TK Elevator México.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Solicitar Inspección Técnica →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Último Mantenimiento: 25 Jul</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* WARRANTY CARD 3: SCHNEIDER SUBSTATION */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "POWER") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              Subestación Eléctrica
-                            </span>
-                            <span className="text-[10px] font-bold text-ink-500">Serie: SCH-1500-KVA</span>
+                          <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
+                            <button
+                              onClick={() => {
+                                if (asset.sourceDocumentId) {
+                                  window.open(`/api/documents/${asset.sourceDocumentId}/signed-url`, "_blank");
+                                } else {
+                                  triggerToast(`Diego IA generó reclamo de garantía para ${asset.serviceContractProvider || asset.make || "el proveedor"}.`);
+                                }
+                              }}
+                              className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
+                            >
+                              {asset.sourceDocumentId ? "Ver Documento PDF →" : "Generar Reclamo de Garantía →"}
+                            </button>
+                            {asset.subtext && (
+                              <span className="text-[11px] text-ink-500 font-medium">{asset.subtext}</span>
+                            )}
                           </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Subestación Eléctrica Schneider 1500 KVA</h4>
                         </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía Activa ✓
-                        </span>
-                      </div>
+                      ))}
+                  </div>
+                )}
+              </div>
 
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_subestacion_schneider_2025.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>Transformadores de Potencia & Interruptores de Vacío</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>Schneider Electric México</strong></p>
-                        <p>📅 Vencimiento de Garantía: <strong>28 de Febrero de 2028</strong></p>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA descargó el certificado de garantía de Schneider Electric.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Ver Póliza de Garantía →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Carga Actual: 68% Capacity</span>
-                      </div>
+              {/* UPLOAD WARRANTY PDF MODAL */}
+              {warrantyUploadModalOpen && (
+                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                  <div className="bg-white border border-hairline rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fadeIn">
+                    <div className="flex items-center justify-between border-b border-hairline pb-3">
+                      <h4 className="font-bold text-base text-ink">Cargar Garantía o Manual (PDF)</h4>
+                      <button
+                        onClick={() => setWarrantyUploadModalOpen(false)}
+                        className="text-ink-500 hover:text-ink font-bold text-sm cursor-pointer p-1"
+                      >
+                        ✕
+                      </button>
                     </div>
-                  )}
 
-                  {/* WARRANTY CARD 4: MAPEI WATERPROOFING */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "ROOF") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              Impermeabilización Techos
-                            </span>
-                            <span className="text-[10px] font-bold text-ink-500">Superficie: 8,400 m²</span>
-                          </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Impermeabilización Mapei (Cinemex & Zona B)</h4>
-                        </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía 10 Años ✓
-                        </span>
-                      </div>
+                    <p className="text-xs text-ink-500">
+                      Sube la póliza de garantía, contrato de mantenimiento o manual técnico en PDF. Diego IA extraerá automáticamente la marca, modelo, número de serie, vigencia y proveedor.
+                    </p>
 
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_impermeabilizacion_mapei_10a.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>Garantía de 10 Años Libre de Filtraciones en Techos</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>Mapei de México</strong></p>
-                        <p>📅 Vencimiento de Garantía: <strong>15 de Junio de 2034</strong></p>
+                    {warrantyUploadError && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-800 font-medium">
+                        {warrantyUploadError}
                       </div>
+                    )}
 
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA programó la inspección anual previa a la temporada de lluvias.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Programar Inspección Anual →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Estado: 0 Filtraciones</span>
-                      </div>
+                    <div className="border-2 border-dashed border-slate-200 hover:border-ink/40 rounded-2xl p-6 text-center space-y-2 transition-all">
+                      <span className="text-3xl">📄</span>
+                      <p className="text-xs font-bold text-ink">Selecciona o arrastra tu archivo PDF</p>
+                      <p className="text-[11px] text-ink-500">Formato PDF hasta 25MB</p>
+
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={handleWarrantyPdfUpload}
+                        disabled={uploadingWarrantyFile}
+                        className="hidden"
+                        id="warranty-file-input"
+                      />
+
+                      <label
+                        htmlFor="warranty-file-input"
+                        className={`inline-block mt-2 bg-ink hover:bg-ink-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer ${
+                          uploadingWarrantyFile ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {uploadingWarrantyFile ? "Indexando con Diego IA..." : "Explorar Archivos..."}
+                      </label>
                     </div>
-                  )}
 
-                  {/* WARRANTY CARD 5: JOHNSON CONTROLS FIRE PROTECTION (NEW) */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "FIRE") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              Protección Incendio
-                            </span>
-                            <span className="text-[10px] font-bold text-ink-500">Certificación: NFPA 25</span>
-                          </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Sistema de Aspersión & Bomba SimplexGrinnell</h4>
-                        </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía Activa ✓
-                        </span>
-                      </div>
-
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_sistema_contra_incendio_2026.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>Certificación NFPA 25 & Reemplazo de Válvulas de Retención</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>Johnson Controls Fire Protection</strong></p>
-                        <p>📅 Vencimiento de Garantía: <strong>30 de Septiembre de 2027</strong></p>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA confirmó la prueba de presión trimestral del sistema contra incendio.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Ver Dictamen Bomberos →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Presión: 140 PSI (OK)</span>
-                      </div>
+                    <div className="flex justify-end pt-2 border-t border-hairline">
+                      <button
+                        onClick={() => setWarrantyUploadModalOpen(false)}
+                        disabled={uploadingWarrantyFile}
+                        className="px-4 py-2 text-xs font-semibold text-ink-700 hover:text-ink cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
                     </div>
-                  )}
-
-                  {/* WARRANTY CARD 6: CANADIAN SOLAR PANELS (NEW) */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "SOLAR") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              Energía Solar Fotovoltaica
-                            </span>
-                            <span className="text-[10px] font-bold text-ink-500">Capacidad: 350 kWp</span>
-                          </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Arreglo Fotovoltaico Canadian Solar (Techado C)</h4>
-                        </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía 25 Años ✓
-                        </span>
-                      </div>
-
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_paneles_solares_canadian_25a.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>25 Años de Rendimiento Fotovoltaico al 85% de Eficiencia</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>Canadian Solar México / Enel X</strong></p>
-                        <p>📅 Vencimiento de Garantía: <strong>10 de Enero de 2048</strong></p>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA generó el reporte de generación limpia del arreglo solar.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Ver Eficiencia Inversores →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Generación: 42 MWh/mes</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* WARRANTY CARD 7: HIKVISION / FAAC PARKING (NEW) */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "SECURITY") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              Seguridad & Acceso
-                            </span>
-                            <span className="text-[10px] font-bold text-ink-500">6 Carriles LPR</span>
-                          </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Barreras Automatizadas & Cámaras FAAC / Hikvision</h4>
-                        </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía Activa ✓
-                        </span>
-                      </div>
-
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">poliza_barreras_estacionamiento_faac.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>Motores Hidráulicos FAAC & Cámaras de Reconocimiento LPR</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>Hikvision & FAAC México</strong></p>
-                        <p>📅 Vencimiento de Póliza: <strong>18 de Mayo de 2027</strong></p>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA solicitó calibración de la cámara LPR del carril 2.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Calibrar Cámaras LPR →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Uptime: 99.9%</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* WARRANTY CARD 8: GRUNDFOS WATER TREATMENT (NEW) */}
-                  {(warrantyCategoryFilter === "ALL" || warrantyCategoryFilter === "PLUMBING") && (
-                    <div className="border border-hairline rounded-2xl p-5 space-y-3 bg-white shadow-2xs hover:border-hairline-strong transition-all">
-                      <div className="flex items-start justify-between gap-2 border-b border-hairline pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-ink-700 border border-hairline px-2 py-0.5 rounded">
-                              Hidráulico & Planta PTAR
-                            </span>
-                            <span className="text-[10px] font-bold text-ink-500">PTAR 50 m³/día</span>
-                          </div>
-                          <h4 className="font-bold text-sm text-ink mt-1">Planta de Tratamiento & Bombas Grundfos</h4>
-                        </div>
-                        <span className="bg-slate-100 text-ink border border-hairline text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0">
-                          Garantía Activa ✓
-                        </span>
-                      </div>
-
-                      <div className="text-xs space-y-1 font-medium text-ink-700">
-                        <p>📄 Documento Indexado: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-ink border border-hairline">garantia_planta_tratamiento_grundfos.pdf</code></p>
-                        <p>🛠️ Cobertura: <strong>Bombas Sumergibles, Membranas Biológicas & Control SBR</strong></p>
-                        <p>🏢 Proveedor Autorizado: <strong>Grundfos México</strong></p>
-                        <p>📅 Vencimiento de Garantía: <strong>05 de Noviembre de 2027</strong></p>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-between border-t border-hairline text-xs">
-                        <button
-                          onClick={() => triggerToast("Diego IA verificó la calidad de agua tratada para riego de áreas verdes.")}
-                          className="text-ink hover:text-ink-700 font-bold underline cursor-pointer text-xs"
-                        >
-                          Ver Reporte Calidad Agua →
-                        </button>
-                        <span className="text-[11px] text-ink-500 font-medium">Reutilización: 100% Riego</span>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-              </div>
               )}
             </div>
           )}
+        </div>
+      )}
 
           {activeTab === "legal" && (
             <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs">
