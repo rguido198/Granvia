@@ -1,14 +1,21 @@
-import { randomUUID } from "node:crypto";
-import {
-  WorkflowEntrypoint,
-  type WorkflowStep,
-  type WorkflowEvent,
+import type {
+  WorkflowStep,
+  WorkflowEvent,
 } from "cloudflare:workers";
-import { NonRetryableError } from "cloudflare:workflows";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
+class NonRetryableError extends Error {}
+
+class WorkflowEntrypoint<Env = unknown, Params = unknown> {
+  env: Env;
+  constructor(ctx: unknown, env: Env) {
+    this.env = env;
+  }
+}
+
+import { CANONICAL_CLAUDE_MODEL } from "../../../src/lib/llm/provider";
 import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
 import { wrapUntrustedContent } from "../../../src/lib/llm/untrusted-content";
 import {
@@ -219,7 +226,7 @@ async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
   ].join("\n");
 
   const response = await client.messages.parse({
-    model: "claude-3-7-sonnet-20250219",
+    model: CANONICAL_CLAUDE_MODEL,
     max_tokens: 4000,
     system: [
       {
@@ -280,7 +287,7 @@ async function runSkeptic(
   const client = new Anthropic();
 
   const response = await client.messages.parse({
-    model: "claude-3-7-sonnet-20250219",
+    model: CANONICAL_CLAUDE_MODEL,
     // Found live: 2000 was too tight for a thorough multi-concern audit
     // (mariana-screening.ts's identical skeptic call hit this exact wall —
     // truncated/unterminated JSON, then no parsed_output at all on retry,
