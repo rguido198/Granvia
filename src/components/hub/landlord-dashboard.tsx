@@ -3712,15 +3712,15 @@ export function LandlordDashboard({
 
             {copilotLoading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-hairline rounded-2xl rounded-bl-xs p-3.5 text-xs text-ink-500 font-medium shadow-2xs flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[var(--console-accent)] animate-ping" />
-                  <span>Consultando a Claude 3.5 Sonnet…</span>
+                <div className="bg-white border border-hairline rounded-2xl rounded-bl-xs p-4 text-xs sm:text-sm text-ink-700 font-medium shadow-2xs flex items-center gap-2.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)] animate-ping" />
+                  <span>Generando diagnóstico ejecutivo…</span>
                 </div>
               </div>
             )}
 
             {copilotError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs font-semibold text-red-700">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 text-xs sm:text-sm font-semibold text-red-700">
                 ⚠️ {copilotError}
               </div>
             )}
@@ -3729,15 +3729,15 @@ export function LandlordDashboard({
           </div>
 
           {/* INPUT AREA — MULTI-LINE TEXTAREA */}
-          <div className="p-3 border-t border-hairline bg-white shrink-0">
+          <div className="p-4 sm:p-5 border-t border-hairline bg-white shrink-0">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 void submitCopilotQuestion(copilotQuestion);
               }}
-              className="flex flex-col gap-2"
+              className="flex flex-col gap-2.5"
             >
-              <div className="relative flex items-end gap-2">
+              <div className="relative flex items-end gap-2.5">
                 <textarea
                   value={copilotQuestion}
                   onChange={(e) => setCopilotQuestion(e.target.value)}
@@ -3750,19 +3750,19 @@ export function LandlordDashboard({
                   rows={2}
                   placeholder="Escribe tu pregunta comercial o sobre la plaza (Enter para enviar, Shift+Enter para salto de línea)..."
                   disabled={copilotLoading}
-                  className="w-full bg-slate-50 border border-hairline-strong rounded-xl p-3 text-xs text-ink-700 font-medium focus:bg-white focus:border-[var(--console-accent)] focus:outline-none resize-none disabled:opacity-60 leading-relaxed"
+                  className="w-full bg-slate-50 border border-hairline-strong rounded-xl p-3.5 sm:p-4 text-sm sm:text-base text-ink-900 placeholder:text-ink-400 font-medium focus:bg-white focus:border-[var(--console-accent)] focus:ring-2 focus:ring-[var(--console-accent)]/10 focus:outline-none resize-none disabled:opacity-60 leading-relaxed shadow-2xs transition-all"
                 />
                 <button
                   type="submit"
                   disabled={copilotLoading || !copilotQuestion.trim()}
-                  className="bg-ink hover:bg-ink-700 text-white px-4 py-3 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs disabled:opacity-50 shrink-0"
+                  className="bg-ink hover:bg-ink-700 text-white px-4 sm:px-5 py-3.5 sm:py-4 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition-all shadow-xs disabled:opacity-50 shrink-0"
                 >
                   {copilotLoading ? "..." : "Enviar"}
                 </button>
               </div>
-              <div className="flex items-center justify-between text-[10px] text-ink-400 font-medium px-1">
+              <div className="flex items-center justify-between text-xs text-ink-500 font-medium px-1">
                 <span>Shift+Enter para salto de línea</span>
-                <span>Claude 3.5 Sonnet • Respuesta ejecutiva</span>
+                <span>Respuesta ejecutiva comercial</span>
               </div>
             </form>
           </div>
