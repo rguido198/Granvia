@@ -52,42 +52,62 @@ function downloadRenewalPdf(renewal: LeaseRenewalSummary) {
   downloadBlob(blob, `convenio_modificatorio_${renewal.renewalNumber.replace(/\s+/g, "_")}.pdf`);
 }
 
-/** The clear, scannable "what actually changes" block — separate from the
- *  dense legal prose in draftMarkdown, which was the whole complaint: a
- *  landlord shouldn't have to read four paragraphs to find the new rent. */
+function formatSpanishDate(isoStr: string): string {
+  if (!isoStr || !/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return isoStr;
+  const [y, m, d] = isoStr.split("-").map(Number);
+  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  return `${d} ${months[m - 1]} ${y}`;
+}
+
+/** Modern, scannable comparison grid — clear new rent vs old rent, new term vs old term */
 function RenewalSummary({ renewal }: { renewal: LeaseRenewalSummary }) {
   const pctChange =
     renewal.currentBaseRentMonthly && renewal.currentBaseRentMonthly > 0
       ? (((renewal.newBaseRentMonthly - renewal.currentBaseRentMonthly) / renewal.currentBaseRentMonthly) * 100).toFixed(1)
       : null;
 
+  const isSameRent = Number(pctChange ?? 0) === 0;
+
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-      <dt className="text-ink-500 font-medium">Vigencia</dt>
-      <dd className="text-ink font-bold">
-        {renewal.currentEndDate} <span className="text-ink-400 font-medium">→</span> {renewal.newStartDate} a {renewal.newEndDate}
-      </dd>
-      <dt className="text-ink-500 font-medium">Renta mensual</dt>
-      <dd className="text-ink font-bold">
-        {renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)"}{" "}
-        <span className="text-ink-400 font-medium">→</span> {formatMxn(renewal.newBaseRentMonthly)}
-        {pctChange !== null && (
-          <span className={`ml-1.5 font-bold ${Number(pctChange) > 0 ? "text-emerald-700" : Number(pctChange) < 0 ? "text-red-700" : "text-ink-500"}`}>
-            ({Number(pctChange) > 0 ? "+" : ""}
-            {pctChange}%)
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 my-2.5">
+      <div className="bg-slate-50 border border-hairline rounded-xl p-3.5 space-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Nueva Vigencia Propuesta</span>
+        <p className="text-sm font-extrabold text-ink">
+          {formatSpanishDate(renewal.newStartDate)} – {formatSpanishDate(renewal.newEndDate)}
+        </p>
+        <p className="text-[11px] font-medium text-ink-500">
+          Vencimiento contrato actual: <span className="font-semibold text-ink-700">{formatSpanishDate(renewal.currentEndDate)}</span>
+        </p>
+      </div>
+
+      <div className="bg-slate-50 border border-hairline rounded-xl p-3.5 space-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Nueva Renta Mensual</span>
+        <div className="flex items-baseline gap-2">
+          <p className="text-sm font-extrabold text-ink">{formatMxn(renewal.newBaseRentMonthly)}</p>
+          <span
+            className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+              Number(pctChange) > 0
+                ? "bg-emerald-100 text-emerald-800"
+                : Number(pctChange) < 0
+                ? "bg-amber-100 text-amber-800"
+                : "bg-slate-200 text-ink-600"
+            }`}
+          >
+            {isSameRent ? "Misma renta (0%)" : `${Number(pctChange) > 0 ? "+" : ""}${pctChange}%`}
           </span>
-        )}
-      </dd>
-    </dl>
+        </div>
+        <p className="text-[11px] font-medium text-ink-500">
+          Renta anterior:{" "}
+          <span className="font-semibold text-ink-700">
+            {renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)"}
+          </span>
+        </p>
+      </div>
+    </div>
   );
 }
 
-/** One renewal draft row — view the full Convenio Modificatorio text, and
- *  (only while still pending) approve or reject it. Approving/rejecting
- *  never touches the real `leases` row — same boundary as Mariana's
- *  screening approval — it only records the landlord's decision on the
- *  draft itself; applying an approved renewal once the tenant countersigns
- *  is a separate, later action. */
+/** Friendly, modern renewal card with intuitive CTAs and visual hierarchy */
 function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
   const router = useRouter();
   const [viewing, setViewing] = useState(false);
@@ -115,86 +135,119 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
     }
   }
 
+  const isPending = renewal.status === "needs_landlord_review";
+  const isApproved = renewal.status === "approved";
+
   return (
-    <div className="border border-hairline rounded-lg p-2.5 space-y-1.5 bg-white">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-ink text-xs">{renewal.renewalNumber}</span>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_CLS[renewal.status]}`}>
-            {STATUS_LABEL[renewal.status]}
+    <div className="border border-hairline rounded-2xl p-4 space-y-3 bg-white shadow-2xs">
+      {/* Top Header Row */}
+      <div className="flex items-center justify-between gap-3 pb-2 border-b border-hairline">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="font-extrabold text-ink text-sm">Propuesta {renewal.renewalNumber}</span>
+          <span
+            className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+              isPending
+                ? "bg-amber-50 text-amber-800 border-amber-200"
+                : isApproved
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                : "bg-slate-100 text-ink-500 border-hairline"
+            }`}
+          >
+            {isPending ? "Pendiente de aprobación" : isApproved ? "Autorizada por arrendador" : "Rechazada"}
           </span>
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-blue-50 text-blue-800 border-blue-200">
-            Proyecto para abogado
-          </span>
-          {renewal.skepticFlagged && (
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200"
-              title={renewal.skepticConcerns.join(" · ")}
-            >
-              Ver notas del auditor
-            </span>
-          )}
         </div>
-        <button type="button" onClick={() => setViewing(true)} className="text-xs font-semibold text-ink-700 underline cursor-pointer">
-          Ver proyecto
+        <button
+          type="button"
+          onClick={() => setViewing(true)}
+          className="text-xs font-bold text-ink bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+        >
+          📄 Ver Convenio
         </button>
       </div>
+
+      {/* Metric Cards Grid */}
       <RenewalSummary renewal={renewal} />
-      {renewal.status === "needs_landlord_review" && (
-        <div className="space-y-1.5 pt-1">
-          <p className="text-[10px] text-ink-500 font-medium">
-            Tu aprobación autoriza este proyecto preliminar con el resumen de cambios para enviarlo a tu abogado.
+
+      {/* Auditor Note Callout Banner if present */}
+      {renewal.skepticConcerns.length > 0 && (
+        <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 text-xs space-y-1">
+          <p className="font-bold text-amber-900 flex items-center gap-1.5">
+            💡 Observaciones de Mariana IA
           </p>
-          <div className="flex items-center gap-2">
+          <ul className="list-disc pl-4 text-amber-800 text-[11px] space-y-0.5">
+            {renewal.skepticConcerns.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Bottom Action Footer */}
+      {isPending && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+          <p className="text-xs text-ink-500 font-medium max-w-sm">
+            Mariana IA preparó el Convenio Modificatorio. Autoriza la propuesta o descarga el PDF para enviarlo a revisión.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <button
               type="button"
               disabled={pending !== null}
               onClick={() => resolve(true)}
-              className="bg-ink text-white px-2.5 py-1 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-50"
+              className="bg-ink text-white hover:bg-slate-800 px-3.5 py-2 rounded-xl font-bold text-xs cursor-pointer transition-colors shadow-2xs disabled:opacity-50 flex items-center gap-1.5"
             >
-              {pending === "approve" ? "Enviando..." : "Aprobar y enviar a abogado"}
+              {pending === "approve" ? "Procesando..." : "✓ Autorizar propuesta"}
+            </button>
+            <button
+              type="button"
+              onClick={() => downloadRenewalPdf(renewal)}
+              className="border border-hairline bg-white hover:bg-slate-50 text-ink-800 px-3 py-2 rounded-xl font-bold text-xs cursor-pointer transition-colors flex items-center gap-1.5"
+            >
+               Descargar PDF
             </button>
             <button
               type="button"
               disabled={pending !== null}
               onClick={() => resolve(false)}
-              className="border border-hairline text-ink-700 px-2.5 py-1 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-50"
+              className="text-ink-500 hover:text-red-700 font-semibold text-xs px-2.5 py-2 cursor-pointer transition-colors disabled:opacity-50"
             >
               {pending === "reject" ? "Rechazando..." : "Rechazar"}
             </button>
           </div>
         </div>
       )}
-      {error && <p className="text-[11px] font-bold text-red-700">{error}</p>}
+
+      {error && <p className="text-xs font-bold text-red-700 bg-red-50 p-2 rounded-lg">{error}</p>}
+
+      {/* Modal View */}
       {viewing && (
         <ConsoleModal>
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={() => setViewing(false)}>
             <div
-              className="bg-white rounded-2xl border border-hairline shadow-2xl p-5 max-w-2xl w-full max-h-[80vh] overflow-y-auto space-y-3"
+              className="bg-white rounded-2xl border border-hairline shadow-2xl p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pb-2 border-b border-hairline">
                 <div>
-                  <p className="font-bold text-sm text-ink">{renewal.renewalNumber} — proyecto para abogado</p>
-                  <p className="text-[11px] text-ink-500">Documento preliminar con desglose de modificaciones respecto al contrato anterior.</p>
+                  <h3 className="font-extrabold text-base text-ink">Convenio Modificatorio — Propuesta {renewal.renewalNumber}</h3>
+                  <p className="text-xs text-ink-500">Documento contractual preparado para revisión del arrendador y su asesoría jurídica.</p>
                 </div>
-                <button type="button" onClick={() => setViewing(false)} className="text-ink-500 font-bold cursor-pointer">
-                  Cerrar
+                <button type="button" onClick={() => setViewing(false)} className="text-ink-400 hover:text-ink font-bold text-sm cursor-pointer p-1">
+                  ✕ Cerrar
                 </button>
               </div>
-              <div className="bg-slate-50 border border-hairline rounded-xl p-3">
-                <RenewalSummary renewal={renewal} />
-              </div>
-              <div className="border-t border-hairline pt-2.5 space-y-2">
+
+              <RenewalSummary renewal={renewal} />
+
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold text-ink-700">Texto del Convenio Modificatorio (Proyecto)</p>
+                  <p className="text-xs font-extrabold text-ink-800">Texto del Convenio Modificatorio</p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => downloadRenewalPdf(renewal)}
-                      className="bg-slate-900 text-white px-2.5 py-1 rounded-lg font-bold text-xs hover:bg-slate-800 cursor-pointer"
+                      className="bg-slate-900 text-white px-3 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-800 cursor-pointer flex items-center gap-1.5"
                     >
-                      Descargar PDF para Abogado
+                      Descargar PDF Oficial
                     </button>
                     <button
                       type="button"
@@ -203,26 +256,16 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
                         setCopied(true);
                         setTimeout(() => setCopied(false), 2000);
                       }}
-                      className="border border-hairline text-ink-700 px-2.5 py-1 rounded-lg font-bold text-xs hover:bg-slate-50 cursor-pointer"
+                      className="border border-hairline text-ink-700 px-3 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-50 cursor-pointer"
                     >
                       {copied ? "✓ Copiado" : "Copiar texto"}
                     </button>
                   </div>
                 </div>
-                <div className="mt-2 text-xs bg-white border border-hairline rounded-xl p-3 max-h-[40vh] overflow-y-auto">
+                <div className="mt-2 text-xs bg-slate-50 border border-hairline rounded-xl p-4 max-h-[45vh] overflow-y-auto font-sans leading-relaxed">
                   <LegalDraftMarkdown markdown={renewal.draftMarkdown} />
                 </div>
               </div>
-              {renewal.skepticConcerns.length > 0 && (
-                <div className="border-t border-hairline pt-2.5">
-                  <p className="text-xs font-bold text-amber-900 mb-1">Notas del auditor (Mariana IA)</p>
-                  <ul className="list-disc pl-4 space-y-1 text-[11px] text-ink-700">
-                    {renewal.skepticConcerns.map((c, i) => (
-                      <li key={i}>{c}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           </div>
         </ConsoleModal>
