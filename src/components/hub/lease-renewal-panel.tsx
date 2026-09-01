@@ -112,6 +112,7 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
   const router = useRouter();
   const [viewing, setViewing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [pending, setPending] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -168,17 +169,33 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
       {/* Metric Cards Grid */}
       <RenewalSummary renewal={renewal} />
 
-      {/* Auditor Note Callout Banner if present */}
+      {/* Auditor Note Collapsible Banner if present */}
       {renewal.skepticConcerns.length > 0 && (
-        <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 text-xs space-y-1">
-          <p className="font-bold text-amber-900 flex items-center gap-1.5">
-            💡 Observaciones de Mariana IA
-          </p>
-          <ul className="list-disc pl-4 text-amber-800 text-[11px] space-y-0.5">
-            {renewal.skepticConcerns.map((c, i) => (
-              <li key={i}>{c}</li>
-            ))}
-          </ul>
+        <div className="border border-amber-200/80 bg-amber-50/60 rounded-xl overflow-hidden text-xs">
+          <button
+            type="button"
+            onClick={() => setShowNotes(!showNotes)}
+            className="w-full flex items-center justify-between p-3 font-semibold text-amber-900 hover:bg-amber-100/50 transition-colors text-left cursor-pointer"
+          >
+            <span className="flex items-center gap-1.5 font-bold">
+              💡 Observaciones técnicas de Mariana IA ({renewal.skepticConcerns.length})
+            </span>
+            <span className="text-amber-800 text-xs font-bold underline">
+              {showNotes ? "Ocultar ▲" : "Ver detalles ▼"}
+            </span>
+          </button>
+          {showNotes && (
+            <div className="p-3 pt-0 border-t border-amber-200/60 bg-white/80 space-y-2">
+              <ul className="space-y-2 text-slate-800 text-xs leading-relaxed pt-2 font-sans">
+                {renewal.skepticConcerns.map((c, i) => (
+                  <li key={i} className="flex gap-2 items-start bg-amber-50/90 p-3 rounded-xl border border-amber-200/80">
+                    <span className="text-amber-700 font-bold">•</span>
+                    <span className="font-medium text-slate-800">{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
