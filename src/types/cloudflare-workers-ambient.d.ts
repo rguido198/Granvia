@@ -22,3 +22,13 @@ declare module "cloudflare:workers" {
     workflowName: string;
   };
 }
+
+// env.ts's WorkflowsEnv.APP_WORKER: Fetcher — another Workers-runtime-only
+// global (not module-scoped, so it can't live in the "cloudflare:workers"
+// shim above) reached the same way, via env.ts's import from diego-triage.ts.
+// Scoped to just the .fetch() call site actually uses (env.ts:41).
+// No top-level import/export in this file, so it's already a global script
+// context — a `declare global` wrapper isn't needed (and isn't valid) here.
+interface Fetcher {
+  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+}
