@@ -225,8 +225,17 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
     .join("\n");
 
   const response = await client.messages.parse({
-    model: "claude-sonnet-5",
-    max_tokens: 3000,
+    model: CANONICAL_CLAUDE_MODEL,
+    // draft_markdown holds the entire Convenio Modificatorio (comparison
+    // table + 4 clauses + citation line, in Spanish legal register) as one
+    // free-text field — much longer than the small structured SkepticVerdict
+    // below, which itself needed 4000 after 2000 truncated it live in
+    // mariana-screening.ts's skeptic pass (see that file's comment). 3000
+    // was tighter than that already-too-tight budget for a much larger
+    // output — bumped to match extractFromVision's 6000 (src/lib/ingest/
+    // lease-extraction.ts), the other free-text-heavy generation in this
+    // codebase.
+    max_tokens: 6000,
     system: [
       {
         type: "text",
