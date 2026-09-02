@@ -8,6 +8,12 @@
 // @cloudflare/workers-types. This shim exists only to satisfy this program's
 // typecheck of that type-only import — it is never used at runtime.
 declare module "cloudflare:workers" {
-  export type WorkflowStep = unknown;
+  export type WorkflowStep = {
+    do<T>(name: string, callback: () => Promise<T>): Promise<T>;
+    waitForEvent<T>(
+      name: string,
+      options: { type: string; timeout?: string },
+    ): Promise<{ payload: T }>;
+  };
   export type WorkflowEvent<T = unknown> = { payload: T };
 }
