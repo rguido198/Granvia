@@ -15,5 +15,10 @@ declare module "cloudflare:workers" {
       options: { type: string; timeout?: string },
     ): Promise<{ payload: T }>;
   };
-  export type WorkflowEvent<T = unknown> = { payload: T };
+  export type WorkflowEvent<T = unknown> = {
+    payload: T;
+    timestamp: Date;
+    instanceId: string;
+    workflowName: string;
+  };
 }
