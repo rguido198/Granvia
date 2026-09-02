@@ -234,7 +234,16 @@ async function draftScreening(
 
   const response = await client.messages.parse({
     model: CANONICAL_CLAUDE_MODEL,
-    max_tokens: 4000,
+    // Found live (2026-09-02): 4000 truncated a real draftScreening call
+    // outright ("Unterminated string in JSON"), and a second sampling of the
+    // same input completed cleanly but only at 3659/4000 tokens (91.5%) —
+    // this schema is the richest structured-output call in the codebase
+    // (16 fields, an unbounded `reasoning` string, a 4000-*character*-capped
+    // draft_markdown, plus matched_product_pairs/category_fit_comparison_units
+    // arrays), so normal generation variance alone can tip it over. Matches
+    // the already-fixed skeptic pass's own history (that one needed 4000
+    // after 2000 truncated it, for a schema a fraction of this size).
+    max_tokens: 6000,
     system: [
       {
         type: "text",
