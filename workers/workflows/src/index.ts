@@ -1,6 +1,6 @@
 import type { WorkflowsEnv } from "./env";
 
-export { DiegoTriageWorkflow } from "./diego-triage";
+export { DiegoTriageWorkflow } from "./diego-triage-entrypoint";
 export { LeaseDigitizationWorkflow } from "./lease-digitization";
 export { LeaseRenewalWorkflow } from "./lease-renewal";
 export { MarianaScreeningWorkflow } from "./mariana-screening";

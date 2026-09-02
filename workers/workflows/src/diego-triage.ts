@@ -1,20 +1,7 @@
 import { randomUUID } from "node:crypto";
-import type {
-  WorkflowStep,
-  WorkflowEvent,
-} from "cloudflare:workers";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-
-class NonRetryableError extends Error {}
-
-class WorkflowEntrypoint<Env = unknown, Params = unknown> {
-  env: Env;
-  constructor(ctx: unknown, env: Env) {
-    this.env = env;
-  }
-}
 
 import { CANONICAL_CLAUDE_MODEL } from "../../../src/lib/llm/provider";
 import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
@@ -25,17 +12,32 @@ import {
   type WorkflowsEnv,
 } from "./env";
 
+// This file is dynamically imported from src/app/api/ingest/route.ts (the
+// local direct-execution fallback, via runDiegoTriageDirect below) and so
+// gets pulled into the main Next.js app's webpack bundle, which cannot
+// resolve the "cloudflare:" scheme — no value imports from
+// "cloudflare:workers"/"cloudflare:workflows" here. The real
+// WorkflowEntrypoint-based class lives in diego-triage-entrypoint.ts
+// instead, imported only by workers/workflows/src/index.ts (built solely by
+// wrangler's own toolchain). NonRetryableError is a local stand-in — it
+// won't structurally match cloudflare:workflows' real class for the
+// platform's step.do() retry-classification, which is an accepted gap here,
+// not something this split changes (it was already a plain local class
+// before the split).
+class NonRetryableError extends Error {}
+
 /**
- * Diego (maintenance-dispatcher) as a durable state machine, on Cloudflare
- * Workflows. Ported from src/workflows/diego-triage.ts (the Vercel `workflow`
- * SDK version) — business logic below is unchanged; only the durable-
- * execution primitives differ (step.do() instead of "use step" functions,
- * step.waitForEvent() instead of createHook()/await hook).
+ * Diego (maintenance-dispatcher)'s shared business logic, reused by both the
+ * durable Workflow entrypoint (diego-triage-entrypoint.ts's
+ * DiegoTriageWorkflow, step.do()-wrapped) and the direct-execution fallback
+ * below (runDiegoTriageDirect, plain async calls, no durable steps).
+ * Ported from src/workflows/diego-triage.ts (the Vercel `workflow` SDK
+ * version) — business logic below is unchanged from that port.
  * Source of truth for the mechanics below: .claude/skills/maintenance-dispatcher/SKILL.md
  * in the OS repo — this file implements it, it doesn't restate it in full.
  */
 
-type Params = { documentId: string; localeId: string };
+export type Params = { documentId: string; localeId: string };
 
 type TicketContext = {
   documentId: string;
@@ -59,7 +61,7 @@ type TicketContext = {
   }[];
 };
 
-async function loadTicketContextForLocale(
+export async function loadTicketContextForLocale(
   documentId: string,
   localeId: string,
 ): Promise<TicketContext> {
@@ -205,7 +207,7 @@ function formatResponsibilityMatrix(
     .join("\n");
 }
 
-async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
+export async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
   const client = new Anthropic();
 
   const userContent = [
@@ -246,7 +248,7 @@ async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
   return response.parsed_output;
 }
 
-async function checkWarranty(
+export async function checkWarranty(
   context: TicketContext,
   draft: DiegoDraft,
 ): Promise<{ covered: boolean; provider: string | null }> {
@@ -281,7 +283,7 @@ const SKEPTIC_SYSTEM_PROMPT = `You audit a maintenance-triage draft before it re
 
 A matrix entry marked "shared" is not itself an unresolved bucket: this client has no CAM program, so a shared system's cost attributes entirely to ARRENDADOR (the landlord absorbs it uncharged, per the draft prompt's own CAM rule) — do not flag that resolution as missing JD-05 support, as an uncited inference, or as inconsistent with a "shared" matrix value. Only flag a shared-system bucket if it names something other than ARRENDADOR.`;
 
-async function runSkeptic(
+export async function runSkeptic(
   context: TicketContext,
   draft: DiegoDraft,
 ): Promise<SkepticVerdict> {
@@ -325,7 +327,7 @@ async function runSkeptic(
   return response.parsed_output;
 }
 
-async function matchContractorAndTier(
+export async function matchContractorAndTier(
   propertyId: string,
   trade: string,
   estimatedCost: number | null,
@@ -362,7 +364,7 @@ async function matchContractorAndTier(
   return { contractorId: contractor?.id ?? null, approvalLevel };
 }
 
-async function writeTicket(
+export async function writeTicket(
   env: WorkflowsEnv,
   params: {
     context: TicketContext;
@@ -473,7 +475,7 @@ async function writeTicket(
   return ticket.id as string;
 }
 
-async function markDispatched(env: WorkflowsEnv, ticketId: string) {
+export async function markDispatched(env: WorkflowsEnv, ticketId: string) {
   const supabase = getSupabaseServiceClient();
   await supabase
     .from("tickets")
@@ -482,7 +484,7 @@ async function markDispatched(env: WorkflowsEnv, ticketId: string) {
   await notifyCopilotoCacheStale(env);
 }
 
-async function markApprovalResolved(
+export async function markApprovalResolved(
   env: WorkflowsEnv,
   ticketId: string,
   approved: boolean,
@@ -532,92 +534,6 @@ export async function runDiegoTriageDirect(params: Params): Promise<{ ticketId: 
   return { ticketId, status };
 }
 
-export class DiegoTriageWorkflow extends WorkflowEntrypoint<
-  WorkflowsEnv,
-  Params
-> {
-  async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
-    hydrateProcessEnv(this.env);
-    const { documentId, localeId } = event.payload;
-
-    const context = await step.do("load ticket context", () =>
-      loadTicketContextForLocale(documentId, localeId),
-    );
-    const draft = await step.do("draft diego ticket", () =>
-      draftDiegoTicket(context),
-    );
-    const warranty = await step.do("check warranty", () =>
-      checkWarranty(context, draft),
-    );
-    const skeptic = await step.do("run skeptic", () =>
-      runSkeptic(context, draft),
-    );
-
-    const { contractorId, approvalLevel } = await step.do(
-      "match contractor and tier",
-      () =>
-        matchContractorAndTier(
-          context.property.id,
-          draft.recommended_trade,
-          warranty.covered ? 0 : draft.estimated_cost_mxn,
-        ),
-    );
-
-    const workflowRunId = event.instanceId;
-    // The RBAC tab's emergency kill-switch (properties.autonomy_frozen) overrides
-    // every auto-dispatch path, warranty claims included — while it's active, every
-    // ticket lands in needs_approval regardless of tier or warranty coverage.
-    const status: "dispatched" | "needs_approval" = context.property
-      .autonomy_frozen
-      ? "needs_approval"
-      : warranty.covered || approvalLevel === "AUTO"
-        ? "dispatched"
-        : "needs_approval";
-
-    const ticketId = await step.do("write ticket", () =>
-      writeTicket(this.env, {
-        context,
-        draft,
-        warranty,
-        skeptic,
-        contractorId,
-        approvalLevel,
-        status,
-        workflowRunId,
-      }),
-    );
-
-    if (status === "needs_approval") {
-      // Tier 3 human gate (root CLAUDE.md §1) — suspends here until the
-      // approve route calls (await env.DIEGO_TRIAGE_WORKFLOW.get(instanceId))
-      // .sendEvent({ type: `ticket-approval-${ticketId}`, payload: {...} }).
-      // 30-day timeout: generous enough that a slow landlord never loses the
-      // decision outright, unlike Vercel createHook's unbounded wait.
-      try {
-        const approvalEvent = await step.waitForEvent<{ approved: boolean }>(
-          "await ticket approval",
-          {
-            type: `ticket-approval-${ticketId}`,
-            timeout: "30 days",
-          },
-        );
-        const decision = approvalEvent.payload;
-        await step.do("mark approval resolved", () =>
-          markApprovalResolved(this.env, ticketId, decision.approved),
-        );
-        return {
-          ticketId,
-          status: decision.approved ? "dispatched" : "closed_administrative",
-        };
-      } catch {
-        // Timed out waiting for a landlord decision — leave the ticket at
-        // needs_approval; a human can still resolve it manually, this just
-        // stops the workflow instance from staying alive forever.
-        return { ticketId, status: "needs_approval" as const };
-      }
-    }
-
-    await step.do("mark dispatched", () => markDispatched(this.env, ticketId));
-    return { ticketId, status: "dispatched" as const };
-  }
-}
+// The real Workflows-platform entrypoint (DiegoTriageWorkflow, extending
+// cloudflare:workers' WorkflowEntrypoint) lives in
+// diego-triage-entrypoint.ts — see this file's top-of-file comment for why.
