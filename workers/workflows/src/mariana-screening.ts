@@ -4,11 +4,9 @@ import {
   type WorkflowEvent,
 } from "cloudflare:workers";
 import { NonRetryableError } from "cloudflare:workflows";
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { CANONICAL_CLAUDE_MODEL } from "../../../src/lib/llm/provider";
+import { callStructuredWithFallback } from "../../../src/lib/llm/provider";
 import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
 import { wrapUntrustedContent } from "../../../src/lib/llm/untrusted-content";
 import { hydrateProcessEnv, notifyCopilotoCacheStale, type WorkflowsEnv } from "./env";
@@ -209,8 +207,6 @@ Respond only with the structured fields requested — no prose outside them.`;
 async function draftScreening(
   context: ApplicationContext,
 ): Promise<MarianaDraft> {
-  const client = new Anthropic();
-
   const userContent = [
     `Solicitud entrante (local objetivo ${context.targetLocale.unitNumber}, ${context.targetLocale.areaSqm ?? "?"} m², estatus ${context.targetLocale.status}):`,
     wrapUntrustedContent("solicitud_entrante", context.rawApplication),
@@ -232,33 +228,22 @@ async function draftScreening(
       : "(ningún contrato activo cargado — no hay base para auditar solapamiento; asigna BAJO y dilo en reasoning)",
   ].join("\n");
 
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    // Found live (2026-09-02): 4000 truncated a real draftScreening call
-    // outright ("Unterminated string in JSON"), and a second sampling of the
-    // same input completed cleanly but only at 3659/4000 tokens (91.5%) —
-    // this schema is the richest structured-output call in the codebase
-    // (16 fields, an unbounded `reasoning` string, a 4000-*character*-capped
-    // draft_markdown, plus matched_product_pairs/category_fit_comparison_units
-    // arrays), so normal generation variance alone can tip it over. Matches
-    // the already-fixed skeptic pass's own history (that one needed 4000
-    // after 2000 truncated it, for a schema a fraction of this size).
-    max_tokens: 6000,
-    system: [
-      {
-        type: "text",
-        text: MARIANA_SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: [{ role: "user", content: userContent }],
-    output_config: { format: zodOutputFormat(MarianaDraftSchema) },
-  });
-
-  if (!response.parsed_output) {
-    throw new NonRetryableError("Mariana draft pass returned no parsed output");
+  // Found live (2026-09-02): 4000 truncated a real draftScreening call
+  // outright ("Unterminated string in JSON"), and a second sampling of the
+  // same input completed cleanly but only at 3659/4000 tokens (91.5%) —
+  // this schema is the richest structured-output call in the codebase
+  // (16 fields, an unbounded `reasoning` string, a 4000-*character*-capped
+  // draft_markdown, plus matched_product_pairs/category_fit_comparison_units
+  // arrays), so normal generation variance alone can tip it over. Matches
+  // the already-fixed skeptic pass's own history (that one needed 4000
+  // after 2000 truncated it, for a schema a fraction of this size).
+  try {
+    return await callStructuredWithFallback(MARIANA_SYSTEM_PROMPT, userContent, MarianaDraftSchema, 6000, true);
+  } catch (err) {
+    throw new NonRetryableError(
+      `Mariana draft pass returned no parsed output: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
-  return response.parsed_output;
 }
 
 const SkepticVerdictSchema = z.object({
@@ -274,52 +259,35 @@ async function runSkeptic(
   context: ApplicationContext,
   draft: MarianaDraft,
 ): Promise<SkepticVerdict> {
-  const client = new Anthropic();
+  const userContent = [
+    `Local objetivo: ${context.targetLocale.unitNumber}, ${context.targetLocale.areaSqm ?? "?"} m², estatus ${context.targetLocale.status}.`,
+    "",
+    "Contratos activos citables:",
+    context.activeLeases
+      .map(
+        (l) =>
+          `- Local ${l.unitNumber} (${l.tenantEntity ?? "?"}): giro="${l.permittedUse ?? "(sin especificar)"}" · exclusiva="${l.exclusiveUseClause ?? "(ninguna)"}" · vence ${l.endDate}`,
+      )
+      .join("\n"),
+    "",
+    `Borrador de Mariana: ${JSON.stringify(draft)}`,
+  ].join("\n");
 
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    // Found live: 2000 truncated the JSON mid-generation on a normal,
-    // multi-concern audit (unterminated string), and the retry returned no
-    // parsed_output at all — that throws NonRetryableError and silently
-    // kills the whole screening workflow with no error surfaced anywhere
-    // (the document just sits at ready_for_triage forever). Matches the
-    // draft call's own budget.
-    max_tokens: 4000,
-    // Same ephemeral cache_control the draft call uses — this prompt is
-    // identical on every application, so a plain string paid full
-    // input-token cost on every skeptic call instead of a cache hit.
-    system: [
-      {
-        type: "text",
-        text: SKEPTIC_SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: [
-      {
-        role: "user",
-        content: [
-          `Local objetivo: ${context.targetLocale.unitNumber}, ${context.targetLocale.areaSqm ?? "?"} m², estatus ${context.targetLocale.status}.`,
-          "",
-          "Contratos activos citables:",
-          context.activeLeases
-            .map(
-              (l) =>
-                `- Local ${l.unitNumber} (${l.tenantEntity ?? "?"}): giro="${l.permittedUse ?? "(sin especificar)"}" · exclusiva="${l.exclusiveUseClause ?? "(ninguna)"}" · vence ${l.endDate}`,
-            )
-            .join("\n"),
-          "",
-          `Borrador de Mariana: ${JSON.stringify(draft)}`,
-        ].join("\n"),
-      },
-    ],
-    output_config: { format: zodOutputFormat(SkepticVerdictSchema) },
-  });
-
-  if (!response.parsed_output) {
-    throw new NonRetryableError("skeptic pass returned no parsed output");
+  // Found live: 2000 truncated the JSON mid-generation on a normal,
+  // multi-concern audit (unterminated string), and the retry returned no
+  // parsed_output at all — that throws NonRetryableError and silently
+  // kills the whole screening workflow with no error surfaced anywhere
+  // (the document just sits at ready_for_triage forever). Matches the
+  // draft call's own budget. Ephemeral cache_control (last arg `true`) —
+  // this prompt is identical on every application, so a plain string paid
+  // full input-token cost on every skeptic call instead of a cache hit.
+  try {
+    return await callStructuredWithFallback(SKEPTIC_SYSTEM_PROMPT, userContent, SkepticVerdictSchema, 4000, true);
+  } catch (err) {
+    throw new NonRetryableError(
+      `skeptic pass returned no parsed output: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
-  return response.parsed_output;
 }
 
 async function writeApplication(params: {

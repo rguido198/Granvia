@@ -1,9 +1,7 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { CANONICAL_CLAUDE_MODEL } from "@/lib/llm/provider";
+import { callStructuredWithFallback } from "@/lib/llm/provider";
 
 /**
  * Exclusivity-overlap audit for a lease's own permitted_use against the
@@ -75,27 +73,16 @@ export async function checkExclusivityConflicts(
 ): Promise<ExclusivityConflict[]> {
   if (!lease.permittedUse || otherActiveLeases.length === 0) return [];
 
-  const client = new Anthropic();
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    max_tokens: 2000,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: [
-          `Contrato bajo revisión: ${lease.tenantEntity}, Local ${lease.unitCode}.`,
-          `Giro permitido de este contrato: ${lease.permittedUse}`,
-          "",
-          "Cláusulas de exclusividad de otros contratos activos en la misma plaza:",
-          otherActiveLeases
-            .map((l) => `- ${l.unitCode} (${l.tenantEntity}): "${l.exclusiveUseClause}"`)
-            .join("\n"),
-        ].join("\n"),
-      },
-    ],
-    output_config: { format: zodOutputFormat(ConflictSchema) },
-  });
+  const userContent = [
+    `Contrato bajo revisión: ${lease.tenantEntity}, Local ${lease.unitCode}.`,
+    `Giro permitido de este contrato: ${lease.permittedUse}`,
+    "",
+    "Cláusulas de exclusividad de otros contratos activos en la misma plaza:",
+    otherActiveLeases
+      .map((l) => `- ${l.unitCode} (${l.tenantEntity}): "${l.exclusiveUseClause}"`)
+      .join("\n"),
+  ].join("\n");
 
-  return response.parsed_output?.conflicts ?? [];
+  const result = await callStructuredWithFallback(SYSTEM_PROMPT, userContent, ConflictSchema, 2000);
+  return result.conflicts;
 }

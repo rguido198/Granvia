@@ -1,9 +1,7 @@
 import { randomUUID } from "node:crypto";
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { CANONICAL_CLAUDE_MODEL } from "../../../src/lib/llm/provider";
+import { callStructuredWithFallback } from "../../../src/lib/llm/provider";
 import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
 import { wrapUntrustedContent } from "../../../src/lib/llm/untrusted-content";
 import {
@@ -208,8 +206,6 @@ function formatResponsibilityMatrix(
 }
 
 export async function draftDiegoTicket(context: TicketContext): Promise<DiegoDraft> {
-  const client = new Anthropic();
-
   const userContent = [
     `Reporte del inquilino (${context.locale.tenant_entity ?? "desconocido"}, local ${context.locale.unit_number}):`,
     context.rawText
@@ -228,24 +224,13 @@ export async function draftDiegoTicket(context: TicketContext): Promise<DiegoDra
       : "(ninguno registrado)",
   ].join("\n");
 
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    max_tokens: 4000,
-    system: [
-      {
-        type: "text",
-        text: DIEGO_SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: [{ role: "user", content: userContent }],
-    output_config: { format: zodOutputFormat(DiegoDraftSchema) },
-  });
-
-  if (!response.parsed_output) {
-    throw new NonRetryableError("Diego draft pass returned no parsed output");
+  try {
+    return await callStructuredWithFallback(DIEGO_SYSTEM_PROMPT, userContent, DiegoDraftSchema, 4000, true);
+  } catch (err) {
+    throw new NonRetryableError(
+      `Diego draft pass returned no parsed output: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
-  return response.parsed_output;
 }
 
 export async function checkWarranty(
@@ -287,44 +272,27 @@ export async function runSkeptic(
   context: TicketContext,
   draft: DiegoDraft,
 ): Promise<SkepticVerdict> {
-  const client = new Anthropic();
+  const userContent = [
+    `Matriz de responsabilidad (contrato digitalizado):\n${formatResponsibilityMatrix(context.lease?.responsibility_matrix ?? null)}`,
+    `Cláusula de mantenimiento: ${context.lease?.maintenance_clause ?? "(ninguna)"}`,
+    `Borrador de Diego: ${JSON.stringify(draft)}`,
+  ].join("\n\n");
 
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    // Found live: 2000 was too tight for a thorough multi-concern audit
-    // (mariana-screening.ts's identical skeptic call hit this exact wall —
-    // truncated/unterminated JSON, then no parsed_output at all on retry,
-    // which throws NonRetryableError and silently kills the whole workflow
-    // with no error surfaced anywhere). Matches the draft call's own budget.
-    max_tokens: 4000,
-    // Same ephemeral cache_control the draft call above uses — this prompt
-    // is identical on every ticket, so leaving it as a plain string meant
-    // paying full input-token cost on every skeptic call instead of a cache
-    // hit after the first.
-    system: [
-      {
-        type: "text",
-        text: SKEPTIC_SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: [
-      {
-        role: "user",
-        content: [
-          `Matriz de responsabilidad (contrato digitalizado):\n${formatResponsibilityMatrix(context.lease?.responsibility_matrix ?? null)}`,
-          `Cláusula de mantenimiento: ${context.lease?.maintenance_clause ?? "(ninguna)"}`,
-          `Borrador de Diego: ${JSON.stringify(draft)}`,
-        ].join("\n\n"),
-      },
-    ],
-    output_config: { format: zodOutputFormat(SkepticVerdictSchema) },
-  });
-
-  if (!response.parsed_output) {
-    throw new NonRetryableError("skeptic pass returned no parsed output");
+  // Found live: 2000 was too tight for a thorough multi-concern audit
+  // (mariana-screening.ts's identical skeptic call hit this exact wall —
+  // truncated/unterminated JSON, then no parsed_output at all on retry,
+  // which throws NonRetryableError and silently kills the whole workflow
+  // with no error surfaced anywhere). Matches the draft call's own budget.
+  // Ephemeral cache_control (last arg `true`) — this prompt is identical on
+  // every ticket, so leaving it uncached meant paying full input-token cost
+  // on every skeptic call instead of a cache hit after the first.
+  try {
+    return await callStructuredWithFallback(SKEPTIC_SYSTEM_PROMPT, userContent, SkepticVerdictSchema, 4000, true);
+  } catch (err) {
+    throw new NonRetryableError(
+      `skeptic pass returned no parsed output: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
-  return response.parsed_output;
 }
 
 export async function matchContractorAndTier(

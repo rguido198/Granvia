@@ -153,12 +153,11 @@ async function main() {
   const cases: GoldenCase[] = JSON.parse(readFileSync(fixturePath, "utf-8"));
 
   const geminiModels = [
-    { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro (Opus equivalent)" },
-    { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (Haiku equivalent)" }
+    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash" }
   ];
 
   console.log("=========================================================================");
-  console.log(" GRAN VÍA BENCHMARK: GEMINI 3.1 PRO & GEMINI 3.6 FLASH vs CLAUDE SONNET 5");
+  console.log(" GRAN VÍA BENCHMARK: GEMINI 3.8 FLASH vs CLAUDE SONNET 5 (current fallback default)");
   console.log("=========================================================================\n");
 
   for (const m of geminiModels) {

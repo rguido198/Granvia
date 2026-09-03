@@ -4,11 +4,9 @@ import {
   type WorkflowEvent,
 } from "cloudflare:workers";
 import { NonRetryableError } from "cloudflare:workflows";
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { CANONICAL_CLAUDE_MODEL } from "../../../src/lib/llm/provider";
+import { callStructuredWithFallback } from "../../../src/lib/llm/provider";
 import { getSupabaseServiceClient } from "../../../src/lib/supabase/server";
 import { hydrateProcessEnv, type WorkflowsEnv } from "./env";
 
@@ -172,8 +170,6 @@ Close with a citation line naming the jurisdiction pack reference and, verbatim,
 Do not invent any clause, date, or figure not given to you. Where information is missing, say so in the relevant section rather than filling a plausible-sounding placeholder.`;
 
 async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
-  const client = new Anthropic();
-
   const pctChange =
     context.currentBaseRentMonthly && context.currentBaseRentMonthly > 0
       ? (
@@ -224,33 +220,22 @@ async function draftRenewal(context: RenewalContext): Promise<RenewalDraft> {
     .filter(Boolean)
     .join("\n");
 
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    // draft_markdown holds the entire Convenio Modificatorio (comparison
-    // table + 4 clauses + citation line, in Spanish legal register) as one
-    // free-text field — much longer than the small structured SkepticVerdict
-    // below, which itself needed 4000 after 2000 truncated it live in
-    // mariana-screening.ts's skeptic pass (see that file's comment). 3000
-    // was tighter than that already-too-tight budget for a much larger
-    // output — bumped to match extractFromVision's 6000 (src/lib/ingest/
-    // lease-extraction.ts), the other free-text-heavy generation in this
-    // codebase.
-    max_tokens: 6000,
-    system: [
-      {
-        type: "text",
-        text: RENEWAL_SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: [{ role: "user", content: userContent }],
-    output_config: { format: zodOutputFormat(RenewalDraftSchema) },
-  });
-
-  if (!response.parsed_output) {
-    throw new NonRetryableError("renewal draft pass returned no parsed output");
+  // draft_markdown holds the entire Convenio Modificatorio (comparison
+  // table + 4 clauses + citation line, in Spanish legal register) as one
+  // free-text field — much longer than the small structured SkepticVerdict
+  // below, which itself needed 4000 after 2000 truncated it live in
+  // mariana-screening.ts's skeptic pass (see that file's comment). 3000
+  // was tighter than that already-too-tight budget for a much larger
+  // output — bumped to match extractFromVision's 6000 (src/lib/ingest/
+  // lease-extraction.ts), the other free-text-heavy generation in this
+  // codebase. Ephemeral cache_control via the last arg (`true`).
+  try {
+    return await callStructuredWithFallback(RENEWAL_SYSTEM_PROMPT, userContent, RenewalDraftSchema, 6000, true);
+  } catch (err) {
+    throw new NonRetryableError(
+      `renewal draft pass returned no parsed output: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
-  return response.parsed_output;
 }
 
 const SkepticVerdictSchema = z.object({
@@ -274,41 +259,29 @@ async function runRenewalSkeptic(
   context: RenewalContext,
   draft: RenewalDraft,
 ): Promise<SkepticVerdict> {
-  const client = new Anthropic();
+  const userContent = [
+    `Fecha de elaboración dada al redactor: ${context.draftedOn}.`,
+    `Local: ${context.unitNumber}, ${context.areaSqm ?? "?"} m². Arrendatario: ${context.tenantEntity}.`,
+    `Vigencia actual: vence ${context.currentEndDate}. Nueva vigencia: ${context.newStartDate} a ${context.newEndDate}.`,
+    `Renta actual: ${context.currentBaseRentMonthly ?? "(no está en registro)"}. Renta nueva: ${context.newBaseRentMonthly}.`,
+    `Método de escalación dado al redactor (legítimo, no inventado si coincide): ${context.escalationMethod}${context.escalationPct !== null ? ` (${context.escalationPct}%)` : ""}.`,
+    `Matriz de responsabilidad vigente: ${context.responsibilityMatrix ? JSON.stringify(context.responsibilityMatrix) : "(no está en registro)"}.`,
+    `Días de aviso vigentes: ${context.noticePeriodDays ?? "(no está en registro)"}.`,
+    `Cláusula de exclusividad vigente: ${context.exclusiveUseClause ?? "(ninguna)"}.`,
+    `Uso permitido vigente: ${context.permittedUse ?? "(no especificado)"}.`,
+    `Claves citables esperadas en la referencia final (exactamente estas): ${RENEWAL_CONSUMED_JD_KEYS.join(", ")}.`,
+    `Claves de jurisdicción sin resolver dadas al redactor: ${RENEWAL_UNRESOLVED_JD_KEYS.join(", ") || "(ninguna)"}.`,
+    "",
+    `Borrador de Mariana:\n${draft.draft_markdown}`,
+  ].join("\n");
 
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    max_tokens: 4000,
-    system: SKEPTIC_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: [
-          `Fecha de elaboración dada al redactor: ${context.draftedOn}.`,
-          `Local: ${context.unitNumber}, ${context.areaSqm ?? "?"} m². Arrendatario: ${context.tenantEntity}.`,
-          `Vigencia actual: vence ${context.currentEndDate}. Nueva vigencia: ${context.newStartDate} a ${context.newEndDate}.`,
-          `Renta actual: ${context.currentBaseRentMonthly ?? "(no está en registro)"}. Renta nueva: ${context.newBaseRentMonthly}.`,
-          `Método de escalación dado al redactor (legítimo, no inventado si coincide): ${context.escalationMethod}${context.escalationPct !== null ? ` (${context.escalationPct}%)` : ""}.`,
-          `Matriz de responsabilidad vigente: ${context.responsibilityMatrix ? JSON.stringify(context.responsibilityMatrix) : "(no está en registro)"}.`,
-          `Días de aviso vigentes: ${context.noticePeriodDays ?? "(no está en registro)"}.`,
-          `Cláusula de exclusividad vigente: ${context.exclusiveUseClause ?? "(ninguna)"}.`,
-          `Uso permitido vigente: ${context.permittedUse ?? "(no especificado)"}.`,
-          `Claves citables esperadas en la referencia final (exactamente estas): ${RENEWAL_CONSUMED_JD_KEYS.join(", ")}.`,
-          `Claves de jurisdicción sin resolver dadas al redactor: ${RENEWAL_UNRESOLVED_JD_KEYS.join(", ") || "(ninguna)"}.`,
-          "",
-          `Borrador de Mariana:\n${draft.draft_markdown}`,
-        ].join("\n"),
-      },
-    ],
-    output_config: { format: zodOutputFormat(SkepticVerdictSchema) },
-  });
-
-  if (!response.parsed_output) {
+  try {
+    return await callStructuredWithFallback(SKEPTIC_SYSTEM_PROMPT, userContent, SkepticVerdictSchema, 4000);
+  } catch (err) {
     throw new NonRetryableError(
-      "renewal skeptic pass returned no parsed output",
+      `renewal skeptic pass returned no parsed output: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
-  return response.parsed_output;
 }
 
 async function writeRenewal(params: {

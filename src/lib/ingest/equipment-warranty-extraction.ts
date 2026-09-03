@@ -1,7 +1,5 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { CANONICAL_CLAUDE_MODEL } from "@/lib/llm/provider";
+import { callStructuredWithFallback } from "@/lib/llm/provider";
 import {
   EquipmentWarrantyExtractedFieldsSchema,
   type EquipmentWarrantyExtractedFields,
@@ -21,19 +19,10 @@ Analiza el texto y extrae:
 - warranty_expiry_date: Fecha de vencimiento de la garantía o póliza en formato "YYYY-MM-DD" (o null si no figura).`;
 
 export async function extractEquipmentWarrantyFromText(rawText: string): Promise<EquipmentWarrantyExtractedFields> {
-  const client = new Anthropic();
-
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    max_tokens: 4000,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: `Texto de la póliza o manual de garantía:\n${rawText}` }],
-    output_config: { format: zodOutputFormat(EquipmentWarrantyExtractedFieldsSchema) },
-  });
-
-  if (!response.parsed_output) {
-    throw new Error("La extracción de la garantía no devolvió resultados estructurados.");
-  }
-
-  return response.parsed_output;
+  return callStructuredWithFallback(
+    SYSTEM_PROMPT,
+    `Texto de la póliza o manual de garantía:\n${rawText}`,
+    EquipmentWarrantyExtractedFieldsSchema,
+    4000
+  );
 }

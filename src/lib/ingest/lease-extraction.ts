@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-import { CANONICAL_CLAUDE_MODEL } from "@/lib/llm/provider";
+import { CANONICAL_CLAUDE_MODEL, callStructuredWithFallback } from "@/lib/llm/provider";
 import { LeaseExtractedFieldsSchema, type LeaseExtractedFields } from "./lease-extraction-schema";
 import { checkLegibility } from "./legibility-check";
 
@@ -48,19 +48,12 @@ special_clauses: cualquier cláusula fuera de lo estándar que NO sea una de las
 Responde solo con los campos estructurados solicitados.`;
 
 export async function extractFromText(rawText: string): Promise<LeaseExtractedFields> {
-  const client = new Anthropic();
-
-  const response = await client.messages.parse({
-    model: CANONICAL_CLAUDE_MODEL,
-    max_tokens: 4000,
-    system: EXTRACTION_SYSTEM_PROMPT,
-    messages: [{ role: "user", content: `Texto del contrato:\n${rawText}` }],
-    output_config: { format: zodOutputFormat(LeaseExtractedFieldsSchema) },
-  });
-
-  if (!response.parsed_output) {
-    throw new Error("lease extraction (text path) returned no parsed output");
-  }
+  const extracted = await callStructuredWithFallback(
+    EXTRACTION_SYSTEM_PROMPT,
+    `Texto del contrato:\n${rawText}`,
+    LeaseExtractedFieldsSchema,
+    4000
+  );
 
   // The legibility gate is not vision-only. pdf-parse can return a native text
   // layer that is mojibake or otherwise garbled (broken embedded encoding,
@@ -76,7 +69,7 @@ export async function extractFromText(rawText: string): Promise<LeaseExtractedFi
     throw new Error(`illegible native text layer: ${legibility.reason}`);
   }
 
-  return response.parsed_output;
+  return extracted;
 }
 
 const VisionExtractionSchema = z.object({
