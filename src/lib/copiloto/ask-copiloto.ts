@@ -402,9 +402,10 @@ async function streamFromGemini(
     .join("\n\n");
 
   // Same constant resolveModelName() resolves any "gemini*"/"flash*" request
-  // to — previously hardcoded here as a second, different literal
-  // ("gemini-3.5-flash") that silently disagreed with CANONICAL_GEMINI_MODEL
-  // ("gemini-2.5-flash") elsewhere in this codebase.
+  // to — previously hardcoded here as a second, separate literal that
+  // silently disagreed with CANONICAL_GEMINI_MODEL elsewhere in this
+  // codebase. Keep it pointed at the constant, not a repeated literal, so
+  // the two can't drift apart again.
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CANONICAL_GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${geminiKey}`;
   const res = await fetch(url, {
     method: "POST",
