@@ -186,7 +186,7 @@ export function DiegoTriageQueue({
             Supervisión y gestión de reportes de mantenimiento en tiempo real.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
           <span className="bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200">
             {kpis.totalActiveTickets} Activos
           </span>

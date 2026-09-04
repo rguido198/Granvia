@@ -150,14 +150,20 @@ async function judgeGrounding(client: Anthropic, anchor: string, answer: string)
 async function main() {
   const client = new Anthropic();
   const fixturePath = path.join(__dirname, "../tests/fixtures/golden-eval-set.json");
-  const cases: GoldenCase[] = JSON.parse(readFileSync(fixturePath, "utf-8"));
+  const allCases: GoldenCase[] = JSON.parse(readFileSync(fixturePath, "utf-8"));
+
+  const onlyId = process.env.EVAL_ONLY_ID;
+  const repeat = Number(process.env.EVAL_REPEAT || "1");
+  const cases: GoldenCase[] = onlyId
+    ? Array(repeat).fill(allCases.find((c) => c.id === onlyId)).filter(Boolean) as GoldenCase[]
+    : allCases;
 
   const geminiModels = [
     { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash" }
   ];
 
   console.log("=========================================================================");
-  console.log(" GRAN VÍA BENCHMARK: GEMINI 3.8 FLASH vs CLAUDE SONNET 5 (current fallback default)");
+  console.log(" GRAN VÍA GOLDEN EVAL: GEMINI 3.8 FLASH, JUDGED BY CLAUDE SONNET 5");
   console.log("=========================================================================\n");
 
   for (const m of geminiModels) {

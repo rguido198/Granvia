@@ -1,18 +1,26 @@
 import "server-only";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import {
+  computeEscalationAudit,
   findEscalationClause,
   isExpired,
   isRenewalSoon,
   type LeaseDetail,
   type LeaseRenewalSummary,
+  type RentChangeEvent,
   type SpecialClause,
 } from "./contract-status";
+import { fetchLeaseClausesByLeaseIds } from "./lease-clauses.server";
 
 export { computeContractAggregates, contractStatusLabel } from "./contract-status";
-export type { ContractAggregates, LeaseDetail, LeaseRenewalSummary } from "./contract-status";
+export type { ContractAggregates, LeaseDetail, LeaseRenewalSummary, LeaseClause, LeaseClauseReviewStatus } from "./contract-status";
 
 export type LocaleStatus = "OCCUPIED" | "VACANT" | "PENDING_LEASE";
+
+/** Commercial category, independent of occupancy (locales.status covers
+ *  that) — a vacant unit keeps its category, so a landlord can see "this
+ *  vacant slot is a Food-category unit" for backfill leasing strategy. */
+export type LocaleUnitType = "ANCHOR" | "FOOD" | "RETAIL" | "SERVICE" | "OTHER";
 
 export type PortfolioRow = {
   slug: string;
@@ -47,6 +55,9 @@ export type PortfolioRow = {
    *  way the console currently labels a unit) instead of just the binary
    *  the rest of this row's fields were built around. */
   status: LocaleStatus;
+  /** null until a landlord backfills it (existing locales predate this
+   *  column) or sets it on a new AddTenantForm submission, which requires it. */
+  unitType: LocaleUnitType | null;
 };
 
 /** A locale that once had a tenant and no longer does — vacateTenantAction
@@ -121,14 +132,14 @@ export async function fetchPortfolio(): Promise<Portfolio> {
 
   const { data: locales, error: localesError } = await supabase
     .from("locales")
-    .select("id, unit_number, area_sqm, status, tenant_entity, trade_name")
+    .select("id, unit_number, area_sqm, status, tenant_entity, trade_name, unit_type")
     .order("unit_number");
   if (localesError) throw new Error(localesError.message);
 
   const { data: leaseRows, error: leasesError } = await supabase
     .from("leases")
     .select(
-      "id, locale_id, tenant_entity, trade_name, permitted_use, exclusive_use_clause, parking_clause, directory_advertising_clause, expansion_option_clause, extended_hours_clause, signage_clause, pets_clause, sublease_restriction_clause, remodeling_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id",
+      "id, locale_id, tenant_entity, trade_name, permitted_use, exclusive_use_clause, parking_clause, directory_advertising_clause, expansion_option_clause, extended_hours_clause, signage_clause, pets_clause, sublease_restriction_clause, remodeling_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id, escalation_pct, escalation_method, escalation_month, security_deposit_amount, security_deposit_status, agent_notes",
     );
   if (leasesError) throw new Error(leasesError.message);
 
@@ -229,6 +240,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       vacant,
       renewalSoon: !vacant && lease ? isRenewalSoon(lease.end_date) : false,
       status: l.status as LocaleStatus,
+      unitType: (l.unit_type as LocaleUnitType | null) ?? null,
     };
   });
 
@@ -353,12 +365,40 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
     }
   }
 
+  // Batch-fetched once for all active leases, same pattern as renewalsByLeaseId
+  // above — feeds computeEscalationAudit's "was the scheduled bump applied"
+  // check (contract-status.ts).
+  const activeLeaseIds = [...activeLeaseByLocale.values()].map((l) => l.id);
+  const rentHistoryByLeaseId = new Map<string, RentChangeEvent[]>();
+  if (activeLeaseIds.length > 0) {
+    const { data: rentHistoryRows, error: rentHistoryError } = await supabase
+      .from("lease_rent_history")
+      .select("lease_id, old_rent, new_rent, changed_at")
+      .in("lease_id", activeLeaseIds);
+    if (rentHistoryError) throw new Error(rentHistoryError.message);
+    for (const r of rentHistoryRows ?? []) {
+      const list = rentHistoryByLeaseId.get(r.lease_id) ?? [];
+      list.push({
+        changedAt: (r.changed_at as string).slice(0, 10),
+        oldRent: r.old_rent === null ? null : Number(r.old_rent),
+        newRent: Number(r.new_rent),
+      });
+      rentHistoryByLeaseId.set(r.lease_id, list);
+    }
+  }
+
+  const clausesByLeaseId = await fetchLeaseClausesByLeaseIds(activeLeaseIds);
+
   const leases: LeaseDetail[] = [...activeLeaseByLocale.values()]
     .map((l) => {
       const locale = localesById.get(l.locale_id);
       const escalation = l.source_document_id
         ? findEscalationClause(specialClausesByDocumentId.get(l.source_document_id) ?? null)
         : null;
+      const escalationAudit = computeEscalationAudit(
+        { startDate: l.start_date, escalationMonth: l.escalation_month },
+        rentHistoryByLeaseId.get(l.id) ?? [],
+      );
       return {
         id: l.locale_id,
         unitCode: locale?.unit_number ?? "?",
@@ -388,6 +428,15 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
         renewals: renewalsByLeaseId.get(l.id) ?? [],
         suggestedEscalationPct: escalation?.pct ?? null,
         suggestedEscalationClauseText: escalation?.clauseText ?? null,
+        escalationPct: l.escalation_pct === null ? null : Number(l.escalation_pct),
+        escalationMethod: l.escalation_method,
+        escalationMonth: l.escalation_month,
+        securityDepositAmount: l.security_deposit_amount === null ? null : Number(l.security_deposit_amount),
+        securityDepositStatus: l.security_deposit_status,
+        agentNotes: l.agent_notes,
+        escalationOverdue: escalationAudit.overdue,
+        escalationDueDate: escalationAudit.dueDate,
+        clauses: clausesByLeaseId.get(l.id) ?? [],
       };
     })
     .sort((a, b) => a.unitCode.localeCompare(b.unitCode));

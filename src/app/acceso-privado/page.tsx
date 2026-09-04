@@ -40,7 +40,7 @@ export default function PrivateGatePage() {
 
           <p className="mt-6 border-t border-hairline pt-4 text-center font-mono text-[10px] leading-relaxed text-ink-400">
             ¿Requieres acceso? Contacta a la administración de La Gran Vía o a{" "}
-            <a className="underline hover:text-ink" href="mailto:contact@technologyconsultants.ventures">
+            <a className="underline hover:text-ink" href="mailto:contact@technologyconsultants.ai">
               Technology Consultants
             </a>
           </p>

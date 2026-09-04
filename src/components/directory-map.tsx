@@ -328,8 +328,12 @@ export function DirectoryMap() {
           </div>
         </div>
 
-        {/* SVG VECTOR CANVAS */}
-        <div className="relative w-full overflow-hidden bg-[#1C1A18] rounded-xl border border-[#3A3631] p-2 sm:p-4">
+        {/* SVG VECTOR CANVAS — overflow-x-auto, not -hidden: the min-w-[650px]
+            below keeps the zone labels legible, which means anything under
+            ~700px (most phones) can't fit it without shrinking text past
+            reading size. Scrolling to see the rest beats silently clipping
+            the right half of the plaza with no way to reach it. */}
+        <div className="relative w-full overflow-x-auto bg-[#1C1A18] rounded-xl border border-[#3A3631] p-2 sm:p-4">
           <svg
             viewBox="0 0 1000 520"
             className="w-full h-auto min-w-[650px] select-none"
@@ -521,11 +525,11 @@ export function DirectoryMap() {
           </span>
         </div>
 
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredTenants.map((tenant) => (
             <li
               key={tenant.slug}
-              className="flex gap-4 rounded-xl border border-hairline bg-sand-100 p-4 transition-all hover:border-ink-400 hover:shadow-xs group"
+              className="min-w-0 flex gap-4 rounded-xl border border-hairline bg-sand-100 p-4 transition-all hover:border-ink-400 hover:shadow-xs group"
             >
               <TenantLogo
                 tenant={tenant}

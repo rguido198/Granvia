@@ -5,6 +5,8 @@ import { upsertContractorAction, type ContractorFormState } from "@/lib/contract
 import {
   CONTRACTOR_TRADES,
   CONTRACTOR_TRADE_LABELS,
+  CONTRACTOR_RATE_TYPES,
+  CONTRACTOR_RATE_TYPE_LABELS,
   type Contractor,
 } from "@/lib/contractors/shared";
 
@@ -93,6 +95,22 @@ function ContractorForm({ contractor, onDone }: { contractor: Contractor | null;
             placeholder="MXN"
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
           />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tipo de tarifa (opcional)</label>
+          <select
+            name="rate_type"
+            defaultValue={contractor?.rateType ?? ""}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
+          >
+            <option value="">-- sin especificar --</option>
+            {CONTRACTOR_RATE_TYPES.map((rt) => (
+              <option key={rt} value={rt}>
+                {CONTRACTOR_RATE_TYPE_LABELS[rt]}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1">
@@ -206,6 +224,7 @@ export function ContractorRoster({ contractors }: { contractors: Contractor[] })
                     <td className="p-3.5">
                       <span className="text-slate-800 font-semibold">{c.name}</span>
                       {c.responseTimeCommitment && <p className="text-[11px] text-slate-500">{c.responseTimeCommitment}</p>}
+                      {c.rateType && <p className="text-[11px] text-slate-500">{CONTRACTOR_RATE_TYPE_LABELS[c.rateType]}</p>}
                     </td>
                     <td className="p-3.5 text-slate-600 font-medium whitespace-nowrap">{c.coverageHours ?? "—"}</td>
                     <td className="p-3.5 whitespace-nowrap">

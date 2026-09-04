@@ -11,7 +11,7 @@ import { z } from "zod";
  * auto-updating pointer to fall back on here.
  */
 export const CANONICAL_CLAUDE_MODEL = "claude-sonnet-5";
-export const CANONICAL_GEMINI_MODEL = "gemini-3.5-flash";
+export const CANONICAL_GEMINI_MODEL = "gemini-3.8-flash";
 
 export function resolveModelName(modelName?: string): string {
   if (!modelName) return CANONICAL_CLAUDE_MODEL;

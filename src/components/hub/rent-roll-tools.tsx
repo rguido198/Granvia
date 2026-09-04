@@ -47,11 +47,20 @@ function plusYearsISO(years: number): string {
 type TenantDraft = {
   tenantName: string;
   unitNumber: string;
+  unitType: "" | "ANCHOR" | "FOOD" | "RETAIL" | "SERVICE" | "OTHER";
   areaSqm: string;
   baseRentMonthly: string;
   startDate: string;
   endDate: string;
   applicationId: string;
+};
+
+const UNIT_TYPE_LABELS: Record<"ANCHOR" | "FOOD" | "RETAIL" | "SERVICE" | "OTHER", string> = {
+  ANCHOR: "Ancla",
+  FOOD: "Alimentos",
+  RETAIL: "Retail",
+  SERVICE: "Servicio",
+  OTHER: "Otro",
 };
 
 function AddTenantForm({
@@ -68,6 +77,7 @@ function AddTenantForm({
   const [draft, setDraft] = useState<TenantDraft>({
     tenantName: "",
     unitNumber: "",
+    unitType: "",
     areaSqm: "",
     baseRentMonthly: "",
     startDate: todayISO(),
@@ -91,6 +101,7 @@ function AddTenantForm({
   const canReview =
     draft.tenantName.trim() !== "" &&
     draft.unitNumber.trim() !== "" &&
+    draft.unitType !== "" &&
     draft.areaSqm !== "" &&
     Number(draft.areaSqm) > 0 &&
     draft.baseRentMonthly !== "" &&
@@ -158,6 +169,20 @@ function AddTenantForm({
               className={`${INPUT_CLS} disabled:bg-slate-100 disabled:text-slate-500`}
             />
           </Field>
+          <Field label="Tipo de local">
+            <select
+              value={draft.unitType}
+              onChange={(e) => setDraft((d) => ({ ...d, unitType: e.target.value as TenantDraft["unitType"] }))}
+              className={INPUT_CLS}
+            >
+              <option value="">-- selecciona un tipo --</option>
+              {(Object.keys(UNIT_TYPE_LABELS) as (keyof typeof UNIT_TYPE_LABELS)[]).map((key) => (
+                <option key={key} value={key}>
+                  {UNIT_TYPE_LABELS[key]}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="Superficie (m²)">
             <input
               type="number"
@@ -223,6 +248,7 @@ function AddTenantForm({
     <form action={formAction} className="rounded-xl border border-amber-300 bg-amber-50/60 p-4 space-y-3">
       <input type="hidden" name="tenant_name" value={draft.tenantName} />
       <input type="hidden" name="unit_number" value={draft.unitNumber} />
+      <input type="hidden" name="unit_type" value={draft.unitType} />
       <input type="hidden" name="area_sqm" value={draft.areaSqm} />
       <input type="hidden" name="base_rent_monthly" value={draft.baseRentMonthly} />
       <input type="hidden" name="start_date" value={draft.startDate} />
@@ -237,6 +263,8 @@ function AddTenantForm({
         <dd className="font-bold">{draft.tenantName}</dd>
         <dt className="text-slate-500">Local</dt>
         <dd className="font-bold">{draft.unitNumber}</dd>
+        <dt className="text-slate-500">Tipo de local</dt>
+        <dd className="font-bold">{draft.unitType && UNIT_TYPE_LABELS[draft.unitType]}</dd>
         <dt className="text-slate-500">Superficie</dt>
         <dd className="font-bold">{draft.areaSqm} m²</dd>
         <dt className="text-slate-500">Renta mensual</dt>

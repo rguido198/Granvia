@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
+import type { LocaleUnitType } from "@/lib/data/portfolio.server";
+
+const UNIT_TYPES: LocaleUnitType[] = ["ANCHOR", "FOOD", "RETAIL", "SERVICE", "OTHER"];
 
 export type RentRollActionState = { error?: string; success?: string };
 
@@ -64,9 +67,12 @@ export async function addTenantAction(
   const rentRaw = String(formData.get("base_rent_monthly") ?? "").trim();
   const startDateInput = String(formData.get("start_date") ?? "").trim();
   const endDateInput = String(formData.get("end_date") ?? "").trim();
+  const unitTypeRaw = String(formData.get("unit_type") ?? "").trim();
 
   if (!tenantName) return { error: "Nombre del inquilino requerido" };
   if (!unitNumber) return { error: "Número de local requerido" };
+  if (!UNIT_TYPES.includes(unitTypeRaw as LocaleUnitType)) return { error: "Tipo de local requerido" };
+  const unitType = unitTypeRaw as LocaleUnitType;
 
   const sqm = Number(sqmRaw);
   const rent = Number(rentRaw);
@@ -91,7 +97,7 @@ export async function addTenantAction(
     // inserting a duplicate.
     const { error: updateError } = await admin
       .from("locales")
-      .update({ area_sqm: sqm, status: "OCCUPIED", tenant_entity: tenantName })
+      .update({ area_sqm: sqm, status: "OCCUPIED", tenant_entity: tenantName, unit_type: unitType })
       .eq("id", existingUnit.id);
     if (updateError) return { error: updateError.message };
     localeId = existingUnit.id;
@@ -101,7 +107,7 @@ export async function addTenantAction(
 
     const { data: locale, error: localeError } = await admin
       .from("locales")
-      .insert({ property_id: propertyId, unit_number: unitNumber, area_sqm: sqm, status: "OCCUPIED", tenant_entity: tenantName })
+      .insert({ property_id: propertyId, unit_number: unitNumber, area_sqm: sqm, status: "OCCUPIED", tenant_entity: tenantName, unit_type: unitType })
       .select("id")
       .single();
     if (localeError || !locale) return { error: localeError?.message ?? "No se pudo crear el local" };

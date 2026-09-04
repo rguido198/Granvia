@@ -23,6 +23,14 @@ export const CONTRACTOR_TRADE_LABELS: Record<ContractorTrade, string> = {
   refrigeracion: "Refrigeración",
 };
 
+export const CONTRACTOR_RATE_TYPES = ["FLAT", "PER_INCIDENT"] as const;
+export type ContractorRateType = (typeof CONTRACTOR_RATE_TYPES)[number];
+
+export const CONTRACTOR_RATE_TYPE_LABELS: Record<ContractorRateType, string> = {
+  FLAT: "Tarifa Fija",
+  PER_INCIDENT: "Por Incidente",
+};
+
 export type Contractor = {
   id: string;
   name: string;
@@ -30,6 +38,7 @@ export type Contractor = {
   coverageHours: string | null;
   responseTimeCommitment: string | null;
   rate: number | null;
+  rateType: ContractorRateType | null;
   licenseExpiry: string | null;
   coiExpiry: string | null;
   active: boolean;

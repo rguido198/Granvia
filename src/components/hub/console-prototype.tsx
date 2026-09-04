@@ -113,7 +113,6 @@ export function ConsolePrototype({ data }: { data: ConsoleData }) {
     collectionRate,
     tenantsAlDia,
     tenantsWithAlert,
-    capexRejected,
     camTotals,
     camMonthlyPool,
     generatedAt,
@@ -200,12 +199,6 @@ export function ConsolePrototype({ data }: { data: ConsoleData }) {
                 value={(camTotals.sharePct / 100).toFixed(4)}
                 note={camTotals.base === camMonthlyPool ? "Cuadra contra la bolsa" : "Descuadre"}
                 tone={camTotals.base === camMonthlyPool ? "ok" : "alert"}
-              />
-              <Kpi
-                label="Gasto rechazado"
-                value={`$${(capexRejected / 1000).toFixed(0)}k MXN`}
-                note="Ahorro directo propietario"
-                tone="ok"
               />
             </div>
 

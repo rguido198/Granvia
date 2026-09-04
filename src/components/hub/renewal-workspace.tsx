@@ -128,7 +128,7 @@ function LeaseOutreachRow({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         {status ? (
           <span
             className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)]/40"

@@ -6,12 +6,13 @@ import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
 import { fetchPendingLeaseApplications } from "@/lib/data/approval-queue.server";
 import { fetchLocaleOptions, fetchTenantPortalData } from "@/lib/data/tenant-portal.server";
 import { fetchContractors } from "@/lib/data/contractors.server";
-import { fetchAutonomyState } from "@/lib/platform/settings.server";
+import { fetchAutonomyState, fetchMaintenanceBudget, fetchApprovalTiers } from "@/lib/platform/settings.server";
 import { fetchAuditLog } from "@/lib/platform/audit-log.server";
 import { fetchCorporateUsers } from "@/lib/platform/users.server";
 import { fetchActiveLeaseDocuments, fetchPortfolio } from "@/lib/data/portfolio.server";
 import { fetchRenewalOutreachStatus, type RenewalOutreachStatus } from "@/lib/data/renewal-workspace.server";
 import { fetchLeads } from "@/lib/data/leads.server";
+import { fetchCapexCases, computeCapexKpis } from "@/lib/data/capex-cases.server";
 
 /**
  * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
@@ -41,6 +42,8 @@ export default async function ConsolaPage() {
   const contractors = await fetchContractors();
   const tenantPortal = await fetchTenantPortalData();
   const autonomyState = await fetchAutonomyState();
+  const maintenanceBudget = await fetchMaintenanceBudget();
+  const approvalTiers = await fetchApprovalTiers();
   const auditLog = await fetchAuditLog();
   const corporateUsers = await fetchCorporateUsers();
   const portfolio = await fetchPortfolio();
@@ -49,11 +52,17 @@ export default async function ConsolaPage() {
   const renewalOutreachStatusMap = await fetchRenewalOutreachStatus(portfolio.leases.map((l) => l.leaseRowId));
   const renewalOutreachStatus: Record<string, RenewalOutreachStatus> = Object.fromEntries(renewalOutreachStatusMap);
   const leads = await fetchLeads();
+  const capexCases = await fetchCapexCases();
+  const capexKpis = computeCapexKpis(capexCases);
 
   return (
     <PageFade>
       <ConsoleShell
         data={data}
+        capexCases={capexCases}
+        capexKpis={capexKpis}
+        maintenanceBudget={maintenanceBudget}
+        approvalTiers={approvalTiers}
         diegoTickets={diegoTickets}
         diegoKpis={diegoKpis}
         localeOptions={localeOptions}

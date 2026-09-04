@@ -35,6 +35,15 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     renewals: [],
     suggestedEscalationPct: null,
     suggestedEscalationClauseText: null,
+    escalationPct: null,
+    escalationMethod: null,
+    escalationMonth: null,
+    securityDepositAmount: null,
+    securityDepositStatus: null,
+    agentNotes: null,
+    escalationOverdue: false,
+    escalationDueDate: null,
+    clauses: [],
     ...overrides,
   };
 }

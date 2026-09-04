@@ -24,7 +24,7 @@ export const PITCH_THESIS = {
   caption: "Mismo sitio. Misma marca. Un equipo nuevo trabajando adentro.",
   urlBefore: "lagranvia.com.mx",
   labelBefore: "Hoy",
-  urlAfter: "granvia.technologyconsultants.ventures",
+  urlAfter: "granvia.technologyconsultants.ai",
   labelAfter: "La propuesta",
   badge: "+ Equipo de IA",
 } as const;
@@ -53,8 +53,8 @@ export const PITCH_DEMO = {
   title: "Conócelos en vivo.",
   lead: "Cada agente de esta propuesta funciona de verdad. Vamos a probarlos juntos, ahora mismo.",
   ctaLabel: "Abrir la demo en vivo",
-  url: "https://granvia.technologyconsultants.ventures/equipo-ia",
-  urlLabel: "granvia.technologyconsultants.ventures/equipo-ia",
+  url: "https://granvia.technologyconsultants.ai/equipo-ia",
+  urlLabel: "granvia.technologyconsultants.ai/equipo-ia",
 } as const;
 
 export const PITCH_CLOSE = {
@@ -63,6 +63,6 @@ export const PITCH_CLOSE = {
   lead: "Esto es solo el principio de lo que Mariana, Diego y Renata pueden hacer por La Gran Vía.",
   creditLabel: "Propuesta preparada por",
   creditName: "Technology Consultants",
-  creditUrl: "https://technologyconsultants.ventures",
-  creditEmail: "roberto@technologyconsultants.ventures",
+  creditUrl: "https://technologyconsultants.ai",
+  creditEmail: "roberto@technologyconsultants.ai",
 } as const;

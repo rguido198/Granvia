@@ -9,12 +9,13 @@ import type { ConsoleData } from "@/lib/console-data";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
 import type { LocaleOption, PortalLocale } from "@/lib/data/tenant-portal.server";
 import type { Contractor } from "@/lib/data/contractors.server";
-import type { AutonomyState } from "@/lib/platform/settings.server";
+import type { AutonomyState, MaintenanceBudget, ApprovalTiers } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
 import type { LeaseDocumentRow, Portfolio } from "@/lib/data/portfolio.server";
 import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
 import type { RenewalOutreachStatus } from "@/lib/data/renewal-outreach-types";
+import type { CapexCase, CapexKpis } from "@/lib/data/capex-cases.server";
 import { HeaderAttentionBell, type AttentionCounts } from "@/components/hub/header-attention-bell";
 import { signOut } from "@/app/consola/actions";
 
@@ -55,6 +56,10 @@ export function ConsoleShell({
   leaseApplications,
   renewalOutreachStatus,
   leads,
+  capexCases,
+  capexKpis,
+  maintenanceBudget,
+  approvalTiers,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -71,6 +76,10 @@ export function ConsoleShell({
   leaseApplications: PendingLeaseApplication[];
   renewalOutreachStatus: Record<string, RenewalOutreachStatus>;
   leads: LeadRow[];
+  capexCases: CapexCase[];
+  capexKpis: CapexKpis;
+  maintenanceBudget: MaintenanceBudget;
+  approvalTiers: ApprovalTiers;
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -114,7 +123,19 @@ export function ConsoleShell({
       // an overlay rendered outside it silently loses all three.
       id={CONSOLE_ROOT_ID}
       style={{
-        zoom: fontSizeLevel === "large" ? 1.12 : fontSizeLevel === "xlarge" ? 1.25 : 1,
+        // Omitted (not 1) at the default size: in Chromium, an element with
+        // `zoom` SET — even to the numeric no-op value 1 — becomes the
+        // containing block for every `position: fixed` descendant, including
+        // everything portaled here via ConsoleModal. That silently breaks
+        // fixed-viewport overlays (they size/center against this element's
+        // full scrollable height instead of the real viewport) for every
+        // session at the default text size, which is nearly everyone — only
+        // large/xlarge actually need the zoom applied.
+        ...(fontSizeLevel === "large"
+          ? { zoom: 1.12 }
+          : fontSizeLevel === "xlarge"
+            ? { zoom: 1.25 }
+            : {}),
         // Console-scoped design tokens — the single place the console's accent
         // is defined. Every hub/*.tsx file below references these three
         // via Tailwind arbitrary values (e.g. bg-[var(--console-accent)])
@@ -197,7 +218,7 @@ export function ConsoleShell({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2.5">
-          {/* Consulta IA leads the cluster and carries the console accent
+          {/* Valeria IA leads the cluster and carries the console accent
            *  color (every other control here is neutral slate) — it's the
            *  main feature of this console, not one setting among several. */}
           {isOwner && (
@@ -212,7 +233,7 @@ export function ConsoleShell({
               }`}
             >
               <span className="h-2 w-2 rounded-full bg-white/70" />
-              <span>Consulta IA</span>
+              <span>Valeria IA</span>
             </button>
           )}
 
@@ -277,7 +298,7 @@ export function ConsoleShell({
                       controls in a single line. Currency/period are configuration,
                       not frequent actions, so they belong in the settings menu
                       alongside text size, not competing for row space with
-                      Consulta IA / the bell / the view toggle. */}
+                      Valeria IA / the bell / the view toggle. */}
                   <div>
                     <p className="mb-1.5 text-xs font-bold text-slate-900">Moneda</p>
                     <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
@@ -404,6 +425,10 @@ export function ConsoleShell({
           leaseApplications={leaseApplications}
           renewalOutreachStatus={renewalOutreachStatus}
           leads={leads}
+          capexCases={capexCases}
+          capexKpis={capexKpis}
+          maintenanceBudget={maintenanceBudget}
+          approvalTiers={approvalTiers}
           onPendingCountsChange={setPendingCounts}
           navigateRequest={navigateRequest}
           onNavigateRequestHandled={clearNavigateRequest}

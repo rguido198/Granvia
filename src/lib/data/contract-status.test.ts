@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { computeContractAggregates, contractStatusLabel, findEscalationClause, type LeaseDetail } from "./contract-status";
+import {
+  computeContractAggregates,
+  computeEscalationAudit,
+  contractStatusLabel,
+  findEscalationClause,
+  type LeaseDetail,
+  type RentChangeEvent,
+} from "./contract-status";
 
 function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
   return {
@@ -31,6 +38,15 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     renewals: [],
     suggestedEscalationPct: null,
     suggestedEscalationClauseText: null,
+    escalationPct: null,
+    escalationMethod: null,
+    escalationMonth: null,
+    securityDepositAmount: null,
+    securityDepositStatus: null,
+    agentNotes: null,
+    escalationOverdue: false,
+    escalationDueDate: null,
+    clauses: [],
     ...overrides,
   };
 }
@@ -108,5 +124,51 @@ describe("findEscalationClause", () => {
       { label: "Ajuste anual", text: "La renta se ajustará anualmente según lo que determinen las partes de mutuo acuerdo." },
     ]);
     expect(result).toBeNull();
+  });
+});
+
+describe("computeEscalationAudit", () => {
+  const lease = makeLease({ startDate: "2024-01-01", escalationMonth: 9 });
+
+  it("is never overdue when escalationMonth is unset", () => {
+    const result = computeEscalationAudit(makeLease({ escalationMonth: null }), [], new Date("2026-10-01"));
+    expect(result).toEqual({ overdue: false, dueDate: null });
+  });
+
+  it("flags overdue when the due month has passed with no recorded increase", () => {
+    const result = computeEscalationAudit(lease, [], new Date("2026-10-01"));
+    expect(result).toEqual({ overdue: true, dueDate: "2026-09-01" });
+  });
+
+  it("is not overdue when a rent increase was recorded at or after the due date", () => {
+    const history: RentChangeEvent[] = [{ changedAt: "2026-09-05", oldRent: 95000, newRent: 100225 }];
+    const result = computeEscalationAudit(lease, history, new Date("2026-10-01"));
+    expect(result).toEqual({ overdue: false, dueDate: "2026-09-01" });
+  });
+
+  it("ignores a recorded change that isn't an increase (e.g. a correction down)", () => {
+    const history: RentChangeEvent[] = [{ changedAt: "2026-09-05", oldRent: 95000, newRent: 90000 }];
+    const result = computeEscalationAudit(lease, history, new Date("2026-10-01"));
+    expect(result.overdue).toBe(true);
+  });
+
+  it("ignores an increase recorded before the due date (a prior cycle's, not this one's)", () => {
+    const history: RentChangeEvent[] = [{ changedAt: "2025-09-05", oldRent: 90000, newRent: 95000 }];
+    const result = computeEscalationAudit(lease, history, new Date("2026-10-01"));
+    expect(result.overdue).toBe(true);
+  });
+
+  it("uses last year's occurrence when this year's due month hasn't arrived yet", () => {
+    const result = computeEscalationAudit(lease, [], new Date("2026-03-01"));
+    expect(result.dueDate).toBe("2025-09-01");
+  });
+
+  it("is not overdue when the due date predates the lease's own start", () => {
+    const result = computeEscalationAudit(
+      makeLease({ startDate: "2026-12-01", escalationMonth: 9 }),
+      [],
+      new Date("2026-10-01"),
+    );
+    expect(result).toEqual({ overdue: false, dueDate: null });
   });
 });

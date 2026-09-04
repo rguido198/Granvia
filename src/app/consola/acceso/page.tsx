@@ -33,8 +33,8 @@ export default function ConsoleLoginPage() {
 
           <p className="mt-5 border-t border-hairline pt-4 text-center font-mono text-[10px] leading-relaxed text-ink-500">
             La sesión caduca a las 8 horas. ¿Sin acceso? Escribe a{" "}
-            <a className="underline hover:text-ink" href="mailto:contact@technologyconsultants.ventures">
-              contact@technologyconsultants.ventures
+            <a className="underline hover:text-ink" href="mailto:contact@technologyconsultants.ai">
+              contact@technologyconsultants.ai
             </a>
           </p>
         </div>

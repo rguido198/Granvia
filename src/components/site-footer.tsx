@@ -88,7 +88,7 @@ export function SiteFooter() {
               Transformación digital integral de Asset Management y agentes de IA autónomos desarrollados por:
             </p>
             <a
-              href="https://technologyconsultants.ventures"
+              href="https://technologyconsultants.ai"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-3.5 py-2 rounded-xl text-xs transition-colors border border-slate-700 shadow-2xs group"

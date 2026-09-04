@@ -23,7 +23,13 @@ import { wrapUntrustedContent } from "@/lib/llm/untrusted-content";
  * generation, no tool-use loop).
  */
 
-const SYSTEM_PROMPT = `Eres Consulta IA, el Director de Asset Management y Copiloto Comercial de La Gran Vía Mexicali.
+// Renamed from "Consulta IA" to "Valeria IA" 2026-09-03 — same identity,
+// now also the agent that drafts/edits contract terms (previously Mariana's
+// renewal-draft generator hardcoded its own byline instead; that was never
+// actually Mariana's stated scope — see docs/superpowers/specs/2026-09-03-
+// rent-roll-redesign-data-mapping.md §4 decision 1). Mariana keeps
+// exclusivity screening for new applicants, unchanged.
+const SYSTEM_PROMPT = `Eres Valeria IA, el Director de Asset Management y Copiloto Comercial de La Gran Vía Mexicali.
 
 Tu rol es ser el asesor ejecutivo estratégico del propietario de la plaza comercial. Tienes visión integral sobre:
 1. Rent Roll, Ocupación y Estrategia de Arrendamiento (Superficie GLA Total, GLA Arrendado, GLA Vacante, Ocupación %, Renta Mensual Total y Renta Promedio/m²).
@@ -72,6 +78,23 @@ type PortfolioLeaseRecord = {
   clausulas_especiales: unknown;
   texto_completo_contrato: string | null;
   sourceDocumentId: string | null;
+  /** Renewal drafts for this lease — added 2026-09-03 so Valeria can
+   *  reference a specific in-flight draft (renewal_id) when proposing an
+   *  edit via propose_renewal_edit. Previously absent from this data block
+   *  entirely; purely additive, doesn't change anything the read-only path
+   *  already returns. */
+  renovaciones: {
+    renewal_id: string;
+    numero: string;
+    estatus: string;
+    fecha_fin_actual: string;
+    fecha_inicio_nueva: string;
+    fecha_fin_nueva: string;
+    renta_actual_mxn: number | null;
+    renta_nueva_mxn: number;
+    escalacion_pct: number | null;
+    metodo_escalacion: string;
+  }[];
 };
 
 type PortfolioDataBlock = {
@@ -191,6 +214,20 @@ async function fetchDataBlock(): Promise<PortfolioDataBlock> {
     clausulas_especiales: l.sourceDocumentId ? (specialClausesByDocumentId.get(l.sourceDocumentId) ?? null) : null,
     texto_completo_contrato: null,
     sourceDocumentId: l.sourceDocumentId,
+    renovaciones: l.renewals
+      .filter((r) => r.status === "needs_landlord_review")
+      .map((r) => ({
+        renewal_id: r.id,
+        numero: r.renewalNumber,
+        estatus: r.status,
+        fecha_fin_actual: r.currentEndDate,
+        fecha_inicio_nueva: r.newStartDate,
+        fecha_fin_nueva: r.newEndDate,
+        renta_actual_mxn: r.currentBaseRentMonthly,
+        renta_nueva_mxn: r.newBaseRentMonthly,
+        escalacion_pct: r.escalationPct,
+        metodo_escalacion: r.escalationMethod,
+      })),
   }));
 
   const ticketsBlock = tickets.map((t) => ({
@@ -263,7 +300,22 @@ async function withIncrementalCacheFallback<T>(cached: () => Promise<T>, raw: ()
 // Shared by askCopiloto (non-streaming — used by scripts/golden-eval-runner.ts,
 // which needs a plain string to grade) and askCopilotoStream (the live
 // endpoint) so the two never drift on what data the model actually sees.
-async function buildCopilotoRequest(question: string, masterGla?: number): Promise<CopilotoRequest> {
+async function buildCopilotoRequest(
+  question: string,
+  masterGla?: number,
+  options?: {
+    /** Default true (unchanged behavior for askCopiloto/askCopilotoStream —
+     *  see wrapUntrustedContent's own doc comment: it's meant for /api/ingest's
+     *  OPEN, unauthenticated intake kinds). askValeria passes false — its
+     *  question always comes from the landlord-gated route, and wrapping it as
+     *  "sin autenticar" made Claude refuse propose_renewal_edit outright,
+     *  found live 2026-09-03: the model correctly followed the wrapper's own
+     *  instruction to never treat wrapped content as a directive, which is
+     *  exactly the behavior this real, authenticated request needed to not have. */
+    wrapQuestion?: boolean;
+  },
+): Promise<CopilotoRequest> {
+  const wrapQuestion = options?.wrapQuestion ?? true;
   const data = await withIncrementalCacheFallback(getCachedData, fetchDataBlock);
 
   const totalGla = masterGla && masterGla > 0 ? masterGla : data.estadisticas_agregadas_contratos.gla_total_plaza_m2;
@@ -337,7 +389,11 @@ async function buildCopilotoRequest(question: string, masterGla?: number): Promi
     // this is a fallback for anything else date-relative the model might
     // reason about (a model has no reliable notion of the real-world
     // "today" on its own).
-    text: `Hoy es ${new Date().toISOString().slice(0, 10)}.\n\n${wrapUntrustedContent("pregunta_entrante", question)}`,
+    text: `Hoy es ${new Date().toISOString().slice(0, 10)}.\n\n${
+      wrapQuestion
+        ? wrapUntrustedContent("pregunta_entrante", question)
+        : `<pregunta_del_propietario>\n${question}\n</pregunta_del_propietario>`
+    }`,
   });
 
   return {
@@ -499,4 +555,159 @@ export async function askCopilotoStream(question: string, masterGla?: number): P
       anthropicStream.abort();
     },
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Valeria's conversational-edit capability — added 2026-09-03, scoped per
+// docs/superpowers/specs/2026-09-03-rent-roll-redesign-data-mapping.md §3a:
+//   - conversation state is client-held only (no persisted thread table)
+//   - the tool never writes to the database — it returns a proposed change,
+//     which the UI renders as a diff card; only an explicit "Aplicar" click
+//     (a separate server action, lease-renewal-actions.ts) commits it
+//   - scoped to unsigned renewal drafts (lease_renewals.status =
+//     'needs_landlord_review') only — never a signed, active lease
+//   - Claude-only: no Gemini tool-use parity, this function has no fallback
+//
+// Deliberately NOT streaming, unlike askCopilotoStream above: a tool-use
+// response is a short structured payload, not a long synthesis answer, so
+// the latency case streaming exists for doesn't apply here. Reuses
+// buildCopilotoRequest as-is (zero changes to the existing read-only path)
+// by prepending prior turns before its single data-context-carrying user
+// message — history always ends on an assistant turn (or is empty), so
+// appending that message preserves strict user/assistant alternation.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type RenewalEditableField = "new_start_date" | "new_end_date" | "new_base_rent_monthly" | "escalation_pct" | "escalation_method";
+
+const RENEWAL_FIELD_LABELS: Record<RenewalEditableField, string> = {
+  new_start_date: "Fecha de inicio",
+  new_end_date: "Fecha de fin",
+  new_base_rent_monthly: "Renta mensual",
+  escalation_pct: "Porcentaje de escalación",
+  escalation_method: "Método de escalación",
+};
+
+export type ProposedRenewalEdit = {
+  renewalId: string;
+  renewalNumber: string;
+  tenantEntity: string;
+  field: RenewalEditableField;
+  fieldLabel: string;
+  oldValue: string;
+  newValue: string;
+  reasoning: string | null;
+};
+
+export type ValeriaTurn = {
+  answer: string;
+  proposedEdit: ProposedRenewalEdit | null;
+  error?: string;
+};
+
+const PROPOSE_RENEWAL_EDIT_TOOL: Anthropic.Messages.Tool = {
+  name: "propose_renewal_edit",
+  description:
+    "Propone un cambio a un campo de una renovación de contrato AÚN EN BORRADOR (estatus needs_landlord_review). El cambio NO se aplica automáticamente — el propietario debe confirmarlo explícitamente en la interfaz antes de que se escriba en la base de datos. Nunca uses esta herramienta para un contrato ya firmado y activo, solo para borradores de renovación pendientes.",
+  input_schema: {
+    type: "object",
+    properties: {
+      renewal_id: {
+        type: "string",
+        description: "El renewal_id (uuid) o número (ej. REN-011) del borrador de renovación a modificar, tomado de renovaciones en los datos de la plaza.",
+      },
+      field: {
+        type: "string",
+        enum: ["new_start_date", "new_end_date", "new_base_rent_monthly", "escalation_pct", "escalation_method"],
+        description: "Campo a modificar. Fechas en formato YYYY-MM-DD, renta y porcentaje como número plano.",
+      },
+      new_value: { type: "string", description: "El nuevo valor propuesto, como texto." },
+      reasoning: { type: "string", description: "Una oración explicando por qué se propone este cambio, mostrada al propietario junto con el comparativo." },
+    },
+    required: ["renewal_id", "field", "new_value"],
+  },
+};
+
+function isRenewalEditableField(value: string): value is RenewalEditableField {
+  return value in RENEWAL_FIELD_LABELS;
+}
+
+export async function askValeria(
+  history: { role: "user" | "assistant"; content: string }[],
+  question: string,
+  masterGla?: number,
+): Promise<ValeriaTurn> {
+  const request = await buildCopilotoRequest(question, masterGla, { wrapQuestion: false });
+  const messages: Anthropic.Messages.MessageParam[] = [
+    ...history.map((h) => ({ role: h.role, content: h.content })),
+    ...request.messages,
+  ];
+
+  const client = getAnthropicClient();
+  const response = await client.messages.create({
+    ...MODEL_PARAMS,
+    system: request.system,
+    messages,
+    tools: [PROPOSE_RENEWAL_EDIT_TOOL],
+  });
+
+  const textBlock = response.content.find((block) => block.type === "text");
+  const answer = textBlock && textBlock.type === "text" ? textBlock.text : "";
+  const toolUseBlock = response.content.find((block) => block.type === "tool_use");
+
+  if (!answer && !toolUseBlock) {
+    return {
+      answer: "",
+      proposedEdit: null,
+      error: `El agente no generó una respuesta (stop_reason: ${response.stop_reason}). Intenta de nuevo o reformula la pregunta.`,
+    };
+  }
+
+  if (!toolUseBlock || toolUseBlock.type !== "tool_use") {
+    return { answer, proposedEdit: null };
+  }
+
+  const input = toolUseBlock.input as { renewal_id?: string; field?: string; new_value?: string; reasoning?: string };
+  if (!input.renewal_id || !input.field || input.new_value === undefined || !isRenewalEditableField(input.field)) {
+    return { answer, proposedEdit: null, error: "Valeria propuso un cambio con datos incompletos — no se generó la tarjeta de confirmación." };
+  }
+
+  const supabase = getSupabaseServiceClient();
+  const { data: renewal, error: renewalError } = await supabase
+    .from("lease_renewals")
+    .select("id, renewal_number, tenant_entity, status, new_start_date, new_end_date, new_base_rent_monthly, escalation_pct, escalation_method")
+    .or(`id.eq.${input.renewal_id},renewal_number.eq.${input.renewal_id}`)
+    .maybeSingle();
+
+  if (renewalError || !renewal) {
+    return { answer, proposedEdit: null, error: `No se encontró la renovación "${input.renewal_id}".` };
+  }
+  if (renewal.status !== "needs_landlord_review") {
+    return {
+      answer,
+      proposedEdit: null,
+      error: `La renovación ${renewal.renewal_number} ya no está en borrador (estatus: ${renewal.status}) — no se puede editar.`,
+    };
+  }
+
+  const fieldColumnByEditable: Record<RenewalEditableField, keyof typeof renewal> = {
+    new_start_date: "new_start_date",
+    new_end_date: "new_end_date",
+    new_base_rent_monthly: "new_base_rent_monthly",
+    escalation_pct: "escalation_pct",
+    escalation_method: "escalation_method",
+  };
+  const oldValue = renewal[fieldColumnByEditable[input.field]];
+
+  const proposedEdit: ProposedRenewalEdit = {
+    renewalId: renewal.id,
+    renewalNumber: renewal.renewal_number,
+    tenantEntity: renewal.tenant_entity,
+    field: input.field,
+    fieldLabel: RENEWAL_FIELD_LABELS[input.field],
+    oldValue: oldValue === null ? "—" : String(oldValue),
+    newValue: input.new_value,
+    reasoning: input.reasoning ?? null,
+  };
+
+  return { answer, proposedEdit };
 }

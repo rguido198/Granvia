@@ -69,9 +69,50 @@ export type LeaseDetail = {
    *  form's percentage field; the landlord can still override it. */
   suggestedEscalationPct: number | null;
   suggestedEscalationClauseText: string | null;
+  /** The active lease's own committed escalation schedule — distinct from
+   *  suggestedEscalationPct above (a *suggestion* mined from the source
+   *  document's special_clauses) and from LeaseRenewalSummary.escalationPct
+   *  (a *proposed renewal's* terms). null until a landlord confirms one. */
+  escalationPct: number | null;
+  escalationMethod: string | null;
+  escalationMonth: number | null;
+  /** Confirmed absent from this schema until 2026-09-03 — see
+   *  portfolio.server.ts's fetchPortfolio doc comment history. null until a
+   *  landlord backfills it. */
+  securityDepositAmount: number | null;
+  securityDepositStatus: string | null;
+  agentNotes: string | null;
+  /** See computeEscalationAudit's doc comment for what "overdue" means and
+   *  its one known limitation (no visibility before lease_rent_history
+   *  existed). false whenever escalationMonth is unset. */
+  escalationOverdue: boolean;
+  escalationDueDate: string | null;
+  /** Empty for a lease never digitized, or digitized before this ledger
+   *  existed (2026-09-03) — no backfill for prior extractions. */
+  clauses: LeaseClause[];
 };
 
 export type SpecialClause = { label: string; text: string };
+
+export type LeaseClauseReviewStatus = "needs_counsel" | "awaiting_reading" | "up_to_date" | "ready_to_redo";
+
+/** One row of Mariana's clause ledger (lease_clauses.server.ts) — auto-generated
+ *  at digitization from the same extraction that writes the named-clause
+ *  columns and exclusive_use_clause (kept, per the 2026-09-03 "coexist"
+ *  decision — this is the separate, granular audit view, not a replacement). */
+export type LeaseClause = {
+  id: string;
+  leaseId: string;
+  sourceDocumentId: string | null;
+  clauseNumber: number;
+  clauseLabel: string;
+  clauseText: string;
+  reviewStatus: LeaseClauseReviewStatus;
+  flagged: boolean;
+  agentNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 const ESCALATION_KEYWORDS = [
   "incremento",
@@ -159,6 +200,60 @@ export function isRenewalSoon(endDate: string): boolean {
  *  real end_date landed in the past relative to today. */
 export function isExpired(endDate: string): boolean {
   return monthsUntil(endDate) < 0;
+}
+
+export type RentChangeEvent = {
+  changedAt: string;
+  oldRent: number | null;
+  newRent: number;
+};
+
+export type EscalationAudit = {
+  overdue: boolean;
+  /** The most recent occurrence of escalationMonth that has already passed
+   *  — null when escalationMonth is unset, or when that occurrence predates
+   *  the lease's own start_date (nothing was "overdue" before the lease
+   *  existed). */
+  dueDate: string | null;
+};
+
+/**
+ * Detects a scheduled rent escalation that doesn't appear to have happened.
+ * "Happened" means: some rent increase (any amount — this is a presence
+ * check, not a percentage match, since real-world negotiation can land
+ * anywhere near the stated pct) recorded in lease_rent_history at or after
+ * the most recent due date.
+ *
+ * Known limitation, not a bug: lease_rent_history (supabase/migrations/
+ * 20260903230148_lease_rent_history.sql) only captures changes made after
+ * that migration landed. A due date from before then will show `overdue:
+ * true` even if the escalation genuinely happened, because there is no
+ * record of it. This audit is only reliable for cycles whose due date falls
+ * after the history table went live — accepted tradeoff (2026-09-03) rather
+ * than building a backfill for changes nobody logged.
+ */
+export function computeEscalationAudit(
+  lease: Pick<LeaseDetail, "startDate" | "escalationMonth">,
+  rentHistory: RentChangeEvent[],
+  referenceDate: Date = new Date(),
+): EscalationAudit {
+  if (lease.escalationMonth === null) return { overdue: false, dueDate: null };
+
+  const refYear = referenceDate.getFullYear();
+  let dueDate = new Date(refYear, lease.escalationMonth - 1, 1);
+  if (dueDate > referenceDate) {
+    dueDate = new Date(refYear - 1, lease.escalationMonth - 1, 1);
+  }
+
+  const start = parseDateOnly(lease.startDate);
+  if (dueDate < start) return { overdue: false, dueDate: null };
+
+  const dueDateStr = dueDate.toISOString().slice(0, 10);
+  const applied = rentHistory.some(
+    (event) => event.changedAt >= dueDateStr && event.oldRent !== null && event.newRent > event.oldRent,
+  );
+
+  return { overdue: !applied, dueDate: dueDateStr };
 }
 
 /** The same three-way precedence the SSOT table's status column renders

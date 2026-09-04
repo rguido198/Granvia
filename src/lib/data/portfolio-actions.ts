@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
+import type { LocaleUnitType } from "@/lib/data/portfolio.server";
 
 export type UpdateRentRollFieldResult = { error?: string };
+
+const UNIT_TYPES: LocaleUnitType[] = ["ANCHOR", "FOOD", "RETAIL", "SERVICE", "OTHER"];
 
 /**
  * Rent Roll's "Modo Edición" inline inputs — landlord-gated, writes the real
@@ -68,6 +71,85 @@ export async function updateRentRollFieldAction(
     const { error } = await admin.from("leases").update({ base_rent_monthly: value }).eq("id", activeLease.id);
     if (error) return { error: error.message };
   }
+
+  revalidatePath("/consola");
+  invalidateCopilotoCache();
+  return {};
+}
+
+export type LeaseEditableField =
+  | "escalation_pct"
+  | "escalation_method"
+  | "escalation_month"
+  | "security_deposit_amount"
+  | "security_deposit_status"
+  | "agent_notes";
+
+const LEASE_NUMERIC_FIELDS: LeaseEditableField[] = ["escalation_pct", "escalation_month", "security_deposit_amount"];
+
+/**
+ * Tier 3 — the same "Modo Edición" pattern as updateRentRollFieldAction, but
+ * targeting `leases` directly by leaseRowId (LeaseDetail.leaseRowId, the real
+ * leases.id) rather than by localeId, since these six fields live on the
+ * lease row itself, not the locale. One action instead of six near-identical
+ * ones — the three text fields (escalation_method, security_deposit_status,
+ * agent_notes) and three numeric fields (escalation_pct, escalation_month,
+ * security_deposit_amount) share the same auth/revalidate shape and differ
+ * only in how the raw value is cast before the write.
+ */
+export async function updateLeaseFieldAction(
+  leaseRowId: string,
+  field: LeaseEditableField,
+  rawValue: string,
+): Promise<UpdateRentRollFieldResult> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "landlord") {
+    return { error: "No autorizado" };
+  }
+
+  const trimmed = rawValue.trim();
+  let value: number | string | null;
+  if (LEASE_NUMERIC_FIELDS.includes(field)) {
+    if (trimmed === "") {
+      value = null;
+    } else {
+      const n = Number(trimmed);
+      if (!Number.isFinite(n)) return { error: "Valor numérico inválido" };
+      if (field === "escalation_month" && (n < 1 || n > 12)) return { error: "El mes debe estar entre 1 y 12" };
+      value = n;
+    }
+  } else {
+    value = trimmed === "" ? null : trimmed;
+  }
+
+  const admin = getSupabaseServiceClient();
+  const { error } = await admin.from("leases").update({ [field]: value }).eq("id", leaseRowId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/consola");
+  invalidateCopilotoCache();
+  return {};
+}
+
+/**
+ * Sets a locale's commercial category — independent of updateRentRollFieldAction
+ * above since it targets `locales.unit_type` unconditionally, with no
+ * vacant/occupied branching (a vacant unit keeps its category). Existing
+ * locales predate this column and start null; this is also the one-time
+ * backfill path for those, in addition to being the ongoing edit path.
+ */
+export async function updateUnitTypeAction(localeId: string, unitType: LocaleUnitType): Promise<UpdateRentRollFieldResult> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "landlord") {
+    return { error: "No autorizado" };
+  }
+  if (!UNIT_TYPES.includes(unitType)) {
+    return { error: "Tipo de local inválido" };
+  }
+
+  const admin = getSupabaseServiceClient();
+  const { error } = await admin.from("locales").update({ unit_type: unitType }).eq("id", localeId);
+  if (error) return { error: error.message };
 
   revalidatePath("/consola");
   invalidateCopilotoCache();

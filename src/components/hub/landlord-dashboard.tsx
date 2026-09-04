@@ -11,7 +11,7 @@ import type { Contractor } from "@/lib/data/contractors.server";
 import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
-import type { Portfolio, LocaleStatus, LeaseDocumentRow } from "@/lib/data/portfolio.server";
+import type { Portfolio, LocaleStatus, LocaleUnitType, LeaseDocumentRow } from "@/lib/data/portfolio.server";
 import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
 import { buildApprovalQueue, type ApprovalQueueItem } from "@/lib/approval-queue";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
@@ -21,8 +21,13 @@ import { DocumentViewerButton, isInFlight, LegalDocumentsPanel, UploadContractBu
 import { MarianaPendingPanel } from "@/components/hub/mariana-pending-panel";
 import type { AttentionCounts } from "@/components/hub/header-attention-bell";
 import { InviteLandlordForm } from "@/components/hub/invite-landlord-form";
-import { toggleAutonomyKillSwitchAction } from "@/lib/platform/actions";
-import { updateRentRollFieldAction } from "@/lib/data/portfolio-actions";
+import { toggleAutonomyKillSwitchAction, updateMaintenanceBudgetAction, updateApprovalTiersAction } from "@/lib/platform/actions";
+import type { MaintenanceBudget, ApprovalTiers } from "@/lib/platform/settings.server";
+import { updateRentRollFieldAction, updateUnitTypeAction, updateLeaseFieldAction, type LeaseEditableField } from "@/lib/data/portfolio-actions";
+import { updateLeaseClauseReviewAction } from "@/lib/data/lease-clauses-actions";
+import { updateRenewalFieldAction } from "@/lib/data/lease-renewal-actions";
+import type { ProposedRenewalEdit } from "@/lib/copiloto/ask-copiloto";
+import type { LeaseClauseReviewStatus } from "@/lib/data/portfolio.server";
 import { RentRollAdminTools, TerminateTenantButton } from "@/components/hub/rent-roll-tools";
 import { LeaseRenewalPanel } from "@/components/hub/lease-renewal-panel";
 import { RenewalWorkspace } from "@/components/hub/renewal-workspace";
@@ -32,8 +37,35 @@ import { LeadPipeline } from "@/components/hub/lead-pipeline";
 import { TENANTS } from "@/content/tenants";
 import { TenantLogo } from "@/components/tenant-logo";
 import type { EquipmentAsset, EquipmentAssetCategory } from "@/lib/data/equipment-assets.server";
+import type { CapexCase, CapexKpis } from "@/lib/data/capex-cases.server";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
+
+type CopilotMessage = {
+  role: "user" | "assistant";
+  content: string;
+  /** Set on an assistant message when Valeria's propose_renewal_edit tool
+   *  fired — renders as a diff card the landlord can Aplicar/Descartar.
+   *  Cleared (not deleted) once resolved, so the card shows its resolved
+   *  state instead of disappearing and losing context. */
+  proposedEdit?: ProposedRenewalEdit;
+  editResolution?: "applied" | "dismissed";
+};
+
+const CLAUSE_REVIEW_STATUS_LABELS: Record<LeaseClauseReviewStatus, string> = {
+  needs_counsel: "Necesita Asesoría Legal",
+  awaiting_reading: "Pendiente de Lectura",
+  up_to_date: "Al Día",
+  ready_to_redo: "Lista para Redactar",
+};
+
+const UNIT_TYPE_LABELS: Record<LocaleUnitType, string> = {
+  ANCHOR: "Ancla",
+  FOOD: "Alimentos",
+  RETAIL: "Retail",
+  SERVICE: "Servicio",
+  OTHER: "Otro",
+};
 
 type RentRollSortKey = "name" | "sqm" | "sharePct" | "rent";
 type RentRollSort = { key: RentRollSortKey; dir: "asc" | "desc" };
@@ -562,6 +594,10 @@ export function LandlordDashboard({
   leaseApplications,
   renewalOutreachStatus,
   leads,
+  capexCases,
+  capexKpis,
+  maintenanceBudget,
+  approvalTiers,
   onPendingCountsChange,
   navigateRequest,
   onNavigateRequestHandled,
@@ -588,6 +624,10 @@ export function LandlordDashboard({
    *  Map isn't RSC-serializable across the client boundary. */
   renewalOutreachStatus: Record<string, RenewalOutreachStatus>;
   leads: LeadRow[];
+  capexCases: CapexCase[];
+  capexKpis: CapexKpis;
+  maintenanceBudget: MaintenanceBudget;
+  approvalTiers: ApprovalTiers;
   /** Pushed up on every change so ConsoleShell's HeaderAttentionBell (its
    *  header bar, not this component's) can render a live count without
    *  duplicating the buildApprovalQueue() derivation up there. */
@@ -611,9 +651,6 @@ export function LandlordDashboard({
   triggerToast: (msg: string) => void;
 }) {
   const {
-    capexCases,
-    capexRejected,
-    capexWarrantyRecovered,
     maintenanceEvents,
     periodLabel,
   } = data;
@@ -967,6 +1004,80 @@ export function LandlordDashboard({
     void refreshPortfolio();
   }
 
+  async function saveUnitType(localeId: string, unitType: LocaleUnitType, label: string) {
+    const key = `${localeId}:unitType`;
+    setSavingField(key);
+    const result = await updateUnitTypeAction(localeId, unitType);
+    setSavingField(null);
+
+    if (result.error) {
+      triggerToast(`No se pudo actualizar el tipo de local de ${label}: ${result.error}`);
+      return;
+    }
+    triggerToast(`Tipo de local de ${label} actualizado.`);
+    void refreshPortfolio();
+  }
+
+  const [applyingEditIdx, setApplyingEditIdx] = useState<number | null>(null);
+
+  async function applyProposedEdit(msgIdx: number, edit: ProposedRenewalEdit) {
+    setApplyingEditIdx(msgIdx);
+    const result = await updateRenewalFieldAction(edit.renewalId, edit.field, edit.newValue);
+    setApplyingEditIdx(null);
+
+    if (result.error) {
+      triggerToast(`No se pudo aplicar el cambio: ${result.error}`);
+      return;
+    }
+    setCopilotHistory((prev) => {
+      const updated = [...prev];
+      if (updated[msgIdx]) updated[msgIdx] = { ...updated[msgIdx], editResolution: "applied" };
+      return updated;
+    });
+    triggerToast(`${edit.renewalNumber} actualizado: ${edit.fieldLabel} → ${edit.newValue}.`);
+    void refreshPortfolio();
+  }
+
+  function dismissProposedEdit(msgIdx: number) {
+    setCopilotHistory((prev) => {
+      const updated = [...prev];
+      if (updated[msgIdx]) updated[msgIdx] = { ...updated[msgIdx], editResolution: "dismissed" };
+      return updated;
+    });
+  }
+
+  async function saveClauseReview(
+    clauseId: string,
+    updates: { reviewStatus?: LeaseClauseReviewStatus; flagged?: boolean },
+    label: string,
+  ) {
+    const key = `clause:${clauseId}`;
+    setSavingField(key);
+    const result = await updateLeaseClauseReviewAction(clauseId, updates);
+    setSavingField(null);
+
+    if (result.error) {
+      triggerToast(`No se pudo actualizar ${label}: ${result.error}`);
+      return;
+    }
+    triggerToast(`${label} actualizado.`);
+    void refreshPortfolio();
+  }
+
+  async function saveLeaseField(leaseRowId: string, field: LeaseEditableField, rawValue: string, label: string) {
+    const key = `${leaseRowId}:${field}`;
+    setSavingField(key);
+    const result = await updateLeaseFieldAction(leaseRowId, field, rawValue);
+    setSavingField(null);
+
+    if (result.error) {
+      triggerToast(`No se pudo actualizar ${label}: ${result.error}`);
+      return;
+    }
+    triggerToast(`${label} actualizado.`);
+    void refreshPortfolio();
+  }
+
   // Rent Roll table sort/filter — text filter is pure client-side (rentRoll
   // is already fully loaded), and the Estado facet below is likewise a plain
   // client-side predicate over the real `status` field portfolio.server.ts
@@ -1010,11 +1121,11 @@ export function LandlordDashboard({
   // now lives in ConsoleShell's single header bar; the drawer itself, and every
   // conversation state below, still belong here.
   const [copilotQuestion, setCopilotQuestion] = useState("");
-  const [copilotHistory, setCopilotHistory] = useState<{ role: "user" | "assistant"; content: string }[]>(() => {
+  const [copilotHistory, setCopilotHistory] = useState<CopilotMessage[]>(() => {
     if (typeof window === "undefined") return [];
     try {
       const saved = localStorage.getItem("granvia_copilot_chat_history");
-      if (saved) return JSON.parse(saved) as { role: "user" | "assistant"; content: string }[];
+      if (saved) return JSON.parse(saved) as CopilotMessage[];
     } catch {
       // localstorage unavailable
     }
@@ -1054,56 +1165,42 @@ export function LandlordDashboard({
       setCopilotError(null);
       setCopilotQuestion("");
 
+      // Prior turns only — the new question is sent separately below, and
+      // Valeria only needs role/content (proposedEdit/editResolution are
+      // this UI's own rendering state, not part of the conversation Claude
+      // sees).
+      const historyForRequest = copilotHistory.map((m) => ({ role: m.role, content: m.content }));
+
       setCopilotHistory((prev) => [...prev, { role: "user", content: asked }]);
       scrollToChatBottom();
 
       try {
-        const res = await fetch("/api/copiloto/ask", {
+        const res = await fetch("/api/copiloto/valeria", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: asked, masterGla: plazaTotalGla }),
+          body: JSON.stringify({ question: asked, history: historyForRequest, masterGla: plazaTotalGla }),
           signal: controller.signal,
         });
 
-        if (!res.ok) {
-          const errorText = await res.text().catch(() => "");
-          let parsedError = "";
-          try {
-            const json = JSON.parse(errorText) as { error?: string };
-            if (json.error) parsedError = json.error;
-          } catch {
-            // text was not JSON
-          }
+        const body = await res.json().catch(() => null);
 
+        if (!res.ok || !body) {
+          const parsedError = (body as { error?: string } | null)?.error ?? "";
           if (res.status === 401 || parsedError === "unauthorized") {
             throw new Error("Tu sesión ha expirado. Por favor recarga la página para volver a ingresar.");
           }
-          throw new Error(parsedError || errorText.slice(0, 150) || `Error ${res.status} del servidor.`);
+          throw new Error(parsedError || `Error ${res.status} del servidor.`);
         }
-        if (!res.body) throw new Error("Error de conexión con el agente.");
 
-        setCopilotHistory((prev) => [...prev, { role: "assistant", content: "" }]);
+        const turn = body as { answer: string; proposedEdit: ProposedRenewalEdit | null; error?: string };
+        if (turn.error && !turn.answer) throw new Error(turn.error);
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          setCopilotHistory((prev) => {
-            const updated = [...prev];
-            const lastIndex = updated.length - 1;
-            if (lastIndex >= 0 && updated[lastIndex].role === "assistant") {
-              updated[lastIndex] = {
-                role: "assistant",
-                content: updated[lastIndex].content + chunk,
-              };
-            }
-            return updated;
-          });
-          scrollToChatBottom();
-        }
+        setCopilotHistory((prev) => [
+          ...prev,
+          { role: "assistant", content: turn.answer, proposedEdit: turn.proposedEdit ?? undefined },
+        ]);
+        scrollToChatBottom();
+        if (turn.error) setCopilotError(turn.error);
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         setCopilotError(err instanceof Error ? err.message : "Error de conexión con el agente.");
@@ -1111,7 +1208,7 @@ export function LandlordDashboard({
         if (copilotAbortRef.current === controller) setCopilotLoading(false);
       }
     },
-    [copilotLoading, plazaTotalGla, scrollToChatBottom],
+    [copilotLoading, copilotHistory, plazaTotalGla, scrollToChatBottom],
   );
 
   // Interactive AI Action States & Simulations
@@ -1189,18 +1286,24 @@ export function LandlordDashboard({
   };
 
   // Governance Policy Edit States
-  const [editingPolicyCard, setEditingPolicyCard] = useState<null | "diego" | "sso">(null);
+  const [editingPolicyCard, setEditingPolicyCard] = useState<null | "diego" | "budget" | "sso">(null);
 
-  // CapEx cost Diego kept off the landlord's P&L this month (denied to the tenant + warranty-covered).
-  // Excludes APROBADO_PRORRATEO_CAM cases — those route to Renata's CAM pool, not here, so this
-  // total never double-counts against Fondo CAM NNN Mensual.
-  const diegoProtectedCapex = capexRejected + capexWarrantyRecovered;
+  // CapEx cost Diego kept off the landlord's P&L (denied to the tenant + warranty-covered),
+  // computed server-side in capex-cases.server.ts's computeCapexKpis(). Excludes
+  // APROBADO_PRORRATEO_CAM cases — those route to Renata's CAM pool, not here, so this
+  // total never double-counts against Fondo CAM NNN Mensual — and excludes
+  // APROBADO_COSTO_ARRENDADOR, which is real landlord spend, not something "protected."
+  const diegoProtectedCapex = capexKpis.protectedFromPL;
 
-  const [diegoThresholdVal, setDiegoThresholdVal] = useState<number>(50000);
-  const [diegoAutoMode, setDiegoAutoMode] = useState<boolean>(true);
+  const [autoCeilingVal, setAutoCeilingVal] = useState<number>(approvalTiers.autoCeilingMxn);
+  const [gerenteCeilingVal, setGerenteCeilingVal] = useState<number>(approvalTiers.gerenteCeilingMxn);
+  const [approvalTiersPending, setApprovalTiersPending] = useState(false);
   const [ssoEnforcedMode, setSsoEnforcedMode] = useState<boolean>(true);
   const [killSwitchActive, setKillSwitchActive] = useState<boolean>(autonomyState.frozen);
   const [killSwitchPending, setKillSwitchPending] = useState(false);
+  const [maintenanceBudgetVal, setMaintenanceBudgetVal] = useState<number | null>(maintenanceBudget.quarterlyBudgetMxn);
+  const [maintenanceBudgetPending, setMaintenanceBudgetPending] = useState(false);
+  const maintenanceBudgetInputRef = useRef<HTMLInputElement>(null);
 
   // Diego IA Maintenance Sub-Navigation State
   const [maintSubTab, setMaintSubTab] = useState<"triage" | "calendario" | "capex" | "contratistas">("triage");
@@ -1635,32 +1738,35 @@ export function LandlordDashboard({
                   wrapper below 1400px, and the wrapper is overflow-hidden — at
                   1024px the old table ran 298px past it and the status column
                   was simply cut off. Percentages can't overflow. */}
-              <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-hidden">
-                <table className="w-full table-fixed text-left text-sm">
+              <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-x-auto">
+                <table className="w-full min-w-[900px] table-fixed text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
-                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} width="w-[26%]" />
-                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" width="w-[11%]" />
+                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} width="w-[19%]" />
+                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" width="w-[8%]" />
                       <SortableHeader
-                        label="% Participación GLA"
+                        label="% GLA"
                         sortKey="sharePct"
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[16%]"
+                        width="w-[10%]"
                         title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
                       />
                       <SortableHeader
-                        label="Renta Mensual Contratada"
+                        label="Renta Mensual"
                         sortKey="rent"
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[20%]"
+                        width="w-[12%]"
                         className="font-extrabold"
                       />
+                      <th className="p-3.5 w-[11%] text-right cursor-default select-none">Renta Anual</th>
+                      <th className="p-3.5 w-[14%] text-left cursor-default select-none">Escalación</th>
+                      <th className="p-3.5 w-[10%] text-left cursor-default select-none">Vencimiento</th>
                       <th
-                        className="p-3.5 w-[27%] text-center cursor-default select-none"
+                        className="p-3.5 w-[16%] text-center cursor-default select-none"
                         title="SSOT = Single Source of Truth / Fuente Única de Verdad (Información sincronizada en tiempo real)"
                       >
                         Estatus Contractual SSOT
@@ -1670,7 +1776,7 @@ export function LandlordDashboard({
                   <tbody className="divide-y divide-hairline text-ink-700 font-medium">
                     {visibleRentRoll.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="p-6 text-center text-ink-500">
+                        <td colSpan={8} className="p-6 text-center text-ink-500">
                           {rentRollFilter ? <>Sin resultados para &ldquo;{rentRollFilter}&rdquo;.</> : "Sin locales con este estatus."}
                         </td>
                       </tr>
@@ -1702,6 +1808,32 @@ export function LandlordDashboard({
                                   </p>
                                 )}
                                 <p className="text-xs text-ink-500 font-medium">{r.unitCode}</p>
+                                {isEditingRentRoll ? (
+                                  <select
+                                    defaultValue={r.unitType ?? ""}
+                                    aria-label={`Tipo de local para ${r.name}`}
+                                    disabled={savingField === `${r.slug}:unitType`}
+                                    className="mt-1 w-fit bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-xs font-bold text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                    onChange={(e) => {
+                                      if (e.target.value) saveUnitType(r.slug, e.target.value as LocaleUnitType, r.name);
+                                    }}
+                                  >
+                                    <option value="" disabled>
+                                      -- tipo --
+                                    </option>
+                                    {(Object.keys(UNIT_TYPE_LABELS) as LocaleUnitType[]).map((key) => (
+                                      <option key={key} value={key}>
+                                        {UNIT_TYPE_LABELS[key]}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  r.unitType && (
+                                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-ink-700 border border-hairline">
+                                      {UNIT_TYPE_LABELS[r.unitType]}
+                                    </span>
+                                  )
+                                )}
                               </div>
                               {/* Only real, direct signal a contract scan exists for this
                                   unit without expanding the row — previously buried as an
@@ -1727,7 +1859,20 @@ export function LandlordDashboard({
                               `${r.sqm} m²`
                             )}
                           </td>
-                          <td className="p-3.5 text-right font-medium text-ink-700 text-sm whitespace-nowrap">{r.sharePct.toFixed(2)}%</td>
+                          <td className="p-3.5 text-right font-medium text-ink-700 text-sm whitespace-nowrap">
+                            <div className="flex flex-col items-end gap-1">
+                              <span>{r.sharePct.toFixed(2)}%</span>
+                              {/* GLA share bar — visual weight proportional to sharePct,
+                                  same console-accent already used everywhere else
+                                  interactive/notable in this table, not a new color. */}
+                              <div className="w-16 h-1 rounded-full bg-slate-100 overflow-hidden" title={`${r.sharePct.toFixed(2)}% del GLA total`}>
+                                <div
+                                  className="h-full rounded-full bg-[var(--console-accent)]"
+                                  style={{ width: `${Math.min(100, r.sharePct)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
                           <td className="p-3.5 text-right font-bold text-ink text-sm whitespace-nowrap">
                             {isEditingRentRoll ? (
                               <input
@@ -1747,6 +1892,50 @@ export function LandlordDashboard({
                                 </p>
                               </div>
                             )}
+                          </td>
+                          {/* Renta Anual, Escalación, Vencimiento — real fields that
+                              already existed elsewhere (Legal Expedientes' expanded
+                              row) but were never surfaced in the Rent Roll table
+                              itself, flagged 2026-09-04. Renta Anual is pure math off
+                              r.rent (no new data); Escalación/Vencimiento come from
+                              leaseByLocaleId, the same LeaseDetail cross-reference
+                              this file already uses a few lines below for
+                              sourceApplicationNumber — no new plumbing. */}
+                          <td className="p-3.5 text-right font-medium text-ink-700 text-sm whitespace-nowrap">
+                            {formatVal(r.rent * 12)}
+                          </td>
+                          <td className="p-3.5 text-left text-sm whitespace-nowrap">
+                            {(() => {
+                              const lease = leaseByLocaleId.get(r.slug);
+                              if (!lease || lease.escalationPct === null) {
+                                return <span className="text-ink-400">—</span>;
+                              }
+                              return (
+                                <div>
+                                  <p className="font-bold text-ink-700">
+                                    {lease.escalationPct}% {lease.escalationMethod ? `· ${lease.escalationMethod}` : ""}
+                                  </p>
+                                  {lease.escalationOverdue && (
+                                    <p className="text-[10px] font-bold text-alert" title={`Vencida desde ${lease.escalationDueDate}`}>
+                                      Vencida
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </td>
+                          <td className="p-3.5 text-left text-sm whitespace-nowrap">
+                            {(() => {
+                              const lease = leaseByLocaleId.get(r.slug);
+                              if (!lease) return <span className="text-ink-400">—</span>;
+                              return (
+                                <div>
+                                  <p className={`font-bold ${lease.isExpired ? "text-alert" : r.renewalSoon ? "text-caution" : "text-ink-700"}`}>
+                                    {new Date(lease.endDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
+                                  </p>
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td className="p-3.5 text-center whitespace-nowrap">
                             <div className="flex flex-col items-center gap-1">
@@ -1776,18 +1965,33 @@ export function LandlordDashboard({
                                 // "SSOT" is only earned once a scanned contract backs the
                                 // row — otherwise this badge would claim a verification
                                 // that never happened (dashboard-builder §1 honesty rule).
+                                // Quiet status system (2026-09-03 reskin): reuses the
+                                // console's own ok/caution tokens (globals.css) instead of
+                                // the mockup's own colors — same visual intent (a verified
+                                // "good" state reads calmer than an unverified one), zero
+                                // new palette.
                                 <span
-                                  className="bg-slate-100 text-ink-700 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                                  className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                                   title="Respaldado por un contrato escaneado en el sistema"
                                 >
                                   Vigente SSOT
                                 </span>
                               ) : (
                                 <span
-                                  className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                                  className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                                   title="Ocupado y bajo contrato, pero sin un documento escaneado en el sistema todavía"
                                 >
                                   Vigente
+                                </span>
+                              )}
+                              {/* Orthogonal to the pill above (doc-scanned vs. not) —
+                                  a lease can be either and still be within its own
+                                  renewal window. r.renewalSoon already existed on
+                                  PortfolioRow before this reskin; just never rendered
+                                  here. */}
+                              {!r.vacant && !isBlueLuna && r.renewalSoon && (
+                                <span className="bg-signal/10 text-signal border border-signal/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                  Renovación Próxima
                                 </span>
                               )}
                               {!r.vacant && r.leaseId && (
@@ -1813,6 +2017,25 @@ export function LandlordDashboard({
                       );
                     })}
                   </tbody>
+                  {/* Totals row — portfolio-wide (not scoped to the search/status
+                      filter above), matching the header's own "{rentRoll.length}
+                      locales · GLA Total..." stat just above the table so the two
+                      never disagree. Real figures already computed for the header
+                      cards, restated here rather than re-derived. */}
+                  <tfoot>
+                    <tr className="border-t-2 border-hairline-strong bg-slate-50/70 font-bold text-ink">
+                      <td className="p-3.5 text-sm">Total Portafolio · {rentRoll.length} locales</td>
+                      <td className="p-3.5 text-right text-sm whitespace-nowrap">{plazaTotalGla.toLocaleString("es-MX")} m²</td>
+                      <td className="p-3.5 text-right text-sm whitespace-nowrap">
+                        {plazaTotalGla > 0 ? `${Math.round((leasedSqm / plazaTotalGla) * 100)}%` : "—"}
+                      </td>
+                      <td className="p-3.5 text-right text-sm whitespace-nowrap">{formatVal(contractedRent)}</td>
+                      <td className="p-3.5 text-right text-sm whitespace-nowrap">{formatVal(contractedRent * 12)}</td>
+                      <td />
+                      <td />
+                      <td />
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
@@ -2044,12 +2267,14 @@ export function LandlordDashboard({
                             ? { label: "Rechazado · Responsabilidad Inquilino", badge: "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)]/30" }
                             : c.verdict === "APROBADO_GARANTIA_COSTO_CERO"
                               ? { label: "Aprobado · Garantía ($0 MXN)", badge: "bg-slate-100 text-ink-700 border border-hairline" }
-                              : { label: "Aprobado · Prorrateo CAM", badge: "bg-caution-surface text-caution border border-caution/40" };
+                              : c.verdict === "APROBADO_PRORRATEO_CAM"
+                                ? { label: "Aprobado · Prorrateo CAM", badge: "bg-caution-surface text-caution border border-caution/40" }
+                                : { label: "Aprobado · Costo Arrendador", badge: "bg-ok-surface text-ok border border-ok/30" };
                         return (
                           <tr key={c.id} className="hover:bg-slate-50/90 transition-colors align-top">
                             <td className="p-3.5">
                               <p className="font-bold text-ink text-sm">{c.tenant}</p>
-                              <p className="text-xs text-ink-500">{c.id}</p>
+                              <p className="text-xs text-ink-500">{c.ticketNumber}</p>
                             </td>
                             <td className="p-3.5">
                               <p className="text-ink-700 font-semibold">{c.expenseType}</p>
@@ -2283,12 +2508,12 @@ export function LandlordDashboard({
                   <button
                     onClick={() => {
                       setCopilotOpen(true);
-                      triggerToast("Abriendo Consulta IA...");
+                      triggerToast("Abriendo Valeria IA...");
                     }}
                     className="bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)] px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
                   >
                     <span className="h-2 w-2 rounded-full bg-[var(--console-accent)]" />
-                    <span>Consulta IA</span>
+                    <span>Valeria IA</span>
                   </button>
                 </div>
               </div>
@@ -2415,10 +2640,21 @@ export function LandlordDashboard({
                   </div>
 
                   <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full table-fixed text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
-                          {/* Four short columns over ~970px: their combined
+                          {/* table-fixed: without it, the expanded clause-detail row
+                              below (a colSpan=4 cell holding a two-column grid of
+                              prose cards) lets auto layout size the whole table to
+                              that grid's max-content width — 530px+ at a 375px
+                              viewport, well past the wrapper's overflow-x-auto, so
+                              the clause text itself needed horizontal scrolling to
+                              read even though it visually wrapped. Fixed layout
+                              pins every column (including the colSpan cell) to
+                              these percentages regardless of content, so prose
+                              wraps to the wrapper's real width instead.
+
+                              Four short columns over ~970px: their combined
                               natural width is only ~713px, so ~260px of slack
                               has to live somewhere. Handing all of it to the
                               tenant column (it was 40%) put ~300px of dead air
@@ -2491,9 +2727,9 @@ export function LandlordDashboard({
                                         shown, which is what the expanded row's header used
                                         to do (same string, twice, no more informative the
                                         second time). */}
-                                    <p className="font-bold text-ink text-sm">{c.tradeName ?? c.tenantEntity}</p>
-                                    {c.tradeName && <p className="text-xs text-ink-500">{c.tenantEntity}</p>}
-                                    <p className="text-xs text-ink-500">{c.unitCode} · {c.sqm} m²</p>
+                                    <p className="font-bold text-ink text-sm break-words">{c.tradeName ?? c.tenantEntity}</p>
+                                    {c.tradeName && <p className="text-xs text-ink-500 break-words">{c.tenantEntity}</p>}
+                                    <p className="text-xs text-ink-500 break-words">{c.unitCode} · {c.sqm} m²</p>
                                   </div>
                                 </div>
                               </td>
@@ -2539,7 +2775,7 @@ export function LandlordDashboard({
                               <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
                                 <td colSpan={4} className="p-5 space-y-4 text-sm">
                                   <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
-                                    <h4 className="font-bold text-sm text-ink">
+                                    <h4 className="font-bold text-sm text-ink break-words min-w-0">
                                       {c.tradeName ? `${c.tradeName} — ${c.tenantEntity}` : c.tenantEntity} · {c.unitCode}
                                     </h4>
                                     <div className="flex items-center gap-2">
@@ -2606,6 +2842,181 @@ export function LandlordDashboard({
                                       </div>
                                     );
                                   })()}
+
+                                  {/* Per-clause ledger (lease_clauses) — auto-generated at
+                                      digitization, added 2026-09-03. Empty for a lease
+                                      never digitized under this pipeline, or digitized
+                                      before it existed (no backfill). Coexists with the
+                                      named-clause cards above, which stay the fast-lookup
+                                      path — this is the complete, per-clause audit view. */}
+                                  {c.clauses.length > 0 && (
+                                    <div className="bg-white rounded-xl border border-hairline shadow-2xs overflow-hidden">
+                                      <p className="font-extrabold text-ink text-sm tracking-wide p-4 pb-0">
+                                        Cláusulas Extraídas ({c.clauses.length})
+                                      </p>
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-xs">
+                                          <thead className="text-ink-500 font-bold uppercase tracking-wider border-b border-hairline">
+                                            <tr>
+                                              <th className="p-3 w-10">#</th>
+                                              <th className="p-3">Cláusula</th>
+                                              <th className="p-3 w-52">Estatus de Revisión</th>
+                                              <th className="p-3 w-20 text-center">Marcada</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-hairline">
+                                            {c.clauses.map((clause) => (
+                                              <tr key={clause.id} className="align-top">
+                                                <td className="p-3 text-ink-500 font-bold">{clause.clauseNumber}</td>
+                                                <td className="p-3 max-w-md">
+                                                  <p className="font-bold text-ink">{clause.clauseLabel}</p>
+                                                  <p className="text-ink-500 leading-relaxed">{clause.clauseText}</p>
+                                                  {clause.agentNote && (
+                                                    <p className="text-[var(--console-accent)] font-semibold mt-1">{clause.agentNote}</p>
+                                                  )}
+                                                </td>
+                                                <td className="p-3">
+                                                  <select
+                                                    defaultValue={clause.reviewStatus}
+                                                    disabled={savingField === `clause:${clause.id}`}
+                                                    className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-xs font-bold text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                                    onChange={(e) =>
+                                                      saveClauseReview(
+                                                        clause.id,
+                                                        { reviewStatus: e.target.value as LeaseClauseReviewStatus },
+                                                        `Estatus de cláusula #${clause.clauseNumber}`,
+                                                      )
+                                                    }
+                                                  >
+                                                    {(Object.keys(CLAUSE_REVIEW_STATUS_LABELS) as LeaseClauseReviewStatus[]).map((key) => (
+                                                      <option key={key} value={key}>
+                                                        {CLAUSE_REVIEW_STATUS_LABELS[key]}
+                                                      </option>
+                                                    ))}
+                                                  </select>
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={clause.flagged}
+                                                    disabled={savingField === `clause:${clause.id}`}
+                                                    className="h-4 w-4 accent-[var(--console-accent)] rounded cursor-pointer disabled:opacity-50"
+                                                    aria-label={`Marcar cláusula #${clause.clauseNumber}`}
+                                                    onChange={(e) =>
+                                                      saveClauseReview(
+                                                        clause.id,
+                                                        { flagged: e.target.checked },
+                                                        `Marca de cláusula #${clause.clauseNumber}`,
+                                                      )
+                                                    }
+                                                  />
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Manually-entered lease terms — no source document
+                                      extraction produces these, unlike the clause cards
+                                      above, so they're editable inline rather than
+                                      read-only. Added 2026-09-03 (Phase 2 additive
+                                      migrations): escalation_pct/method/month and
+                                      security_deposit_amount/status previously didn't
+                                      exist on this schema at all. */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-2">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <p className="font-extrabold text-ink text-sm tracking-wide">Escalación Vigente</p>
+                                        {c.escalationOverdue && (
+                                          <span
+                                            className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-alert-surface text-alert border border-alert-edge"
+                                            title={`Vencida desde ${c.escalationDueDate} — sin incremento de renta registrado desde entonces.`}
+                                          >
+                                            Vencida desde {c.escalationDueDate}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="grid grid-cols-3 gap-2">
+                                        <label className="space-y-1">
+                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">% Anual</span>
+                                          <input
+                                            type="number"
+                                            step="0.01"
+                                            defaultValue={c.escalationPct ?? ""}
+                                            disabled={savingField === `${c.leaseRowId}:escalation_pct`}
+                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_pct", e.target.value, "Escalación %")}
+                                          />
+                                        </label>
+                                        <label className="space-y-1 col-span-2">
+                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Método</span>
+                                          <input
+                                            type="text"
+                                            defaultValue={c.escalationMethod ?? ""}
+                                            placeholder="Ej. fixed_pct, INPC"
+                                            disabled={savingField === `${c.leaseRowId}:escalation_method`}
+                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_method", e.target.value, "Método de escalación")}
+                                          />
+                                        </label>
+                                        <label className="space-y-1 col-span-3">
+                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Mes de aplicación (1-12)</span>
+                                          <input
+                                            type="number"
+                                            min={1}
+                                            max={12}
+                                            defaultValue={c.escalationMonth ?? ""}
+                                            disabled={savingField === `${c.leaseRowId}:escalation_month`}
+                                            className="w-20 bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_month", e.target.value, "Mes de escalación")}
+                                          />
+                                        </label>
+                                      </div>
+                                    </div>
+
+                                    <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-2">
+                                      <p className="font-extrabold text-ink text-sm tracking-wide">Depósito en Garantía</p>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <label className="space-y-1">
+                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Monto (MXN)</span>
+                                          <input
+                                            type="number"
+                                            step="0.01"
+                                            defaultValue={c.securityDepositAmount ?? ""}
+                                            disabled={savingField === `${c.leaseRowId}:security_deposit_amount`}
+                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "security_deposit_amount", e.target.value, "Monto de depósito")}
+                                          />
+                                        </label>
+                                        <label className="space-y-1">
+                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Estatus</span>
+                                          <input
+                                            type="text"
+                                            defaultValue={c.securityDepositStatus ?? ""}
+                                            placeholder="Ej. completo, incompleto"
+                                            disabled={savingField === `${c.leaseRowId}:security_deposit_status`}
+                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "security_deposit_status", e.target.value, "Estatus de depósito")}
+                                          />
+                                        </label>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
+                                    <p className="font-extrabold text-ink text-sm tracking-wide">Notas del Agente</p>
+                                    <textarea
+                                      defaultValue={c.agentNotes ?? ""}
+                                      placeholder="Comentario libre de Valeria/Mariana sobre este contrato…"
+                                      rows={2}
+                                      disabled={savingField === `${c.leaseRowId}:agent_notes`}
+                                      className="w-full bg-white border border-hairline-strong rounded px-2 py-1.5 text-sm font-medium text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                      onBlur={(e) => saveLeaseField(c.leaseRowId, "agent_notes", e.target.value, "Notas del agente")}
+                                    />
+                                  </div>
 
                                   <LeaseRenewalPanel
                                     leaseId={c.leaseRowId}
@@ -3205,7 +3616,7 @@ export function LandlordDashboard({
                       setKillSwitchPending(false);
                     }
                   }}
-                  className={`px-6 py-3.5 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md shrink-0 whitespace-nowrap disabled:opacity-60 disabled:cursor-wait ${
+                  className={`w-full md:w-auto px-6 py-3.5 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md md:shrink-0 disabled:opacity-60 disabled:cursor-wait ${
                     killSwitchActive
                       ? "bg-white text-ink hover:bg-slate-100"
                       : "bg-signal-dark hover:bg-alert text-white"
@@ -3227,34 +3638,38 @@ export function LandlordDashboard({
                 </div>
 
                 <div className="space-y-4 text-sm">
-                  {/* POLICY 1: DIEGO AI SPENDING THRESHOLD */}
+                  {/* POLICY 1: DIEGO AI SPENDING THRESHOLD — real persistence
+                      to approval_tiers (added 2026-09-03), the same rows
+                      diego-triage.ts (workers/workflows) actually reads to
+                      decide AUTO vs GERENTE vs DIRECCION. Previously this
+                      card's "Guardar Cambios" only cleared local edit state;
+                      the single "Monto Máximo Autónomo" number and the
+                      "Piloto Automático Activo" checkbox both controlled
+                      nothing real — the checkbox is dropped rather than
+                      backed by a new column, since the real system has no
+                      such on/off switch (autonomy_frozen, the kill switch
+                      above, already covers that). */}
                   <div className="border border-hairline rounded-xl p-5 bg-slate-50 space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       <div className="space-y-1 max-w-2xl">
                         <div className="flex items-center gap-3">
-                          <span className="font-bold text-ink text-base">Diego IA · Umbral CapEx</span>
+                          <span className="font-bold text-ink text-base">Diego IA · Niveles de Aprobación CapEx</span>
                           <span className="bg-slate-100 text-ink-700 border border-hairline text-xs font-bold px-2.5 py-0.5 rounded">
-                            ${diegoThresholdVal.toLocaleString()} MXN Max
+                            AUTO hasta {formatVal(autoCeilingVal)} · GERENTE hasta {formatVal(gerenteCeilingVal)}
                           </span>
                         </div>
                         <p className="text-ink-700 text-sm leading-relaxed font-medium">
-                          Diego IA puede despachar proveedores de mantenimiento automáticamente en órdenes de hasta ${diegoThresholdVal.toLocaleString()} MXN. Montos mayores requieren firma dual Admin.
+                          Diego IA despacha automáticamente hasta {formatVal(autoCeilingVal)} MXN. De {formatVal(autoCeilingVal)} a {formatVal(gerenteCeilingVal)} MXN requiere aprobación de Gerente. Montos mayores requieren aprobación de Dirección.
                         </p>
                       </div>
 
                       {editingPolicyCard !== "diego" && (
-                        <div className="flex items-center gap-4 shrink-0">
-                          <div className="text-xs font-bold text-ink">
-                            <span className="text-ink-500">Estatus: </span>
-                            <span className="text-ink">{diegoAutoMode ? "Piloto Automático Activo" : "Supervisión Manual"}</span>
-                          </div>
-                          <button
-                            onClick={() => setEditingPolicyCard("diego")}
-                            className="bg-white border border-[var(--console-accent)] hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs"
-                          >
-                            Editar Configuración →
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setEditingPolicyCard("diego")}
+                          className="bg-white border border-[var(--console-accent)] hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs shrink-0"
+                        >
+                          Editar Configuración →
+                        </button>
                       )}
                     </div>
 
@@ -3262,42 +3677,129 @@ export function LandlordDashboard({
                       <div className="p-4 bg-white border border-hairline-strong rounded-xl space-y-3 animate-fadeIn">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <label className="block text-xs font-bold text-ink-700">
-                            Monto Máximo Autónomo (MXN):
+                            Techo AUTO (MXN) — despacho automático hasta este monto:
                             <input
                               type="number"
-                              step={5000}
-                              value={diegoThresholdVal}
-                              onChange={(e) => setDiegoThresholdVal(Number(e.target.value))}
+                              step={500}
+                              value={autoCeilingVal}
+                              onChange={(e) => setAutoCeilingVal(Number(e.target.value))}
                               className="mt-1 w-full bg-slate-50 border border-hairline-strong rounded-lg px-3 py-2 text-sm font-bold text-ink focus:outline-none focus:border-[var(--console-accent)]"
                             />
                           </label>
-
-                          <div className="flex flex-col justify-end">
-                            <label className="flex items-center gap-2.5 text-sm font-bold text-ink cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={diegoAutoMode}
-                                onChange={(e) => setDiegoAutoMode(e.target.checked)}
-                                className="h-5 w-5 accent-[var(--console-accent)] rounded"
-                              />
-                              Piloto Automático Activo
-                            </label>
-                          </div>
+                          <label className="block text-xs font-bold text-ink-700">
+                            Techo GERENTE (MXN) — requiere Dirección por encima de este monto:
+                            <input
+                              type="number"
+                              step={1000}
+                              value={gerenteCeilingVal}
+                              onChange={(e) => setGerenteCeilingVal(Number(e.target.value))}
+                              className="mt-1 w-full bg-slate-50 border border-hairline-strong rounded-lg px-3 py-2 text-sm font-bold text-ink focus:outline-none focus:border-[var(--console-accent)]"
+                            />
+                          </label>
                         </div>
 
                         <div className="flex items-center gap-3 pt-2 border-t border-hairline">
                           <button
-                            onClick={() => {
+                            disabled={approvalTiersPending}
+                            onClick={async () => {
+                              setApprovalTiersPending(true);
+                              const result = await updateApprovalTiersAction(autoCeilingVal, gerenteCeilingVal);
+                              setApprovalTiersPending(false);
+                              if (result.error) {
+                                triggerToast(`No se pudo actualizar los niveles de aprobación: ${result.error}`);
+                                return;
+                              }
                               setEditingPolicyCard(null);
-                              triggerToast(`Umbral de Diego IA actualizado a $${diegoThresholdVal.toLocaleString()} MXN.`);
+                              triggerToast(`Niveles de aprobación actualizados: AUTO hasta ${formatVal(autoCeilingVal)}, GERENTE hasta ${formatVal(gerenteCeilingVal)}.`);
                             }}
-                            className="bg-ink hover:bg-ink-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                            className="bg-ink hover:bg-ink-700 disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
                           >
-                            Guardar Cambios
+                            {approvalTiersPending ? "Guardando…" : "Guardar Cambios"}
                           </button>
                           <button
                             onClick={() => setEditingPolicyCard(null)}
-                            className="bg-slate-100 hover:bg-slate-200 text-ink-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                            disabled={approvalTiersPending}
+                            className="bg-slate-100 hover:bg-slate-200 text-ink-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* POLICY 2: MAINTENANCE QUARTERLY BUDGET — real persistence
+                      (properties.maintenance_quarterly_budget_mxn, added
+                      2026-09-03), unlike the Diego threshold card above whose
+                      "Guardar Cambios" only clears local edit state and never
+                      writes anywhere. */}
+                  <div className="border border-hairline rounded-xl p-5 bg-slate-50 space-y-3">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                      <div className="space-y-1 max-w-2xl">
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-ink text-base">Presupuesto Trimestral de Mantenimiento</span>
+                          <span className="bg-slate-100 text-ink-700 border border-hairline text-xs font-bold px-2.5 py-0.5 rounded">
+                            {maintenanceBudgetVal !== null ? `${formatVal(maintenanceBudgetVal)} MXN` : "Sin definir"}
+                          </span>
+                        </div>
+                        <p className="text-ink-700 text-sm leading-relaxed font-medium">
+                          Tope de gasto trimestral en mantenimiento, plaza-wide. Diego IA lo usa como referencia de
+                          seguimiento en el tablero — no bloquea despachos por sí solo.
+                        </p>
+                      </div>
+
+                      {editingPolicyCard !== "budget" && (
+                        <button
+                          onClick={() => setEditingPolicyCard("budget")}
+                          className="bg-white border border-[var(--console-accent)] hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs shrink-0"
+                        >
+                          Editar Configuración →
+                        </button>
+                      )}
+                    </div>
+
+                    {editingPolicyCard === "budget" && (
+                      <div className="p-4 bg-white border border-hairline-strong rounded-xl space-y-3 animate-fadeIn">
+                        <label className="block text-xs font-bold text-ink-700 max-w-xs">
+                          Presupuesto Trimestral (MXN) — vacío para quitar el tope:
+                          <input
+                            type="number"
+                            step={1000}
+                            defaultValue={maintenanceBudgetVal ?? ""}
+                            ref={maintenanceBudgetInputRef}
+                            className="mt-1 w-full bg-slate-50 border border-hairline-strong rounded-lg px-3 py-2 text-sm font-bold text-ink focus:outline-none focus:border-[var(--console-accent)]"
+                          />
+                        </label>
+
+                        <div className="flex items-center gap-3 pt-2 border-t border-hairline">
+                          <button
+                            disabled={maintenanceBudgetPending}
+                            onClick={async () => {
+                              const raw = maintenanceBudgetInputRef.current?.value.trim() ?? "";
+                              const next = raw === "" ? null : Number(raw);
+                              if (next !== null && (!Number.isFinite(next) || next < 0)) {
+                                triggerToast("Monto inválido.");
+                                return;
+                              }
+                              setMaintenanceBudgetPending(true);
+                              const result = await updateMaintenanceBudgetAction(next);
+                              setMaintenanceBudgetPending(false);
+                              if (result.error) {
+                                triggerToast(`No se pudo actualizar el presupuesto: ${result.error}`);
+                                return;
+                              }
+                              setMaintenanceBudgetVal(next);
+                              setEditingPolicyCard(null);
+                              triggerToast(next !== null ? `Presupuesto actualizado a ${formatVal(next)} MXN.` : "Presupuesto eliminado.");
+                            }}
+                            className="bg-ink hover:bg-ink-700 disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                          >
+                            {maintenanceBudgetPending ? "Guardando…" : "Guardar Cambios"}
+                          </button>
+                          <button
+                            onClick={() => setEditingPolicyCard(null)}
+                            disabled={maintenanceBudgetPending}
+                            className="bg-slate-100 hover:bg-slate-200 text-ink-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                           >
                             Cancelar
                           </button>
@@ -3502,7 +4004,10 @@ export function LandlordDashboard({
                                 >
                                   {e.actorType === "user" ? "Usuario" : "Agente IA"}
                                 </span>
-                                <span className="text-[10px] font-mono text-console-slate" title="Hash SHA-256 de la entrada">
+                                <span
+                                  className="text-[10px] font-mono text-console-slate truncate inline-block max-w-[92px]"
+                                  title="Hash SHA-256 de la entrada"
+                                >
                                   {e.hash}
                                 </span>
                               </div>
@@ -3529,7 +4034,7 @@ export function LandlordDashboard({
                 <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)] animate-pulse" />
               </div>
               <div>
-                <h3 className="font-bold text-base sm:text-lg leading-tight">Consulta IA</h3>
+                <h3 className="font-bold text-base sm:text-lg leading-tight">Valeria IA</h3>
                 <p className="text-xs text-slate-300 font-medium">Copiloto Ejecutivo de Asset Management</p>
               </div>
             </div>
@@ -3565,7 +4070,7 @@ export function LandlordDashboard({
             {copilotHistory.length === 0 && !copilotLoading && (
               <div className="space-y-4 py-2">
                 <div className="bg-white border border-hairline rounded-xl p-5 shadow-2xs space-y-2">
-                  <p className="font-bold text-ink text-base">¡Hola! Soy Consulta IA 🏛️</p>
+                  <p className="font-bold text-ink text-base">¡Hola! Soy Valeria IA 🏛️</p>
                   <p className="text-ink-600 text-xs sm:text-sm leading-relaxed">
                     Tu asesor ejecutivo comercial para La Gran Vía Mexicali. Puedo analizar el Rent Roll, calcular vacantes, revisar exclusividades de giro, evaluar tickets de mantenimiento y presupuestos CapEx.
                   </p>
@@ -3608,7 +4113,49 @@ export function LandlordDashboard({
                   {msg.role === "user" ? (
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   ) : (
-                    renderFormattedMarkdown(msg.content)
+                    <>
+                      {renderFormattedMarkdown(msg.content)}
+                      {msg.proposedEdit && (
+                        <div className="mt-3 rounded-xl border border-[var(--console-accent)]/30 bg-[var(--console-accent-soft)] p-3.5 space-y-2">
+                          <p className="text-xs font-bold text-ink">
+                            Cambio propuesto — {msg.proposedEdit.renewalNumber} ({msg.proposedEdit.tenantEntity})
+                          </p>
+                          <div className="text-xs text-ink-700 font-medium">
+                            <span className="font-bold">{msg.proposedEdit.fieldLabel}:</span>{" "}
+                            <span className="line-through text-ink-400">{msg.proposedEdit.oldValue}</span>{" "}
+                            → <span className="font-bold text-ink">{msg.proposedEdit.newValue}</span>
+                          </div>
+                          {msg.proposedEdit.reasoning && <p className="text-[11px] text-ink-500 italic">{msg.proposedEdit.reasoning}</p>}
+                          <p className="text-[10px] text-ink-500 font-semibold uppercase tracking-wider">
+                            No se aplica a contratos firmados y activos — solo a este borrador de renovación.
+                          </p>
+                          {msg.editResolution === "applied" ? (
+                            <p className="text-xs font-bold text-emerald-700">✓ Cambio aplicado.</p>
+                          ) : msg.editResolution === "dismissed" ? (
+                            <p className="text-xs font-bold text-ink-500">Descartado.</p>
+                          ) : (
+                            <div className="flex items-center gap-2 pt-1">
+                              <button
+                                type="button"
+                                disabled={applyingEditIdx === idx}
+                                onClick={() => applyProposedEdit(idx, msg.proposedEdit!)}
+                                className="bg-ink hover:bg-ink-700 disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                              >
+                                {applyingEditIdx === idx ? "Aplicando…" : "Aplicar"}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={applyingEditIdx === idx}
+                                onClick={() => dismissProposedEdit(idx)}
+                                className="text-ink-600 hover:text-ink-900 text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer disabled:opacity-50"
+                              >
+                                Descartar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

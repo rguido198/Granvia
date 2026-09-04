@@ -29,18 +29,6 @@ export interface ApplicantCase {
   legalFilter: string;
 }
 
-export interface CapexCase {
-  id: string;
-  tenant: string;
-  expenseType: string;
-  amount: number;
-  isQuestionable: boolean;
-  verdict: "RECHAZADO_RESPONSABILIDAD_INQUILINO" | "APROBADO_GARANTIA_COSTO_CERO" | "APROBADO_PRORRATEO_CAM";
-  details: string;
-  equipmentModel: string;
-  serialNumber: string;
-}
-
 /** One critical asset in Diego's bitácora. */
 export type CriticalEquipment = {
   asset: string;
@@ -137,12 +125,9 @@ export type ConsoleData = {
   collectionRate: number;
 
   leasingApplicants: ApplicantCase[];
-  capexCases: CapexCase[];
   criticalEquipment: CriticalEquipment[];
   maintenanceEvents: MaintenanceEvent[];
   rentProtectedAnnual: number;
-  capexRejected: number;
-  capexWarrantyRecovered: number;
 
   fiscalAlertRent: number;
   saariInbound: SaariInboundLine[];

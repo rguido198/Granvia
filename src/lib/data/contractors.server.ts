@@ -10,7 +10,7 @@ export async function fetchContractors(): Promise<Contractor[]> {
   const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from("contractors")
-    .select("id, name, trade, coverage_hours, response_time_commitment, rate, license_expiry, coi_expiry, active")
+    .select("id, name, trade, coverage_hours, response_time_commitment, rate, rate_type, license_expiry, coi_expiry, active")
     .order("trade");
 
   if (error) throw new Error(error.message);
@@ -22,6 +22,7 @@ export async function fetchContractors(): Promise<Contractor[]> {
     coverageHours: row.coverage_hours,
     responseTimeCommitment: row.response_time_commitment,
     rate: row.rate,
+    rateType: row.rate_type,
     licenseExpiry: row.license_expiry,
     coiExpiry: row.coi_expiry,
     active: row.active,

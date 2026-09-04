@@ -5,7 +5,6 @@ import type {
   AgentReply,
   ApplicantCase,
   CamRow,
-  CapexCase,
   ConsoleData,
   CriticalEquipment,
   MaintenanceEvent,
@@ -80,42 +79,6 @@ const LEASING_APPLICANTS: ApplicantCase[] = [
     contractExactSnippet: '"...Las partes acuerdan que la restricción de giro sobre ensaladas aplica únicamente a conceptos dedicados 100% a bowls saludables, no limitando la venta de acompañamientos en restaurantes de especialidad de carne..."',
     overlapScore: "24.5% Coincidencia Menor (Ajustable)",
     legalFilter: "Ley Federal de Competencia Económica (LFCE §3)",
-  },
-];
-
-const CAPEX_CASES: CapexCase[] = [
-  {
-    id: "CAP-01",
-    tenant: "Derma Club Farmacia Dermatológica",
-    expenseType: "Remodelación de Luminarias Decorativas Interiores",
-    amount: 78000,
-    isQuestionable: true,
-    verdict: "RECHAZADO_RESPONSABILIDAD_INQUILINO",
-    details: "RECHAZADO: Solicitud improcedente. El contrato de arrendamiento (Sección 12) establece que la iluminación estética interior es responsabilidad 100% del arrendatario.",
-    equipmentModel: "Luminaria LED Estética 240V",
-    serialNumber: "DL-99482-DECO",
-  },
-  {
-    id: "CAP-02",
-    tenant: "Ashley",
-    expenseType: "Falla de Compresor HVAC 15 Toneladas (Calor 44°C Mexicali)",
-    amount: 145000,
-    isQuestionable: false,
-    verdict: "APROBADO_GARANTIA_COSTO_CERO",
-    details: "GARANTÍA APLICADA ($0 COSTO PROPIETARIO): Diego verificó número de serie Carrier #CR-884920. El reemplazo está cubierto al 100% por póliza de fábrica de Carrier.",
-    equipmentModel: "Carrier Commercial WeatherMaster",
-    serialNumber: "CR-884920",
-  },
-  {
-    id: "CAP-03",
-    tenant: "Cinemex Premium",
-    expenseType: "Mantenimiento Preventivo de Planta de Emergencia Común",
-    amount: 52000,
-    isQuestionable: false,
-    verdict: "APROBADO_PRORRATEO_CAM",
-    details: "APROBADO PARA CAM NNN: Gasto de infraestructura común prorrateable entre todos los locales. Incorporado al Fondo CAM de Agosto 2026 ($504,468 MXN) — ver Registro Completo de Facturas en Finanzas & Gastos CAM.",
-    equipmentModel: "Caterpillar C15 ACERT 500kW",
-    serialNumber: "CAT-500-9942",
   },
 ];
 
@@ -347,8 +310,6 @@ const camTotals = camRows.reduce(
 
 // Agent headline metrics, summed from the cases each tab renders — never restated.
 const rentProtectedAnnual = LEASING_APPLICANTS.reduce((sum, app) => sum + (app.rentProtectedAnnualMxn ?? 0), 0);
-const capexRejected = CAPEX_CASES.filter((c) => c.verdict.includes("RECHAZADO")).reduce((sum, c) => sum + c.amount, 0);
-const capexWarrantyRecovered = CAPEX_CASES.filter((c) => c.verdict.includes("GARANTIA")).reduce((sum, c) => sum + c.amount, 0);
 
 /** The MINT row — the single tenant Renata flags. Its rent is the amount her PPD/PUE alert reconciles. */
 const FISCAL_ALERT_ROW = rentRoll.find((row) => row.fiscalAlert);
@@ -477,12 +438,9 @@ export function buildConsoleData(): ConsoleData {
     collectionRate,
 
     leasingApplicants: LEASING_APPLICANTS,
-    capexCases: CAPEX_CASES,
     criticalEquipment: CRITICAL_EQUIPMENT satisfies CriticalEquipment[],
     maintenanceEvents: MAINTENANCE_EVENTS satisfies MaintenanceEvent[],
     rentProtectedAnnual,
-    capexRejected,
-    capexWarrantyRecovered,
 
     fiscalAlertRent: FISCAL_ALERT_ROW?.rent ?? 0,
     saariInbound: SAARI_INBOUND,

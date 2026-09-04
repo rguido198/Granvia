@@ -15,6 +15,7 @@ import {
   matchTenant,
 } from "../../../src/lib/ingest/fuzzy-match-tenant";
 import { checkExclusivityConflicts } from "../../../src/lib/ingest/exclusivity-check";
+import { replaceLeaseClauses, buildFullClauseList } from "../../../src/lib/data/lease-clauses.server";
 import type {
   LeaseExtractedFields,
   NewLeaseDetails,
@@ -443,7 +444,11 @@ async function promoteExtraction(
       // no error, so the locale's tenant/area synced above but no lease row
       // was ever created, leaving the rent roll showing the tenant at $0
       // rent with no contract attached.
-      await insertLeaseRow(supabase, {
+      // Captured (previously discarded) so the clause-ledger write just
+      // below has a real lease_id for this branch too — without it,
+      // currentLeaseId stays undefined here even though a lease row was
+      // just created.
+      currentLeaseId = await insertLeaseRow(supabase, {
         localeId,
         unitNumber: locale.unit_number,
         tenantEntity: finalFields.tenant_entity,
@@ -455,6 +460,16 @@ async function promoteExtraction(
         documentId,
       });
     }
+  }
+
+  // Per-clause ledger (lease_clauses) — auto-generated from the same
+  // extraction that just wrote the named-clause columns above, per the
+  // 2026-09-03 "coexist" decision (docs/superpowers/specs/2026-09-03-
+  // rent-roll-redesign-data-mapping.md §6, 3b). Replaces the lease's full
+  // clause set rather than appending, so re-digitizing the same document
+  // doesn't accumulate duplicates.
+  if (currentLeaseId) {
+    await replaceLeaseClauses(currentLeaseId, documentId, buildFullClauseList(finalFields));
   }
 
   const { data: occupiedLocaleRows } = await supabase
