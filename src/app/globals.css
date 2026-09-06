@@ -266,9 +266,26 @@
   animation: pulse-glow 2.2s ease-in-out infinite;
 }
 
+/* Horizontally-scrolling chip/pill rows (e.g. Valeria's mobile suggested-
+   question row) still scroll via swipe/trackpad with this applied — it only
+   hides the track/thumb, which otherwise renders as a visible desktop-style
+   scrollbar even on touch devices, reading as a broken/unfinished control
+   rather than a native quick-reply row. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ── ACCESSIBILITY FONT SCALE ENGINE ────────────────────────────────────── */
+/* No `zoom` here at the default size (font-size: 100% is already the no-op)
+   — see console-shell.tsx's own comment on the same element's inline style:
+   `zoom` on the console-root ancestor is what made it the containing block
+   for every `position: fixed` overlay portaled onto it. Only large/xlarge
+   actually need the zoom applied. */
 .scale-font-normal {
-  zoom: 1;
   font-size: 100%;
 }
 .scale-font-large {

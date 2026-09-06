@@ -2640,7 +2640,15 @@ export function LandlordDashboard({
                   </div>
 
                   <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
-                    <table className="w-full table-fixed text-left text-sm">
+                    {/* min-w: table-fixed enforces these percentages literally regardless
+                        of viewport — fine at 4 columns (this table's original width), but
+                        the 4 columns added 2026-09-06 push %-width columns below their
+                        content's readable minimum on a real phone (e.g. 20% of a 251px
+                        mobile wrapper is ~50px, which breaks a tenant name one character
+                        per line rather than wrapping words). A wide fixed table the wrapper
+                        scrolls to is the same fix already applied to the Rent Roll table
+                        above for the identical reason. */}
+                    <table className="w-full min-w-[920px] table-fixed text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
                           {/* table-fixed: without it, the expanded clause-detail row
@@ -2677,14 +2685,14 @@ export function LandlordDashboard({
                             sortKey="name"
                             current={contractSort}
                             onSort={toggleContractSort}
-                            width="w-[30%]"
+                            width="w-[20%]"
                           />
                           <SortableHeader
                             label="Vencimiento Contrato"
                             sortKey="endDate"
                             current={contractSort}
                             onSort={toggleContractSort}
-                            width="w-[21%]"
+                            width="w-[10%]"
                           />
                           <SortableHeader
                             label="Renta Mensual"
@@ -2692,15 +2700,24 @@ export function LandlordDashboard({
                             current={contractSort}
                             onSort={toggleContractSort}
                             align="right"
-                            width="w-[19%]"
+                            width="w-[9%]"
                           />
-                          <th className="p-3.5 w-[30%] text-right">Estatus Contractual</th>
+                          {/* Four columns added 2026-09-06 against the original design
+                              mockup, which showed all of these as their own always-visible
+                              cells — real fields this table already had access to (Phase 2/3
+                              backend work) but that were only ever shown in the expanded
+                              clause-detail row below, one click away. */}
+                          <th className="p-3.5 w-[11%] text-left">Escalación</th>
+                          <th className="p-3.5 w-[11%] text-left">Depósito en Garantía</th>
+                          <th className="p-3.5 w-[14%] text-left">Exclusividad</th>
+                          <th className="p-3.5 w-[15%] text-left">Nota de Mariana IA</th>
+                          <th className="p-3.5 w-[10%] text-right">Estatus Contractual</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hairline font-medium">
                         {visibleLeases.length === 0 && (
                           <tr>
-                            <td colSpan={4} className="p-6 text-center text-ink-500">
+                            <td colSpan={8} className="p-6 text-center text-ink-500">
                               {contractFilter ? (
                                 <>Sin resultados para &ldquo;{contractFilter}&rdquo;.</>
                               ) : (
@@ -2741,6 +2758,58 @@ export function LandlordDashboard({
                                 </p>
                               </td>
                               <td className="p-3.5 font-semibold text-ink-700 text-sm text-right tabular-nums">{formatMxn(c.rentMonthly)}</td>
+                              <td className="p-3.5">
+                                {c.escalationPct !== null ? (
+                                  <>
+                                    <p className="text-sm text-ink break-words">
+                                      {c.escalationPct}% · {c.escalationMethod ?? "método no definido"}
+                                    </p>
+                                    {c.escalationOverdue && (
+                                      <p className="text-[11px] font-bold text-alert">Vencida</p>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className="text-ink-400 text-sm">—</span>
+                                )}
+                              </td>
+                              <td className="p-3.5">
+                                {c.securityDepositAmount !== null ? (
+                                  <>
+                                    <p className="text-sm font-semibold text-ink tabular-nums">
+                                      {formatMxn(c.securityDepositAmount)}
+                                    </p>
+                                    {c.securityDepositStatus && (
+                                      <p className="text-[11px] text-ink-500 break-words">{c.securityDepositStatus}</p>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className="text-ink-400 text-sm">—</span>
+                                )}
+                              </td>
+                              <td className="p-3.5">
+                                {c.exclusiveUseClause ? (
+                                  <p
+                                    className="text-xs text-ink-700 leading-snug line-clamp-2 break-words"
+                                    title={c.exclusiveUseClause}
+                                  >
+                                    {c.exclusiveUseClause}
+                                  </p>
+                                ) : (
+                                  <span className="text-ink-400 text-sm">Sin exclusividad</span>
+                                )}
+                              </td>
+                              <td className="p-3.5">
+                                {c.agentNotes ? (
+                                  <p
+                                    className="text-xs text-ink-700 leading-snug line-clamp-2 break-words"
+                                    title={c.agentNotes}
+                                  >
+                                    {c.agentNotes}
+                                  </p>
+                                ) : (
+                                  <span className="text-ink-400 text-sm">—</span>
+                                )}
+                              </td>
                               <td className="p-3.5 text-right">
                                 <div className="flex items-center justify-end gap-2">
                                   {/* One instance, here — not duplicated next to the name in
@@ -2767,274 +2836,284 @@ export function LandlordDashboard({
                               </td>
                             </tr>
 
-                            {/* EXPANDABLE CLAUSE DETAIL ROW — exclusive_use_clause, permitted_use,
-                                and the eight named clause columns the leases table has. No
-                                per-contract hash, no INPC/penalty clause columns exist in the
-                                schema, so none are shown. */}
-                            {inspectedContractId === c.id && (
-                              <tr className="bg-slate-50/90 text-ink animate-fadeIn border-b-2 border-hairline">
-                                <td colSpan={4} className="p-5 space-y-4 text-sm">
-                                  <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
-                                    <h4 className="font-bold text-sm text-ink break-words min-w-0">
-                                      {c.tradeName ? `${c.tradeName} — ${c.tenantEntity}` : c.tenantEntity} · {c.unitCode}
-                                    </h4>
-                                    <div className="flex items-center gap-2">
-                                      {/* The document viewer lives next to the Vigente/Vencido
-                                          badge in the collapsed row now, not here too — one
-                                          instance instead of the same icon repeating in every
-                                          view of this same contract. */}
-                                      {c.sourceApplicationNumber && (
-                                        <span
-                                          className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-400 shrink-0"
-                                          title={`Origen: ${c.sourceApplicationNumber} — evaluado por Mariana IA`}
-                                        >
-                                          <MarianaLinkIcon />
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                                    <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                      <p className="font-extrabold text-ink text-sm tracking-wide">Cláusula de Exclusividad</p>
-                                      <p className="text-ink-700 text-sm leading-relaxed font-medium">
-                                        {c.exclusiveUseClause || "Sin cláusula de exclusividad registrada."}
-                                      </p>
-                                    </div>
-
-                                    <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                      <p className="font-extrabold text-ink text-sm tracking-wide">Uso Permitido</p>
-                                      <p className="text-ink-700 text-sm leading-relaxed font-medium">
-                                        {c.permittedUse || "No especificado."}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {/* Eight recurring clause types promoted out of special_clauses
-                                      into their own leases columns — see lease-extraction-schema.ts
-                                      for the frequency data behind this list. Present-only: most
-                                      leases have at most one or two of the eight, so a fixed grid of
-                                      always-visible "no aplica" cards (the exclusivity/permitted-use
-                                      pattern above) would mostly show empty state here. */}
-                                  {(() => {
-                                    const allNamedClauses: [string, string | null][] = [
-                                      ["Estacionamiento Reservado", c.parkingClause],
-                                      ["Publicidad en Directorio", c.directoryAdvertisingClause],
-                                      ["Ampliación Futura", c.expansionOptionClause],
-                                      ["Horario Extendido", c.extendedHoursClause],
-                                      ["Señalización Exterior", c.signageClause],
-                                      ["Mascotas", c.petsClause],
-                                      ["Restricción de Subarrendamiento", c.subleaseRestrictionClause],
-                                      ["Remodelación", c.remodelingClause],
-                                    ];
-                                    const namedClauses = allNamedClauses.filter(
-                                      (entry): entry is [string, string] => entry[1] !== null,
-                                    );
-                                    if (namedClauses.length === 0) return null;
-                                    return (
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {namedClauses.map(([label, text]) => (
-                                          <div key={label} className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                            <p className="font-extrabold text-ink text-sm tracking-wide">{label}</p>
-                                            <p className="text-ink-700 text-sm leading-relaxed font-medium">{text}</p>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    );
-                                  })()}
-
-                                  {/* Per-clause ledger (lease_clauses) — auto-generated at
-                                      digitization, added 2026-09-03. Empty for a lease
-                                      never digitized under this pipeline, or digitized
-                                      before it existed (no backfill). Coexists with the
-                                      named-clause cards above, which stay the fast-lookup
-                                      path — this is the complete, per-clause audit view. */}
-                                  {c.clauses.length > 0 && (
-                                    <div className="bg-white rounded-xl border border-hairline shadow-2xs overflow-hidden">
-                                      <p className="font-extrabold text-ink text-sm tracking-wide p-4 pb-0">
-                                        Cláusulas Extraídas ({c.clauses.length})
-                                      </p>
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full text-left text-xs">
-                                          <thead className="text-ink-500 font-bold uppercase tracking-wider border-b border-hairline">
-                                            <tr>
-                                              <th className="p-3 w-10">#</th>
-                                              <th className="p-3">Cláusula</th>
-                                              <th className="p-3 w-52">Estatus de Revisión</th>
-                                              <th className="p-3 w-20 text-center">Marcada</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody className="divide-y divide-hairline">
-                                            {c.clauses.map((clause) => (
-                                              <tr key={clause.id} className="align-top">
-                                                <td className="p-3 text-ink-500 font-bold">{clause.clauseNumber}</td>
-                                                <td className="p-3 max-w-md">
-                                                  <p className="font-bold text-ink">{clause.clauseLabel}</p>
-                                                  <p className="text-ink-500 leading-relaxed">{clause.clauseText}</p>
-                                                  {clause.agentNote && (
-                                                    <p className="text-[var(--console-accent)] font-semibold mt-1">{clause.agentNote}</p>
-                                                  )}
-                                                </td>
-                                                <td className="p-3">
-                                                  <select
-                                                    defaultValue={clause.reviewStatus}
-                                                    disabled={savingField === `clause:${clause.id}`}
-                                                    className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-xs font-bold text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                                    onChange={(e) =>
-                                                      saveClauseReview(
-                                                        clause.id,
-                                                        { reviewStatus: e.target.value as LeaseClauseReviewStatus },
-                                                        `Estatus de cláusula #${clause.clauseNumber}`,
-                                                      )
-                                                    }
-                                                  >
-                                                    {(Object.keys(CLAUSE_REVIEW_STATUS_LABELS) as LeaseClauseReviewStatus[]).map((key) => (
-                                                      <option key={key} value={key}>
-                                                        {CLAUSE_REVIEW_STATUS_LABELS[key]}
-                                                      </option>
-                                                    ))}
-                                                  </select>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                  <input
-                                                    type="checkbox"
-                                                    checked={clause.flagged}
-                                                    disabled={savingField === `clause:${clause.id}`}
-                                                    className="h-4 w-4 accent-[var(--console-accent)] rounded cursor-pointer disabled:opacity-50"
-                                                    aria-label={`Marcar cláusula #${clause.clauseNumber}`}
-                                                    onChange={(e) =>
-                                                      saveClauseReview(
-                                                        clause.id,
-                                                        { flagged: e.target.checked },
-                                                        `Marca de cláusula #${clause.clauseNumber}`,
-                                                      )
-                                                    }
-                                                  />
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Manually-entered lease terms — no source document
-                                      extraction produces these, unlike the clause cards
-                                      above, so they're editable inline rather than
-                                      read-only. Added 2026-09-03 (Phase 2 additive
-                                      migrations): escalation_pct/method/month and
-                                      security_deposit_amount/status previously didn't
-                                      exist on this schema at all. */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-2">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <p className="font-extrabold text-ink text-sm tracking-wide">Escalación Vigente</p>
-                                        {c.escalationOverdue && (
-                                          <span
-                                            className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-alert-surface text-alert border border-alert-edge"
-                                            title={`Vencida desde ${c.escalationDueDate} — sin incremento de renta registrado desde entonces.`}
-                                          >
-                                            Vencida desde {c.escalationDueDate}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="grid grid-cols-3 gap-2">
-                                        <label className="space-y-1">
-                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">% Anual</span>
-                                          <input
-                                            type="number"
-                                            step="0.01"
-                                            defaultValue={c.escalationPct ?? ""}
-                                            disabled={savingField === `${c.leaseRowId}:escalation_pct`}
-                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_pct", e.target.value, "Escalación %")}
-                                          />
-                                        </label>
-                                        <label className="space-y-1 col-span-2">
-                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Método</span>
-                                          <input
-                                            type="text"
-                                            defaultValue={c.escalationMethod ?? ""}
-                                            placeholder="Ej. fixed_pct, INPC"
-                                            disabled={savingField === `${c.leaseRowId}:escalation_method`}
-                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_method", e.target.value, "Método de escalación")}
-                                          />
-                                        </label>
-                                        <label className="space-y-1 col-span-3">
-                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Mes de aplicación (1-12)</span>
-                                          <input
-                                            type="number"
-                                            min={1}
-                                            max={12}
-                                            defaultValue={c.escalationMonth ?? ""}
-                                            disabled={savingField === `${c.leaseRowId}:escalation_month`}
-                                            className="w-20 bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_month", e.target.value, "Mes de escalación")}
-                                          />
-                                        </label>
-                                      </div>
-                                    </div>
-
-                                    <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-2">
-                                      <p className="font-extrabold text-ink text-sm tracking-wide">Depósito en Garantía</p>
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <label className="space-y-1">
-                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Monto (MXN)</span>
-                                          <input
-                                            type="number"
-                                            step="0.01"
-                                            defaultValue={c.securityDepositAmount ?? ""}
-                                            disabled={savingField === `${c.leaseRowId}:security_deposit_amount`}
-                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "security_deposit_amount", e.target.value, "Monto de depósito")}
-                                          />
-                                        </label>
-                                        <label className="space-y-1">
-                                          <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Estatus</span>
-                                          <input
-                                            type="text"
-                                            defaultValue={c.securityDepositStatus ?? ""}
-                                            placeholder="Ej. completo, incompleto"
-                                            disabled={savingField === `${c.leaseRowId}:security_deposit_status`}
-                                            className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                            onBlur={(e) => saveLeaseField(c.leaseRowId, "security_deposit_status", e.target.value, "Estatus de depósito")}
-                                          />
-                                        </label>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
-                                    <p className="font-extrabold text-ink text-sm tracking-wide">Notas del Agente</p>
-                                    <textarea
-                                      defaultValue={c.agentNotes ?? ""}
-                                      placeholder="Comentario libre de Valeria/Mariana sobre este contrato…"
-                                      rows={2}
-                                      disabled={savingField === `${c.leaseRowId}:agent_notes`}
-                                      className="w-full bg-white border border-hairline-strong rounded px-2 py-1.5 text-sm font-medium text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                      onBlur={(e) => saveLeaseField(c.leaseRowId, "agent_notes", e.target.value, "Notas del agente")}
-                                    />
-                                  </div>
-
-                                  <LeaseRenewalPanel
-                                    leaseId={c.leaseRowId}
-                                    currentEndDate={c.endDate}
-                                    isExpired={c.isExpired}
-                                    renewalSoon={c.renewalSoon}
-                                    renewals={c.renewals}
-                                    suggestedEscalationPct={c.suggestedEscalationPct}
-                                    suggestedEscalationClauseText={c.suggestedEscalationClauseText}
-                                  />
-                                </td>
-                              </tr>
-                            )}
                           </Fragment>
                         ))}
                       </tbody>
                     </table>
                   </div>
+
+              {/* Standalone, outside the horizontally-scrolling table wrapper on
+                  purpose — added 2026-09-06 alongside the four new always-visible
+                  columns above. Those columns pushed table-fixed's min-width to
+                  920px so the short data cells stay readable on a phone; if this
+                  detail panel were still a colSpan row inside that same table (as
+                  it was before), its prose would inherit that 920px box too and
+                  need horizontal scroll to read, undoing the readability fix this
+                  panel already went through earlier the same day. Rendering it
+                  here instead means it just takes the real width of this card,
+                  no viewport-relative width hack needed. */}
+              {(() => {
+                const c = visibleLeases.find((lease) => lease.id === inspectedContractId);
+                if (!c) return null;
+                return (
+                  <div className="border border-hairline rounded-xl bg-slate-50/90 text-ink animate-fadeIn p-5 space-y-4 text-sm">
+                        <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
+                          <h4 className="font-bold text-sm text-ink break-words min-w-0">
+                            {c.tradeName ? `${c.tradeName} — ${c.tenantEntity}` : c.tenantEntity} · {c.unitCode}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            {/* The document viewer lives next to the Vigente/Vencido
+                                badge in the collapsed row now, not here too — one
+                                instance instead of the same icon repeating in every
+                                view of this same contract. */}
+                            {c.sourceApplicationNumber && (
+                              <span
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-hairline text-ink-400 shrink-0"
+                                title={`Origen: ${c.sourceApplicationNumber} — evaluado por Mariana IA`}
+                              >
+                                <MarianaLinkIcon />
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                          <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
+                            <p className="font-extrabold text-ink text-sm tracking-wide">Cláusula de Exclusividad</p>
+                            <p className="text-ink-700 text-sm leading-relaxed font-medium">
+                              {c.exclusiveUseClause || "Sin cláusula de exclusividad registrada."}
+                            </p>
+                          </div>
+
+                          <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
+                            <p className="font-extrabold text-ink text-sm tracking-wide">Uso Permitido</p>
+                            <p className="text-ink-700 text-sm leading-relaxed font-medium">
+                              {c.permittedUse || "No especificado."}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Eight recurring clause types promoted out of special_clauses
+                            into their own leases columns — see lease-extraction-schema.ts
+                            for the frequency data behind this list. Present-only: most
+                            leases have at most one or two of the eight, so a fixed grid of
+                            always-visible "no aplica" cards (the exclusivity/permitted-use
+                            pattern above) would mostly show empty state here. */}
+                        {(() => {
+                          const allNamedClauses: [string, string | null][] = [
+                            ["Estacionamiento Reservado", c.parkingClause],
+                            ["Publicidad en Directorio", c.directoryAdvertisingClause],
+                            ["Ampliación Futura", c.expansionOptionClause],
+                            ["Horario Extendido", c.extendedHoursClause],
+                            ["Señalización Exterior", c.signageClause],
+                            ["Mascotas", c.petsClause],
+                            ["Restricción de Subarrendamiento", c.subleaseRestrictionClause],
+                            ["Remodelación", c.remodelingClause],
+                          ];
+                          const namedClauses = allNamedClauses.filter(
+                            (entry): entry is [string, string] => entry[1] !== null,
+                          );
+                          if (namedClauses.length === 0) return null;
+                          return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {namedClauses.map(([label, text]) => (
+                                <div key={label} className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
+                                  <p className="font-extrabold text-ink text-sm tracking-wide">{label}</p>
+                                  <p className="text-ink-700 text-sm leading-relaxed font-medium">{text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Per-clause ledger (lease_clauses) — auto-generated at
+                            digitization, added 2026-09-03. Empty for a lease
+                            never digitized under this pipeline, or digitized
+                            before it existed (no backfill). Coexists with the
+                            named-clause cards above, which stay the fast-lookup
+                            path — this is the complete, per-clause audit view. */}
+                        {c.clauses.length > 0 && (
+                          <div className="bg-white rounded-xl border border-hairline shadow-2xs overflow-hidden">
+                            <p className="font-extrabold text-ink text-sm tracking-wide p-4 pb-0">
+                              Cláusulas Extraídas ({c.clauses.length})
+                            </p>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-xs">
+                                <thead className="text-ink-500 font-bold uppercase tracking-wider border-b border-hairline">
+                                  <tr>
+                                    <th className="p-3 w-10">#</th>
+                                    <th className="p-3">Cláusula</th>
+                                    <th className="p-3 w-52">Estatus de Revisión</th>
+                                    <th className="p-3 w-20 text-center">Marcada</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-hairline">
+                                  {c.clauses.map((clause) => (
+                                    <tr key={clause.id} className="align-top">
+                                      <td className="p-3 text-ink-500 font-bold">{clause.clauseNumber}</td>
+                                      <td className="p-3 max-w-md">
+                                        <p className="font-bold text-ink">{clause.clauseLabel}</p>
+                                        <p className="text-ink-500 leading-relaxed">{clause.clauseText}</p>
+                                        {clause.agentNote && (
+                                          <p className="text-[var(--console-accent)] font-semibold mt-1">{clause.agentNote}</p>
+                                        )}
+                                      </td>
+                                      <td className="p-3">
+                                        <select
+                                          defaultValue={clause.reviewStatus}
+                                          disabled={savingField === `clause:${clause.id}`}
+                                          className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-xs font-bold text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                          onChange={(e) =>
+                                            saveClauseReview(
+                                              clause.id,
+                                              { reviewStatus: e.target.value as LeaseClauseReviewStatus },
+                                              `Estatus de cláusula #${clause.clauseNumber}`,
+                                            )
+                                          }
+                                        >
+                                          {(Object.keys(CLAUSE_REVIEW_STATUS_LABELS) as LeaseClauseReviewStatus[]).map((key) => (
+                                            <option key={key} value={key}>
+                                              {CLAUSE_REVIEW_STATUS_LABELS[key]}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </td>
+                                      <td className="p-3 text-center">
+                                        <input
+                                          type="checkbox"
+                                          checked={clause.flagged}
+                                          disabled={savingField === `clause:${clause.id}`}
+                                          className="h-4 w-4 accent-[var(--console-accent)] rounded cursor-pointer disabled:opacity-50"
+                                          aria-label={`Marcar cláusula #${clause.clauseNumber}`}
+                                          onChange={(e) =>
+                                            saveClauseReview(
+                                              clause.id,
+                                              { flagged: e.target.checked },
+                                              `Marca de cláusula #${clause.clauseNumber}`,
+                                            )
+                                          }
+                                        />
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Manually-entered lease terms — no source document
+                            extraction produces these, unlike the clause cards
+                            above, so they're editable inline rather than
+                            read-only. Added 2026-09-03 (Phase 2 additive
+                            migrations): escalation_pct/method/month and
+                            security_deposit_amount/status previously didn't
+                            exist on this schema at all. */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-extrabold text-ink text-sm tracking-wide">Escalación Vigente</p>
+                              {c.escalationOverdue && (
+                                <span
+                                  className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-alert-surface text-alert border border-alert-edge"
+                                  title={`Vencida desde ${c.escalationDueDate} — sin incremento de renta registrado desde entonces.`}
+                                >
+                                  Vencida desde {c.escalationDueDate}
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <label className="space-y-1">
+                                <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">% Anual</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  defaultValue={c.escalationPct ?? ""}
+                                  disabled={savingField === `${c.leaseRowId}:escalation_pct`}
+                                  className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                  onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_pct", e.target.value, "Escalación %")}
+                                />
+                              </label>
+                              <label className="space-y-1 col-span-2">
+                                <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Método</span>
+                                <input
+                                  type="text"
+                                  defaultValue={c.escalationMethod ?? ""}
+                                  placeholder="Ej. fixed_pct, INPC"
+                                  disabled={savingField === `${c.leaseRowId}:escalation_method`}
+                                  className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                  onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_method", e.target.value, "Método de escalación")}
+                                />
+                              </label>
+                              <label className="space-y-1 col-span-3">
+                                <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Mes de aplicación (1-12)</span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={12}
+                                  defaultValue={c.escalationMonth ?? ""}
+                                  disabled={savingField === `${c.leaseRowId}:escalation_month`}
+                                  className="w-20 bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                  onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_month", e.target.value, "Mes de escalación")}
+                                />
+                              </label>
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-2">
+                            <p className="font-extrabold text-ink text-sm tracking-wide">Depósito en Garantía</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <label className="space-y-1">
+                                <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Monto (MXN)</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  defaultValue={c.securityDepositAmount ?? ""}
+                                  disabled={savingField === `${c.leaseRowId}:security_deposit_amount`}
+                                  className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                  onBlur={(e) => saveLeaseField(c.leaseRowId, "security_deposit_amount", e.target.value, "Monto de depósito")}
+                                />
+                              </label>
+                              <label className="space-y-1">
+                                <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Estatus</span>
+                                <input
+                                  type="text"
+                                  defaultValue={c.securityDepositStatus ?? ""}
+                                  placeholder="Ej. completo, incompleto"
+                                  disabled={savingField === `${c.leaseRowId}:security_deposit_status`}
+                                  className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                  onBlur={(e) => saveLeaseField(c.leaseRowId, "security_deposit_status", e.target.value, "Estatus de depósito")}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-1.5">
+                          <p className="font-extrabold text-ink text-sm tracking-wide">Notas del Agente</p>
+                          <textarea
+                            defaultValue={c.agentNotes ?? ""}
+                            placeholder="Comentario libre de Valeria/Mariana sobre este contrato…"
+                            rows={2}
+                            disabled={savingField === `${c.leaseRowId}:agent_notes`}
+                            className="w-full bg-white border border-hairline-strong rounded px-2 py-1.5 text-sm font-medium text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                            onBlur={(e) => saveLeaseField(c.leaseRowId, "agent_notes", e.target.value, "Notas del agente")}
+                          />
+                        </div>
+
+                        <LeaseRenewalPanel
+                          leaseId={c.leaseRowId}
+                          currentEndDate={c.endDate}
+                          isExpired={c.isExpired}
+                          renewalSoon={c.renewalSoon}
+                          renewals={c.renewals}
+                          suggestedEscalationPct={c.suggestedEscalationPct}
+                          suggestedEscalationClauseText={c.suggestedEscalationClauseText}
+                        />
+
+                  </div>
+                );
+              })()}
                 </div>
               )}
 
@@ -4027,15 +4106,28 @@ export function LandlordDashboard({
       {/* AI ASSISTANT DRAWER / SLIDE-OVER PANEL */}
       {copilotOpen && (
         <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[48rem] lg:w-[56rem] xl:w-[64rem] max-w-[96vw] bg-white border-l border-hairline shadow-2xl flex flex-col justify-between animate-slideLeft">
-          {/* HEADER */}
-          <div className="p-4 sm:p-5 border-b border-hairline bg-ink text-white flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-[var(--console-accent)]/20 border border-[var(--console-accent)]/40 flex items-center justify-center">
+          {/* HEADER — plain and message-thread-like on mobile (name + avatar +
+              a back chevron, nothing else competing for the top strip); the
+              fuller executive-console framing (subtitle, labeled buttons)
+              only shows from sm: up, where there's room for it without it
+              reading as chrome. */}
+          <div className="p-3 sm:p-5 border-b border-hairline bg-ink text-white flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <button
+                onClick={() => setCopilotOpen(false)}
+                className="sm:hidden -ml-1 p-1 text-slate-300 hover:text-white cursor-pointer"
+                aria-label="Cerrar"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="h-8 w-8 rounded-full sm:rounded-lg bg-[var(--console-accent)]/20 border border-[var(--console-accent)]/40 flex items-center justify-center shrink-0">
                 <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)] animate-pulse" />
               </div>
               <div>
                 <h3 className="font-bold text-base sm:text-lg leading-tight">Valeria IA</h3>
-                <p className="text-xs text-slate-300 font-medium">Copiloto Ejecutivo de Asset Management</p>
+                <p className="hidden sm:block text-xs text-slate-300 font-medium">Copiloto Ejecutivo de Asset Management</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -4050,15 +4142,16 @@ export function LandlordDashboard({
                     }
                     triggerToast("Nueva consulta iniciada.");
                   }}
-                  className="text-slate-300 hover:text-white text-xs sm:text-sm cursor-pointer font-medium bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                  className="text-slate-300 hover:text-white cursor-pointer font-medium bg-white/10 hover:bg-white/20 transition-colors flex items-center gap-1.5 h-8 w-8 sm:h-auto sm:w-auto justify-center rounded-full sm:rounded-lg sm:px-3 sm:py-1.5 text-xs sm:text-sm"
                   title="Reiniciar conversación"
                 >
-                  <span>✨ Nueva Consulta</span>
+                  <span aria-hidden="true">✨</span>
+                  <span className="hidden sm:inline">Nueva Consulta</span>
                 </button>
               )}
               <button
                 onClick={() => setCopilotOpen(false)}
-                className="text-slate-300 hover:text-white text-xs sm:text-sm cursor-pointer font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
+                className="hidden sm:block text-slate-300 hover:text-white text-xs sm:text-sm cursor-pointer font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
               >
                 Cerrar
               </button>
@@ -4069,14 +4162,44 @@ export function LandlordDashboard({
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-sm sm:text-base bg-slate-50/50">
             {copilotHistory.length === 0 && !copilotLoading && (
               <div className="space-y-4 py-2">
-                <div className="bg-white border border-hairline rounded-xl p-5 shadow-2xs space-y-2">
+                {/* Mobile: reads as Valeria's own opening message, plain like
+                    every other bubble below — not a bordered info card
+                    competing with the actual conversation. Desktop keeps the
+                    card treatment, which has room to read as a distinct
+                    "about me" panel rather than clutter. */}
+                <div className="bg-slate-100 sm:bg-white sm:border sm:border-hairline rounded-2xl rounded-bl-xs sm:rounded-xl p-4 sm:p-5 sm:shadow-2xs space-y-2 max-w-[95%] sm:max-w-none">
                   <p className="font-bold text-ink text-base">¡Hola! Soy Valeria IA 🏛️</p>
                   <p className="text-ink-600 text-xs sm:text-sm leading-relaxed">
                     Tu asesor ejecutivo comercial para La Gran Vía Mexicali. Puedo analizar el Rent Roll, calcular vacantes, revisar exclusividades de giro, evaluar tickets de mantenimiento y presupuestos CapEx.
                   </p>
                 </div>
 
-                <div className="space-y-2">
+                {/* Suggested questions: horizontally-scrolling pill row on
+                    mobile (quick-reply chips, tap and go) instead of stacked
+                    bordered cards — the grid below stays for sm:+, where
+                    there's width for it to read as options rather than a
+                    scroll. */}
+                <div className="sm:hidden -mx-4 px-4 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                  {[
+                    "¿Cuál es el % de ocupación y superficie vacante?",
+                    "Resumen ejecutivo de vencimientos próximos",
+                    "¿Qué exclusividades de giro existen?",
+                    "Estatus de mantenimiento y CapEx pendiente",
+                  ].map((suggested, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setCopilotQuestion(suggested);
+                        void submitCopilotQuestion(suggested);
+                      }}
+                      className="shrink-0 whitespace-nowrap bg-white hover:bg-slate-100 border border-hairline rounded-full px-3.5 py-2 text-xs font-semibold text-ink-700 transition-colors cursor-pointer"
+                    >
+                      {suggested}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="hidden sm:block space-y-2">
                   <p className="text-xs font-bold text-ink-500 uppercase tracking-wider">Preguntas sugeridas:</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {[
@@ -4104,10 +4227,10 @@ export function LandlordDashboard({
             {copilotHistory.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[95%] sm:max-w-[92%] rounded-2xl p-4 sm:p-5 text-sm sm:text-base leading-relaxed ${
+                  className={`max-w-[85%] sm:max-w-[92%] rounded-2xl p-3.5 sm:p-5 text-sm sm:text-base leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-ink text-white rounded-br-xs font-medium shadow-2xs"
-                      : "bg-white text-ink-800 border border-hairline rounded-bl-xs shadow-2xs"
+                      ? "bg-ink text-white rounded-br-xs font-medium sm:shadow-2xs"
+                      : "bg-slate-100 sm:bg-white text-ink-800 sm:border sm:border-hairline rounded-bl-xs sm:shadow-2xs"
                   }`}
                 >
                   {msg.role === "user" ? (
@@ -4163,9 +4286,10 @@ export function LandlordDashboard({
 
             {copilotLoading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-hairline rounded-2xl rounded-bl-xs p-4 text-xs sm:text-sm text-ink-700 font-medium shadow-2xs flex items-center gap-2.5">
+                <div className="bg-slate-100 sm:bg-white sm:border sm:border-hairline rounded-2xl rounded-bl-xs p-3.5 sm:p-4 text-xs sm:text-sm text-ink-700 font-medium sm:shadow-2xs flex items-center gap-2.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-[var(--console-accent)] animate-ping" />
-                  <span>Generando diagnóstico ejecutivo…</span>
+                  <span className="hidden sm:inline">Generando diagnóstico ejecutivo…</span>
+                  <span className="sm:hidden">Escribiendo…</span>
                 </div>
               </div>
             )}
@@ -4179,8 +4303,12 @@ export function LandlordDashboard({
             <div ref={copilotChatEndRef} />
           </div>
 
-          {/* INPUT AREA — MULTI-LINE TEXTAREA */}
-          <div className="p-4 sm:p-5 border-t border-hairline bg-white shrink-0">
+          {/* INPUT AREA — pill-shaped and single-line-tall on mobile, like a
+              messaging app's compose bar; the hint row and boxier desktop
+              textarea only show from sm: up, where "Shift+Enter for a
+              newline" is a useful tip rather than chrome nobody reads on a
+              phone (Enter still sends either way). */}
+          <div className="p-3 sm:p-5 border-t border-hairline bg-white shrink-0">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -4188,7 +4316,7 @@ export function LandlordDashboard({
               }}
               className="flex flex-col gap-2.5"
             >
-              <div className="relative flex items-end gap-2.5">
+              <div className="relative flex items-end gap-2 sm:gap-2.5">
                 <textarea
                   value={copilotQuestion}
                   onChange={(e) => setCopilotQuestion(e.target.value)}
@@ -4198,20 +4326,24 @@ export function LandlordDashboard({
                       void submitCopilotQuestion(copilotQuestion);
                     }
                   }}
-                  rows={2}
-                  placeholder="Escribe tu pregunta comercial o sobre la plaza (Enter para enviar, Shift+Enter para salto de línea)..."
+                  rows={1}
+                  placeholder="Pregúntale a Valeria…"
                   disabled={copilotLoading}
-                  className="w-full bg-slate-50 border border-hairline-strong rounded-xl p-3.5 sm:p-4 text-sm sm:text-base text-ink-900 placeholder:text-ink-400 font-medium focus:bg-white focus:border-[var(--console-accent)] focus:ring-2 focus:ring-[var(--console-accent)]/10 focus:outline-none resize-none disabled:opacity-60 leading-relaxed shadow-2xs transition-all"
+                  className="w-full bg-slate-100 sm:bg-slate-50 border border-transparent sm:border-hairline-strong rounded-full sm:rounded-xl px-4 py-2.5 sm:p-4 text-sm sm:text-base text-ink-900 placeholder:text-ink-400 font-medium focus:bg-white focus:border-[var(--console-accent)] focus:ring-2 focus:ring-[var(--console-accent)]/10 focus:outline-none resize-none disabled:opacity-60 leading-relaxed sm:shadow-2xs transition-all"
                 />
                 <button
                   type="submit"
                   disabled={copilotLoading || !copilotQuestion.trim()}
-                  className="bg-ink hover:bg-ink-700 text-white px-4 sm:px-5 py-3.5 sm:py-4 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition-all shadow-xs disabled:opacity-50 shrink-0"
+                  aria-label="Enviar"
+                  className="bg-ink hover:bg-ink-700 text-white h-10 w-10 sm:h-auto sm:w-auto sm:px-5 sm:py-4 rounded-full sm:rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition-all sm:shadow-xs disabled:opacity-50 shrink-0 flex items-center justify-center"
                 >
-                  {copilotLoading ? "..." : "Enviar"}
+                  <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
+                  </svg>
+                  <span className="hidden sm:inline">{copilotLoading ? "..." : "Enviar"}</span>
                 </button>
               </div>
-              <div className="flex items-center justify-between text-xs text-ink-500 font-medium px-1">
+              <div className="hidden sm:flex items-center justify-between text-xs text-ink-500 font-medium px-1">
                 <span>Shift+Enter para salto de línea</span>
                 <span>Respuesta ejecutiva comercial</span>
               </div>

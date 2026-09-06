@@ -72,8 +72,30 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
             {reportExcerpt}
           </p>
         </td>
+        {/* Activo/Proveedor/Garantía: real fields Diego's triage already
+            computes and writes (asset match + warranty check drove
+            costBucket in the first place) but that were never surfaced past
+            the drawer — flagged 2026-09-06 against the original design
+            mockup, which shows all three as their own columns. */}
+        <td className="p-3.5 align-top text-sm text-slate-700 min-w-[130px]">
+          {ticket.assetName ?? <span className="text-slate-400">—</span>}
+        </td>
+        <td className="p-3.5 align-top text-sm text-slate-700 whitespace-nowrap">
+          {ticket.contractorName ?? <span className="text-slate-400">—</span>}
+        </td>
         <td className="p-3.5 align-top text-sm font-semibold text-slate-700 text-right whitespace-nowrap">
           {ticket.estimatedCost !== null ? formatMxn(ticket.estimatedCost) : "—"}
+        </td>
+        <td className="p-3.5 align-top text-sm whitespace-nowrap">
+          {ticket.assetName ? (
+            ticket.warrantyCovered ? (
+              <span className="text-emerald-700 font-semibold">Cubierta ✓</span>
+            ) : (
+              <span className="text-slate-500">Sin cobertura</span>
+            )
+          ) : (
+            <span className="text-slate-400">—</span>
+          )}
         </td>
         {/* Status column also carries the draft/audit flags — they qualify the
             state of the ticket, so they belong next to the state. */}
@@ -137,7 +159,7 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
 
       {errorMsg && (
         <tr className="border-b border-slate-100 last:border-b-0">
-          <td colSpan={6} className="px-3.5 pb-2 pt-0 text-xs text-red-600">
+          <td colSpan={9} className="px-3.5 pb-2 pt-0 text-xs text-red-600">
             {errorMsg}
           </td>
         </tr>
@@ -230,7 +252,10 @@ export function DiegoTriageQueue({
                 <th className="p-3.5 font-bold">Ticket</th>
                 <th className="p-3.5 font-bold">Inquilino</th>
                 <th className="p-3.5 font-bold">Reporte</th>
+                <th className="p-3.5 font-bold">Activo</th>
+                <th className="p-3.5 font-bold">Proveedor</th>
                 <th className="p-3.5 font-bold text-right">Costo</th>
+                <th className="p-3.5 font-bold">Garantía</th>
                 <th className="p-3.5 font-bold">Estado</th>
                 <th className="p-3.5 font-bold text-right">Acciones</th>
               </tr>

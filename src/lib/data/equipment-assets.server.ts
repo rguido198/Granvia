@@ -207,6 +207,32 @@ export async function fetchEquipmentAssets(): Promise<EquipmentAsset[]> {
   return rows.map((r) => parseAssetRow(r, localeMap));
 }
 
+function parseManualUrlMeta(manual_url: string | null): ManualUrlPayload {
+  if (!manual_url) return {};
+  try {
+    return JSON.parse(manual_url);
+  } catch {
+    return { docName: manual_url };
+  }
+}
+
+/** The `assets` table predates its own `name` column — rows seeded before
+ *  that migration (or written by a path that hasn't caught up, e.g. Diego's
+ *  triage-time asset match) carry the display name inside `manual_url`'s
+ *  JSON blob instead, with `model`/`make` as a last resort. Exported so
+ *  diego-tickets.server.ts's ticket→asset join resolves the same name a
+ *  landlord sees on the asset's own Contratistas & Garantías card, instead
+ *  of reading the often-null `name` column directly and showing blank. */
+export function resolveAssetDisplayName(r: {
+  name: string | null;
+  model: string | null;
+  make: string | null;
+  manual_url: string | null;
+}): string {
+  const meta = parseManualUrlMeta(r.manual_url);
+  return r.name || meta.name || r.model || r.make || "Equipo de Infraestructura";
+}
+
 function parseAssetRow(
   r: {
     id: string;
@@ -221,15 +247,7 @@ function parseAssetRow(
   },
   localeMap: Map<string, string>,
 ): EquipmentAsset {
-  let meta: ManualUrlPayload = {};
-  if (r.manual_url) {
-    try {
-      meta = JSON.parse(r.manual_url);
-    } catch {
-      meta = { docName: r.manual_url };
-    }
-  }
-
+  const meta = parseManualUrlMeta(r.manual_url);
   const category: EquipmentAssetCategory = meta.category || "GENERAL";
   const unitNumber = localeMap.get(r.locale_id) || "Área Común";
 

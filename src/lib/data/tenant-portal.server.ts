@@ -138,6 +138,11 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
       updatedAt: t.updated_at,
       workPerformed: t.work_performed,
       finalCost: t.final_cost !== null ? Number(t.final_cost) : null,
+      // Landlord-only fields — the asset match and warranty determination are
+      // an internal triage detail, not something a tenant's own ticket view
+      // needs to show (same reasoning as pendingConfirmationSince below).
+      assetName: null,
+      warrantyCovered: false,
       // Landlord-only escalation UI reads this — see its doc comment in
       // diego-tickets.server.ts. The tenant portal never needs it.
       pendingConfirmationSince: null,

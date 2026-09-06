@@ -1,5 +1,6 @@
 import "server-only";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { resolveAssetDisplayName } from "@/lib/data/equipment-assets.server";
 
 export type DiegoTicket = {
   id: string;
@@ -44,6 +45,16 @@ export type DiegoTicket = {
    *  which is the pre-dispatch approval figure. Null until
    *  mark-resolved writes it. */
   finalCost: number | null;
+  /** Name of the equipment/asset Diego's triage matched this ticket's report
+   *  to (assets.name) — null when nothing in the tracked equipment list
+   *  matched, which is the common case for reports that aren't about a
+   *  major system (a leaking faucet, a broken light). */
+  assetName: string | null;
+  /** Whether Diego determined the matched asset's warranty/service contract
+   *  covered this fault at triage time — what actually drove costBucket
+   *  landing on ARRENDADOR at $0 instead of a real charge. Always false
+   *  when assetName is null (no match to check coverage against). */
+  warrantyCovered: boolean;
   /** When this ticket most recently entered pending_confirmation, per
    *  ticket_status_history — deliberately NOT updatedAt, which is a
    *  generic trigger-maintained column now (bumps on any update to the
@@ -79,10 +90,11 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       `
       id, ticket_number, status, priority, cost_bucket, estimated_cost,
       tenant_entity, reporter_name, raw_report, diagnosis_answer, created_at, updated_at,
-      work_performed, final_cost, unresolved_jd_keys,
+      work_performed, final_cost, unresolved_jd_keys, warranty_covered,
       skeptic_flagged, skeptic_concerns,
       locales ( unit_number, properties ( name ) ),
-      contractors ( name )
+      contractors ( name ),
+      assets ( name, model, make, manual_url )
     `,
     )
     .order("created_at", { ascending: false });
@@ -105,10 +117,12 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     work_performed: string | null;
     final_cost: string | number | null;
     unresolved_jd_keys: string[] | null;
+    warranty_covered: boolean | null;
     skeptic_flagged: boolean;
     skeptic_concerns: string[] | null;
     locales: { unit_number: string; properties: { name: string } | null } | null;
     contractors: { name: string } | null;
+    assets: { name: string | null; model: string | null; make: string | null; manual_url: string | null } | null;
   };
 
   const rows = (data ?? []) as unknown as Row[];
@@ -158,6 +172,8 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       updatedAt: t.updated_at,
       workPerformed: t.work_performed,
       finalCost: t.final_cost !== null ? Number(t.final_cost) : null,
+      assetName: t.assets ? resolveAssetDisplayName(t.assets) : null,
+      warrantyCovered: t.warranty_covered ?? false,
       pendingConfirmationSince: pendingConfirmationSinceById.get(t.id) ?? null,
     };
   });
