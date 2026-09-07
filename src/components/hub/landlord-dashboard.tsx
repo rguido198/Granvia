@@ -1788,8 +1788,14 @@ export function LandlordDashboard({
           The title, the mobile nav toggle, the currency toggle, the period
           selector and the Copiloto button all moved up there. */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* MAIN BODY AREA */}
-        <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
+        {/* MAIN BODY AREA — capped at 1600px rather than the old 1280px
+            (max-w-7xl): on a 1440px+ laptop, let alone a wide monitor, the
+            old cap left a dead gutter on both sides doing nothing. 1600px
+            still keeps KPI card grids and forms from stretching thin on
+            very wide screens — a table-specific wider cap is a separate,
+            deliberately deferred follow-up (tables are the one thing here
+            that gets strictly better with more width; cards don't). */}
+        <div className="p-6 sm:p-8 space-y-8 max-w-[1600px] w-full mx-auto">
           {activeTab === "rentroll" && (
             <Fragment>
             <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs">
