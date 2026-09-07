@@ -1631,6 +1631,12 @@ export function LandlordDashboard({
                   <p className="text-xs font-bold text-ink-500 tracking-wide">Renta Contratada (Portafolio)</p>
                   <p className="text-2xl font-bold text-ink">{formatMxn(contractedRent)}</p>
                   <p className="text-xs text-ink-500 font-medium">{rentRoll.length} locales bajo contrato</p>
+                  <Link
+                    href="/consola/finanzas"
+                    className="inline-block text-xs font-bold text-[var(--console-accent)] hover:underline pt-0.5"
+                  >
+                    Ver dinero en el tiempo →
+                  </Link>
                 </div>
 
                 <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 space-y-1">
