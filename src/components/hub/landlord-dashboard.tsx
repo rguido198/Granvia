@@ -2487,7 +2487,7 @@ export function LandlordDashboard({
                               {formatVal(c.amount)}
                             </td>
                             <td className="p-3.5">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1 ${verdictMeta.badge}`}>
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1 whitespace-nowrap ${verdictMeta.badge}`}>
                                 {verdictMeta.label}
                               </span>
                               <p className="text-xs text-ink-500 leading-relaxed max-w-md">{c.details}</p>
@@ -2524,7 +2524,7 @@ export function LandlordDashboard({
                               fullWidth
                               value={
                                 <>
-                                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1 ${verdictMeta.badge}`}>
+                                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1 whitespace-nowrap ${verdictMeta.badge}`}>
                                     {verdictMeta.label}
                                   </span>
                                   <span className="block text-ink-600 font-normal normal-case">{c.details}</span>
@@ -3078,11 +3078,11 @@ export function LandlordDashboard({
                                     Ver expediente →
                                   </Link>
                                   {c.isExpired ? (
-                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge">
+                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge whitespace-nowrap">
                                       Vencido
                                     </span>
                                   ) : c.renewalSoon ? (
-                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40">
+                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40 whitespace-nowrap">
                                       Renovación Próxima
                                     </span>
                                   ) : (
@@ -3129,9 +3129,9 @@ export function LandlordDashboard({
                             subtitle={c.tradeName ? `${c.tenantEntity} · ${c.unitCode}` : `${c.unitCode} · ${c.sqm} m²`}
                             badge={
                               c.isExpired ? (
-                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge">Vencido</span>
+                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge whitespace-nowrap">Vencido</span>
                               ) : c.renewalSoon ? (
-                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40">Renovación Próxima</span>
+                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40 whitespace-nowrap">Renovación Próxima</span>
                               ) : (
                                 <span className="text-xs font-semibold text-ink-500">Vigente</span>
                               )
@@ -3408,7 +3408,7 @@ export function LandlordDashboard({
                                 if (!verifiedMiss) return null;
                                 return (
                                   <span
-                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-alert-surface text-alert border border-alert-edge"
+                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-alert-surface text-alert border border-alert-edge whitespace-nowrap"
                                     title={`Vencida desde ${verifiedMiss.dueDate} — sin incremento de renta registrado desde entonces.`}
                                   >
                                     Vencida desde {verifiedMiss.dueDate}
@@ -3577,7 +3577,7 @@ export function LandlordDashboard({
                   {/* Labeled Divider separating live data from demo simulator */}
                   <div className="relative flex py-2 items-center">
                     <div className="flex-grow border-t border-slate-300"></div>
-                    <span className="flex-shrink mx-4 text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                    <span className="flex-shrink-0 mx-4 text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 whitespace-nowrap">
                       Simulador de Exclusividad — Demostración
                     </span>
                     <div className="flex-grow border-t border-slate-300"></div>
@@ -3750,7 +3750,7 @@ export function LandlordDashboard({
                           </div>
 
                           <span
-                            className={`text-xs font-bold px-3 py-1 rounded-full border shrink-0 ${
+                            className={`text-xs font-bold px-3 py-1 rounded-full border shrink-0 whitespace-nowrap ${
                               prospect.viable
                                 ? "bg-slate-100 text-ink border-hairline-strong"
                                 : "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border-[var(--console-accent)]/30"
@@ -4392,7 +4392,7 @@ export function LandlordDashboard({
                         <h3 className="text-lg font-bold text-ink">
                           Bitácora Inmutable de Auditoría
                         </h3>
-                        <span className="inline-flex items-center gap-1.5 bg-ok-surface text-ok border border-ok/30 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1.5 bg-ok-surface text-ok border border-ok/30 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide whitespace-nowrap">
                           <span className="h-1.5 w-1.5 rounded-full bg-ok-surface0 animate-pulse" />
                           En Vivo
                         </span>
@@ -4497,7 +4497,7 @@ export function LandlordDashboard({
                               <p className="text-xs text-console-ash leading-relaxed self-center">{e.action}</p>
                               <div className="flex flex-col items-end gap-1 shrink-0">
                                 <span
-                                  className={`text-[9.5px] font-bold tracking-wide px-2 py-0.5 rounded-full border border-console-hairline-strong ${
+                                  className={`text-[9.5px] font-bold tracking-wide px-2 py-0.5 rounded-full border border-console-hairline-strong whitespace-nowrap ${
                                     e.actorType === "user"
                                       ? "bg-console-raised text-console-ash"
                                       : "bg-console-raised text-ok-on-dark"
