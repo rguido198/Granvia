@@ -210,14 +210,23 @@ export function MarianaPendingPanel({
                 leaseMatchItems.length + leaseExtractionItems.length === 1 ? "" : "s"
               } por validar.`}
         </p>
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={refreshing}
-          className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1.5 rounded-lg border border-hairline hover:bg-slate-200 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shrink-0"
-        >
-          {refreshing ? "Actualizando…" : "Actualizar"}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/consola/excepciones"
+            className="text-xs font-bold text-[var(--console-accent)] hover:underline"
+            title="Casos donde un agente no está seguro, un contrato no está digitalizado, o un inquilino reportó que el problema sigue"
+          >
+            Ver excepciones →
+          </Link>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={refreshing}
+            className="text-xs font-bold bg-slate-100 text-ink-700 px-3 py-1.5 rounded-lg border border-hairline hover:bg-slate-200 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {refreshing ? "Actualizando…" : "Actualizar"}
+          </button>
+        </div>
       </div>
 
       {leaseApplications.length > 0 && (
