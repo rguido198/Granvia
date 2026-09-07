@@ -1800,15 +1800,25 @@ export function LandlordDashboard({
                 <table className="w-full min-w-[900px] table-fixed text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
-                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} width="w-[19%]" />
-                      <SortableHeader label="Superficie" sortKey="sqm" current={rentRollSort} onSort={toggleRentRollSort} align="right" width="w-[8%]" />
+                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} width="w-[22%]" />
+                      {/* Superficie + % GLA merged into one column, and Renta
+                          Anual dropped (pure ×12 restatement — moved to the
+                          .xlsx export and the lease detail page instead of
+                          living in the scanning view) and Escalación folded
+                          into Vencimiento below, shown only on the leases
+                          that actually have one — found live 2026-09-08:
+                          eight thin numeric columns forced horizontal
+                          scanning across values that don't compare to each
+                          other. Grouped by what's actually read together
+                          instead: size+share is one fact, rent+/m² is one
+                          fact, date+escalation is one temporal fact. */}
                       <SortableHeader
-                        label="% GLA"
-                        sortKey="sharePct"
+                        label="Superficie · % GLA"
+                        sortKey="sqm"
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[10%]"
+                        width="w-[18%]"
                         title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
                       />
                       <SortableHeader
@@ -1817,14 +1827,12 @@ export function LandlordDashboard({
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[12%]"
+                        width="w-[16%]"
                         className="font-extrabold"
                       />
-                      <th className="p-3.5 w-[11%] text-right cursor-default select-none">Renta Anual</th>
-                      <th className="p-3.5 w-[14%] text-left cursor-default select-none">Escalación</th>
-                      <th className="p-3.5 w-[10%] text-left cursor-default select-none">Vencimiento</th>
+                      <th className="p-3.5 w-[24%] text-left cursor-default select-none">Vencimiento</th>
                       <th
-                        className="p-3.5 w-[16%] text-center cursor-default select-none"
+                        className="p-3.5 w-[20%] text-center cursor-default select-none"
                         title="SSOT = Single Source of Truth / Fuente Única de Verdad (Información sincronizada en tiempo real)"
                       >
                         Estatus Contractual SSOT
@@ -1902,24 +1910,22 @@ export function LandlordDashboard({
                               )}
                             </div>
                           </td>
-                          <td className="p-3.5 text-right font-medium text-ink-700 whitespace-nowrap">
-                            {isEditingRentRoll ? (
-                              <input
-                                type="number"
-                                defaultValue={r.sqm}
-                                aria-label={`Superficie m² para ${r.name}`}
-                                disabled={savingField === `${r.slug}:sqm`}
-                                className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-sm focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                onBlur={(e) => saveRentRollField(r.slug, "sqm", e.target.value, r.sqm, `Superficie de ${r.name}`)}
-                                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                              />
-                            ) : (
-                              `${r.sqm} m²`
-                            )}
-                          </td>
                           <td className="p-3.5 text-right font-medium text-ink-700 text-sm whitespace-nowrap">
                             <div className="flex flex-col items-end gap-1">
-                              <span>{r.sharePct.toFixed(2)}%</span>
+                              {isEditingRentRoll ? (
+                                <input
+                                  type="number"
+                                  defaultValue={r.sqm}
+                                  aria-label={`Superficie m² para ${r.name}`}
+                                  disabled={savingField === `${r.slug}:sqm`}
+                                  className="w-16 bg-white border border-hairline-strong rounded px-1.5 py-0.5 text-right font-bold text-ink text-sm focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                  onBlur={(e) => saveRentRollField(r.slug, "sqm", e.target.value, r.sqm, `Superficie de ${r.name}`)}
+                                  onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                                />
+                              ) : (
+                                <span className="font-bold text-ink">{r.sqm} m²</span>
+                              )}
+                              <span className="text-xs text-ink-500">{r.sharePct.toFixed(2)}%</span>
                               {/* GLA share bar — visual weight proportional to sharePct,
                                   same console-accent already used everywhere else
                                   interactive/notable in this table, not a new color. */}
@@ -1951,23 +1957,20 @@ export function LandlordDashboard({
                               </div>
                             )}
                           </td>
-                          {/* Renta Anual, Escalación, Vencimiento — real fields that
-                              already existed elsewhere (Legal Expedientes' expanded
-                              row) but were never surfaced in the Rent Roll table
-                              itself, flagged 2026-09-04. Renta Anual is pure math off
-                              r.rent (no new data); Escalación/Vencimiento come from
-                              leaseByLocaleId, the same LeaseDetail cross-reference
-                              this file already uses a few lines below for
-                              sourceApplicationNumber — no new plumbing. */}
-                          <td className="p-3.5 text-right font-medium text-ink-700 text-sm whitespace-nowrap">
-                            {formatVal(r.rent * 12)}
-                          </td>
+                          {/* Vencimiento + Escalación merged into one column —
+                              Renta Anual (pure ×12 restatement) dropped
+                              entirely, moved to the .xlsx export and the
+                              lease detail page instead. Escalación is a
+                              secondary line under the date, shown only when
+                              the lease actually has one on file (most rows
+                              don't yet — see /consola/escalaciones), same
+                              real fields (leaseByLocaleId, the LeaseDetail
+                              cross-reference this file already uses a few
+                              lines below for sourceApplicationNumber). */}
                           <td className="p-3.5 text-left text-sm whitespace-nowrap">
                             {(() => {
                               const lease = leaseByLocaleId.get(r.slug);
-                              if (!lease || lease.escalationPct === null) {
-                                return <span className="text-ink-400">—</span>;
-                              }
+                              if (!lease) return <span className="text-ink-400">—</span>;
                               // Only flag a VERIFIED miss here — a cycle
                               // whose due date predates
                               // LEASE_RENT_HISTORY_SINCE has no ledger to
@@ -1982,27 +1985,20 @@ export function LandlordDashboard({
                               );
                               return (
                                 <div>
-                                  <p className="font-bold text-ink-700">
-                                    {lease.escalationPct}% {lease.escalationMethod ? `· ${ESCALATION_METHOD_LABEL[lease.escalationMethod]}` : ""}
-                                  </p>
-                                  {verifiedMiss && (
-                                    <p className="text-[10px] font-bold text-alert" title={`Vencida desde ${verifiedMiss.dueDate}`}>
-                                      Vencida
-                                    </p>
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </td>
-                          <td className="p-3.5 text-left text-sm whitespace-nowrap">
-                            {(() => {
-                              const lease = leaseByLocaleId.get(r.slug);
-                              if (!lease) return <span className="text-ink-400">—</span>;
-                              return (
-                                <div>
                                   <p className={`font-bold ${lease.isExpired ? "text-alert" : r.renewalSoon ? "text-caution" : "text-ink-700"}`}>
                                     {new Date(lease.endDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
                                   </p>
+                                  {lease.escalationPct !== null && (
+                                    <p className="text-[11px] text-ink-500 font-medium mt-0.5">
+                                      {lease.escalationPct}% {lease.escalationMethod ? `· ${ESCALATION_METHOD_LABEL[lease.escalationMethod]}` : ""}
+                                      {verifiedMiss && (
+                                        <span className="text-alert font-bold" title={`Vencida desde ${verifiedMiss.dueDate}`}>
+                                          {" "}
+                                          · Vencida
+                                        </span>
+                                      )}
+                                    </p>
+                                  )}
                                 </div>
                               );
                             })()}

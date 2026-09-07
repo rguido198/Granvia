@@ -119,6 +119,7 @@ export function LeaseDetailView({ lease, tickets }: { lease: LeaseDetail; ticket
           <div className="bg-slate-50 border border-hairline rounded-xl p-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Renta mensual</p>
             <p className="text-sm font-extrabold text-slate-900">{formatMxn(lease.rentMonthly)}</p>
+            <p className="text-[11px] text-slate-500 font-medium">{formatMxn(lease.rentMonthly * 12)}/año</p>
           </div>
           <div className="bg-slate-50 border border-hairline rounded-xl p-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Reclamos abiertos · Renovaciones</p>

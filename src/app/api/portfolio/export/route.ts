@@ -43,6 +43,7 @@ export async function GET() {
       "Nombre Comercial": r.tradeName ?? "—",
       "Superficie (m²)": r.sqm,
       "Renta Mensual (MXN)": r.rent,
+      "Renta Anual (MXN)": r.rent * 12,
       "Participación GLA (%)": Number(r.sharePct.toFixed(2)),
       Estado: r.status,
       "Categoría / Giro": category,
