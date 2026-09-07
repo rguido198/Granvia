@@ -31,6 +31,15 @@ export type LeaseApplicationDetail = {
   draftMarkdown: string | null;
   unresolvedJdKeys: string[];
   showWatermark: boolean;
+  createdAt: string;
+  /** Who actually clicked Aprobar/Rechazar (lease_applications.reviewed_by,
+   *  resolved to a name/email via profiles) and when — null while status is
+   *  still needs_landlord_review. Root claude.md's #4 frontend priority
+   *  ("agent trace / audit") applied here too: written by
+   *  /api/workflow/approve-lease on every resolution, just never selected
+   *  before this. */
+  reviewedByName: string | null;
+  reviewedAt: string | null;
 };
 
 export async function fetchLeaseApplicationDetail(id: string): Promise<LeaseApplicationDetail | null> {
@@ -48,6 +57,7 @@ export async function fetchLeaseApplicationDetail(id: string): Promise<LeaseAppl
       requested_sqm, desired_term_years, risk_level, matched_clause_text, matched_product_pairs,
       category_fit_score, yield_score, term_stability_score, match_score,
       skeptic_flagged, skeptic_concerns, draft_markdown, unresolved_jd_keys,
+      created_at, reviewed_by, reviewed_at,
       target_locale:locales!lease_applications_target_locale_id_fkey ( unit_number ),
       matched_locale:locales!lease_applications_matched_locale_id_fkey ( unit_number, tenant_entity )
     `,
@@ -61,6 +71,16 @@ export async function fetchLeaseApplicationDetail(id: string): Promise<LeaseAppl
   const targetLocale = Array.isArray(data.target_locale) ? data.target_locale[0] : data.target_locale;
   const matchedLocale = Array.isArray(data.matched_locale) ? data.matched_locale[0] : data.matched_locale;
   const unresolvedJdKeys = (data.unresolved_jd_keys as string[] | null) ?? [];
+
+  let reviewedByName: string | null = null;
+  if (data.reviewed_by) {
+    const { data: reviewer } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", data.reviewed_by as string)
+      .maybeSingle();
+    reviewedByName = reviewer?.full_name ?? reviewer?.email ?? null;
+  }
 
   return {
     id: data.id,
@@ -88,5 +108,8 @@ export async function fetchLeaseApplicationDetail(id: string): Promise<LeaseAppl
     draftMarkdown: data.draft_markdown,
     unresolvedJdKeys,
     showWatermark: unresolvedJdKeys.length > 0,
+    createdAt: data.created_at as string,
+    reviewedByName,
+    reviewedAt: data.reviewed_at as string | null,
   };
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { LegalDraftMarkdown } from "@/components/hub/legal-draft-markdown";
 import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
 import type { LeaseApplicationDetail } from "@/lib/data/lease-application-detail.server";
@@ -316,13 +317,24 @@ export function LeaseApplicationCard({
             {application.applicationNumber}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="text-xs font-bold bg-ink text-white px-3 py-1.5 rounded-lg hover:bg-ink-700 cursor-pointer shrink-0"
-        >
-          {expanded ? "Ocultar expediente" : "Ver expediente →"}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Same decision, a stable address — see the standalone page's own
+           *  doc comment for why this is additive, not a replacement for
+           *  the expand-in-place quick path below. */}
+          <Link
+            href={`/consola/solicitudes/${application.id}`}
+            className="text-xs font-bold text-[var(--console-accent)] hover:underline"
+          >
+            Página completa →
+          </Link>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-xs font-bold bg-ink text-white px-3 py-1.5 rounded-lg hover:bg-ink-700 cursor-pointer"
+          >
+            {expanded ? "Ocultar expediente" : "Ver expediente →"}
+          </button>
+        </div>
       </div>
 
       {expanded && (
