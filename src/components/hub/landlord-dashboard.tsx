@@ -1543,9 +1543,17 @@ export function LandlordDashboard({
         />
       )}
 
-      {/* LEFT SIDEBAR NAVIGATION — off-canvas drawer on mobile, permanent column on lg+ */}
+      {/* LEFT SIDEBAR NAVIGATION — off-canvas drawer on mobile, permanent column on lg+.
+          overflow-y-auto — inset-y-0 fixes this to exactly the viewport height, and
+          without it, a short viewport (a laptop with a small usable height, or the
+          browser's own chrome eating into it) had nowhere for the nav+Pulso block to
+          go once it no longer fit above the footer session card: the fixed box doesn't
+          grow, so the card just rendered past the bottom edge, off-screen and
+          unreachable — there was no scrollbar to bring it back. justify-between still
+          pins the footer to the bottom on a tall-enough viewport; this only changes
+          what happens once content stops fitting. */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-hairline/80 shrink-0 flex flex-col justify-between p-4 space-y-4 text-left transition-all duration-200 lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] overflow-y-auto bg-white border-r border-hairline/80 shrink-0 flex flex-col justify-between p-4 space-y-4 text-left transition-all duration-200 lg:static lg:z-auto lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${sidebarCollapsed ? "lg:w-20" : "lg:w-72"}`}
       >
@@ -1673,6 +1681,12 @@ export function LandlordDashboard({
               </p>
             )}
 
+            {/* "RBAC" dropped from this label only — at 288px the sidebar had
+                ~137px for the text next to the icon and the "Admin" pill, and
+                "Control de Acceso RBAC" needed 168px, truncating to "Control
+                de Acces…". The full name (with RBAC) still lives on the page
+                itself (title, toast) — this is the nav entry, not the only
+                place the acronym appears. */}
             <SidebarNavItem
               active={activeTab === "rbac"}
               onClick={() => selectTab("rbac")}
@@ -1680,7 +1694,7 @@ export function LandlordDashboard({
               collapsed={sidebarCollapsed}
               trailing={<span className="text-xs font-bold bg-slate-200 text-ink px-2 py-0.5 rounded shrink-0 ml-2">Admin</span>}
             >
-              Control de Acceso RBAC
+              Control de Acceso
             </SidebarNavItem>
           </nav>
 

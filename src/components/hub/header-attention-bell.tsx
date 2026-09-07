@@ -50,14 +50,21 @@ export function HeaderAttentionBell({
           </span>
         )}
       </summary>
-      {/* fixed + viewport-relative offsets, not absolute+right-0 (relative to
-          the bell icon itself): the header row wraps differently across real
-          device widths, and on a layout where the bell lands mid-row instead
-          of near the true screen edge, a right-0-anchored w-64 popover ran
-          off the left side of the screen entirely — confirmed 2026-09-07.
-          Pinning to the viewport's own corner is robust to wherever the icon
-          ends up. */}
-      <div className="fixed top-20 right-3 z-30 w-64 max-w-[calc(100vw-1.5rem)] sm:top-16 rounded-xl border border-slate-200 bg-white p-2 shadow-md">
+      {/* Mobile (<sm, the header's flex-col stack): fixed + viewport-relative
+          offsets, not absolute+right-0 relative to the bell icon itself — the
+          header row wraps differently across real device widths there, and
+          on a layout where the bell lands mid-row instead of near the true
+          screen edge, a right-0-anchored w-64 popover ran off the left side
+          of the screen entirely — confirmed 2026-09-07. Pinning to the
+          viewport's own corner was robust to wherever the icon ended up.
+          sm+ (the header's single non-wrapping row): that risk doesn't
+          apply, and the viewport-corner anchor actively broke instead — on
+          a wide screen the bell sits well inside the header, not near the
+          true right edge, so the popover rendered visibly detached, floating
+          off to the side under nothing. absolute+top-full anchors it to the
+          icon itself, which is what "detached" was missing — confirmed
+          2026-09-08. */}
+      <div className="fixed top-20 right-3 z-30 w-64 max-w-[calc(100vw-1.5rem)] rounded-xl border border-slate-200 bg-white p-2 shadow-md sm:absolute sm:top-full sm:right-0 sm:mt-2">
         <p className="px-2 py-1 text-[11px] font-bold text-slate-400 tracking-wider">Atención</p>
 
         {counts.diegoDecisiones > 0 && (
