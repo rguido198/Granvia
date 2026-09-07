@@ -17,9 +17,10 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { renewalId, approved } = body as {
+  const { renewalId, approved, rejectionReason } = body as {
     renewalId?: string;
     approved?: boolean;
+    rejectionReason?: string;
   };
   if (typeof renewalId !== "string" || typeof approved !== "boolean") {
     return NextResponse.json(
@@ -63,7 +64,11 @@ export async function POST(request: NextRequest) {
     );
     await instance.sendEvent({
       type: `lease-renewal-review-${renewalId}`,
-      payload: { approved, reviewedById: profile.id },
+      payload: {
+        approved,
+        reviewedById: profile.id,
+        ...(approved ? {} : { rejectionReason: typeof rejectionReason === "string" ? rejectionReason : undefined }),
+      },
     });
     return NextResponse.json({ runId: renewal.workflow_run_id });
   } catch (error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { ApprovalQueueItem, ApprovalQueueItemKind } from "@/lib/approval-queue";
 import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
 import { LeaseApplicationCard } from "@/components/hub/lease-application-review";
@@ -71,7 +72,18 @@ function ItemRow({
         </p>
       </div>
 
-      {actionable ? (
+      {item.kind === "lease_renewal" ? (
+        // A renewal has its own standalone page (root claude.md's #1
+        // frontend priority) — links straight there instead of jumping into
+        // the console's Expedientes tab and expanding a row, which is what
+        // onNavigate below still does for every other kind.
+        <Link
+          href={`/consola/renovaciones/${item.id}`}
+          className="text-xs font-bold text-white bg-ink px-3 py-1.5 rounded-lg hover:bg-ink-700 cursor-pointer shrink-0"
+        >
+          Ver comparativo →
+        </Link>
+      ) : actionable ? (
         <button
           type="button"
           onClick={() => onNavigate(item)}

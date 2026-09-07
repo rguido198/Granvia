@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { computeDaysRemaining, tierForDays, TIER_LABELS, type ExpirationTierKey, type LeaseDetail } from "@/lib/data/contract-status";
 import { RENEWAL_OUTREACH_STAGES, type RenewalOutreachStage, type RenewalOutreachStatus } from "@/lib/data/renewal-outreach-types";
 
@@ -148,13 +149,26 @@ function LeaseOutreachRow({
 
         <ContactForm leaseRowId={lease.leaseRowId} onSubmit={onRegisterContact} />
 
-        <button
-          type="button"
-          onClick={() => onOpenContract(lease.id)}
-          className="text-xs font-bold bg-slate-100 text-ink-700 px-2.5 py-1 rounded-lg border border-hairline hover:bg-slate-200 cursor-pointer"
-        >
-          {draft ? "Ver Renovación" : "Redactar Renovación"}
-        </button>
+        {/* A draft already exists — its own standalone page (root claude.md's
+         *  #1 frontend priority) is the real destination, not the Expedientes
+         *  row onOpenContract expands. Only "Redactar Renovación" (no draft
+         *  yet) still needs that in-console form. */}
+        {draft ? (
+          <Link
+            href={`/consola/renovaciones/${draft.id}`}
+            className="text-xs font-bold bg-slate-100 text-ink-700 px-2.5 py-1 rounded-lg border border-hairline hover:bg-slate-200 cursor-pointer"
+          >
+            Ver Renovación
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onOpenContract(lease.id)}
+            className="text-xs font-bold bg-slate-100 text-ink-700 px-2.5 py-1 rounded-lg border border-hairline hover:bg-slate-200 cursor-pointer"
+          >
+            Redactar Renovación
+          </button>
+        )}
       </div>
     </div>
   );

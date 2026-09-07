@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ConsoleModal } from "@/components/hub/console-modal";
-import { LegalDraftMarkdown } from "@/components/hub/legal-draft-markdown";
+import Link from "next/link";
 import type { LeaseRenewalSummary } from "@/lib/data/portfolio.server";
 import { downloadBlob, generateContractPdf } from "@/lib/mock-pdf";
 
@@ -29,7 +28,7 @@ function todayPlusYearsISO(startISO: string, years: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function formatMxn(n: number): string {
+export function formatMxn(n: number): string {
   return `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
 }
 
@@ -52,7 +51,7 @@ function downloadRenewalPdf(renewal: LeaseRenewalSummary) {
   downloadBlob(blob, `convenio_modificatorio_${renewal.renewalNumber.replace(/\s+/g, "_")}.pdf`);
 }
 
-function formatSpanishDate(isoStr: string): string {
+export function formatSpanishDate(isoStr: string): string {
   if (!isoStr || !/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return isoStr;
   const [y, m, d] = isoStr.split("-").map(Number);
   const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -127,8 +126,6 @@ function RenewalSummary({ renewal }: { renewal: LeaseRenewalSummary }) {
 /** Friendly, modern renewal card with enlarged, legible typography and intuitive CTAs */
 function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
   const router = useRouter();
-  const [viewing, setViewing] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [pending, setPending] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -173,13 +170,15 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
             {isPending ? "Pendiente de aprobación" : isApproved ? "Autorizada por arrendador" : "Rechazada"}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setViewing(true)}
+        {/* Its own standalone page (root claude.md's #1 frontend priority) —
+         *  a stable, linkable address instead of a modal that closes when
+         *  the tab does. */}
+        <Link
+          href={`/consola/renovaciones/${renewal.id}`}
           className="text-xs sm:text-sm font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
         >
           📄 Ver Convenio
-        </button>
+        </Link>
       </div>
 
       {/* Metric Cards Grid */}
@@ -220,59 +219,6 @@ function RenewalCard({ renewal }: { renewal: LeaseRenewalSummary }) {
       )}
 
       {error && <p className="text-sm font-bold text-red-700 bg-red-50 p-3 rounded-xl">{error}</p>}
-
-      {/* Modal View */}
-      {viewing && (
-        <ConsoleModal>
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={() => setViewing(false)}>
-            <div
-              className="bg-white rounded-2xl border border-hairline shadow-2xl p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto space-y-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-hairline">
-                <div>
-                  <h3 className="font-extrabold text-lg text-slate-900">Convenio Modificatorio — Propuesta {renewal.renewalNumber}</h3>
-                  <p className="text-sm text-slate-600">Documento contractual preparado para revisión del arrendador y su asesoría jurídica.</p>
-                </div>
-                <button type="button" onClick={() => setViewing(false)} className="text-slate-400 hover:text-slate-900 font-bold text-base cursor-pointer p-1">
-                  ✕ Cerrar
-                </button>
-              </div>
-
-              <RenewalSummary renewal={renewal} />
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-extrabold text-slate-900">Texto del Convenio Modificatorio</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => downloadRenewalPdf(renewal)}
-                      className="bg-slate-900 text-white px-3.5 py-2 rounded-xl font-bold text-sm hover:bg-slate-800 cursor-pointer flex items-center gap-1.5"
-                    >
-                      Descargar PDF Oficial
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(renewal.draftMarkdown);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }}
-                      className="border border-hairline text-slate-800 px-3.5 py-2 rounded-xl font-bold text-sm hover:bg-slate-50 cursor-pointer"
-                    >
-                      {copied ? "✓ Copiado" : "Copiar texto"}
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-2 text-sm sm:text-base bg-slate-50 border border-hairline rounded-2xl p-5 max-h-[45vh] overflow-y-auto font-sans leading-relaxed text-slate-900">
-                  <LegalDraftMarkdown markdown={renewal.draftMarkdown} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </ConsoleModal>
-      )}
     </div>
   );
 }

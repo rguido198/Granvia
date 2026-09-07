@@ -165,6 +165,18 @@ export type LeaseRenewalSummary = {
   skepticFlagged: boolean;
   skepticConcerns: string[];
   createdAt: string;
+  /** Set by /api/workflow/approve-lease-renewal when this draft was
+   *  rejected — null for a pending or approved draft, and for a rejection
+   *  recorded before this field existed. */
+  rejectionReason: string | null;
+  /** "valeria_ai" when Valeria's propose_renewal_edit → "Aplicar" flow last
+   *  changed a field on this draft; null when the draft is exactly as
+   *  Mariana's workflow first generated it. */
+  lastEditedBy: string | null;
+  lastEditedReasoning: string | null;
+  /** A landlord's "request changes" note (requestRenewalChangesAction) —
+   *  doesn't change status, just sits on the record for whoever redrafts. */
+  landlordFeedback: string | null;
 };
 
 /** Parses a bare "YYYY-MM-DD" calendar date directly from its components,

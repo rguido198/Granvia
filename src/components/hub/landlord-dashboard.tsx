@@ -1022,7 +1022,7 @@ export function LandlordDashboard({
 
   async function applyProposedEdit(msgIdx: number, edit: ProposedRenewalEdit) {
     setApplyingEditIdx(msgIdx);
-    const result = await updateRenewalFieldAction(edit.renewalId, edit.field, edit.newValue);
+    const result = await updateRenewalFieldAction(edit.renewalId, edit.field, edit.newValue, edit.reasoning ?? undefined);
     setApplyingEditIdx(null);
 
     if (result.error) {

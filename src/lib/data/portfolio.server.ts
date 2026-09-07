@@ -164,7 +164,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: renewalRows, error: renewalsError } = await supabase
     .from("lease_renewals")
     .select(
-      "id, renewal_number, source_lease_id, tenant_entity, status, current_end_date, new_start_date, new_end_date, current_base_rent_monthly, new_base_rent_monthly, escalation_pct, escalation_method, draft_markdown, skeptic_flagged, skeptic_concerns, created_at",
+      "id, renewal_number, source_lease_id, tenant_entity, status, current_end_date, new_start_date, new_end_date, current_base_rent_monthly, new_base_rent_monthly, escalation_pct, escalation_method, draft_markdown, skeptic_flagged, skeptic_concerns, created_at, rejection_reason, last_edited_by, last_edited_reasoning, landlord_feedback",
     )
     .order("created_at", { ascending: false });
   if (renewalsError) throw new Error(renewalsError.message);
@@ -188,6 +188,10 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       skepticFlagged: r.skeptic_flagged as boolean,
       skepticConcerns: (r.skeptic_concerns as string[] | null) ?? [],
       createdAt: r.created_at as string,
+      rejectionReason: r.rejection_reason as string | null,
+      lastEditedBy: r.last_edited_by as string | null,
+      lastEditedReasoning: r.last_edited_reasoning as string | null,
+      landlordFeedback: r.landlord_feedback as string | null,
     });
     renewalsByLeaseId.set(r.source_lease_id as string, list);
   }
@@ -331,6 +335,10 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
         skepticFlagged: false,
         skepticConcerns: [],
         createdAt: new Date().toISOString(),
+        rejectionReason: null,
+        lastEditedBy: null,
+        lastEditedReasoning: null,
+        landlordFeedback: null,
       };
 
       // Persist asynchronously to DB so portfolio queries remain fast

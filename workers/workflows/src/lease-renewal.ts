@@ -331,6 +331,7 @@ async function markReviewed(
   renewalId: string,
   approved: boolean,
   reviewedById: string | undefined,
+  rejectionReason: string | undefined,
 ) {
   const supabase = getSupabaseServiceClient();
   await supabase
@@ -339,6 +340,9 @@ async function markReviewed(
       status: approved ? "approved" : "rejected",
       reviewed_by: reviewedById ?? null,
       reviewed_at: new Date().toISOString(),
+      // Only meaningful on a rejection — left untouched (not nulled out) on
+      // an approval so a prior "request changes" note isn't silently wiped.
+      ...(approved ? {} : { rejection_reason: rejectionReason ?? null }),
     })
     .eq("id", renewalId);
 }
@@ -372,13 +376,14 @@ export class LeaseRenewalWorkflow extends WorkflowEntrypoint<
       const reviewEvent = await step.waitForEvent<{
         approved: boolean;
         reviewedById?: string;
+        rejectionReason?: string;
       }>("await renewal review", {
         type: `lease-renewal-review-${renewalId}`,
         timeout: "30 days",
       });
       const decision = reviewEvent.payload;
       await step.do("mark reviewed", () =>
-        markReviewed(renewalId, decision.approved, decision.reviewedById),
+        markReviewed(renewalId, decision.approved, decision.reviewedById, decision.rejectionReason),
       );
       return {
         renewalId,

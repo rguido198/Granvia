@@ -26,6 +26,12 @@ export async function updateRenewalFieldAction(
   renewalId: string,
   field: RenewalEditableField,
   rawValue: string,
+  /** Valeria's stated reasoning for this specific edit (askValeria's
+   *  ProposedRenewalEdit.reasoning) — persisted alongside the field change
+   *  so the diff view can attribute this row to her, with her own words,
+   *  instead of defaulting every row to "Mariana AI" regardless of who
+   *  actually touched it last. Undefined for any future non-chat caller. */
+  reasoning?: string,
 ): Promise<UpdateRenewalFieldResult> {
   const profile = await getCurrentProfile();
   if (!profile || profile.role !== "landlord") {
@@ -53,10 +59,59 @@ export async function updateRenewalFieldAction(
     value = rawValue;
   }
 
-  const { error } = await admin.from("lease_renewals").update({ [field]: value }).eq("id", renewalId);
+  const { error } = await admin
+    .from("lease_renewals")
+    .update({
+      [field]: value,
+      last_edited_by: "valeria_ai",
+      last_edited_reasoning: reasoning ?? null,
+    })
+    .eq("id", renewalId);
   if (error) return { error: error.message };
 
   revalidatePath("/consola");
+  revalidatePath(`/consola/renovaciones/${renewalId}`);
   invalidateCopilotoCache();
   return { success: `${renewal.renewal_number} actualizado.` };
+}
+
+/**
+ * Tier 2 — a landlord leaving feedback on an in-flight draft without
+ * resolving it either way (not an approve, not a reject): status stays
+ * needs_landlord_review, the note just sits on the record for whoever
+ * redrafts next. Mirrors updateRenewalFieldAction's own draft-only scoping.
+ */
+export async function requestRenewalChangesAction(
+  renewalId: string,
+  feedback: string,
+): Promise<UpdateRenewalFieldResult> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "landlord") {
+    return { error: "No autorizado" };
+  }
+  const trimmed = feedback.trim();
+  if (!trimmed) return { error: "Escribe qué cambios necesitas antes de enviar." };
+
+  const admin = getSupabaseServiceClient();
+  const { data: renewal, error: fetchError } = await admin
+    .from("lease_renewals")
+    .select("status, renewal_number")
+    .eq("id", renewalId)
+    .maybeSingle();
+  if (fetchError) return { error: fetchError.message };
+  if (!renewal) return { error: "Renovación no encontrada" };
+  if (renewal.status !== "needs_landlord_review") {
+    return { error: `Solo se pueden dejar comentarios en renovaciones en borrador — ${renewal.renewal_number} ya está en estatus "${renewal.status}".` };
+  }
+
+  const { error } = await admin
+    .from("lease_renewals")
+    .update({ landlord_feedback: trimmed })
+    .eq("id", renewalId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/consola");
+  revalidatePath(`/consola/renovaciones/${renewalId}`);
+  invalidateCopilotoCache();
+  return { success: `Comentario guardado en ${renewal.renewal_number}.` };
 }
