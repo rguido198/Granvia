@@ -6,10 +6,11 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
  * it aggregates (tickets, lease_renewals, documents) is already fetched by
  * consola/page.tsx for its own tab — fetchPortfolio() reads
  * lease_applications too, but only `promoted_lease_id` for already-approved
- * rows (the Add Tenant picker), never the pending ones. legal/prospectos is
- * a live screening tool, not a pending-queue panel, so nothing in the app
- * reaches these rows today — confirmed by tracing every caller of
- * /api/workflow/approve-lease and finding none in src/.
+ * rows (the Add Tenant picker), never the pending ones. This lightweight
+ * list backs the Pendientes queue's count/summary only — the real per-row
+ * detail (and the actual /api/workflow/approve-lease callers) live in
+ * lease-application-detail.server.ts, fetched on demand by
+ * lease-application-review.tsx's card and by /consola/solicitudes/[id].
  */
 export type PendingLeaseApplication = {
   id: string;

@@ -14,9 +14,20 @@ import { isDocumentActionable } from "@/lib/data/document-status";
  * two can't drift on what counts as "pending."
  *
  * v1 is read-only. Each item's deepLink names the existing review panel
- * (or, for lease_application, nothing — no such panel exists yet, see
- * approval-queue.server.ts's doc comment) where the actual approve/reject
- * still happens through the untouched /api/workflow/* routes.
+ * where the actual approve/reject still happens through the untouched
+ * /api/workflow/* routes.
+ *
+ * lease_application's deepLink carries no tab/subTab — not because no
+ * review surface exists (it does: lease-application-review.tsx's card in
+ * Mariana's Pendientes tab, and /consola/solicitudes/[id] as of 2026-09-07 —
+ * this comment previously claimed otherwise and was wrong, corrected after
+ * that stale claim led a session to recommend rebuilding something that
+ * already existed). It's dead-but-harmless: mariana-pending-panel.tsx
+ * renders lease_application rows from its own richer `leaseApplications`
+ * prop (PendingLeaseApplication[], with a real Link to the standalone page),
+ * never from this generic queue's ApprovalQueueItem/deepLink path — so
+ * handleApprovalNavigate's `if (!("tab" in item.deepLink)) return` early-out
+ * for this kind is never exercised by anything a user can click today.
  */
 
 export type ApprovalQueueItemKind =
@@ -35,10 +46,9 @@ export type ApprovalQueueItem = {
   unit: string | null;
   createdAt: string;
   requiredAction: string;
-  /** `target` is always present, even for lease_application — so a future
-   *  Mariana review panel can wire up `tab`/`subTab` without this type, or
-   *  any queue item already built against it, needing to change. Absence of
-   *  `tab` (not a null value) is what the inbox UI reads as "no panel yet." */
+  /** `target` is always present, even for lease_application, whose real
+   *  review surfaces (the Pendientes card, the standalone page) are both
+   *  reached by other means — see this file's own top comment. */
   deepLink:
     | { tab: "maint" | "legal"; subTab?: string; target: { kind: ApprovalQueueItemKind; id: string } }
     | { target: { kind: "lease_application"; id: string } };

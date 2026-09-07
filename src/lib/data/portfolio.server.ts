@@ -535,6 +535,17 @@ export type LeaseDocumentRow = {
    *  promote onto — the document is fine, there is just nothing to write to. */
   errorMessage: string | null;
   createdAt: string;
+
+  // — Gate 1/Gate 2 provenance, root claude.md's #4 frontend priority
+  // ("agent trace / audit") applied to the document pipeline: real columns
+  // (documents.match_verified_by_id/at, extraction_verified_by_id) written
+  // by confirm-lease-match/confirm-lease-extraction on every confirmation,
+  // resolved to a name via profiles, never selected before this.
+  /** When Gate 1 (entity match) was confirmed — distinct from
+   *  extractionVerifiedAt, which is Gate 2. Null until confirmed. */
+  matchVerifiedAt: string | null;
+  matchVerifiedByName: string | null;
+  extractionVerifiedByName: string | null;
 };
 
 /** `extracted_fields` is a bare jsonb column with no shape guarantee, and an
@@ -568,7 +579,7 @@ function tradeNameFromExtractedFields(extractedFields: unknown): string | null {
 const RESOLVED_DOCUMENT_HISTORY_LIMIT = 20;
 
 const LEASE_DOCUMENT_COLUMNS =
-  "id, original_filename, status, suggested_locale_id, match_confidence, locale_id, extracted_fields, extraction_verified_at, error_message, created_at";
+  "id, original_filename, status, suggested_locale_id, match_confidence, locale_id, extracted_fields, extraction_verified_at, error_message, created_at, match_verified_at, match_verified_by_id, extraction_verified_by_id";
 
 /**
  * Every `kind = 'active_lease'` document that still needs a landlord's
@@ -630,6 +641,20 @@ export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
     }
   }
 
+  // Same batch-fetch-profiles-by-id pattern as the approver lookups already
+  // added to diego-tickets.server.ts/portfolio.server.ts's renewal mapping.
+  const verifierIds = [
+    ...new Set(
+      rows.flatMap((r) => [r.match_verified_by_id, r.extraction_verified_by_id]).filter((v): v is string => !!v),
+    ),
+  ];
+  const { data: verifierProfiles } = verifierIds.length
+    ? await supabase.from("profiles").select("id, email, full_name").in("id", verifierIds)
+    : { data: [] };
+  const verifierById = new Map((verifierProfiles ?? []).map((p) => [p.id, p]));
+  const verifierName = (id: string | null) =>
+    id ? (verifierById.get(id)?.full_name ?? verifierById.get(id)?.email ?? null) : null;
+
   return (rows ?? []).map((r) => {
     const suggested = r.suggested_locale_id ? localeById.get(r.suggested_locale_id) : undefined;
     const confirmed = r.locale_id ? localeById.get(r.locale_id) : undefined;
@@ -648,6 +673,9 @@ export async function fetchActiveLeaseDocuments(): Promise<LeaseDocumentRow[]> {
       extractionVerifiedAt: r.extraction_verified_at,
       errorMessage: r.error_message,
       createdAt: r.created_at,
+      matchVerifiedAt: r.match_verified_at,
+      matchVerifiedByName: verifierName(r.match_verified_by_id),
+      extractionVerifiedByName: verifierName(r.extraction_verified_by_id),
     };
   });
 }

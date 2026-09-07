@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { ConsoleModal } from "@/components/hub/console-modal";
+import { formatSpanishDate } from "@/components/hub/lease-renewal-panel";
 import {
   LeaseExtractedFieldsSchema,
   type LeaseExtractedFields,
@@ -56,6 +57,12 @@ export type DocumentRow = {
   extractionVerifiedAt: string | null;
   errorMessage: string | null;
   createdAt: string;
+  /** Gate 1/Gate 2 provenance — who confirmed, not just when. See
+   *  portfolio.server.ts's LeaseDocumentRow (this type's server-side twin)
+   *  for the full doc comment. */
+  matchVerifiedAt: string | null;
+  matchVerifiedByName: string | null;
+  extractionVerifiedByName: string | null;
 };
 
 export type UnitOption = {
@@ -341,6 +348,22 @@ function DocumentCard({
               ? "Contrato actualizado ✓"
               : (STATUS_LABELS[doc.status] ?? doc.status)}
           </p>
+          {/* Who confirmed each gate, not just when — root claude.md's #4
+           *  frontend priority ("agent trace / audit") applied to the
+           *  document pipeline. matchVerifiedAt exists whether or not the
+           *  document has since cleared Gate 2, so this can render on its
+           *  own even for a doc still sitting at needs_new_lease. */}
+          {(doc.matchVerifiedByName || doc.extractionVerifiedByName) && (
+            <p className="text-[10px] text-ink-400 font-medium mt-0.5">
+              {doc.matchVerifiedByName && (
+                <>Local confirmado por {doc.matchVerifiedByName}{doc.matchVerifiedAt ? ` · ${formatSpanishDate(doc.matchVerifiedAt.slice(0, 10))}` : ""}</>
+              )}
+              {doc.matchVerifiedByName && doc.extractionVerifiedByName && " · "}
+              {doc.extractionVerifiedByName && (
+                <>Cláusulas verificadas por {doc.extractionVerifiedByName}{doc.extractionVerifiedAt ? ` · ${formatSpanishDate(doc.extractionVerifiedAt.slice(0, 10))}` : ""}</>
+              )}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {!doc.extractionVerifiedAt && (
