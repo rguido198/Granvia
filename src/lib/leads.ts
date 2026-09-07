@@ -1,9 +1,11 @@
+import "server-only";
 import {
   BUSINESS_CATEGORIES,
   LEASE_KEYS,
   branchFor,
   type LeaseKey,
 } from "@/content/leasing";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export type LeasingLead = {
   nombre: string;
@@ -98,14 +100,50 @@ export function validateLead(
 }
 
 /**
- * Persistence seam for a validated lead.
+ * Persistence seam for a validated lead — real destination as of this
+ * write: the console's own `leads` table (lead-pipeline.tsx, source of
+ * fetchLeads()), the same funnel a landlord already works from. Not a
+ * separate system: `lease_applications.source_lead_id` already points back
+ * at this table (20260830000011_lead_pipeline.sql), so a public inquiry
+ * landing here is exactly the pipeline's own "how a lead becomes a
+ * screened application" shape, not a new concept bolted on.
  *
- * TODO(integración): today this only writes a structured server log so nothing
- * is silently dropped while the site is in review. Before launch, point this at
- * the real destination — CRM insert plus the branch-specific auto-reply
- * (pop-up guide PDF vs. scheduling link) described on the page — and make the
- * failure path surface to the visitor rather than resolving quietly.
+ * `created_by` is `text not null`, not a uuid FK to auth.users — deliberately
+ * accepts a non-landlord string identifier, which is what makes a publicly-
+ * submitted lead (no authenticated user at all) representable in this table
+ * without schema changes. RLS on `leads` is `is_landlord()`-only, so this
+ * write goes through the service-role client, same as every other
+ * public-facing insert in this codebase (e.g. /api/ingest).
+ *
+ * What's still a real gap, not fixed here: no CRM beyond this table, and no
+ * auto-reply (the "pop-up guide PDF vs. scheduling link" the page's own copy
+ * promises). Both need an actual choice of provider — email service, or a
+ * real external CRM — plus credentials, which is a decision this change
+ * doesn't get to make silently. What this write DOES fix is the actual
+ * substance of the TODO it replaces: a submitted lead is now a durable,
+ * queryable row a landlord can act on (visible in the console's Lead
+ * Pipeline), not a log line nobody reads, and a failed write now throws —
+ * submitLeasingInquiry's existing catch block (crece-tu-negocio/actions.ts)
+ * already surfaces that to the visitor, it just never had a real failure
+ * mode to catch before.
  */
 export async function recordLead(lead: LeasingLead): Promise<void> {
-  console.info("[leasing-lead]", JSON.stringify(lead));
+  const supabase = getSupabaseServiceClient();
+
+  const notes = [
+    `Contacto: ${lead.telefono} · ${lead.correo}`,
+    `Superficie deseada: ${lead.metros} m²`,
+    `Duración de arrendamiento: ${lead.duracion}`,
+  ].join("\n");
+
+  const { error } = await supabase.from("leads").insert({
+    applicant_entity: lead.nombre,
+    category: lead.giro,
+    contact_channel: `${lead.telefono} / ${lead.correo}`,
+    source: "crece-tu-negocio (sitio web)",
+    notes,
+    created_by: "public_site:crece-tu-negocio",
+  });
+
+  if (error) throw new Error(error.message);
 }

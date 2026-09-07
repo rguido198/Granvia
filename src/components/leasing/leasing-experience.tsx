@@ -83,9 +83,6 @@ export function LeasingExperience() {
             <p className="text-sm text-ink-700 leading-relaxed">
               Gracias por tu interés en formar parte de La Gran Vía Mexicali. Nuestro equipo comercial revisará tu solicitud y se pondrá en contacto contigo a la brevedad para compartirte la Ficha Técnica de Arrendamiento y las opciones disponibles.
             </p>
-            <p className="text-xs text-ink-400 font-mono pt-2 border-t border-pine/20">
-              También enviamos un correo de confirmación a tu bandeja de entrada.
-            </p>
           </div>
         ) : (
           <form action={formAction} noValidate className="space-y-4">
