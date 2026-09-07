@@ -502,6 +502,30 @@ function renderFormattedMarkdown(content: string) {
       continue;
     }
 
+    // Top-level heading # — Valeria's structured responses (e.g. "Resumen
+    // Ejecutivo") open with one of these; missing before 2026-09-07, so the
+    // literal "# " rendered as plain paragraph text instead of a heading.
+    if (trimmed.startsWith("# ")) {
+      blocks.push(
+        <h3 key={`h1-${i}`} className="font-extrabold text-lg sm:text-xl text-ink border-b-2 border-ink/10 pb-2.5 mt-2 mb-3.5 leading-snug">
+          {formatInlineMarkdown(trimmed.slice(2))}
+        </h3>
+      );
+      i++;
+      continue;
+    }
+
+    // Section heading ##
+    if (trimmed.startsWith("## ")) {
+      blocks.push(
+        <h4 key={`h2-${i}`} className="font-bold text-base sm:text-lg text-ink border-b border-hairline pb-2 mt-6 mb-3 leading-snug">
+          {formatInlineMarkdown(trimmed.slice(3))}
+        </h4>
+      );
+      i++;
+      continue;
+    }
+
     // Headings ###
     if (trimmed.startsWith("### ")) {
       blocks.push(

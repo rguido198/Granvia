@@ -50,7 +50,14 @@ export function HeaderAttentionBell({
           </span>
         )}
       </summary>
-      <div className="absolute right-0 z-30 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-md">
+      {/* fixed + viewport-relative offsets, not absolute+right-0 (relative to
+          the bell icon itself): the header row wraps differently across real
+          device widths, and on a layout where the bell lands mid-row instead
+          of near the true screen edge, a right-0-anchored w-64 popover ran
+          off the left side of the screen entirely — confirmed 2026-09-07.
+          Pinning to the viewport's own corner is robust to wherever the icon
+          ends up. */}
+      <div className="fixed top-20 right-3 z-30 w-64 max-w-[calc(100vw-1.5rem)] sm:top-16 rounded-xl border border-slate-200 bg-white p-2 shadow-md">
         <p className="px-2 py-1 text-[11px] font-bold text-slate-400 tracking-wider">Atención</p>
 
         {counts.diegoDecisiones > 0 && (
