@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentProfile } from "@/lib/auth/server";
+import { getCurrentProfile, type Profile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { invalidateCopilotoCache } from "@/lib/copiloto/cache";
 import type { EscalationMethod } from "@/lib/data/contract-status";
@@ -10,12 +10,15 @@ export type EscalationBackfillActionResult = { error?: string };
 
 const ESCALATION_METHODS: EscalationMethod[] = ["fixed_pct", "landlord_specified"];
 
-async function requireLandlord(): Promise<EscalationBackfillActionResult | null> {
+/** Returns the landlord profile (for updated_by attribution — see
+ *  lease_field_history's own migration comment on why the app has to
+ *  supply this, not a trigger) or the auth error to return as-is. */
+async function requireLandlord(): Promise<{ profile: Profile } | { error: string }> {
   const profile = await getCurrentProfile();
   if (!profile || profile.role !== "landlord") {
     return { error: "No autorizado" };
   }
-  return null;
+  return { profile };
 }
 
 /**
@@ -32,8 +35,8 @@ export async function confirmEscalationScheduleAction(
   escalationPct: number,
   escalationMethod: EscalationMethod,
 ): Promise<EscalationBackfillActionResult> {
-  const authError = await requireLandlord();
-  if (authError) return authError;
+  const auth = await requireLandlord();
+  if ("error" in auth) return auth;
 
   if (!Number.isInteger(escalationMonth) || escalationMonth < 1 || escalationMonth > 12) {
     return { error: "El mes debe estar entre 1 y 12" };
@@ -53,6 +56,7 @@ export async function confirmEscalationScheduleAction(
       escalation_pct: escalationPct,
       escalation_method: escalationMethod,
       escalation_confirmed_none: false,
+      updated_by: auth.profile.id,
     })
     .eq("id", leaseRowId);
   if (error) return { error: error.message };
@@ -72,13 +76,19 @@ export async function confirmEscalationScheduleAction(
  * still on the worklist).
  */
 export async function confirmNoEscalationAction(leaseRowId: string): Promise<EscalationBackfillActionResult> {
-  const authError = await requireLandlord();
-  if (authError) return authError;
+  const auth = await requireLandlord();
+  if ("error" in auth) return auth;
 
   const admin = getSupabaseServiceClient();
   const { error } = await admin
     .from("leases")
-    .update({ escalation_confirmed_none: true, escalation_month: null, escalation_pct: null, escalation_method: null })
+    .update({
+      escalation_confirmed_none: true,
+      escalation_month: null,
+      escalation_pct: null,
+      escalation_method: null,
+      updated_by: auth.profile.id,
+    })
     .eq("id", leaseRowId);
   if (error) return { error: error.message };
 
@@ -100,8 +110,8 @@ export async function confirmNoEscalationAction(leaseRowId: string): Promise<Esc
 export async function bulkConfirmSuggestedEscalationsAction(
   rows: { leaseRowId: string; month: number; pct: number }[],
 ): Promise<EscalationBackfillActionResult> {
-  const authError = await requireLandlord();
-  if (authError) return authError;
+  const auth = await requireLandlord();
+  if ("error" in auth) return auth;
   if (rows.length === 0) return {};
 
   const admin = getSupabaseServiceClient();
@@ -114,6 +124,7 @@ export async function bulkConfirmSuggestedEscalationsAction(
           escalation_pct: r.pct,
           escalation_method: "fixed_pct",
           escalation_confirmed_none: false,
+          updated_by: auth.profile.id,
         })
         .eq("id", r.leaseRowId),
     ),

@@ -40,6 +40,7 @@ export async function confirmCamTermsAction(
       cam_share_basis: camShareBasis.trim(),
       cam_cap_controllable_pct: camCapControllablePct,
       admin_fee_pct: adminFeePct,
+      updated_by: profile.id,
     })
     .eq("id", leaseRowId);
   if (error) return { error: error.message };

@@ -23,6 +23,23 @@ async function stamp(entry: Omit<AuditEntry, "hash">): Promise<AuditEntry> {
   return { ...entry, hash: await fingerprint(entry) };
 }
 
+/** Human labels for lease_field_history.field_name — the raw column name
+ *  shouted snake_case in the database, same reasoning as
+ *  ESCALATION_METHOD_LABEL (contract-status.ts): a landlord reading this
+ *  tab shouldn't see "cam_cap_controllable_pct" verbatim. */
+const LEASE_FIELD_LABEL: Record<string, string> = {
+  escalation_pct: "% de escalación",
+  escalation_month: "mes de escalación",
+  escalation_method: "método de escalación",
+  escalation_confirmed_none: "confirmación de sin escalación",
+  cam_share_basis: "base de prorrateo CAM",
+  cam_cap_controllable_pct: "tope de controlables CAM",
+  admin_fee_pct: "cuota administrativa CAM",
+  security_deposit_amount: "depósito en garantía",
+  security_deposit_status: "estatus del depósito",
+  agent_notes: "notas del agente",
+};
+
 /**
  * Real events, pulled from the tables each real Tier 2/3 action actually
  * writes to — replaces the seeded/appended local React state that used to
@@ -36,7 +53,9 @@ async function stamp(entry: Omit<AuditEntry, "hash">): Promise<AuditEntry> {
  * history: an autonomy-kill-switch deactivation overwrites its own record (so
  * only a currently-active freeze shows up here, never a past one that was
  * since lifted), and a lease application only ever shows its most recent
- * review, not a full decision trail.
+ * review, not a full decision trail. A third gap of the same shape —
+ * manual landlord edits to `leases` fields leaving no trace — is now closed
+ * by lease_field_history (20260907160000_lease_field_history.sql) below.
  */
 export async function fetchAuditLog(): Promise<AuditEntry[]> {
   const supabase = getSupabaseServiceClient();
@@ -143,6 +162,47 @@ export async function fetchAuditLog(): Promise<AuditEntry[]> {
         action: "Activó el interruptor de emergencia — automatizaciones de Diego IA congeladas",
       }),
     );
+  }
+
+  const { data: fieldChanges } = await supabase
+    .from("lease_field_history")
+    .select("id, lease_id, field_name, old_value, new_value, changed_by, changed_at")
+    .order("changed_at", { ascending: false })
+    .limit(20);
+
+  if (fieldChanges?.length) {
+    const leaseIds = [...new Set(fieldChanges.map((f) => f.lease_id))];
+    const { data: leases } = await supabase.from("leases").select("id, locale_id, tenant_entity").in("id", leaseIds);
+    const leaseById = new Map((leases ?? []).map((l) => [l.id, l]));
+
+    const localeIds = [...new Set((leases ?? []).map((l) => l.locale_id).filter((v): v is string => !!v))];
+    const { data: locales } = localeIds.length
+      ? await supabase.from("locales").select("id, unit_number").in("id", localeIds)
+      : { data: [] };
+    const localeById = new Map((locales ?? []).map((l) => [l.id, l]));
+
+    const changerIds = [...new Set(fieldChanges.map((f) => f.changed_by).filter((v): v is string => !!v))];
+    const { data: profiles } = changerIds.length
+      ? await supabase.from("profiles").select("id, email, full_name").in("id", changerIds)
+      : { data: [] };
+    const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+    for (const f of fieldChanges) {
+      const lease = leaseById.get(f.lease_id);
+      const locale = lease?.locale_id ? localeById.get(lease.locale_id) : null;
+      const changer = f.changed_by ? profileById.get(f.changed_by) : null;
+      const fieldLabel = LEASE_FIELD_LABEL[f.field_name] ?? f.field_name;
+      const unitLabel = locale?.unit_number ?? lease?.tenant_entity ?? "un contrato";
+      entries.push(
+        await stamp({
+          id: `lfh-${f.id}`,
+          timestamp: f.changed_at,
+          actorType: "user",
+          actor: changer?.full_name ?? changer?.email ?? "Administrador",
+          action: `Actualizó ${fieldLabel} de ${unitLabel}: "${f.old_value ?? "(vacío)"}" → "${f.new_value ?? "(vacío)"}"`,
+        }),
+      );
+    }
   }
 
   return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());

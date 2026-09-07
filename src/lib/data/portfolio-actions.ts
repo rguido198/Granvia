@@ -123,7 +123,10 @@ export async function updateLeaseFieldAction(
   }
 
   const admin = getSupabaseServiceClient();
-  const { error } = await admin.from("leases").update({ [field]: value }).eq("id", leaseRowId);
+  const { error } = await admin
+    .from("leases")
+    .update({ [field]: value, updated_by: profile.id })
+    .eq("id", leaseRowId);
   if (error) return { error: error.message };
 
   revalidatePath("/consola");
