@@ -199,16 +199,28 @@ export function DocumentViewerButton({
       {viewerError && <p className="text-xs font-bold text-red-700 mt-1">{viewerError}</p>}
       {viewerUrl && (
         <ConsoleModal>
+          {/* w-3/4 alone was ~281px on a 375px phone — the PDF's own
+           *  viewer doesn't reflow to that width, so it rendered at native
+           *  scale and clipped on the right with no visible way to scroll
+           *  to it. Full-bleed (minus a small margin) below sm:, back to
+           *  the original 3/4 box at sm: and up. The close button is new
+           *  too — tap-outside-to-close was never reachable once the box
+           *  was near-full-screen. */}
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-6"
             onClick={() => setViewerUrl(null)}
           >
-            <iframe
-              title="Contrato"
-              src={viewerUrl}
-              className="w-3/4 h-3/4 bg-white rounded-xl"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div className="relative w-full h-[88vh] sm:w-3/4 sm:h-3/4" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setViewerUrl(null)}
+                aria-label="Cerrar documento"
+                className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-ink text-white text-sm font-bold flex items-center justify-center shadow-lg cursor-pointer"
+              >
+                ✕
+              </button>
+              <iframe title="Contrato" src={viewerUrl} className="w-full h-full bg-white rounded-xl shadow-2xl" />
+            </div>
           </div>
         </ConsoleModal>
       )}
