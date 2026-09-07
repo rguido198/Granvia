@@ -47,6 +47,7 @@ import { TENANTS } from "@/content/tenants";
 import { TenantLogo } from "@/components/tenant-logo";
 import type { EquipmentAsset, EquipmentAssetCategory } from "@/lib/data/equipment-assets.server";
 import type { CapexCase, CapexKpis } from "@/lib/data/capex-cases.server";
+import { useShortcutLabel, KEYBOARD_ONLY_CLASS } from "@/lib/ui/shortcut-key";
 
 type SidebarTab = "rentroll" | "maint" | "legal" | "rbac";
 
@@ -1529,6 +1530,7 @@ export function LandlordDashboard({
   // mobile off-canvas drawer prop from ConsoleShell). Not persisted: a
   // per-visit default is fine for a preference this cheap to re-toggle.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const valeriaShortcutLabel = useShortcutLabel("K");
 
   return (
     <div className="min-h-screen bg-slate-50 text-ink-700 flex flex-col lg:flex-row antialiased">
@@ -1651,8 +1653,14 @@ export function LandlordDashboard({
               icon={<ValeriaNavIcon />}
               collapsed={sidebarCollapsed}
               trailing={
-                <span className="text-[10px] font-mono text-ink-400 bg-slate-100 border border-hairline rounded px-1.5 py-0.5 shrink-0 ml-2">
-                  ⌘K
+                // Keyboard-only, same reasoning as the palette's own badge
+                // (command-palette.tsx) — a touch device has nothing to
+                // press, and "Valeria IA" alone is still the full, tappable
+                // row label without it.
+                <span
+                  className={`hidden text-[10px] font-mono text-ink-400 bg-slate-100 border border-hairline rounded px-1.5 py-0.5 shrink-0 ml-2 ${KEYBOARD_ONLY_CLASS}`}
+                >
+                  {valeriaShortcutLabel}
                 </span>
               }
             >

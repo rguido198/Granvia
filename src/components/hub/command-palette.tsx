@@ -13,6 +13,7 @@ import {
 } from "@/lib/data/contract-status";
 import { STATUS_LABEL as TICKET_STATUS_LABEL } from "@/components/hub/diego-ticket-ui";
 import { fetchCommandPaletteIndexAction, type CommandPaletteIndex } from "@/lib/data/command-palette-actions";
+import { useShortcutLabel, KEYBOARD_ONLY_CLASS } from "@/lib/ui/shortcut-key";
 
 const RENEWAL_STATUS_LABEL: Record<string, string> = {
   needs_landlord_review: "Pendiente de revisión",
@@ -157,6 +158,7 @@ export function CommandPalette() {
   const [index, setIndex] = useState<CommandPaletteIndex | null>(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const shortcutLabel = useShortcutLabel("K");
 
   // Never on the login page — no session, nothing to search.
   const disabled = pathname === "/consola/acceso";
@@ -398,11 +400,16 @@ export function CommandPalette() {
         <button
           type="button"
           onClick={openPalette}
-          aria-label="Buscar (⌘K)"
+          aria-label={`Buscar (${shortcutLabel})`}
           className="fixed bottom-5 right-5 z-40 sm:bottom-6 sm:right-6 bg-ink hover:bg-ink-700 text-white rounded-full shadow-lg px-4 py-2.5 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
         >
           <span>Buscar</span>
-          <span className="text-[10px] font-mono bg-white/15 rounded px-1.5 py-0.5">⌘K</span>
+          {/* Keyboard-only — a touch device has no ⌘/Ctrl to press, so the
+           *  hint would be a decoration nobody can act on. The "Buscar"
+           *  label alone is still the full, tappable affordance. */}
+          <span className={`hidden text-[10px] font-mono bg-white/15 rounded px-1.5 py-0.5 ${KEYBOARD_ONLY_CLASS}`}>
+            {shortcutLabel}
+          </span>
         </button>
       )}
 
