@@ -127,6 +127,7 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
       reporterName: t.reporter_name,
       rawReport: t.raw_report,
       diagnosis: t.diagnosis_answer,
+      localeId: locale.id,
       unitNumber: locale.unitNumber,
       propertyName: locale.propertyName,
       unresolvedKeys,

@@ -382,7 +382,8 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
     const { data: rentHistoryRows, error: rentHistoryError } = await supabase
       .from("lease_rent_history")
       .select("lease_id, old_rent, new_rent, changed_at")
-      .in("lease_id", activeLeaseIds);
+      .in("lease_id", activeLeaseIds)
+      .order("changed_at", { ascending: true });
     if (rentHistoryError) throw new Error(rentHistoryError.message);
     for (const r of rentHistoryRows ?? []) {
       const list = rentHistoryByLeaseId.get(r.lease_id) ?? [];
@@ -445,6 +446,7 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
         escalationOverdue: escalationAudit.overdue,
         escalationDueDate: escalationAudit.dueDate,
         clauses: clausesByLeaseId.get(l.id) ?? [],
+        rentHistory: rentHistoryByLeaseId.get(l.id) ?? [],
       };
     })
     .sort((a, b) => a.unitCode.localeCompare(b.unitCode));

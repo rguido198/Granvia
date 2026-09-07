@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type {
   ConsoleData,
 } from "@/lib/console-data";
@@ -1996,6 +1997,12 @@ export function LandlordDashboard({
                               )}
                               {!r.vacant && r.leaseId && (
                                 <div className="flex items-center gap-2.5">
+                                  <Link
+                                    href={`/consola/locales/${r.slug}`}
+                                    className="text-xs font-bold text-[var(--console-accent)] hover:underline shrink-0"
+                                  >
+                                    Ver expediente →
+                                  </Link>
                                   <TerminateTenantButton localeId={r.slug} leaseId={r.leaseId} tenantName={r.name} unitCode={r.unitCode} />
                                   {/* DocumentViewerButton for this lease now lives in the name
                                       cell (leftmost column) instead of here — showing up
@@ -2821,6 +2828,18 @@ export function LandlordDashboard({
                                       <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
                                     </span>
                                   )}
+                                  {/* The one place a row click still only expands inline —
+                                      this is the actual landing page (contrato, historial de
+                                      renta, reclamos de Diego IA, cláusulas, todo en una sola
+                                      columna) for the answer to "¿qué está pasando con el
+                                      2-14?" */}
+                                  <Link
+                                    href={`/consola/locales/${c.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-xs font-bold text-[var(--console-accent)] hover:underline shrink-0"
+                                  >
+                                    Ver expediente →
+                                  </Link>
                                   {c.isExpired ? (
                                     <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge">
                                       Vencido

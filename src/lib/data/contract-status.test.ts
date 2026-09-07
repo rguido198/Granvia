@@ -47,6 +47,7 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     escalationOverdue: false,
     escalationDueDate: null,
     clauses: [],
+    rentHistory: [],
     ...overrides,
   };
 }

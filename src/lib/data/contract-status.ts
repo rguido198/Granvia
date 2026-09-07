@@ -90,6 +90,12 @@ export type LeaseDetail = {
   /** Empty for a lease never digitized, or digitized before this ledger
    *  existed (2026-09-03) — no backfill for prior extractions. */
   clauses: LeaseClause[];
+  /** Every recorded rent change for this lease (lease_rent_history), oldest
+   *  first — the same events computeEscalationAudit already reads, exposed
+   *  raw here for the lease detail page's payment-history column. Empty for
+   *  a lease with no change recorded since the table started logging
+   *  (2026-09-03) — see that migration's own "starts empty" note. */
+  rentHistory: RentChangeEvent[];
 };
 
 export type SpecialClause = { label: string; text: string };

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Inter } from "next/font/google";
 import type { CSSProperties } from "react";
 import { PageFade } from "@/components/ui";
+import { CONSOLE_ROOT_ID } from "@/components/hub/console-root";
 import { fetchRenewalDetail } from "@/lib/data/renewal-detail.server";
 import { RenewalDiffView } from "@/components/hub/renewal-diff-view";
 
@@ -47,6 +48,11 @@ export default async function RenewalDetailPage({ params }: { params: Promise<{ 
   return (
     <PageFade>
       <div
+        // Portal target for any ConsoleModal-based overlay this page (or a
+        // component it reuses) mounts — see console-root.ts, and the
+        // matching fix on /consola/locales/[id]/page.tsx's own doc comment
+        // for the concrete bug this prevents.
+        id={CONSOLE_ROOT_ID}
         style={
           {
             ["--console-accent" as string]: "#4f46e5",

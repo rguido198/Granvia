@@ -28,6 +28,11 @@ export type DiegoTicket = {
   reporterName: string | null;
   rawReport: string;
   diagnosis: string | null;
+  /** locales.id — the same value LeaseDetail.id carries (that file's own
+   *  "id is actually the locale's id" convention) — lets a consumer match a
+   *  ticket to its lease/local by id instead of a fragile unitNumber string
+   *  compare. */
+  localeId: string | null;
   unitNumber: string;
   propertyName: string;
   unresolvedKeys: string[];
@@ -92,7 +97,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       tenant_entity, reporter_name, raw_report, diagnosis_answer, created_at, updated_at,
       work_performed, final_cost, unresolved_jd_keys, warranty_covered,
       skeptic_flagged, skeptic_concerns,
-      locales ( unit_number, properties ( name ) ),
+      locale_id, locales ( unit_number, properties ( name ) ),
       contractors ( name ),
       assets ( name, model, make, manual_url )
     `,
@@ -120,6 +125,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     warranty_covered: boolean | null;
     skeptic_flagged: boolean;
     skeptic_concerns: string[] | null;
+    locale_id: string | null;
     locales: { unit_number: string; properties: { name: string } | null } | null;
     contractors: { name: string } | null;
     assets: { name: string | null; model: string | null; make: string | null; manual_url: string | null } | null;
@@ -161,6 +167,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       reporterName: t.reporter_name,
       rawReport: t.raw_report,
       diagnosis: t.diagnosis_answer,
+      localeId: t.locale_id,
       unitNumber: t.locales?.unit_number ?? "?",
       propertyName: t.locales?.properties?.name ?? "?",
       unresolvedKeys,
