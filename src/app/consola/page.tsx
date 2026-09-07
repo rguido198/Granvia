@@ -15,8 +15,12 @@ import { fetchLeads } from "@/lib/data/leads.server";
 import { fetchCapexCases, computeCapexKpis } from "@/lib/data/capex-cases.server";
 
 /**
- * Landlord command center — plaza-wide rent roll, CAM prorateo and the agent
- * modules. Gated by the session check in src/middleware.ts; not linked from the
+ * Landlord command center — plaza-wide rent roll and the agent modules
+ * (Diego, Mariana, Valeria). No CAM prorateo here — this engagement never
+ * contracted Renata/cam-allocator (see tenant-portal.tsx's own doc comment);
+ * a CAM mockup exists only in the public marketing showcase
+ * (team-showcase.tsx / cam-allocation.tsx), never in this real console.
+ * Gated by the session check in src/middleware.ts; not linked from the
  * site navigation.
  *
  * Rendered per request, never prerendered.
