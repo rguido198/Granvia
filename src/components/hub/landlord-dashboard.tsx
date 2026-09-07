@@ -2006,10 +2006,23 @@ export function LandlordDashboard({
                   1024px the old table ran 298px past it and the status column
                   was simply cut off. Percentages can't overflow. */}
               <div className="hidden sm:block border border-hairline rounded-xl bg-white shadow-2xs overflow-x-auto">
-                <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+                {/* Only Inquilino & Local carries a real variable-length
+                    payload (tenant name + trade name + unit code); the
+                    other four columns hold short, fixed-shape content —
+                    a size, a rent figure, a date, a status pill. Giving
+                    all five a percentage share (the pre-2026-09-08 layout)
+                    stretched the four short columns proportionally with a
+                    wider container and did nothing for the one column that
+                    actually needed it, so tenant names kept truncating
+                    right next to a growing empty margin. table-fixed
+                    hands any column with no width to the remaining space —
+                    so only Inquilino & Local is left unset here, and it
+                    absorbs 100% of whatever the 1280px→1600px cap change
+                    freed up. */}
+                <table className="w-full min-w-[960px] table-fixed text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
-                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} width="w-[22%]" />
+                      <SortableHeader label="Inquilino & Local" sortKey="name" current={rentRollSort} onSort={toggleRentRollSort} />
                       {/* Superficie + % GLA merged into one column, and Renta
                           Anual dropped (pure ×12 restatement — moved to the
                           .xlsx export and the lease detail page instead of
@@ -2027,7 +2040,7 @@ export function LandlordDashboard({
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[18%]"
+                        width="w-[112px]"
                         title={`GLA = Gross Leasable Area / Superficie Rentable Bruta (${plazaTotalGla.toLocaleString("es-MX")} m² total)`}
                       />
                       <SortableHeader
@@ -2036,12 +2049,12 @@ export function LandlordDashboard({
                         current={rentRollSort}
                         onSort={toggleRentRollSort}
                         align="right"
-                        width="w-[16%]"
+                        width="w-[120px]"
                         className="font-extrabold"
                       />
-                      <th className="p-3.5 w-[24%] text-left cursor-default select-none">Vencimiento</th>
+                      <th className="p-3.5 w-[150px] text-left cursor-default select-none">Vencimiento</th>
                       <th
-                        className="p-3.5 w-[20%] text-center cursor-default select-none"
+                        className="p-3.5 w-[230px] text-left cursor-default select-none"
                         title="SSOT = Single Source of Truth / Fuente Única de Verdad (Información sincronizada en tiempo real)"
                       >
                         Estatus Contractual SSOT
@@ -2051,7 +2064,9 @@ export function LandlordDashboard({
                   <tbody className="divide-y divide-hairline text-ink-700 font-medium">
                     {visibleRentRoll.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="p-6 text-center text-ink-500">
+                        {/* 5, not the pre-consolidation 8 — colSpan drifted out of
+                            sync with the header when that column count changed. */}
+                        <td colSpan={5} className="p-6 text-center text-ink-500">
                           {rentRollFilter ? <>Sin resultados para &ldquo;{rentRollFilter}&rdquo;.</> : "Sin locales con este estatus."}
                         </td>
                       </tr>
@@ -2060,7 +2075,7 @@ export function LandlordDashboard({
                       const isBlueLuna = r.name.includes("Blue Luna");
 
                       return (
-                        <tr key={r.slug} className={`transition-colors ${isEditingRentRoll ? "bg-slate-100/50 hover:bg-slate-100" : "hover:bg-slate-50"}`}>
+                        <tr key={r.slug} className={`group transition-colors ${isEditingRentRoll ? "bg-slate-100/50 hover:bg-slate-100" : "hover:bg-slate-50"}`}>
                           <td className="p-3.5">
                             <div className="flex items-center gap-2.5">
                               <RentRollThumbnail name={r.tradeName ?? r.name} vacant={r.vacant} />
@@ -2176,7 +2191,7 @@ export function LandlordDashboard({
                               real fields (leaseByLocaleId, the LeaseDetail
                               cross-reference this file already uses a few
                               lines below for sourceApplicationNumber). */}
-                          <td className="p-3.5 text-left text-sm whitespace-nowrap">
+                          <td className="p-3.5 text-left text-sm">
                             {(() => {
                               const lease = leaseByLocaleId.get(r.slug);
                               if (!lease) return <span className="text-ink-400">—</span>;
@@ -2194,10 +2209,16 @@ export function LandlordDashboard({
                               );
                               return (
                                 <div>
-                                  <p className={`font-bold ${lease.isExpired ? "text-alert" : r.renewalSoon ? "text-caution" : "text-ink-700"}`}>
+                                  <p className={`font-bold whitespace-nowrap ${lease.isExpired ? "text-alert" : r.renewalSoon ? "text-caution" : "text-ink-700"}`}>
                                     {new Date(lease.endDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
                                   </p>
                                   {lease.escalationPct !== null && (
+                                    // No whitespace-nowrap here (unlike the
+                                    // date above) — ESCALATION_METHOD_LABEL
+                                    // text can run longer than this now-
+                                    // content-width column, and wrapping to
+                                    // a second line reads better than
+                                    // overflowing past the column edge.
                                     <p className="text-[11px] text-ink-500 font-medium mt-0.5">
                                       {lease.escalationPct}% {lease.escalationMethod ? `· ${ESCALATION_METHOD_LABEL[lease.escalationMethod]}` : ""}
                                       {verifiedMiss && (
@@ -2212,8 +2233,19 @@ export function LandlordDashboard({
                               );
                             })()}
                           </td>
-                          <td className="p-3.5 text-center whitespace-nowrap">
-                            <div className="flex flex-col items-center gap-1">
+                          {/* Badge + actions used to stack in a centered column —
+                              three lines tall on every occupied row, and centering
+                              a column wide enough for "Revisar Seguro · Mariana IA →"
+                              left empty margin on both sides of the shorter badges.
+                              Now one row, left-aligned, wrapping only if a row
+                              genuinely can't fit (e.g. a renewal badge alongside a
+                              long status). Actions (Ver expediente / Desocupar) are
+                              hover-reveal on a fine pointer — 23 rows × 2 buttons is
+                              46 permanent controls, Desocupar red on every row reads
+                              as a continuous warning — but stay always-visible on
+                              touch, where there's no hover to reveal them. */}
+                          <td className="p-3.5">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                               {isBlueLuna ? (
                                 <button
                                   onClick={() => {
@@ -2228,12 +2260,12 @@ export function LandlordDashboard({
                                     triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                                   }}
                                   title="Ver auditoría de póliza asignada a Mariana IA"
-                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto whitespace-nowrap"
+                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 whitespace-nowrap shrink-0"
                                 >
                                   Revisar Seguro · Mariana IA →
                                 </button>
                               ) : r.vacant ? (
-                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap">
+                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0">
                                   Vacante
                                 </span>
                               ) : r.sourceDocumentId ? (
@@ -2246,14 +2278,14 @@ export function LandlordDashboard({
                                 // "good" state reads calmer than an unverified one), zero
                                 // new palette.
                                 <span
-                                  className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap"
+                                  className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0"
                                   title="Respaldado por un contrato escaneado en el sistema"
                                 >
                                   Vigente SSOT
                                 </span>
                               ) : (
                                 <span
-                                  className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap"
+                                  className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0"
                                   title="Ocupado y bajo contrato, pero sin un documento escaneado en el sistema todavía"
                                 >
                                   Vigente
@@ -2265,12 +2297,12 @@ export function LandlordDashboard({
                                   PortfolioRow before this reskin; just never rendered
                                   here. */}
                               {!r.vacant && !isBlueLuna && r.renewalSoon && (
-                                <span className="bg-signal/10 text-signal border border-signal/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap">
+                                <span className="bg-signal/10 text-signal border border-signal/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0">
                                   Renovación Próxima
                                 </span>
                               )}
                               {!r.vacant && r.leaseId && (
-                                <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1">
+                                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 opacity-100 transition-opacity [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 focus-within:opacity-100">
                                   <Link
                                     href={`/consola/locales/${r.slug}`}
                                     className="text-xs font-bold text-[var(--console-accent)] hover:underline shrink-0"
@@ -2303,16 +2335,21 @@ export function LandlordDashboard({
                       locales · GLA Total..." stat just above the table so the two
                       never disagree. Real figures already computed for the header
                       cards, restated here rather than re-derived. */}
+                  {/* 5 cells, matching the 5 real columns above — this drifted to
+                      8 (the pre-consolidation count) when Superficie/% GLA merged
+                      and Renta Anual/Vencimiento/Estatus dropped or merged out of
+                      the scanning view; table-fixed tolerates the extra cells
+                      silently, but they were never landing in a real column. */}
                   <tfoot>
                     <tr className="border-t-2 border-hairline-strong bg-slate-50/70 font-bold text-ink">
                       <td className="p-3.5 text-sm">Total Portafolio · {rentRoll.length} locales</td>
-                      <td className="p-3.5 text-right text-sm whitespace-nowrap">{plazaTotalGla.toLocaleString("es-MX")} m²</td>
                       <td className="p-3.5 text-right text-sm whitespace-nowrap">
-                        {plazaTotalGla > 0 ? `${Math.round((leasedSqm / plazaTotalGla) * 100)}%` : "—"}
+                        {plazaTotalGla.toLocaleString("es-MX")} m²
+                        <span className="block text-[11px] font-medium text-ink-500">
+                          {plazaTotalGla > 0 ? `${Math.round((leasedSqm / plazaTotalGla) * 100)}% GLA` : "—"}
+                        </span>
                       </td>
                       <td className="p-3.5 text-right text-sm whitespace-nowrap">{formatVal(contractedRent)}</td>
-                      <td className="p-3.5 text-right text-sm whitespace-nowrap">{formatVal(contractedRent * 12)}</td>
-                      <td />
                       <td />
                       <td />
                     </tr>
