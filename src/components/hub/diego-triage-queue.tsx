@@ -67,22 +67,23 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
         </td>
         {/* Widest column on purpose — the tenant's own report is what a landlord
             triages from. Diego's diagnosis lives in the drawer, not repeated here
-            in low-contrast grey under the line it paraphrases. */}
+            in low-contrast grey under the line it paraphrases.
+            Activo/Proveedor: real fields Diego's triage already computes and
+            writes (asset match + warranty check drove costBucket in the
+            first place) — briefly their own columns (flagged 2026-09-06
+            against the original design mockup), folded back in here
+            2026-09-08 once nine columns stopped fitting without a
+            horizontal scroll on an ordinary desktop width. Garantía stays
+            its own column; it's the one of the three landlords act on. */}
         <td className="p-3.5 align-top text-sm min-w-[280px]">
           <p className="text-slate-800 leading-relaxed" title={ticket.rawReport}>
             {reportExcerpt}
           </p>
-        </td>
-        {/* Activo/Proveedor/Garantía: real fields Diego's triage already
-            computes and writes (asset match + warranty check drove
-            costBucket in the first place) but that were never surfaced past
-            the drawer — flagged 2026-09-06 against the original design
-            mockup, which shows all three as their own columns. */}
-        <td className="p-3.5 align-top text-sm text-slate-700 min-w-[130px]">
-          {ticket.assetName ?? <span className="text-slate-400">—</span>}
-        </td>
-        <td className="p-3.5 align-top text-sm text-slate-700 whitespace-nowrap">
-          {ticket.contractorName ?? <span className="text-slate-400">—</span>}
+          {(ticket.assetName || ticket.contractorName) && (
+            <p className="text-xs text-slate-500 mt-1">
+              {[ticket.assetName, ticket.contractorName].filter(Boolean).join(" · ")}
+            </p>
+          )}
         </td>
         <td className="p-3.5 align-top text-sm font-semibold text-slate-700 text-right whitespace-nowrap">
           {ticket.estimatedCost !== null ? formatMxn(ticket.estimatedCost) : "—"}
@@ -335,8 +336,6 @@ export function DiegoTriageQueue({
                   <th className="p-3.5 font-bold">Ticket</th>
                   <th className="p-3.5 font-bold">Inquilino</th>
                   <th className="p-3.5 font-bold">Reporte</th>
-                  <th className="p-3.5 font-bold">Activo</th>
-                  <th className="p-3.5 font-bold">Proveedor</th>
                   <th className="p-3.5 font-bold text-right">Costo</th>
                   <th className="p-3.5 font-bold">Garantía</th>
                   <th className="p-3.5 font-bold">Estado</th>

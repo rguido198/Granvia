@@ -2065,7 +2065,7 @@ export function LandlordDashboard({
                                 </span>
                               )}
                               {!r.vacant && r.leaseId && (
-                                <div className="flex items-center gap-2.5">
+                                <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1">
                                   <Link
                                     href={`/consola/locales/${r.slug}`}
                                     className="text-xs font-bold text-[var(--console-accent)] hover:underline shrink-0"
@@ -3055,28 +3055,36 @@ export function LandlordDashboard({
                                 )}
                               </td>
                               <td className="p-3.5 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  {/* One instance, here — not duplicated next to the name in
-                                      both the collapsed row and the expanded header the way
-                                      it was before. This is the only place "is there a scan
-                                      on file" needs to show. */}
-                                  {c.sourceDocumentId && (
-                                    <span onClick={(e) => e.stopPropagation()}>
-                                      <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
-                                    </span>
-                                  )}
-                                  {/* The one place a row click still only expands inline —
-                                      this is the actual landing page (contrato, historial de
-                                      renta, reclamos de Diego IA, cláusulas, todo en una sola
-                                      columna) for the answer to "¿qué está pasando con el
-                                      2-14?" */}
-                                  <Link
-                                    href={`/consola/locales/${c.id}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-xs font-bold text-[var(--console-accent)] hover:underline shrink-0"
-                                  >
-                                    Ver expediente →
-                                  </Link>
+                                {/* Status badge stacked below the link, not beside it — an
+                                    inline "Ver expediente →" right next to "Renovación
+                                    Próxima" reads as the arrow pointing AT the badge
+                                    (as if it navigated there), when the two are
+                                    unrelated: one's a navigation link, the other a
+                                    status pill. Found live 2026-09-08. */}
+                                <div className="flex flex-col items-end gap-1.5">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {/* One instance, here — not duplicated next to the name in
+                                        both the collapsed row and the expanded header the way
+                                        it was before. This is the only place "is there a scan
+                                        on file" needs to show. */}
+                                    {c.sourceDocumentId && (
+                                      <span onClick={(e) => e.stopPropagation()}>
+                                        <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" iconOnly />
+                                      </span>
+                                    )}
+                                    {/* The one place a row click still only expands inline —
+                                        this is the actual landing page (contrato, historial de
+                                        renta, reclamos de Diego IA, cláusulas, todo en una sola
+                                        columna) for the answer to "¿qué está pasando con el
+                                        2-14?" */}
+                                    <Link
+                                      href={`/consola/locales/${c.id}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-xs font-bold text-[var(--console-accent)] hover:underline shrink-0"
+                                    >
+                                      Ver expediente →
+                                    </Link>
+                                  </div>
                                   {c.isExpired ? (
                                     <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge whitespace-nowrap">
                                       Vencido
