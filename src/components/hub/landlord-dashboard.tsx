@@ -2406,27 +2406,47 @@ export function LandlordDashboard({
                         subtitle={r.tradeName ? `${r.name} · ${r.unitCode}` : r.unitCode}
                         badge={badge}
                         primaryLabel="Renta Mensual"
-                        primaryValue={formatVal(r.rent)}
+                        // /m² alongside the total — the one derived figure that
+                        // supports a pricing judgment, same secondary line the
+                        // desktop table's Renta Mensual cell already carries.
+                        // Renta Anual (a pure ×12 restatement, no judgment it
+                        // supports) is deliberately not here — see below.
+                        primaryValue={
+                          <>
+                            {formatVal(r.rent)}
+                            <span className="block text-xs text-ink-500 font-medium mt-0.5">
+                              {formatVal(Math.round(r.rent / r.sqm))}/m²
+                            </span>
+                          </>
+                        }
                         fields={
                           <>
                             <MobileCardField label="Superficie" value={`${r.sqm} m²`} />
                             <MobileCardField label="% GLA" value={`${r.sharePct.toFixed(2)}%`} />
-                            <MobileCardField label="Renta Anual" value={formatVal(r.rent * 12)} />
-                            <MobileCardField
-                              label="Escalación"
-                              value={
-                                lease && lease.escalationPct !== null ? (
+                            {/* Renta Anual dropped — a card has no horizontal-
+                                scanning problem, but this was always a pure ×12
+                                restatement of the figure right above, not a fact
+                                of its own; it's one tap away via Ver expediente /
+                                the lease detail page. Escalación stays its own
+                                field (a card has room; it doesn't need to fold
+                                under Vencimiento like the table does) but only
+                                renders when set — same presence rule the desktop
+                                consolidation used, applied here as omission
+                                instead of folding, since "—" on 23 of 23 cards is
+                                worse as a full labeled row than as a table cell. */}
+                            {lease && lease.escalationPct !== null && (
+                              <MobileCardField
+                                label="Escalación"
+                                value={
                                   <>
                                     {lease.escalationPct}%
                                     {lease.escalationCycles.some((cy) => !cy.applied && cy.dueDate >= LEASE_RENT_HISTORY_SINCE) && (
                                       <span className="text-alert"> · Vencida</span>
                                     )}
                                   </>
-                                ) : (
-                                  "—"
-                                )
-                              }
-                            />
+                                }
+                              />
+                            )}
                             <MobileCardField
                               label="Vencimiento"
                               value={
@@ -2439,7 +2459,10 @@ export function LandlordDashboard({
                                 )
                               }
                             />
-                            {!r.vacant && r.renewalSoon && <MobileCardField label="Estatus" value="Renovación Próxima" />}
+                            {/* fullWidth — MobileCardField truncates by default at
+                                half the card's width, which was clipping this to
+                                "Renovación Pró…". */}
+                            {!r.vacant && r.renewalSoon && <MobileCardField label="Estatus" value="Renovación Próxima" fullWidth />}
                           </>
                         }
                         actions={
