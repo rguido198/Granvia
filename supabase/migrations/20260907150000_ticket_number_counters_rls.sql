@@ -1,0 +1,15 @@
+-- ticket_number_counters had RLS disabled — fully exposed to the anon key
+-- (embedded in every page load) via PostgREST, readable and writable by
+-- anyone regardless of the app's own query paths.
+--
+-- No policy is added for anon/authenticated: confirmed by tracing every
+-- write path into `tickets` (the only table whose ticket_number column
+-- defaults to next_ticket_number(), the only function that touches this
+-- table) — api/ingest/route.ts and workers/workflows/src/diego-triage.ts
+-- both exclusively use SUPABASE_SERVICE_ROLE_KEY, never the anon key.
+-- next_ticket_number() has no SECURITY DEFINER, so it runs as whichever
+-- role performs the INSERT — always service_role in this codebase, which
+-- bypasses RLS entirely regardless of policies. Enabling RLS with zero
+-- policies denies anon/authenticated completely (the correct state — no
+-- legitimate path needs access) without touching the one real write path.
+alter table ticket_number_counters enable row level security;

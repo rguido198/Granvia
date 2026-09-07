@@ -38,7 +38,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function ConsolaPage() {
+export default async function ConsolaPage({
+  searchParams,
+}: {
+  /** ?ticket=<id> — the ⌘K command palette's ticket resolver. ?tab=legal —
+   *  its "Documentos" nav action (no specific record, just the tab). See
+   *  command-palette.tsx and console-shell.tsx's initial props. */
+  searchParams: Promise<{ ticket?: string; tab?: string }>;
+}) {
+  const { ticket, tab } = await searchParams;
   const data = buildConsoleData();
 
   const { tickets: diegoTickets, kpis: diegoKpis } = await fetchDiegoTickets();
@@ -81,6 +89,8 @@ export default async function ConsolaPage() {
         leaseApplications={leaseApplications}
         renewalOutreachStatus={renewalOutreachStatus}
         leads={leads}
+        initialTicketId={ticket}
+        initialTab={tab === "legal" || tab === "maint" ? tab : undefined}
       />
     </PageFade>
   );

@@ -74,19 +74,48 @@ export type LeaseDetail = {
    *  document's special_clauses) and from LeaseRenewalSummary.escalationPct
    *  (a *proposed renewal's* terms). null until a landlord confirms one. */
   escalationPct: number | null;
-  escalationMethod: string | null;
+  escalationMethod: EscalationMethod | null;
   escalationMonth: number | null;
+  /** Landlord reviewed this lease's backfill row and confirmed the source
+   *  contract has no escalation clause — distinct from escalationMonth
+   *  simply being null, which alone can't tell "never reviewed" apart from
+   *  "reviewed, genuinely none." See the escalation_confirmed_none
+   *  migration's own comment. */
+  escalationConfirmedNone: boolean;
+  /** The contract's stated CAM allocation basis (e.g. "GLA share") — free
+   *  text, landlord-entered, null until confirmed. Current pro-rata math
+   *  everywhere else in this codebase assumes raw GLA share for every
+   *  tenant; this is the one place that assumption could be contractually
+   *  wrong, and nothing reads it yet. */
+  camShareBasis: string | null;
+  /** Cap on controllable CAM expenses passed through to this tenant, as a
+   *  percentage — a negotiated protection against overage billing. Ignored
+   *  everywhere today. */
+  camCapControllablePct: number | null;
+  /** CAM administration fee, as a percentage of the allocated base — never
+   *  applied anywhere in this codebase, so it's revenue not being billed. */
+  adminFeePct: number | null;
+  /** Free-text CAM/maintenance clause from the source contract — the
+   *  provenance for the three fields above. null for a lease never
+   *  digitized, or digitized before this field existed. */
+  maintenanceClause: string | null;
   /** Confirmed absent from this schema until 2026-09-03 — see
    *  portfolio.server.ts's fetchPortfolio doc comment history. null until a
    *  landlord backfills it. */
   securityDepositAmount: number | null;
   securityDepositStatus: string | null;
   agentNotes: string | null;
-  /** See computeEscalationAudit's doc comment for what "overdue" means and
-   *  its one known limitation (no visibility before lease_rent_history
+  /** Convenience mirror of escalationCycles' last entry — see
+   *  computeEscalationAudit's doc comment for what "overdue" means and its
+   *  one known limitation (no visibility before lease_rent_history
    *  existed). false whenever escalationMonth is unset. */
   escalationOverdue: boolean;
   escalationDueDate: string | null;
+  /** Every annual escalation cycle from lease start through the most
+   *  recent due date, each independently audited — the full history behind
+   *  escalationOverdue/escalationDueDate's single-cycle convenience view.
+   *  Empty whenever escalationMonth is unset. */
+  escalationCycles: EscalationCycle[];
   /** Empty for a lease never digitized, or digitized before this ledger
    *  existed (2026-09-03) — no backfill for prior extractions. */
   clauses: LeaseClause[];
@@ -118,6 +147,22 @@ export type LeaseClause = {
   agentNote: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+/**
+ * The only two values ever written anywhere in this codebase — Mariana's
+ * renewal-drafting default ("fixed_pct", a matched %) and the draft-renewal
+ * route's flat-rate override ("landlord_specified"). Column was left free
+ * text at first (20260903221148_lease_escalation_schedule.sql), which let
+ * four different UI components each invent their own fallback string for
+ * null. Constrained at the DB level (20260907130000_escalation_method_enum
+ * .sql) once the live data confirmed nothing else was ever stored.
+ */
+export type EscalationMethod = "fixed_pct" | "landlord_specified";
+
+export const ESCALATION_METHOD_LABEL: Record<EscalationMethod, string> = {
+  fixed_pct: "% fijo",
+  landlord_specified: "monto especificado por el arrendador",
 };
 
 const ESCALATION_KEYWORDS = [
@@ -166,7 +211,7 @@ export type LeaseRenewalSummary = {
   currentBaseRentMonthly: number | null;
   newBaseRentMonthly: number;
   escalationPct: number | null;
-  escalationMethod: string;
+  escalationMethod: EscalationMethod;
   draftMarkdown: string;
   skepticFlagged: boolean;
   skepticConcerns: string[];
@@ -233,52 +278,107 @@ export type RentChangeEvent = {
   newRent: number;
 };
 
+/** supabase/migrations/20260903230148_lease_rent_history.sql — the day
+ *  lease_rent_history started logging. A cycle whose dueDate falls before
+ *  this has no ledger to check against, so `applied: false` there means
+ *  "unverifiable," not "confirmed missed." computeEscalationAudit doesn't
+ *  bake that distinction into `applied` itself (it stays a pure presence
+ *  check); a caller that needs "verified vs unverifiable" compares a
+ *  cycle's own dueDate against this constant (money-over-time.server.ts's
+ *  escalation audit section does exactly that). */
+export const LEASE_RENT_HISTORY_SINCE = "2026-09-03";
+
+export type EscalationCycle = {
+  /** First-of-month due date for this annual cycle. */
+  dueDate: string;
+  /** Whether some rent increase (any amount — presence check, not a
+   *  percentage match, since real-world negotiation can land anywhere near
+   *  the stated pct) was recorded in lease_rent_history within this
+   *  cycle's own window: [dueDate, next cycle's dueDate), or [dueDate, ∞)
+   *  for the most recent cycle. Windowed so one bump can't silently clear
+   *  an unrelated earlier cycle it wasn't meant for. */
+  applied: boolean;
+};
+
 export type EscalationAudit = {
+  /** Every annual due-date occurrence from the lease's own start_date
+   *  through the most recent one that has already passed, oldest first —
+   *  the fix for the single-most-recent-cycle blind spot: a lease that
+   *  missed 2024 and 2025 but caught up last month now shows two missed
+   *  cycles and one applied one, not "clean." Empty when escalationMonth is
+   *  unset, or its first occurrence hasn't happened yet. */
+  cycles: EscalationCycle[];
+  /** Convenience mirror of the last entry in `cycles` — true when the most
+   *  recent cycle wasn't applied. Kept for callers that only need "is
+   *  anything overdue right now," not the full history. */
   overdue: boolean;
-  /** The most recent occurrence of escalationMonth that has already passed
-   *  — null when escalationMonth is unset, or when that occurrence predates
-   *  the lease's own start_date (nothing was "overdue" before the lease
-   *  existed). */
   dueDate: string | null;
 };
 
+/** Local-time YYYY-MM-DD — not `toISOString().slice(0,10)`, which parses
+ *  the local Date's UTC-shifted instant and can roll the calendar date back
+ *  a day (or a month, near a boundary) in a negative-UTC-offset timezone.
+ *  Same class of bug parseDateOnly's own doc comment already documents for
+ *  the client-side renewal workspace. */
+function formatDateOnly(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 /**
- * Detects a scheduled rent escalation that doesn't appear to have happened.
- * "Happened" means: some rent increase (any amount — this is a presence
- * check, not a percentage match, since real-world negotiation can land
- * anywhere near the stated pct) recorded in lease_rent_history at or after
- * the most recent due date.
+ * Walks every annual escalation cycle a lease has had, from its own
+ * start_date through the most recent one that's already due, and audits
+ * each independently — the multi-year fix for the previous single-cycle
+ * version, which only ever looked at the most recent due date and so read
+ * a lease that missed 2024 and 2025 as "clean" the moment it caught up once.
  *
- * Known limitation, not a bug: lease_rent_history (supabase/migrations/
- * 20260903230148_lease_rent_history.sql) only captures changes made after
- * that migration landed. A due date from before then will show `overdue:
- * true` even if the escalation genuinely happened, because there is no
- * record of it. This audit is only reliable for cycles whose due date falls
- * after the history table went live — accepted tradeoff (2026-09-03) rather
- * than building a backfill for changes nobody logged.
+ * "Applied" means: some rent increase recorded in lease_rent_history within
+ * that specific cycle's own window (see EscalationCycle's doc comment) —
+ * still a presence check, not a percentage match.
+ *
+ * Known limitation, not a bug: lease_rent_history only captures changes
+ * made on/after LEASE_RENT_HISTORY_SINCE. A cycle due before then reads
+ * `applied: false` even if the escalation genuinely happened, because
+ * there's no record either way — accepted tradeoff (2026-09-03) rather than
+ * building a backfill for changes nobody logged. See that constant's own
+ * doc comment for how a caller distinguishes "confirmed missed" from
+ * "unverifiable" using this same `applied` flag.
  */
 export function computeEscalationAudit(
   lease: Pick<LeaseDetail, "startDate" | "escalationMonth">,
   rentHistory: RentChangeEvent[],
   referenceDate: Date = new Date(),
 ): EscalationAudit {
-  if (lease.escalationMonth === null) return { overdue: false, dueDate: null };
-
-  const refYear = referenceDate.getFullYear();
-  let dueDate = new Date(refYear, lease.escalationMonth - 1, 1);
-  if (dueDate > referenceDate) {
-    dueDate = new Date(refYear - 1, lease.escalationMonth - 1, 1);
-  }
+  if (lease.escalationMonth === null) return { cycles: [], overdue: false, dueDate: null };
 
   const start = parseDateOnly(lease.startDate);
-  if (dueDate < start) return { overdue: false, dueDate: null };
+  let due = new Date(start.getFullYear(), lease.escalationMonth - 1, 1);
+  if (due < start) due = new Date(due.getFullYear() + 1, due.getMonth(), 1);
 
-  const dueDateStr = dueDate.toISOString().slice(0, 10);
-  const applied = rentHistory.some(
-    (event) => event.changedAt >= dueDateStr && event.oldRent !== null && event.newRent > event.oldRent,
-  );
+  const dueDates: Date[] = [];
+  while (due <= referenceDate) {
+    dueDates.push(due);
+    due = new Date(due.getFullYear() + 1, due.getMonth(), 1);
+  }
 
-  return { overdue: !applied, dueDate: dueDateStr };
+  const cycles: EscalationCycle[] = dueDates.map((d, i) => {
+    const dueStr = formatDateOnly(d);
+    const nextStr = i + 1 < dueDates.length ? formatDateOnly(dueDates[i + 1]) : null;
+    const applied = rentHistory.some(
+      (event) =>
+        event.oldRent !== null &&
+        event.newRent > event.oldRent &&
+        event.changedAt >= dueStr &&
+        (nextStr === null || event.changedAt < nextStr),
+    );
+    return { dueDate: dueStr, applied };
+  });
+
+  const last = cycles.length > 0 ? cycles[cycles.length - 1] : null;
+  return {
+    cycles,
+    overdue: last !== null && !last.applied,
+    dueDate: last !== null ? last.dueDate : null,
+  };
 }
 
 /** The same three-way precedence the SSOT table's status column renders

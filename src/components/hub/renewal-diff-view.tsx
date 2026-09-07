@@ -6,7 +6,7 @@ import { LegalDraftMarkdown } from "@/components/hub/legal-draft-markdown";
 import { formatMxn, formatSpanishDate } from "@/components/hub/lease-renewal-panel";
 import { downloadBlob, generateContractPdf } from "@/lib/mock-pdf";
 import { requestRenewalChangesAction } from "@/lib/data/lease-renewal-actions";
-import type { LeaseDetail } from "@/lib/data/contract-status";
+import { ESCALATION_METHOD_LABEL, type LeaseDetail } from "@/lib/data/contract-status";
 import type { RenewalVersion } from "@/lib/data/renewal-detail.server";
 
 const STATUS_BADGE: Record<RenewalVersion["status"], { label: string; cls: string }> = {
@@ -213,7 +213,7 @@ export function RenewalDiffView({
       newEndDate: selected.newEndDate,
       currentRent: selected.currentBaseRentMonthly !== null ? formatMxn(selected.currentBaseRentMonthly) : "(sin registro)",
       newRent: formatMxn(selected.newBaseRentMonthly),
-      escalationPct: selected.escalationPct !== null ? `${selected.escalationPct}%` : selected.escalationMethod,
+      escalationPct: selected.escalationPct !== null ? `${selected.escalationPct}%` : ESCALATION_METHOD_LABEL[selected.escalationMethod],
       clausesMarkdown: selected.draftMarkdown,
     });
     downloadBlob(blob, `convenio_modificatorio_${selected.renewalNumber.replace(/\s+/g, "_")}.pdf`);
@@ -324,8 +324,12 @@ export function RenewalDiffView({
         />
         <DiffRow
           label="Escalación"
-          oldValue={lease.escalationPct !== null ? `${lease.escalationPct}% (${lease.escalationMethod ?? "contrato vigente"})` : "(sin escalación en registro)"}
-          newValue={`${selected.escalationPct !== null ? `${selected.escalationPct}%` : selected.escalationMethod} (${selected.escalationMethod})`}
+          oldValue={
+            lease.escalationPct !== null
+              ? `${lease.escalationPct}% (${lease.escalationMethod ? ESCALATION_METHOD_LABEL[lease.escalationMethod] : "sin método registrado"})`
+              : "(sin escalación en registro)"
+          }
+          newValue={`${selected.escalationPct !== null ? `${selected.escalationPct}%` : ESCALATION_METHOD_LABEL[selected.escalationMethod]} (${ESCALATION_METHOD_LABEL[selected.escalationMethod]})`}
           changed
           citation={changedByLabel(selected)}
         />

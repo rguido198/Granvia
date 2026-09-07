@@ -4,7 +4,7 @@ import Link from "next/link";
 import { DocumentViewerButton } from "@/components/hub/legal-documents-panel";
 import { formatSpanishDate } from "@/components/hub/lease-renewal-panel";
 import { formatMxn, STATUS_LABEL as TICKET_STATUS_LABEL, STATUS_BADGE as TICKET_STATUS_BADGE, COST_BUCKET_LABEL } from "@/components/hub/diego-ticket-ui";
-import type { LeaseDetail, LeaseClauseReviewStatus } from "@/lib/data/contract-status";
+import { ESCALATION_METHOD_LABEL, type LeaseDetail, type LeaseClauseReviewStatus } from "@/lib/data/contract-status";
 import type { DiegoTicket } from "@/lib/data/diego-tickets.server";
 
 const RESPONSIBILITY_SYSTEMS = [
@@ -146,7 +146,11 @@ export function LeaseDetailView({ lease, tickets }: { lease: LeaseDetail; ticket
           <Field label="Días de aviso de terminación" value={lease.noticePeriodDays !== null ? `${lease.noticePeriodDays} días` : "(sin registro)"} />
           <Field
             label="Escalación vigente"
-            value={lease.escalationPct !== null ? `${lease.escalationPct}% (${lease.escalationMethod ?? "método sin registrar"})` : "(sin escalación en registro)"}
+            value={
+              lease.escalationPct !== null
+                ? `${lease.escalationPct}% (${lease.escalationMethod ? ESCALATION_METHOD_LABEL[lease.escalationMethod] : "sin método registrado"})`
+                : "(sin escalación en registro)"
+            }
           />
           <Field label="Origen" value={lease.sourceApplicationNumber ? `Screening ${lease.sourceApplicationNumber} — Mariana IA` : "Registro directo"} />
         </div>

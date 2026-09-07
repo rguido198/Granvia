@@ -9,10 +9,13 @@ import { MoneyOverTimeView } from "@/components/hub/money-over-time-view";
 
 /**
  * Standalone portfolio-wide money page — root claude.md's #3 frontend
- * priority ("money over time"), scoped to what's real: contracted rent and
- * escalation-due compliance, not collections/delinquency/CAM recovery (no
- * invoicing or payments table exists in this schema — see
- * money-over-time.server.ts's own doc comment for the full reasoning).
+ * priority ("money over time"), named "Renta Programada" rather than
+ * "Cobranza": every figure derives from lease terms on file (contracted
+ * rent, 24-month projection, escalation compliance, expiration ladder,
+ * rent/m² benchmark), never from cash actually received. Collections
+ * aging and CAM recovery have no data source yet (no invoicing/payments
+ * table in this schema) and render as named, locked roadmap slots — see
+ * money-over-time.server.ts's own doc comment for the full reasoning.
  *
  * Same standalone-page pattern as /consola/renovaciones/[id] and
  * /consola/locales/[id]: gated by middleware.ts's `/consola` prefix check,
@@ -30,7 +33,7 @@ const consoleFont = Inter({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Dinero en el Tiempo | Consola La Gran Vía Mexicali",
+  title: "Renta Programada y Escalaciones | Consola La Gran Vía Mexicali",
   robots: { index: false, follow: false },
 };
 

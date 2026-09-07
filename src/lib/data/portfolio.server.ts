@@ -85,6 +85,12 @@ export type ApprovedApplication = {
   applicationNumber: string;
   applicantEntity: string;
   targetUnitCode: string;
+  /** lease_applications.created_at — the closest anchor this row has for
+   *  "how long has this been sitting approved-but-unpromoted." Not an
+   *  approved_at (that moment isn't tracked separately), so it slightly
+   *  overstates the wait if a landlord took a while just to approve it —
+   *  named accordingly wherever it's shown (see stalled-handoffs.server.ts). */
+  createdAt: string;
 };
 
 export type Portfolio = {
@@ -139,7 +145,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: leaseRows, error: leasesError } = await supabase
     .from("leases")
     .select(
-      "id, locale_id, tenant_entity, trade_name, permitted_use, exclusive_use_clause, parking_clause, directory_advertising_clause, expansion_option_clause, extended_hours_clause, signage_clause, pets_clause, sublease_restriction_clause, remodeling_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id, escalation_pct, escalation_method, escalation_month, security_deposit_amount, security_deposit_status, agent_notes",
+      "id, locale_id, tenant_entity, trade_name, permitted_use, exclusive_use_clause, parking_clause, directory_advertising_clause, expansion_option_clause, extended_hours_clause, signage_clause, pets_clause, sublease_restriction_clause, remodeling_clause, responsibility_matrix, notice_period_days, base_rent_monthly, start_date, end_date, source_document_id, escalation_pct, escalation_method, escalation_month, escalation_confirmed_none, security_deposit_amount, security_deposit_status, agent_notes, cam_share_basis, cam_cap_controllable_pct, admin_fee_pct, maintenance_clause",
     );
   if (leasesError) throw new Error(leasesError.message);
 
@@ -151,7 +157,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   // promoted at all.
   const { data: applicationRows, error: applicationsError } = await supabase
     .from("lease_applications")
-    .select("id, application_number, applicant_entity, target_locale_id, status, promoted_lease_id");
+    .select("id, application_number, applicant_entity, target_locale_id, status, promoted_lease_id, created_at");
   if (applicationsError) throw new Error(applicationsError.message);
 
   const applicationNumberByLeaseId = new Map(
@@ -195,7 +201,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       currentBaseRentMonthly: r.current_base_rent_monthly === null ? null : Number(r.current_base_rent_monthly),
       newBaseRentMonthly: Number(r.new_base_rent_monthly),
       escalationPct: r.escalation_pct === null ? null : Number(r.escalation_pct),
-      escalationMethod: r.escalation_method as string,
+      escalationMethod: r.escalation_method as LeaseRenewalSummary["escalationMethod"],
       draftMarkdown: r.draft_markdown as string,
       skepticFlagged: r.skeptic_flagged as boolean,
       skepticConcerns: (r.skeptic_concerns as string[] | null) ?? [],
@@ -454,13 +460,19 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
         suggestedEscalationPct: escalation?.pct ?? null,
         suggestedEscalationClauseText: escalation?.clauseText ?? null,
         escalationPct: l.escalation_pct === null ? null : Number(l.escalation_pct),
-        escalationMethod: l.escalation_method,
+        escalationMethod: l.escalation_method as LeaseDetail["escalationMethod"],
         escalationMonth: l.escalation_month,
+        escalationConfirmedNone: l.escalation_confirmed_none as boolean,
+        camShareBasis: l.cam_share_basis,
+        camCapControllablePct: l.cam_cap_controllable_pct === null ? null : Number(l.cam_cap_controllable_pct),
+        adminFeePct: l.admin_fee_pct === null ? null : Number(l.admin_fee_pct),
+        maintenanceClause: l.maintenance_clause,
         securityDepositAmount: l.security_deposit_amount === null ? null : Number(l.security_deposit_amount),
         securityDepositStatus: l.security_deposit_status,
         agentNotes: l.agent_notes,
         escalationOverdue: escalationAudit.overdue,
         escalationDueDate: escalationAudit.dueDate,
+        escalationCycles: escalationAudit.cycles,
         clauses: clausesByLeaseId.get(l.id) ?? [],
         rentHistory: rentHistoryByLeaseId.get(l.id) ?? [],
       };
@@ -474,6 +486,7 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
       applicationNumber: a.application_number as string,
       applicantEntity: a.applicant_entity as string,
       targetUnitCode: localesById.get(a.target_locale_id as string)?.unit_number ?? "?",
+      createdAt: a.created_at as string,
     }))
     .sort((a, b) => a.applicationNumber.localeCompare(b.applicationNumber));
 

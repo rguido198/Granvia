@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentProfile } from "@/lib/auth/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import type { EscalationMethod } from "@/lib/data/contract-status";
 
 /**
  * Starts leaseRenewalWorkflow for an existing lease — the "Redactar
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
   }
 
   let resolvedRent: number;
-  let escalationMethod: string;
+  let escalationMethod: EscalationMethod;
   let resolvedPct: number | null;
   if (hasFlatRent) {
     resolvedRent = newBaseRentMonthly!;

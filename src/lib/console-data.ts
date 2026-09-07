@@ -87,22 +87,6 @@ export type RentRollRow = {
   fiscalAlert: boolean;
 };
 
-/** One line of the CAM prorateo matrix, peso amounts already rounded. */
-export type CamRow = {
-  key: string;
-  label: string;
-  sqm: number;
-  sharePct: number;
-  base: number;
-  admin: number;
-  iva: number;
-  total: number;
-  vacant: boolean;
-  fiscalAlert: boolean;
-};
-
-export type CamTotals = { base: number; admin: number; iva: number; total: number; sharePct: number };
-
 /** One settlement line replayed from SAARI against the rent roll. */
 export type SaariInboundLine = { local: string; label: string; amount: number; flagged: boolean };
 
@@ -110,9 +94,6 @@ export type SaariInboundLine = { local: string; label: string; amount: number; f
 export type ConsoleData = {
   rentRoll: RentRollRow[];
   vacantUnit: VacantUnit;
-  camRows: CamRow[];
-  camTotals: CamTotals;
-  camMonthlyPool: number;
 
   leasedSqm: number;
   plazaTotalGla: number;

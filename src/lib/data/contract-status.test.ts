@@ -46,6 +46,12 @@ function makeLease(overrides: Partial<LeaseDetail>): LeaseDetail {
     agentNotes: null,
     escalationOverdue: false,
     escalationDueDate: null,
+    escalationCycles: [],
+    escalationConfirmedNone: false,
+    camShareBasis: null,
+    camCapControllablePct: null,
+    adminFeePct: null,
+    maintenanceClause: null,
     clauses: [],
     rentHistory: [],
     ...overrides,
@@ -133,18 +139,28 @@ describe("computeEscalationAudit", () => {
 
   it("is never overdue when escalationMonth is unset", () => {
     const result = computeEscalationAudit(makeLease({ escalationMonth: null }), [], new Date("2026-10-01"));
-    expect(result).toEqual({ overdue: false, dueDate: null });
+    expect(result).toEqual({ cycles: [], overdue: false, dueDate: null });
   });
 
-  it("flags overdue when the due month has passed with no recorded increase", () => {
+  it("flags overdue when the due month has passed with no recorded increase, walking every cycle since lease start", () => {
     const result = computeEscalationAudit(lease, [], new Date("2026-10-01"));
-    expect(result).toEqual({ overdue: true, dueDate: "2026-09-01" });
+    expect(result).toEqual({
+      cycles: [
+        { dueDate: "2024-09-01", applied: false },
+        { dueDate: "2025-09-01", applied: false },
+        { dueDate: "2026-09-01", applied: false },
+      ],
+      overdue: true,
+      dueDate: "2026-09-01",
+    });
   });
 
   it("is not overdue when a rent increase was recorded at or after the due date", () => {
     const history: RentChangeEvent[] = [{ changedAt: "2026-09-05", oldRent: 95000, newRent: 100225 }];
     const result = computeEscalationAudit(lease, history, new Date("2026-10-01"));
-    expect(result).toEqual({ overdue: false, dueDate: "2026-09-01" });
+    expect(result.overdue).toBe(false);
+    expect(result.dueDate).toBe("2026-09-01");
+    expect(result.cycles.at(-1)).toEqual({ dueDate: "2026-09-01", applied: true });
   });
 
   it("ignores a recorded change that isn't an increase (e.g. a correction down)", () => {
@@ -170,6 +186,34 @@ describe("computeEscalationAudit", () => {
       [],
       new Date("2026-10-01"),
     );
-    expect(result).toEqual({ overdue: false, dueDate: null });
+    expect(result).toEqual({ cycles: [], overdue: false, dueDate: null });
+  });
+
+  it("does not let one increase clear an earlier, unrelated cycle it wasn't meant for (the multi-year fix)", () => {
+    // Missed 2024 and 2025 entirely, caught up with a single bump in 2026 —
+    // the old single-cycle audit read this lease as clean the moment the
+    // last cycle applied. It should now show two real missed cycles.
+    const history: RentChangeEvent[] = [{ changedAt: "2026-09-10", oldRent: 90000, newRent: 94500 }];
+    const result = computeEscalationAudit(lease, history, new Date("2026-10-01"));
+    expect(result.cycles).toEqual([
+      { dueDate: "2024-09-01", applied: false },
+      { dueDate: "2025-09-01", applied: false },
+      { dueDate: "2026-09-01", applied: true },
+    ]);
+    expect(result.overdue).toBe(false); // last cycle is clean...
+    const missedCycles = result.cycles.filter((c) => !c.applied);
+    expect(missedCycles).toHaveLength(2); // ...but 2 real cycles were still missed.
+  });
+
+  it("attributes an increase to the cycle whose window it actually falls in, not just 'at or after some due date'", () => {
+    // The 2025 bump only satisfies the 2025 cycle (its own window),
+    // not the 2024 cycle that came before it.
+    const history: RentChangeEvent[] = [{ changedAt: "2025-09-05", oldRent: 90000, newRent: 94500 }];
+    const result = computeEscalationAudit(lease, history, new Date("2026-10-01"));
+    expect(result.cycles).toEqual([
+      { dueDate: "2024-09-01", applied: false },
+      { dueDate: "2025-09-01", applied: true },
+      { dueDate: "2026-09-01", applied: false },
+    ]);
   });
 });

@@ -14,6 +14,13 @@ import type { AutonomyState } from "@/lib/platform/settings.server";
 import type { AuditEntry } from "@/lib/platform/audit-log.server";
 import type { CorporateUser } from "@/lib/platform/users.server";
 import type { Portfolio, LocaleStatus, LocaleUnitType, LeaseDocumentRow } from "@/lib/data/portfolio.server";
+import { ESCALATION_METHOD_LABEL, LEASE_RENT_HISTORY_SINCE } from "@/lib/data/contract-status";
+
+/** Shared with ConsoleShell (which owns the state, this component only
+ *  consumes it) — defined here rather than there since console-shell.tsx
+ *  already imports LandlordDashboard, and a type import the other way
+ *  around would be circular. */
+export type NavigateRequest = { tab: "maint" | "legal"; subTab: string; focusTicketId?: string };
 import type { PendingLeaseApplication } from "@/lib/data/approval-queue.server";
 import { buildApprovalQueue, type ApprovalQueueItem } from "@/lib/approval-queue";
 import { DiegoTriageQueue } from "@/components/hub/diego-triage-queue";
@@ -658,10 +665,13 @@ export function LandlordDashboard({
    *  header bar, not this component's) can render a live count without
    *  duplicating the buildApprovalQueue() derivation up there. */
   onPendingCountsChange: (counts: AttentionCounts) => void;
-  /** Set by a HeaderAttentionBell click; consumed once (see the effect
-   *  below) to flip activeTab/maintSubTab/legalSubTab the same way a
-   *  sidebar or "Ir a revisión" click already does. */
-  navigateRequest: { tab: "maint" | "legal"; subTab: string } | null;
+  /** Set by a HeaderAttentionBell click or the ⌘K command palette's ticket
+   *  resolver (via ConsoleShell's initialTicketId → this same channel);
+   *  consumed once (see the effect below) to flip
+   *  activeTab/maintSubTab/legalSubTab the same way a sidebar or "Ir a
+   *  revisión" click already does, plus focusTicketId when the request
+   *  names a specific ticket. */
+  navigateRequest: NavigateRequest | null;
   onNavigateRequestHandled: () => void;
   /**
    * Console chrome owned by ConsoleShell's single header bar. The controls for
@@ -954,14 +964,19 @@ export function LandlordDashboard({
     });
   }, [liveDiegoKpis.pendingApprovalsCount, marianaDecisionesCount, marianaExpedientesCount, onPendingCountsChange]);
 
-  // Consumes a HeaderAttentionBell click exactly once, then clears it —
-  // same tab/sub-tab state handleApprovalNavigate already drives, just
-  // triggered from the header instead of a queue row.
+  // Consumes a HeaderAttentionBell click or a ⌘K ticket result exactly
+  // once, then clears it — same tab/sub-tab state handleApprovalNavigate
+  // already drives, just triggered from the header/palette instead of a
+  // queue row.
   useEffect(() => {
     if (!navigateRequest) return;
     selectTab(navigateRequest.tab);
     if (navigateRequest.tab === "maint") setMaintSubTab(navigateRequest.subTab as typeof maintSubTab);
     else setLegalSubTab(navigateRequest.subTab as typeof legalSubTab);
+    if (navigateRequest.focusTicketId) {
+      setFocusTicketId(navigateRequest.focusTicketId);
+      setFocusDocumentId(null);
+    }
     onNavigateRequestHandled();
     // selectTab/setMaintSubTab/setLegalSubTab are plain consts redefined
     // every render (not memoized) — omitted from deps for the same reason
@@ -1660,7 +1675,7 @@ export function LandlordDashboard({
                     href="/consola/finanzas"
                     className="inline-block text-xs font-bold text-[var(--console-accent)] hover:underline pt-0.5"
                   >
-                    Ver dinero en el tiempo →
+                    Ver renta programada →
                   </Link>
                 </div>
 
@@ -1673,12 +1688,17 @@ export function LandlordDashboard({
                     {leases.length > 0 ? Math.round((digitizedLeaseCount / leases.length) * 100) : 0}% con contrato
                     escaneado en el sistema
                   </p>
-                  <Link
-                    href="/consola/actividad"
-                    className="inline-block text-xs font-bold text-[var(--console-accent)] hover:underline pt-0.5"
-                  >
-                    Ver actividad de los agentes →
-                  </Link>
+                  <div className="flex flex-col gap-0.5 pt-0.5">
+                    <Link href="/consola/actividad" className="text-xs font-bold text-[var(--console-accent)] hover:underline">
+                      Ver actividad de los agentes →
+                    </Link>
+                    <Link href="/consola/atascos" className="text-xs font-bold text-[var(--console-accent)] hover:underline">
+                      Ver traspasos atascados →
+                    </Link>
+                    <Link href="/consola/cam" className="text-xs font-bold text-[var(--console-accent)] hover:underline">
+                      Ver CAM: gasto y términos →
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="bg-slate-50 border border-hairline/90 border-t-2 border-t-[var(--console-accent)] rounded-xl p-4.5 flex items-center gap-4">
@@ -1948,13 +1968,25 @@ export function LandlordDashboard({
                               if (!lease || lease.escalationPct === null) {
                                 return <span className="text-ink-400">—</span>;
                               }
+                              // Only flag a VERIFIED miss here — a cycle
+                              // whose due date predates
+                              // LEASE_RENT_HISTORY_SINCE has no ledger to
+                              // check against, so lease.escalationOverdue
+                              // alone (last-cycle-only, unverifiable dates
+                              // included) would read as a false alarm on
+                              // day 4 of a 4-day-old table. Full detail —
+                              // multi-cycle, verified vs unverifiable —
+                              // lives on /consola/finanzas.
+                              const verifiedMiss = lease.escalationCycles.find(
+                                (c) => !c.applied && c.dueDate >= LEASE_RENT_HISTORY_SINCE,
+                              );
                               return (
                                 <div>
                                   <p className="font-bold text-ink-700">
-                                    {lease.escalationPct}% {lease.escalationMethod ? `· ${lease.escalationMethod}` : ""}
+                                    {lease.escalationPct}% {lease.escalationMethod ? `· ${ESCALATION_METHOD_LABEL[lease.escalationMethod]}` : ""}
                                   </p>
-                                  {lease.escalationOverdue && (
-                                    <p className="text-[10px] font-bold text-alert" title={`Vencida desde ${lease.escalationDueDate}`}>
+                                  {verifiedMiss && (
+                                    <p className="text-[10px] font-bold text-alert" title={`Vencida desde ${verifiedMiss.dueDate}`}>
                                       Vencida
                                     </p>
                                   )}
@@ -2144,7 +2176,9 @@ export function LandlordDashboard({
                                 lease && lease.escalationPct !== null ? (
                                   <>
                                     {lease.escalationPct}%
-                                    {lease.escalationOverdue && <span className="text-alert"> · Vencida</span>}
+                                    {lease.escalationCycles.some((cy) => !cy.applied && cy.dueDate >= LEASE_RENT_HISTORY_SINCE) && (
+                                      <span className="text-alert"> · Vencida</span>
+                                    )}
                                   </>
                                 ) : (
                                   "—"
@@ -2972,9 +3006,9 @@ export function LandlordDashboard({
                                 {c.escalationPct !== null ? (
                                   <>
                                     <p className="text-sm text-ink break-words">
-                                      {c.escalationPct}% · {c.escalationMethod ?? "método no definido"}
+                                      {c.escalationPct}% · {c.escalationMethod ? ESCALATION_METHOD_LABEL[c.escalationMethod] : "sin método registrado"}
                                     </p>
-                                    {c.escalationOverdue && (
+                                    {c.escalationCycles.some((cy) => !cy.applied && cy.dueDate >= LEASE_RENT_HISTORY_SINCE) && (
                                       <p className="text-[11px] font-bold text-alert">Vencida</p>
                                     )}
                                   </>
@@ -3112,7 +3146,15 @@ export function LandlordDashboard({
                                 />
                                 <MobileCardField
                                   label="Escalación"
-                                  value={c.escalationPct !== null ? `${c.escalationPct}%${c.escalationOverdue ? " · Vencida" : ""}` : "—"}
+                                  value={
+                                    c.escalationPct !== null
+                                      ? `${c.escalationPct}%${
+                                          c.escalationCycles.some((cy) => !cy.applied && cy.dueDate >= LEASE_RENT_HISTORY_SINCE)
+                                            ? " · Vencida"
+                                            : ""
+                                        }`
+                                      : "—"
+                                  }
                                 />
                                 <MobileCardField
                                   label="Depósito"
@@ -3359,14 +3401,20 @@ export function LandlordDashboard({
                           <div className="bg-white p-4 rounded-xl border border-hairline shadow-2xs space-y-2">
                             <div className="flex items-center justify-between gap-2">
                               <p className="font-extrabold text-ink text-sm tracking-wide">Escalación Vigente</p>
-                              {c.escalationOverdue && (
-                                <span
-                                  className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-alert-surface text-alert border border-alert-edge"
-                                  title={`Vencida desde ${c.escalationDueDate} — sin incremento de renta registrado desde entonces.`}
-                                >
-                                  Vencida desde {c.escalationDueDate}
-                                </span>
-                              )}
+                              {(() => {
+                                const verifiedMiss = c.escalationCycles.find(
+                                  (cy) => !cy.applied && cy.dueDate >= LEASE_RENT_HISTORY_SINCE,
+                                );
+                                if (!verifiedMiss) return null;
+                                return (
+                                  <span
+                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-alert-surface text-alert border border-alert-edge"
+                                    title={`Vencida desde ${verifiedMiss.dueDate} — sin incremento de renta registrado desde entonces.`}
+                                  >
+                                    Vencida desde {verifiedMiss.dueDate}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                               <label className="space-y-1">
@@ -3382,14 +3430,16 @@ export function LandlordDashboard({
                               </label>
                               <label className="space-y-1 col-span-2">
                                 <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Método</span>
-                                <input
-                                  type="text"
+                                <select
                                   defaultValue={c.escalationMethod ?? ""}
-                                  placeholder="Ej. fixed_pct, INPC"
                                   disabled={savingField === `${c.leaseRowId}:escalation_method`}
                                   className="w-full bg-white border border-hairline-strong rounded px-1.5 py-1 text-sm font-medium text-ink focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
-                                  onBlur={(e) => saveLeaseField(c.leaseRowId, "escalation_method", e.target.value, "Método de escalación")}
-                                />
+                                  onChange={(e) => saveLeaseField(c.leaseRowId, "escalation_method", e.target.value, "Método de escalación")}
+                                >
+                                  <option value="">— sin registrar —</option>
+                                  <option value="fixed_pct">{ESCALATION_METHOD_LABEL.fixed_pct}</option>
+                                  <option value="landlord_specified">{ESCALATION_METHOD_LABEL.landlord_specified}</option>
+                                </select>
                               </label>
                               <label className="space-y-1 col-span-3">
                                 <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wider">Mes de aplicación (1-12)</span>

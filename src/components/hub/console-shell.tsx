@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { Inter } from "next/font/google";
 import { CONSOLE_ROOT_ID } from "@/components/hub/console-root";
-import { LandlordDashboard } from "@/components/hub/landlord-dashboard";
+import { LandlordDashboard, type NavigateRequest } from "@/components/hub/landlord-dashboard";
 import { TenantPortal } from "@/components/hub/tenant-portal";
 import type { ConsoleData } from "@/lib/console-data";
 import type { DiegoKPIs, DiegoTicket } from "@/lib/data/diego-tickets.server";
@@ -60,6 +60,8 @@ export function ConsoleShell({
   capexKpis,
   maintenanceBudget,
   approvalTiers,
+  initialTicketId,
+  initialTab,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -80,6 +82,15 @@ export function ConsoleShell({
   capexKpis: CapexKpis;
   maintenanceBudget: MaintenanceBudget;
   approvalTiers: ApprovalTiers;
+  /** From /consola?ticket=<id> — the ⌘K command palette's ticket resolver.
+   *  URL-driven rather than passed via component state because the palette
+   *  itself is mounted in consola/layout.tsx, a sibling of this component's
+   *  entire subtree, not an ancestor with props to hand down. */
+  initialTicketId?: string;
+  /** From /consola?tab=legal|maint — the palette's "Documentos" nav action
+   *  (no specific record, just the tab). Same URL-driven reasoning as
+   *  initialTicketId. */
+  initialTab?: "legal" | "maint";
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -108,12 +119,28 @@ export function ConsoleShell({
     marianaDecisiones: 0,
     marianaExpedientes: 0,
   });
-  const [navigateRequest, setNavigateRequest] = useState<{ tab: "maint" | "legal"; subTab: string } | null>(null);
+  const [navigateRequest, setNavigateRequest] = useState<NavigateRequest | null>(null);
   const clearNavigateRequest = useCallback(() => setNavigateRequest(null), []);
   const triggerToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3500);
   };
+
+  // ⌘K's ticket resolver navigates to /consola?ticket=<id> from anywhere —
+  // including a page that doesn't mount ConsoleShell at all — so the only
+  // channel it has into "open this ticket's drawer" is the URL. Re-fires on
+  // every distinct initialTicketId (not just first mount): a soft
+  // navigation from ⌘K while already on /consola changes the prop without
+  // remounting ConsoleShell.
+  useEffect(() => {
+    if (initialTicketId) {
+      setNavigateRequest({ tab: "maint", subTab: "triage", focusTicketId: initialTicketId });
+    } else if (initialTab === "legal") {
+      setNavigateRequest({ tab: "legal", subTab: "expedientes" });
+    } else if (initialTab === "maint") {
+      setNavigateRequest({ tab: "maint", subTab: "triage" });
+    }
+  }, [initialTicketId, initialTab]);
 
   return (
     <div

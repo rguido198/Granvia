@@ -4,7 +4,6 @@ import { TENANTS } from "@/content/tenants";
 import type {
   AgentReply,
   ApplicantCase,
-  CamRow,
   ConsoleData,
   CriticalEquipment,
   MaintenanceEvent,
@@ -139,20 +138,6 @@ const VACANT_UNIT = {
   askingRent: 106800,
 };
 
-/**
- * Monthly common-area pool billed across the plaza's GLA. Every figure in
- * Renata's prorateo matrix derives from this one number, so the column always
- * sums back to it exactly — that sum is the 1.0000 invariant the tab claims.
- *
- * $452,468 across the four ERP/manual/tenant invoices in Renata's ledger, plus
- * $52,000 for Diego's case CAP-03 (Cinemex Premium emergency generator, approved
- * APROBADO_PRORRATEO_CAM) — folded in as of the Ago 2026 cut. Both ledgers must
- * list it or this total stops being traceable to its line items.
- */
-const CAM_MONTHLY_POOL = 504468;
-const CAM_ADMIN_RATE = 0.15;
-const IVA_RATE = 0.16;
-
 function getTenantSqm(name: string, index: number): number {
   if (name.includes("Ashley")) return 1450;
   if (name.includes("Cinemex")) return 1180;
@@ -223,7 +208,10 @@ function apportionPercent(values: number[], total: number, decimals = 2): number
 /** Key for the vacant unit in the per-unit share map. */
 const VACANT_KEY = "__vacant__";
 
-/** Renata's fiscal SAT check — the same condition that drives the CFDI alert on the CAM tab. */
+/** Fiscal SAT check flag on a rent roll row — no CAM tab reads it anymore
+ *  (the fake CAM prorateo that used to consume this was removed; nothing in
+ *  the real console currently reads `fiscalAlert` either — see the spawned
+ *  task auditing this whole file's dead ConsoleData fields). */
 function hasFiscalAlert(name: string): boolean {
   return name.includes("260 Grill");
 }
@@ -255,10 +243,9 @@ const tenantsWithAlert = rentRoll.filter((row) => row.fiscalAlert).length;
 const tenantsAlDia = rentRoll.length - tenantsWithAlert;
 const collectionRate = (tenantsAlDia / rentRoll.length) * 100;
 
-// Every billable unit in plaza order: the 84 leased locales, then the vacancy.
-// Both tables draw their pro-rata share from this one apportionment, keyed by
-// unit, so the rent roll and the prorateo matrix always print the same figure
-// for the same tenant regardless of filtering.
+// Every billable unit in plaza order: the leased locales, then the vacancy.
+// sharePct on the rent roll draws from this one apportionment, keyed by unit
+// (the fake CAM prorateo matrix that used to share it was removed).
 const units = [
   ...rentRoll.map((row) => ({
     key: row.tenant.slug,
@@ -275,37 +262,6 @@ const displayShares = apportionPercent(
   plazaTotalGla,
 );
 const shareByUnit = new Map(units.map((unit, index) => [unit.key, displayShares[index]]));
-
-// Prorateo CAM — each unit's slice of CAM_MONTHLY_POOL, rounded to the peso.
-// The rounding residual lands on the largest-GLA row so the column sums to the
-// pool exactly; the same convention governs CAM_ALLOCATION in content/hub.ts.
-const camRowsRaw = units.map((unit) => ({
-  ...unit,
-  base: Math.round((CAM_MONTHLY_POOL * unit.sqm) / plazaTotalGla),
-}));
-
-const largestCamRowIndex = camRowsRaw.reduce(
-  (best, row, index) => (row.sqm > camRowsRaw[best].sqm ? index : best),
-  0,
-);
-const camResidual = CAM_MONTHLY_POOL - camRowsRaw.reduce((sum, row) => sum + row.base, 0);
-
-const camRows = camRowsRaw.map((row, index) => {
-  const base = index === largestCamRowIndex ? row.base + camResidual : row.base;
-  const admin = Math.round(base * CAM_ADMIN_RATE);
-  const iva = Math.round((base + admin) * IVA_RATE);
-  return { ...row, base, admin, iva, total: base + admin + iva };
-});
-
-const camTotals = camRows.reduce(
-  (acc, row) => ({
-    base: acc.base + row.base,
-    admin: acc.admin + row.admin,
-    iva: acc.iva + row.iva,
-    total: acc.total + row.total,
-  }),
-  { base: 0, admin: 0, iva: 0, total: 0 },
-);
 
 
 // Agent headline metrics, summed from the cases each tab renders — never restated.
@@ -407,25 +363,9 @@ export function buildConsoleData(): ConsoleData {
     };
   });
 
-  const camMatrix: CamRow[] = camRows.map((row) => ({
-    key: row.key,
-    label: row.label,
-    sqm: row.sqm,
-    sharePct: shareByUnit.get(row.key) ?? 0,
-    base: row.base,
-    admin: row.admin,
-    iva: row.iva,
-    total: row.total,
-    vacant: row.vacant,
-    fiscalAlert: row.fiscalAlert,
-  }));
-
   return {
     rentRoll: rows,
     vacantUnit: { ...VACANT_UNIT, sharePct: shareByUnit.get(VACANT_KEY) ?? 0 },
-    camRows: camMatrix,
-    camTotals: { ...camTotals, sharePct: displayShares.reduce((sum, value) => sum + value, 0) },
-    camMonthlyPool: CAM_MONTHLY_POOL,
 
     leasedSqm,
     plazaTotalGla,

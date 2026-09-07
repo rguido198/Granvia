@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import type { LeaseRenewalSummary } from "@/lib/data/portfolio.server";
+import { ESCALATION_METHOD_LABEL } from "@/lib/data/contract-status";
 import { downloadBlob, generateContractPdf } from "@/lib/mock-pdf";
 
 // "Aprobado" alone reads as a finished decision — SKILL.md's own closing
@@ -45,7 +46,7 @@ function downloadRenewalPdf(renewal: LeaseRenewalSummary) {
     newEndDate: renewal.newEndDate,
     currentRent: renewal.currentBaseRentMonthly !== null ? formatMxn(renewal.currentBaseRentMonthly) : "(sin registro)",
     newRent: formatMxn(renewal.newBaseRentMonthly),
-    escalationPct: renewal.escalationPct !== null ? `${renewal.escalationPct}%` : renewal.escalationMethod,
+    escalationPct: renewal.escalationPct !== null ? `${renewal.escalationPct}%` : ESCALATION_METHOD_LABEL[renewal.escalationMethod],
     clausesMarkdown: renewal.draftMarkdown,
   });
   downloadBlob(blob, `convenio_modificatorio_${renewal.renewalNumber.replace(/\s+/g, "_")}.pdf`);
