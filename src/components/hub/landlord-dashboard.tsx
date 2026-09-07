@@ -2023,12 +2023,12 @@ export function LandlordDashboard({
                                     triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                                   }}
                                   title="Ver auditoría de póliza asignada a Mariana IA"
-                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto"
+                                  className="bg-caution-surface hover:bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer transition-all hover:scale-105 shadow-xs flex items-center gap-1 mx-auto whitespace-nowrap"
                                 >
                                   Revisar Seguro · Mariana IA →
                                 </button>
                               ) : r.vacant ? (
-                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                                <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap">
                                   Vacante
                                 </span>
                               ) : r.sourceDocumentId ? (
@@ -2041,14 +2041,14 @@ export function LandlordDashboard({
                                 // "good" state reads calmer than an unverified one), zero
                                 // new palette.
                                 <span
-                                  className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                                  className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap"
                                   title="Respaldado por un contrato escaneado en el sistema"
                                 >
                                   Vigente SSOT
                                 </span>
                               ) : (
                                 <span
-                                  className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                                  className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap"
                                   title="Ocupado y bajo contrato, pero sin un documento escaneado en el sistema todavía"
                                 >
                                   Vigente
@@ -2060,7 +2060,7 @@ export function LandlordDashboard({
                                   PortfolioRow before this reskin; just never rendered
                                   here. */}
                               {!r.vacant && !isBlueLuna && r.renewalSoon && (
-                                <span className="bg-signal/10 text-signal border border-signal/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                <span className="bg-signal/10 text-signal border border-signal/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap">
                                   Renovación Próxima
                                 </span>
                               )}
@@ -2145,16 +2145,16 @@ export function LandlordDashboard({
                           triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
                         }}
                         title="Ver auditoría de póliza asignada a Mariana IA"
-                        className="bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer"
+                        className="bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer whitespace-nowrap"
                       >
                         Revisar Seguro →
                       </button>
                     ) : r.vacant ? (
-                      <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">Vacante</span>
+                      <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap">Vacante</span>
                     ) : r.sourceDocumentId ? (
-                      <span className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold">Vigente SSOT</span>
+                      <span className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap">Vigente SSOT</span>
                     ) : (
-                      <span className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold">Vigente</span>
+                      <span className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap">Vigente</span>
                     );
 
                     return (
