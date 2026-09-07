@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { upsertContractorAction, type ContractorFormState } from "@/lib/contractors/actions";
+import { MobileCard, MobileCardEmpty, MobileCardField, MobileCardList } from "@/components/hub/mobile-card";
 import {
   CONTRACTOR_TRADES,
   CONTRACTOR_TRADE_LABELS,
@@ -203,7 +204,8 @@ export function ContractorRoster({ contractors }: { contractors: Contractor[] })
           al menos uno.
         </p>
       ) : (
-        <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
+        <>
+        <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px] tracking-wider">
               <tr>
@@ -264,6 +266,58 @@ export function ContractorRoster({ contractors }: { contractors: Contractor[] })
             </tbody>
           </table>
         </div>
+        <MobileCardList>
+          {contractors.length === 0 ? (
+            <MobileCardEmpty>Sin contratistas dados de alta todavía.</MobileCardEmpty>
+          ) : (
+            contractors.map((c) => {
+              const expired = isExpired(c.licenseExpiry) || isExpired(c.coiExpiry);
+              return (
+                <MobileCard
+                  key={c.id}
+                  title={c.name}
+                  subtitle={CONTRACTOR_TRADE_LABELS[c.trade as keyof typeof CONTRACTOR_TRADE_LABELS] ?? c.trade}
+                  badge={
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.active ? "bg-slate-100 text-slate-800 border border-slate-200" : "bg-slate-50 text-slate-400 border border-slate-200"}`}>
+                      {c.active ? "Activo" : "Inactivo"}
+                    </span>
+                  }
+                  fields={
+                    <>
+                      <MobileCardField label="Cobertura" value={c.coverageHours ?? "—"} />
+                      <MobileCardField label="SLA" value={c.responseTimeCommitment ?? "—"} />
+                      <MobileCardField
+                        label="Licencia / COI"
+                        fullWidth
+                        value={
+                          expired ? (
+                            <span className="bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                              Vencida — excluida del despacho
+                            </span>
+                          ) : (
+                            `Lic. ${c.licenseExpiry} · COI ${c.coiExpiry}`
+                          )
+                        }
+                      />
+                    </>
+                  }
+                  actions={
+                    <button
+                      onClick={() => {
+                        setEditingId(c.id);
+                        setAddingNew(false);
+                      }}
+                      className="text-xs font-bold text-slate-700 underline cursor-pointer hover:text-slate-900"
+                    >
+                      Editar
+                    </button>
+                  }
+                />
+              );
+            })
+          )}
+        </MobileCardList>
+        </>
       )}
 
       {editingContractor && (

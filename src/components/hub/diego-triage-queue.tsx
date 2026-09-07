@@ -6,6 +6,7 @@ import type { LocaleOption } from "@/lib/data/tenant-portal.server";
 import { NewTicketForm } from "@/components/hub/new-ticket-form";
 import { InviteTenantForm } from "@/components/hub/invite-tenant-form";
 import { DiegoTicketDrawer } from "@/components/hub/diego-ticket-drawer";
+import { MobileCard, MobileCardField, MobileCardList } from "@/components/hub/mobile-card";
 import {
   PRIORITY_BADGE,
   STATUS_BADGE,
@@ -168,6 +169,87 @@ function TicketRow({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void
   );
 }
 
+/** Mobile counterpart to TicketRow — same data, same useResolveTicket hook
+ *  for the inline Aprobar/Rechazar actions, card layout instead of a row.
+ *  See mobile-card.tsx's doc comment for why this is a sibling to the
+ *  table rather than a second row shape inside the same <tbody>. */
+function TicketCard({ ticket, onOpen }: { ticket: DiegoTicket; onOpen: () => void }) {
+  const { submitting, errorMsg, resolve } = useResolveTicket(ticket.id);
+  const reportExcerpt =
+    ticket.rawReport.length > 160 ? ticket.rawReport.slice(0, 160).trimEnd() + "…" : ticket.rawReport;
+
+  const badge = (
+    <span className={"inline-block text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap " + STATUS_BADGE[ticket.status]}>
+      {STATUS_LABEL[ticket.status]}
+    </span>
+  );
+
+  return (
+    <div>
+      <MobileCard
+        title={ticket.tenantEntity ? shortTenantName(ticket.tenantEntity) : ticket.ticketNumber}
+        subtitle={ticket.tenantEntity ? ticket.ticketNumber : undefined}
+        badge={badge}
+        primaryLabel={ticket.estimatedCost !== null ? "Costo Estimado" : undefined}
+        primaryValue={ticket.estimatedCost !== null ? formatMxn(ticket.estimatedCost) : undefined}
+        fields={
+          <>
+            <MobileCardField label="Reporte" value={reportExcerpt} fullWidth />
+            {ticket.priority && <MobileCardField label="Prioridad" value={ticket.priority} />}
+            <MobileCardField label="Activo" value={ticket.assetName ?? "—"} />
+            <MobileCardField label="Proveedor" value={ticket.contractorName ?? "—"} />
+            <MobileCardField
+              label="Garantía"
+              value={ticket.assetName ? (ticket.warrantyCovered ? "Cubierta ✓" : "Sin cobertura") : "—"}
+            />
+            {ticket.showWatermark && <MobileCardField label="Estado" value="Draft" />}
+            {ticket.skepticFlagged && ticket.skepticConcerns.length > 0 && (
+              <MobileCardField
+                label="Auditoría"
+                value={`⚠ ${ticket.skepticConcerns.length} duda${ticket.skepticConcerns.length === 1 ? "" : "s"} sin resolver`}
+              />
+            )}
+          </>
+        }
+        actions={
+          ticket.status === "needs_approval" ? (
+            <>
+              <button
+                onClick={() => resolve(true)}
+                disabled={submitting !== null}
+                className="bg-ink hover:bg-ink-700 text-white font-bold px-3.5 py-2 rounded-lg text-xs cursor-pointer disabled:opacity-50"
+              >
+                {submitting === "approve" ? "Procesando…" : "✓ Aprobar y Despachar"}
+              </button>
+              <button
+                onClick={() => resolve(false)}
+                disabled={submitting !== null}
+                className="bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)] font-bold px-3.5 py-2 rounded-lg text-xs cursor-pointer disabled:opacity-50"
+              >
+                {submitting === "reject" ? "…" : "✕ Rechazar"}
+              </button>
+              <button
+                onClick={onOpen}
+                className="text-xs font-bold text-ink-600 hover:text-ink-900 px-2 py-2 cursor-pointer"
+              >
+                Ver expediente →
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onOpen}
+              className="text-xs font-bold text-[var(--console-accent)] hover:underline px-0 py-1 cursor-pointer"
+            >
+              Ver expediente completo →
+            </button>
+          )
+        }
+      />
+      {errorMsg && <p className="text-xs text-red-600 px-1 pt-1.5">{errorMsg}</p>}
+    </div>
+  );
+}
+
 export function DiegoTriageQueue({
   tickets,
   kpis,
@@ -245,32 +327,39 @@ export function DiegoTriageQueue({
       {tickets.length === 0 ? (
         <p className="text-xs text-slate-500">Sin tickets registrados todavía.</p>
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                <th className="p-3.5 font-bold">Ticket</th>
-                <th className="p-3.5 font-bold">Inquilino</th>
-                <th className="p-3.5 font-bold">Reporte</th>
-                <th className="p-3.5 font-bold">Activo</th>
-                <th className="p-3.5 font-bold">Proveedor</th>
-                <th className="p-3.5 font-bold text-right">Costo</th>
-                <th className="p-3.5 font-bold">Garantía</th>
-                <th className="p-3.5 font-bold">Estado</th>
-                <th className="p-3.5 font-bold text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tickets.map((ticket) => (
-                <TicketRow
-                  key={ticket.id}
-                  ticket={ticket}
-                  onOpen={() => setSelectedTicketId(ticket.id)}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="hidden sm:block rounded-xl border border-slate-200 bg-white overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                  <th className="p-3.5 font-bold">Ticket</th>
+                  <th className="p-3.5 font-bold">Inquilino</th>
+                  <th className="p-3.5 font-bold">Reporte</th>
+                  <th className="p-3.5 font-bold">Activo</th>
+                  <th className="p-3.5 font-bold">Proveedor</th>
+                  <th className="p-3.5 font-bold text-right">Costo</th>
+                  <th className="p-3.5 font-bold">Garantía</th>
+                  <th className="p-3.5 font-bold">Estado</th>
+                  <th className="p-3.5 font-bold text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tickets.map((ticket) => (
+                  <TicketRow
+                    key={ticket.id}
+                    ticket={ticket}
+                    onOpen={() => setSelectedTicketId(ticket.id)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <MobileCardList>
+            {tickets.map((ticket) => (
+              <TicketCard key={ticket.id} ticket={ticket} onOpen={() => setSelectedTicketId(ticket.id)} />
+            ))}
+          </MobileCardList>
+        </>
       )}
 
       {selectedTicket && (

@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { MobileCard, MobileCardEmpty, MobileCardField, MobileCardList } from "@/components/hub/mobile-card";
 import type {
   ConsoleData,
 } from "@/lib/console-data";
@@ -1745,7 +1746,7 @@ export function LandlordDashboard({
                   wrapper below 1400px, and the wrapper is overflow-hidden — at
                   1024px the old table ran 298px past it and the status column
                   was simply cut off. Percentages can't overflow. */}
-              <div className="border border-hairline rounded-xl bg-white shadow-2xs overflow-x-auto">
+              <div className="hidden sm:block border border-hairline rounded-xl bg-white shadow-2xs overflow-x-auto">
                 <table className="w-full min-w-[900px] table-fixed text-left text-sm">
                   <thead className="bg-slate-50 text-[11px] font-bold text-ink-700 border-b border-hairline tracking-wider">
                     <tr>
@@ -2051,6 +2052,106 @@ export function LandlordDashboard({
                   </tfoot>
                 </table>
               </div>
+
+              {/* Mobile card view (<640px) — see mobile-card.tsx's own doc
+                  comment for why this exists as a sibling rather than an
+                  alternate <tbody>. Read-only: Modo Edición's inline cell
+                  editing stays a desktop workflow — bulk-editing a rent roll
+                  from a phone-width card isn't a real use case, and every
+                  value here is still one tap away from the full edit surface
+                  via "Ver expediente". */}
+              <MobileCardList>
+                {visibleRentRoll.length === 0 ? (
+                  <MobileCardEmpty>
+                    {rentRollFilter ? <>Sin resultados para &ldquo;{rentRollFilter}&rdquo;.</> : "Sin locales con este estatus."}
+                  </MobileCardEmpty>
+                ) : (
+                  visibleRentRoll.map((r) => {
+                    const isBlueLuna = r.name.includes("Blue Luna");
+                    const lease = leaseByLocaleId.get(r.slug);
+                    const badge = isBlueLuna ? (
+                      <button
+                        onClick={() => {
+                          setCopilotOpen(true);
+                          setCopilotHistory([
+                            {
+                              role: "assistant",
+                              content:
+                                "Mariana IA (Contratos & Arrendamientos): Blue Luna Café (Local 16). Póliza de seguro de responsabilidad civil vence en Nov 2026. Recordatorio legal pre-notificado.",
+                            },
+                          ]);
+                          triggerToast("Mariana IA (Contratos): Expediente Blue Luna Café abierto.");
+                        }}
+                        title="Ver auditoría de póliza asignada a Mariana IA"
+                        className="bg-caution-surface text-caution border border-caution/40 px-2.5 py-1 rounded-full font-bold text-[11px] cursor-pointer"
+                      >
+                        Revisar Seguro →
+                      </button>
+                    ) : r.vacant ? (
+                      <span className="bg-slate-100 text-ink-500 border border-hairline px-2.5 py-0.5 rounded-full text-[11px] font-bold">Vacante</span>
+                    ) : r.sourceDocumentId ? (
+                      <span className="bg-ok-surface text-ok border border-ok/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold">Vigente SSOT</span>
+                    ) : (
+                      <span className="bg-caution-surface text-caution border border-caution/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold">Vigente</span>
+                    );
+
+                    return (
+                      <MobileCard
+                        key={r.slug}
+                        title={r.tradeName ?? r.name}
+                        subtitle={r.tradeName ? `${r.name} · ${r.unitCode}` : r.unitCode}
+                        badge={badge}
+                        primaryLabel="Renta Mensual"
+                        primaryValue={formatVal(r.rent)}
+                        fields={
+                          <>
+                            <MobileCardField label="Superficie" value={`${r.sqm} m²`} />
+                            <MobileCardField label="% GLA" value={`${r.sharePct.toFixed(2)}%`} />
+                            <MobileCardField label="Renta Anual" value={formatVal(r.rent * 12)} />
+                            <MobileCardField
+                              label="Escalación"
+                              value={
+                                lease && lease.escalationPct !== null ? (
+                                  <>
+                                    {lease.escalationPct}%
+                                    {lease.escalationOverdue && <span className="text-alert"> · Vencida</span>}
+                                  </>
+                                ) : (
+                                  "—"
+                                )
+                              }
+                            />
+                            <MobileCardField
+                              label="Vencimiento"
+                              value={
+                                lease ? (
+                                  <span className={lease.isExpired ? "text-alert" : r.renewalSoon ? "text-caution" : ""}>
+                                    {new Date(lease.endDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
+                                  </span>
+                                ) : (
+                                  "—"
+                                )
+                              }
+                            />
+                            {!r.vacant && r.renewalSoon && <MobileCardField label="Estatus" value="Renovación Próxima" />}
+                          </>
+                        }
+                        actions={
+                          !r.vacant && r.leaseId ? (
+                            <>
+                              <Link href={`/consola/locales/${r.slug}`} className="text-xs font-bold text-[var(--console-accent)] hover:underline">
+                                Ver expediente →
+                              </Link>
+                              {r.sourceDocumentId && <DocumentViewerButton documentId={r.sourceDocumentId} label="Ver contrato" />}
+                              <TerminateTenantButton localeId={r.slug} leaseId={r.leaseId} tenantName={r.name} unitCode={r.unitCode} />
+                            </>
+                          ) : undefined
+                        }
+                      />
+                    );
+                  })
+                )}
+              </MobileCardList>
             </div>
 
             {/* INQUILINOS ANTERIORES — a "Desocupar" never deletes a locale,
@@ -2072,7 +2173,7 @@ export function LandlordDashboard({
                     keep the four data columns near their own content; the
                     status pill closes the row against the right edge instead of
                     floating in the middle of a wide last column. */}
-                <div className="border border-hairline rounded-xl overflow-hidden">
+                <div className="hidden sm:block border border-hairline rounded-xl overflow-hidden">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] font-bold text-ink-500 border-b border-hairline tracking-wider">
                       <tr>
@@ -2111,6 +2212,31 @@ export function LandlordDashboard({
                     </tbody>
                   </table>
                 </div>
+                <MobileCardList>
+                  {formerTenants.map((t) => (
+                    <MobileCard
+                      key={t.localeId}
+                      title={t.tenantEntity}
+                      subtitle={t.unitCode}
+                      badge={<span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-ink-700 border border-hairline">Vacante</span>}
+                      primaryLabel="Última Renta"
+                      primaryValue={formatVal(t.lastRentMonthly)}
+                      fields={
+                        <>
+                          <MobileCardField label="Superficie" value={`${t.sqm.toLocaleString("es-MX")} m²`} />
+                          <MobileCardField
+                            label="Contrato Terminó"
+                            value={
+                              t.leaseEndDate !== "—"
+                                ? new Date(t.leaseEndDate).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
+                                : "—"
+                            }
+                          />
+                        </>
+                      }
+                    />
+                  ))}
+                </MobileCardList>
               </div>
             )}
             </Fragment>
@@ -2258,7 +2384,7 @@ export function LandlordDashboard({
                   </span>
                 </div>
 
-                <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
+                <div className="hidden sm:block overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
                   {/* No width hints here on purpose: unlike the other four
                       ledgers, every column in this one is already content-bound
                       (its natural width overflows ~970px and wraps), so there is
@@ -2308,6 +2434,45 @@ export function LandlordDashboard({
                     </tbody>
                   </table>
                 </div>
+                <MobileCardList>
+                  {capexCases.map((c) => {
+                    const verdictMeta =
+                      c.verdict === "RECHAZADO_RESPONSABILIDAD_INQUILINO"
+                        ? { label: "Rechazado · Responsabilidad Inquilino", badge: "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border border-[var(--console-accent)]/30" }
+                        : c.verdict === "APROBADO_GARANTIA_COSTO_CERO"
+                          ? { label: "Aprobado · Garantía ($0 MXN)", badge: "bg-slate-100 text-ink-700 border border-hairline" }
+                          : c.verdict === "APROBADO_PRORRATEO_CAM"
+                            ? { label: "Aprobado · Prorrateo CAM", badge: "bg-caution-surface text-caution border border-caution/40" }
+                            : { label: "Aprobado · Costo Arrendador", badge: "bg-ok-surface text-ok border border-ok/30" };
+                    return (
+                      <MobileCard
+                        key={c.id}
+                        title={c.tenant}
+                        subtitle={c.ticketNumber}
+                        primaryLabel="Monto"
+                        primaryValue={formatVal(c.amount)}
+                        fields={
+                          <>
+                            <MobileCardField label="Tipo de Gasto" value={c.expenseType} fullWidth />
+                            <MobileCardField label="Equipo" value={`${c.equipmentModel} · ${c.serialNumber}`} fullWidth />
+                            <MobileCardField
+                              label="Veredicto Diego IA"
+                              fullWidth
+                              value={
+                                <>
+                                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1 ${verdictMeta.badge}`}>
+                                    {verdictMeta.label}
+                                  </span>
+                                  <span className="block text-ink-600 font-normal normal-case">{c.details}</span>
+                                </>
+                              }
+                            />
+                          </>
+                        }
+                      />
+                    );
+                  })}
+                </MobileCardList>
               </div>
               </div>
               )}
@@ -2652,7 +2817,7 @@ export function LandlordDashboard({
                     </p>
                   </div>
 
-                  <div className="overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
+                  <div className="hidden sm:block overflow-x-auto border border-hairline rounded-xl bg-white shadow-2xs">
                     {/* min-w: table-fixed enforces these percentages literally regardless
                         of viewport — fine at 4 columns (this table's original width), but
                         the 4 columns added 2026-09-06 push %-width columns below their
@@ -2660,7 +2825,9 @@ export function LandlordDashboard({
                         mobile wrapper is ~50px, which breaks a tenant name one character
                         per line rather than wrapping words). A wide fixed table the wrapper
                         scrolls to is the same fix already applied to the Rent Roll table
-                        above for the identical reason. */}
+                        above for the identical reason — now superseded below 640px by the
+                        MobileCardList sibling (this comment's own "readable minimum"
+                        problem is exactly what that replaces). */}
                     <table className="w-full min-w-[920px] table-fixed text-left text-sm">
                       <thead className="bg-slate-50 text-ink-700 font-bold border-b border-hairline text-[11px] tracking-wider">
                         <tr>
@@ -2867,6 +3034,88 @@ export function LandlordDashboard({
                     </table>
                   </div>
 
+                  <MobileCardList>
+                    {visibleLeases.length === 0 ? (
+                      <MobileCardEmpty>
+                        {contractFilter ? <>Sin resultados para &ldquo;{contractFilter}&rdquo;.</> : "Ningún contrato con renovación próxima."}
+                      </MobileCardEmpty>
+                    ) : (
+                      visibleLeases.map((c) => (
+                        // A plain div, not a <button> — the actions row below
+                        // holds real interactive elements (Link, buttons), and
+                        // a button can't validly contain another one. Same
+                        // clickable-row pattern the desktop <tr onClick> above
+                        // already uses.
+                        <div
+                          key={c.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setInspectedContractId(inspectedContractId === c.id ? null : c.id)}
+                          onKeyDown={(e) => {
+                            if (e.target !== e.currentTarget) return;
+                            if (e.key === "Enter" || e.key === " ") {
+                              if (e.key === " ") e.preventDefault();
+                              setInspectedContractId(inspectedContractId === c.id ? null : c.id);
+                            }
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <MobileCard
+                            title={c.tradeName ?? c.tenantEntity}
+                            subtitle={c.tradeName ? `${c.tenantEntity} · ${c.unitCode}` : `${c.unitCode} · ${c.sqm} m²`}
+                            badge={
+                              c.isExpired ? (
+                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-alert-surface text-alert border border-alert-edge">Vencido</span>
+                              ) : c.renewalSoon ? (
+                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-caution-surface text-caution border border-caution/40">Renovación Próxima</span>
+                              ) : (
+                                <span className="text-xs font-semibold text-ink-500">Vigente</span>
+                              )
+                            }
+                            primaryLabel="Renta Mensual"
+                            primaryValue={formatMxn(c.rentMonthly)}
+                            fields={
+                              <>
+                                <MobileCardField
+                                  label="Vencimiento"
+                                  value={<span className={c.isExpired ? "text-alert" : c.renewalSoon ? "text-caution" : ""}>{formatContractDate(c.endDate)}</span>}
+                                />
+                                <MobileCardField
+                                  label="Escalación"
+                                  value={c.escalationPct !== null ? `${c.escalationPct}%${c.escalationOverdue ? " · Vencida" : ""}` : "—"}
+                                />
+                                <MobileCardField
+                                  label="Depósito"
+                                  value={c.securityDepositAmount !== null ? formatMxn(c.securityDepositAmount) : "—"}
+                                />
+                                <MobileCardField label="Exclusividad" value={c.exclusiveUseClause ? "Sí" : "No"} />
+                              </>
+                            }
+                            actions={
+                              <>
+                                {c.sourceDocumentId && (
+                                  <span onClick={(e) => e.stopPropagation()}>
+                                    <DocumentViewerButton documentId={c.sourceDocumentId} label="Ver contrato" />
+                                  </span>
+                                )}
+                                <Link
+                                  href={`/consola/locales/${c.id}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-bold text-[var(--console-accent)] hover:underline"
+                                >
+                                  Ver expediente →
+                                </Link>
+                                <span className="text-xs font-bold text-ink-500 ml-auto">
+                                  {inspectedContractId === c.id ? "Ocultar cláusulas ▲" : "Ver cláusulas ▼"}
+                                </span>
+                              </>
+                            }
+                          />
+                        </div>
+                      ))
+                    )}
+                  </MobileCardList>
+
               {/* Standalone, outside the horizontally-scrolling table wrapper on
                   purpose — added 2026-09-06 alongside the four new always-visible
                   columns above. Those columns pushed table-fixed's min-width to
@@ -2962,7 +3211,7 @@ export function LandlordDashboard({
                             <p className="font-extrabold text-ink text-sm tracking-wide p-4 pb-0">
                               Cláusulas Extraídas ({c.clauses.length})
                             </p>
-                            <div className="overflow-x-auto">
+                            <div className="hidden sm:block overflow-x-auto">
                               <table className="w-full text-left text-xs">
                                 <thead className="text-ink-500 font-bold uppercase tracking-wider border-b border-hairline">
                                   <tr>
@@ -3023,6 +3272,48 @@ export function LandlordDashboard({
                                   ))}
                                 </tbody>
                               </table>
+                            </div>
+                            <div className="sm:hidden divide-y divide-hairline">
+                              {c.clauses.map((clause) => (
+                                <div key={clause.id} className="p-3.5 space-y-2">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <p className="font-bold text-ink text-xs">
+                                      #{clause.clauseNumber} · {clause.clauseLabel}
+                                    </p>
+                                    <label className="flex items-center gap-1.5 text-[10px] font-bold text-ink-500 shrink-0">
+                                      <input
+                                        type="checkbox"
+                                        checked={clause.flagged}
+                                        disabled={savingField === `clause:${clause.id}`}
+                                        className="h-4 w-4 accent-[var(--console-accent)] rounded cursor-pointer disabled:opacity-50"
+                                        aria-label={`Marcar cláusula #${clause.clauseNumber}`}
+                                        onChange={(e) =>
+                                          saveClauseReview(clause.id, { flagged: e.target.checked }, `Marca de cláusula #${clause.clauseNumber}`)
+                                        }
+                                      />
+                                      Marcada
+                                    </label>
+                                  </div>
+                                  <p className="text-xs text-ink-500 leading-relaxed">{clause.clauseText}</p>
+                                  {clause.agentNote && (
+                                    <p className="text-xs text-[var(--console-accent)] font-semibold">{clause.agentNote}</p>
+                                  )}
+                                  <select
+                                    defaultValue={clause.reviewStatus}
+                                    disabled={savingField === `clause:${clause.id}`}
+                                    className="w-full bg-white border border-hairline-strong rounded-lg px-2 py-1.5 text-xs font-bold text-ink-700 focus:border-[var(--console-accent)] focus:outline-none disabled:opacity-50"
+                                    onChange={(e) =>
+                                      saveClauseReview(clause.id, { reviewStatus: e.target.value as LeaseClauseReviewStatus }, `Estatus de cláusula #${clause.clauseNumber}`)
+                                    }
+                                  >
+                                    {(Object.keys(CLAUSE_REVIEW_STATUS_LABELS) as LeaseClauseReviewStatus[]).map((key) => (
+                                      <option key={key} value={key}>
+                                        {CLAUSE_REVIEW_STATUS_LABELS[key]}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -3639,7 +3930,7 @@ export function LandlordDashboard({
                   </p>
                 </div>
 
-                <div className="border border-hairline rounded-xl overflow-hidden shadow-xs">
+                <div className="hidden sm:block border border-hairline rounded-xl overflow-hidden shadow-xs">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-100 text-ink-700 font-bold text-[11px] sm:text-xs tracking-wider border-b border-hairline-strong">
                       <tr>
@@ -3677,6 +3968,32 @@ export function LandlordDashboard({
                     </tbody>
                   </table>
                 </div>
+                <MobileCardList>
+                  {corporateUsers.length === 0 ? (
+                    <MobileCardEmpty>Sin usuarios landlord registrados.</MobileCardEmpty>
+                  ) : (
+                    corporateUsers.map((u) => (
+                      <MobileCard
+                        key={u.id}
+                        title={u.email}
+                        subtitle={u.fullName ?? undefined}
+                        badge={
+                          u.status === "active" ? (
+                            <span className="bg-ok-surface text-ok border border-ok/30 font-bold px-2.5 py-1 rounded-md text-xs inline-block">Activo</span>
+                          ) : (
+                            <span className="bg-caution-surface text-caution border border-caution/40 font-bold px-2.5 py-1 rounded-md text-xs inline-block">Pendiente</span>
+                          )
+                        }
+                        fields={
+                          <MobileCardField
+                            label="Invitado"
+                            value={new Date(u.createdAt).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
+                          />
+                        }
+                      />
+                    ))
+                  )}
+                </MobileCardList>
               </div>
 
               {/* PROMINENT EMERGENCY KILL-SWITCH BANNER */}

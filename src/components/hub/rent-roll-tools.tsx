@@ -567,7 +567,7 @@ function BulkImportPanel({ onDone }: { onDone: () => void }) {
             </button>
           </div>
 
-          <div className="max-h-64 overflow-auto border border-slate-200 rounded-lg bg-white">
+          <div className="hidden sm:block max-h-64 overflow-auto border border-slate-200 rounded-lg bg-white">
             <table className="w-full text-left text-[11px]">
               <thead className="bg-slate-100 font-bold text-slate-600 sticky top-0">
                 <tr>
@@ -592,6 +592,18 @@ function BulkImportPanel({ onDone }: { onDone: () => void }) {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="sm:hidden max-h-72 overflow-y-auto space-y-1.5">
+            {rows.map((r, i) => (
+              <div key={i} className={`rounded-lg border p-2.5 text-xs ${r.errors.length ? "bg-red-50 border-red-200" : "bg-white border-slate-200"}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-slate-800">{r.errors.length ? "⚠" : "✓"} {r.tenantName || "—"}</span>
+                  <span className="text-slate-500 shrink-0">{r.unitNumber || "—"}</span>
+                </div>
+                <p className="text-slate-500 mt-0.5">{r.areaSqm ?? "—"} m² · {r.baseRentMonthly ?? "—"} MXN</p>
+                {r.errors.length > 0 && <p className="text-red-700 mt-0.5">{r.errors.join("; ")}</p>}
+              </div>
+            ))}
           </div>
 
           <div className="flex items-center gap-2">
