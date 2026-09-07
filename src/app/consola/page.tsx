@@ -42,11 +42,14 @@ export default async function ConsolaPage({
   searchParams,
 }: {
   /** ?ticket=<id> — the ⌘K command palette's ticket resolver. ?tab=legal —
-   *  its "Documentos" nav action (no specific record, just the tab). See
-   *  command-palette.tsx and console-shell.tsx's initial props. */
-  searchParams: Promise<{ ticket?: string; tab?: string }>;
+   *  its "Documentos" nav action (no specific record, just the tab).
+   *  ?copilotPrompt=<query> — its "Preguntarle a Valeria" fallback result,
+   *  the question typed in the palette, passed through as Valeria's
+   *  opening message. See command-palette.tsx and console-shell.tsx's
+   *  initial props. */
+  searchParams: Promise<{ ticket?: string; tab?: string; copilotPrompt?: string }>;
 }) {
-  const { ticket, tab } = await searchParams;
+  const { ticket, tab, copilotPrompt } = await searchParams;
   const data = buildConsoleData();
 
   const { tickets: diegoTickets, kpis: diegoKpis } = await fetchDiegoTickets();
@@ -91,6 +94,7 @@ export default async function ConsolaPage({
         leads={leads}
         initialTicketId={ticket}
         initialTab={tab === "legal" || tab === "maint" ? tab : undefined}
+        initialCopilotPrompt={copilotPrompt}
       />
     </PageFade>
   );

@@ -201,6 +201,22 @@ function LegalNavIcon() {
   );
 }
 
+/** Same four-point sparkle as MarianaLinkIcon (both mark "AI did this"),
+ *  sized for the nav rail instead of an inline text glyph. */
+function ValeriaNavIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 shrink-0" aria-hidden="true">
+      <path
+        d="M10 2.5 11.3 7l4.5 1.3-4.5 1.3L10 14l-1.3-4.4-4.5-1.3L8.7 7 10 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path d="M15.8 13.2v2.6M14.5 14.5h2.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function RbacNavIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" aria-hidden="true">
@@ -713,6 +729,7 @@ export function LandlordDashboard({
   currency,
   copilotOpen,
   setCopilotOpen,
+  initialCopilotPrompt,
   sidebarOpen,
   setSidebarOpen,
   triggerToast,
@@ -758,6 +775,12 @@ export function LandlordDashboard({
   currency: "MXN" | "USD";
   copilotOpen: boolean;
   setCopilotOpen: (open: boolean) => void;
+  /** ⌘K command palette's "Preguntarle a Valeria" fallback result (via
+   *  ConsoleShell → /consola?copilotPrompt=<query>) — opens the panel and
+   *  sends this text as Valeria's first message, so the question someone
+   *  already typed in the palette doesn't have to be retyped in the chat
+   *  input. Consumed once, in the effect below. */
+  initialCopilotPrompt?: string;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   triggerToast: (msg: string) => void;
@@ -1328,6 +1351,18 @@ export function LandlordDashboard({
     [copilotLoading, copilotHistory, plazaTotalGla, scrollToChatBottom],
   );
 
+  // Fires once per distinct initialCopilotPrompt (⌘K's "Preguntarle a
+  // Valeria" result) — opens the panel and sends the typed question as
+  // Valeria's first message, same one-shot-effect shape as the
+  // navigateRequest handling below for ticket/tab deep links.
+  const lastSubmittedInitialPromptRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialCopilotPrompt || lastSubmittedInitialPromptRef.current === initialCopilotPrompt) return;
+    lastSubmittedInitialPromptRef.current = initialCopilotPrompt;
+    setCopilotOpen(true);
+    void submitCopilotQuestion(initialCopilotPrompt);
+  }, [initialCopilotPrompt, setCopilotOpen, submitCopilotQuestion]);
+
   // Interactive AI Action States & Simulations
   const [warrantyCategoryFilter, setWarrantyCategoryFilter] = useState<string>("ALL");
   const [equipmentAssets, setEquipmentAssets] = useState<EquipmentAsset[]>([]);
@@ -1598,6 +1633,30 @@ export function LandlordDashboard({
               hasPending={marianaDecisionesCount + marianaExpedientesCount > 0}
             >
               Mariana IA · Legal
+            </SidebarNavItem>
+
+            {/* Valeria is not a destination like the three items above —
+             *  she's a mode you invoke over whatever screen you're already
+             *  on, so this never carries the active/selected treatment (it
+             *  would never light up, since it never becomes "the current
+             *  screen"). Positioned right under Mariana per direction, same
+             *  group, but styled as an action: no active state, ⌘K hint
+             *  instead of a trailing count. The header pill stays as the
+             *  always-visible entry point; this is a second, discoverable
+             *  one for people scanning the nav instead of reaching for the
+             *  shortcut. */}
+            <SidebarNavItem
+              active={false}
+              onClick={() => setCopilotOpen(true)}
+              icon={<ValeriaNavIcon />}
+              collapsed={sidebarCollapsed}
+              trailing={
+                <span className="text-[10px] font-mono text-ink-400 bg-slate-100 border border-hairline rounded px-1.5 py-0.5 shrink-0 ml-2">
+                  ⌘K
+                </span>
+              }
+            >
+              Valeria IA
             </SidebarNavItem>
 
             {!sidebarCollapsed && (

@@ -96,7 +96,26 @@ type PaletteResult =
   | { kind: "renewal"; key: string; title: string; subtitle: string; statusLabel: string; id: string }
   | { kind: "application"; key: string; title: string; subtitle: string; note: string; localeId: string | null; id: string | null }
   | { kind: "clause"; key: string; title: string; subtitle: string; snippet: string; localeId: string }
-  | { kind: "action"; key: string; title: string; subtitle: string; entry: ActionEntry };
+  | { kind: "action"; key: string; title: string; subtitle: string; entry: ActionEntry }
+  | { kind: "valeria"; key: string; title: string; subtitle: string; query: string };
+
+/** Every other result here is a lookup — type an identifier, land somewhere.
+ *  A typed question that doesn't resolve to a lookup still deserves an
+ *  answer, so every non-empty query gets this appended as its last result:
+ *  the sole result when nothing else matched (an empty search becomes a
+ *  working one), or just the option to skip the list and ask directly when
+ *  something did. Selecting it hands the exact typed text to Valeria as her
+ *  opening message (see command-palette.tsx's `select()` and
+ *  landlord-dashboard.tsx's initialCopilotPrompt effect) — never dropped,
+ *  never requiring a retype in the chat input. */
+function valeriaFallback(results: PaletteResult[], q: string): PaletteResult[] {
+  if (!q) return results;
+  const display = q.length > 72 ? `${q.slice(0, 72)}…` : q;
+  return [
+    ...results,
+    { kind: "valeria" as const, key: `valeria-${q}`, title: `Preguntarle a Valeria: "${display}"`, subtitle: "Copiloto Ejecutivo — abre el chat con esta pregunta", query: q },
+  ];
+}
 
 function leaseHasVerifiedMiss(cycles: EscalationCycle[]): boolean {
   return cycles.some((c) => !c.applied && c.dueDate >= LEASE_RENT_HISTORY_SINCE);
@@ -185,29 +204,35 @@ export function CommandPalette() {
     // 3. Exact-format IDs skip fuzzy ranking entirely — a match here is the
     // whole result set.
     if (/^inc-/i.test(q)) {
-      return index.tickets
-        .filter((t) => t.ticketNumber.toLowerCase().includes(qLower))
-        .map((t) => ({
-          kind: "ticket" as const,
-          key: `ticket-${t.id}`,
-          title: t.ticketNumber,
-          subtitle: `${t.unitNumber}${t.tenantEntity ? ` · ${t.tenantEntity}` : ""}`,
-          statusLabel: TICKET_STATUS_LABEL[t.status],
-          id: t.id,
-        }));
+      return valeriaFallback(
+        index.tickets
+          .filter((t) => t.ticketNumber.toLowerCase().includes(qLower))
+          .map((t) => ({
+            kind: "ticket" as const,
+            key: `ticket-${t.id}`,
+            title: t.ticketNumber,
+            subtitle: `${t.unitNumber}${t.tenantEntity ? ` · ${t.tenantEntity}` : ""}`,
+            statusLabel: TICKET_STATUS_LABEL[t.status],
+            id: t.id,
+          })),
+        q,
+      );
     }
     if (/^ren-/i.test(q)) {
-      return index.leases
-        .flatMap((l) => l.renewals.map((r) => ({ lease: l, renewal: r })))
-        .filter(({ renewal }) => renewal.renewalNumber.toLowerCase().includes(qLower))
-        .map(({ lease, renewal }) => ({
-          kind: "renewal" as const,
-          key: `renewal-${renewal.id}`,
-          title: renewal.renewalNumber,
-          subtitle: `${lease.unitCode} · ${lease.tenantEntity}`,
-          statusLabel: RENEWAL_STATUS_LABEL[renewal.status] ?? renewal.status,
-          id: renewal.id,
-        }));
+      return valeriaFallback(
+        index.leases
+          .flatMap((l) => l.renewals.map((r) => ({ lease: l, renewal: r })))
+          .filter(({ renewal }) => renewal.renewalNumber.toLowerCase().includes(qLower))
+          .map(({ lease, renewal }) => ({
+            kind: "renewal" as const,
+            key: `renewal-${renewal.id}`,
+            title: renewal.renewalNumber,
+            subtitle: `${lease.unitCode} · ${lease.tenantEntity}`,
+            statusLabel: RENEWAL_STATUS_LABEL[renewal.status] ?? renewal.status,
+            id: renewal.id,
+          })),
+        q,
+      );
     }
     if (/^app-/i.test(q)) {
       const pending = index.pendingApplications
@@ -243,7 +268,7 @@ export function CommandPalette() {
           localeId: l.id,
           id: null,
         }));
-      return [...pending, ...approvedNotPromoted, ...promotedToLease];
+      return valeriaFallback([...pending, ...approvedNotPromoted, ...promotedToLease], q);
     }
 
     // Filter verbs — same predicates already fixed elsewhere this session,
@@ -253,17 +278,21 @@ export function CommandPalette() {
     if (expiringMatch) {
       const days = Number(expiringMatch[1]);
       const targetTier = tierForDays(days);
-      return index.leases
-        .filter((l) => tierForDays(computeDaysRemaining(l.endDate)) === targetTier)
-        .map((l) => ({ ...unitResult(l), subtitle: `${l.unitCode} · vence ${l.endDate} · ${TIER_LABELS[targetTier]}` }));
+      return valeriaFallback(
+        index.leases
+          .filter((l) => tierForDays(computeDaysRemaining(l.endDate)) === targetTier)
+          .map((l) => ({ ...unitResult(l), subtitle: `${l.unitCode} · vence ${l.endDate} · ${TIER_LABELS[targetTier]}` })),
+        q,
+      );
     }
     if ("no schedule".startsWith(qLower) && qLower.length >= 2) {
-      return index.leases
-        .filter((l) => l.escalationMonth === null && !l.escalationConfirmedNone)
-        .map(unitResult);
+      return valeriaFallback(
+        index.leases.filter((l) => l.escalationMonth === null && !l.escalationConfirmedNone).map(unitResult),
+        q,
+      );
     }
     if ("overdue".startsWith(qLower) && qLower.length >= 3) {
-      return index.leases.filter((l) => leaseHasVerifiedMiss(l.escalationCycles)).map(unitResult);
+      return valeriaFallback(index.leases.filter((l) => leaseHasVerifiedMiss(l.escalationCycles)).map(unitResult), q);
     }
 
     // Empty query: static nav only (no history, per spec — "nice, not
@@ -320,7 +349,7 @@ export function CommandPalette() {
       entry,
     }));
 
-    return [...unitMatches, ...tenantMatches, ...clauseMatches, ...actionMatches];
+    return valeriaFallback([...unitMatches, ...tenantMatches, ...clauseMatches, ...actionMatches], q);
   }, [index, query]);
 
   useEffect(() => {
@@ -347,6 +376,13 @@ export function CommandPalette() {
         case "action":
           if (result.entry.href) router.push(result.entry.href);
           else if (result.entry.navTab) router.push(`/consola?tab=${result.entry.navTab}`);
+          break;
+        case "valeria":
+          // Valeria's panel only lives on the main /consola page (see
+          // landlord-dashboard.tsx) — same cross-route push as the other
+          // action entries above when triggered from a standalone page
+          // like /consola/finanzas.
+          router.push(`/consola?copilotPrompt=${encodeURIComponent(result.query)}`);
           break;
       }
       setOpen(false);
@@ -395,15 +431,12 @@ export function CommandPalette() {
                     if (r) select(r);
                   }
                 }}
-                placeholder="Local, inquilino, INC-/REN-/APP-, cláusula, expiring 60, no schedule, overdue…"
+                placeholder="Local, inquilino, INC-/REN-/APP-, cláusula, expiring 60, no schedule, overdue… o cualquier pregunta para Valeria"
                 className="w-full text-sm font-medium text-ink px-2 py-2 focus:outline-none placeholder:text-ink-400"
               />
             </div>
             <div className="max-h-[60vh] overflow-y-auto">
               {loading && <p className="text-xs text-ink-500 font-medium p-4">Cargando…</p>}
-              {!loading && results.length === 0 && (
-                <p className="text-xs text-ink-500 font-medium p-4">Sin resultados para &ldquo;{query}&rdquo;.</p>
-              )}
               {!loading &&
                 results.map((r, i) => (
                   <button
@@ -426,9 +459,11 @@ export function CommandPalette() {
                       className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                         r.kind === "unit" && r.alert
                           ? "bg-red-50 text-red-800 border-red-200"
-                          : r.kind === "action" && r.entry.locked
-                            ? "bg-slate-100 text-slate-500 border-slate-200"
-                            : "bg-slate-50 text-slate-600 border-slate-200"
+                          : r.kind === "valeria"
+                            ? "bg-[var(--console-accent-soft)] text-[var(--console-accent)] border-[var(--console-accent)]/40"
+                            : r.kind === "action" && r.entry.locked
+                              ? "bg-slate-100 text-slate-500 border-slate-200"
+                              : "bg-slate-50 text-slate-600 border-slate-200"
                       }`}
                     >
                       {r.kind === "unit" || r.kind === "ticket" || r.kind === "renewal"
@@ -439,7 +474,9 @@ export function CommandPalette() {
                             ? "Roadmap"
                             : r.kind === "clause"
                               ? "Cláusula"
-                              : ""}
+                              : r.kind === "valeria"
+                                ? "Valeria"
+                                : ""}
                     </span>
                   </button>
                 ))}

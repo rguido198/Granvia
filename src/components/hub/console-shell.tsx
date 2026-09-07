@@ -62,6 +62,7 @@ export function ConsoleShell({
   approvalTiers,
   initialTicketId,
   initialTab,
+  initialCopilotPrompt,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -91,6 +92,12 @@ export function ConsoleShell({
    *  (no specific record, just the tab). Same URL-driven reasoning as
    *  initialTicketId. */
   initialTab?: "legal" | "maint";
+  /** From /consola?copilotPrompt=<query> — the palette's "Preguntarle a
+   *  Valeria" fallback result. Same URL-driven reasoning as
+   *  initialTicketId; forwarded straight to LandlordDashboard, which owns
+   *  both copilotOpen and submitCopilotQuestion, so it consumes this
+   *  itself rather than ConsoleShell doing anything with it. */
+  initialCopilotPrompt?: string;
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -459,6 +466,7 @@ export function ConsoleShell({
           onPendingCountsChange={setPendingCounts}
           navigateRequest={navigateRequest}
           onNavigateRequestHandled={clearNavigateRequest}
+          initialCopilotPrompt={initialCopilotPrompt}
           currency={currency}
           copilotOpen={copilotOpen}
           setCopilotOpen={setCopilotOpen}
