@@ -158,6 +158,63 @@ function MarianaLinkIcon() {
   );
 }
 
+/** Sidebar nav icons — hand-rolled to match MarianaLinkIcon's stroke style
+ *  (no icon library in this codebase). One per top-level nav destination,
+ *  used both inline (expanded sidebar) and standalone (collapsed rail, where
+ *  the icon is the only thing left identifying the destination). */
+function RentRollNavIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" aria-hidden="true">
+      <rect x="3" y="3" width="7.5" height="7.5" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function MaintenanceNavIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" aria-hidden="true">
+      <path
+        d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2 2.6-2.6Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function LegalNavIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" aria-hidden="true">
+      <path
+        d="M12 3v18M5 7l-3 6a3 3 0 0 0 6 0L5 7Zm14 0l-3 6a3 3 0 0 0 6 0l-3-6ZM5 7h14M9 21h6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function RbacNavIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" aria-hidden="true">
+      <path
+        d="M12 2.5 19.5 6v6c0 5-3.15 8.15-7.5 9.5C7.65 20.15 4.5 17 4.5 12V6L12 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // A small fixed palette of pastel/text pairs, each with real contrast
 // (WCAG-safe 700/800-weight text on a 100-weight fill) — deterministic per
 // tenant name so the same row always lands on the same color across
@@ -285,30 +342,49 @@ function SidebarNavItem({
   active,
   onClick,
   trailing,
+  icon,
+  collapsed,
+  hasPending,
   children,
 }: {
   active: boolean;
   onClick: () => void;
   trailing?: React.ReactNode;
+  icon?: React.ReactNode;
+  collapsed?: boolean;
+  hasPending?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-        active ? "bg-slate-100 text-[var(--console-accent)]" : "text-ink-700 hover:bg-slate-100 hover:text-ink"
-      }`}
+      title={collapsed && typeof children === "string" ? children : undefined}
+      className={`w-full text-left flex items-center rounded-xl text-sm font-bold transition-all cursor-pointer ${
+        collapsed ? "justify-center px-2.5 py-2.5" : "justify-between px-3.5 py-2.5"
+      } ${active ? "bg-slate-100 text-[var(--console-accent)]" : "text-ink-700 hover:bg-slate-100 hover:text-ink"}`}
     >
-      <span className="flex items-center gap-2">
-        <span
-          className={`h-1.5 w-1.5 rounded-full shrink-0 transition-opacity ${
-            active ? "bg-[var(--console-accent)] opacity-100" : "opacity-0"
-          }`}
-          aria-hidden="true"
-        />
-        <span>{children}</span>
+      <span className={`flex items-center min-w-0 ${collapsed ? "" : "gap-2"}`}>
+        {icon ? (
+          <span className="relative shrink-0">
+            {icon}
+            {hasPending && (
+              <span
+                className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-caution ring-2 ring-white"
+                aria-hidden="true"
+              />
+            )}
+          </span>
+        ) : (
+          <span
+            className={`h-1.5 w-1.5 rounded-full shrink-0 transition-opacity ${
+              active ? "bg-[var(--console-accent)] opacity-100" : "opacity-0"
+            }`}
+            aria-hidden="true"
+          />
+        )}
+        {!collapsed && <span className="truncate">{children}</span>}
       </span>
-      {trailing}
+      {!collapsed && trailing}
     </button>
   );
 }
@@ -1414,6 +1490,11 @@ export function LandlordDashboard({
   const auditLog = initialAuditLog;
   const [auditLogFilter, setAuditLogFilter] = useState("");
 
+  // Desktop-only icon-rail collapse — independent of `sidebarOpen` (the
+  // mobile off-canvas drawer prop from ConsoleShell). Not persisted: a
+  // per-visit default is fine for a preference this cheap to re-toggle.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50 text-ink-700 flex flex-col lg:flex-row antialiased">
       {/* Mobile drawer backdrop — tap outside the sidebar to close it */}
@@ -1427,19 +1508,36 @@ export function LandlordDashboard({
 
       {/* LEFT SIDEBAR NAVIGATION — off-canvas drawer on mobile, permanent column on lg+ */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-hairline/80 shrink-0 flex flex-col justify-between p-4 space-y-4 text-left transition-transform duration-200 lg:static lg:z-auto lg:w-72 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-hairline/80 shrink-0 flex flex-col justify-between p-4 space-y-4 text-left transition-all duration-200 lg:static lg:z-auto lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${sidebarCollapsed ? "lg:w-20" : "lg:w-72"}`}
       >
         <div className="space-y-4">
-          <div className="flex justify-end lg:hidden">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="-mt-1 -mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 hover:bg-slate-100"
+              className="-mt-1 -mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 hover:bg-slate-100 lg:hidden"
               aria-label="Cerrar menú"
             >
               ✕
+            </button>
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed((v) => !v)}
+              className="hidden lg:flex -mt-1 -mr-1 h-8 w-8 items-center justify-center rounded-lg text-ink-400 hover:bg-slate-100 hover:text-ink-600"
+              aria-label={sidebarCollapsed ? "Expandir menú" : "Colapsar menú"}
+              title={sidebarCollapsed ? "Expandir menú" : "Colapsar menú"}
+            >
+              <svg
+                className={`h-4 w-4 transition-transform duration-200 ${sidebarCollapsed ? "rotate-180" : ""}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
           </div>
           {/* Brand block removed from here — it now lives once, in the
@@ -1455,40 +1553,64 @@ export function LandlordDashboard({
               quiet gray highlight + accent-tinted label instead of a solid
               accent-filled pill. */}
           <nav className="space-y-1 text-left">
-            <p className="px-2 text-[11px] font-bold text-ink-400 tracking-wider mb-2">
-              Panel del Portafolio
-            </p>
+            {!sidebarCollapsed && (
+              <p className="px-2 text-[11px] font-bold text-ink-400 tracking-wider mb-2">
+                Panel del Portafolio
+              </p>
+            )}
 
-            <SidebarNavItem active={activeTab === "rentroll"} onClick={() => selectTab("rentroll")}>
+            <SidebarNavItem
+              active={activeTab === "rentroll"}
+              onClick={() => selectTab("rentroll")}
+              icon={<RentRollNavIcon />}
+              collapsed={sidebarCollapsed}
+            >
               Rent Roll & Locales
             </SidebarNavItem>
 
-            <p className="px-2 text-[11px] font-bold text-ink-400 tracking-wider mt-6 mb-2">
-              Gestión & Inteligencia Operativa
-            </p>
+            {!sidebarCollapsed && (
+              <p className="px-2 text-[11px] font-bold text-ink-400 tracking-wider mt-6 mb-2">
+                Gestión & Inteligencia Operativa
+              </p>
+            )}
 
-            {/* No counts on the sidebar itself — a long badge here read as
-             *  heavier than the agent name and turned navigation into an
-             *  alert rail. Counts live where they have context: inside
-             *  each agent's own tabs (Diego's "Triage" label, Mariana's
-             *  "Pendientes" label, both below) and in the header's
-             *  HeaderAttentionBell, which both push their counts into via
-             *  onPendingCountsChange. */}
-            <SidebarNavItem active={activeTab === "maint"} onClick={() => selectTab("maint")}>
+            {/* No numeric badges on the sidebar itself — a long badge here
+             *  read as heavier than the agent name and turned navigation
+             *  into an alert rail. Counts still live where they have
+             *  context (Diego's "Triage" label, Mariana's "Pendientes"
+             *  label, the header's HeaderAttentionBell) — this dot is a
+             *  status signal, not a count, same restraint applied. */}
+            <SidebarNavItem
+              active={activeTab === "maint"}
+              onClick={() => selectTab("maint")}
+              icon={<MaintenanceNavIcon />}
+              collapsed={sidebarCollapsed}
+              hasPending={liveDiegoKpis.pendingApprovalsCount > 0}
+            >
               Diego IA · Mantenimiento
             </SidebarNavItem>
 
-            <SidebarNavItem active={activeTab === "legal"} onClick={() => selectTab("legal")}>
+            <SidebarNavItem
+              active={activeTab === "legal"}
+              onClick={() => selectTab("legal")}
+              icon={<LegalNavIcon />}
+              collapsed={sidebarCollapsed}
+              hasPending={marianaDecisionesCount + marianaExpedientesCount > 0}
+            >
               Mariana IA · Legal
             </SidebarNavItem>
 
-            <p className="px-2 text-[11px] font-bold text-ink-400 tracking-wider mt-6 mb-2">
-              Gobierno & Seguridad
-            </p>
+            {!sidebarCollapsed && (
+              <p className="px-2 text-[11px] font-bold text-ink-400 tracking-wider mt-6 mb-2">
+                Gobierno & Seguridad
+              </p>
+            )}
 
             <SidebarNavItem
               active={activeTab === "rbac"}
               onClick={() => selectTab("rbac")}
+              icon={<RbacNavIcon />}
+              collapsed={sidebarCollapsed}
               trailing={<span className="text-xs font-bold bg-slate-200 text-ink px-2 py-0.5 rounded shrink-0 ml-2">Admin</span>}
             >
               Control de Acceso RBAC
@@ -1499,7 +1621,11 @@ export function LandlordDashboard({
               footer session card with numbers the page already computes for
               the Rent Roll KPI cards and the header's attention bell (no new
               calc introduced here). Each row jumps to the tab that explains
-              it, same click-through pattern as HeaderAttentionBell. */}
+              it, same click-through pattern as HeaderAttentionBell. Hidden
+              in the collapsed rail — there's no room to keep it legible at
+              20px wide, and its numbers are still one click away via the
+              nav item it summarizes. */}
+          {!sidebarCollapsed && (
           <div className="space-y-1.5 rounded-xl border border-hairline bg-slate-50 p-3.5 text-left">
             <p className="px-0.5 text-[11px] font-bold text-ink-400 tracking-wider mb-1">Pulso del Portafolio</p>
 
@@ -1547,6 +1673,7 @@ export function LandlordDashboard({
               </span>
             </button>
           </div>
+          )}
         </div>
 
         {/* Footer Session Badge — avatar (real initials, no fabricated photo)
@@ -1556,26 +1683,35 @@ export function LandlordDashboard({
             LandlordDashboard isn't handed the authenticated session identity
             as a prop (that lives further up, outside this component's
             scope), so this only restyles the container — it doesn't invent
-            a different identity. */}
+            a different identity. Collapses to just the avatar (tooltip
+            carries the email) in the icon rail — same treatment as the nav
+            items above it. */}
         <div className="pt-4 border-t border-hairline space-y-3 text-left">
           <div
             onClick={() => {
               selectTab("rbac");
               triggerToast("Abriendo Consola de Control de Acceso & Permisos RBAC...");
             }}
-            className="flex items-center gap-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 p-3 border border-hairline transition-all cursor-pointer group text-left"
+            title={sidebarCollapsed ? SESSION_EMAIL : undefined}
+            className={`flex items-center rounded-xl bg-slate-50 hover:bg-slate-100 border border-hairline transition-all cursor-pointer group text-left ${
+              sidebarCollapsed ? "justify-center p-2" : "gap-2.5 p-3"
+            }`}
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white text-xs font-bold">
               {emailInitials(SESSION_EMAIL)}
             </span>
-            <div className="min-w-0 flex-1">
-              <p className="group-hover:underline font-mono text-xs font-bold text-ink truncate">{SESSION_EMAIL}</p>
-              <p className="text-[11px] text-ink-500 font-semibold truncate">Administrador General</p>
-            </div>
-            <svg className="h-4 w-4 text-ink-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.041.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a7.688 7.688 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.127.332-.184.582-.496.644-.87l.214-1.28z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            {!sidebarCollapsed && (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="group-hover:underline font-mono text-xs font-bold text-ink truncate">{SESSION_EMAIL}</p>
+                  <p className="text-[11px] text-ink-500 font-semibold truncate">Administrador General</p>
+                </div>
+                <svg className="h-4 w-4 text-ink-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.041.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a7.688 7.688 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.127.332-.184.582-.496.644-.87l.214-1.28z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </>
+            )}
           </div>
         </div>
       </aside>
