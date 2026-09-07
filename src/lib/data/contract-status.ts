@@ -183,6 +183,13 @@ export type LeaseRenewalSummary = {
   /** A landlord's "request changes" note (requestRenewalChangesAction) —
    *  doesn't change status, just sits on the record for whoever redrafts. */
   landlordFeedback: string | null;
+  /** Who actually clicked Aprobar/Rechazar (lease_renewals.reviewed_by,
+   *  resolved to a name/email) and when — null while status is still
+   *  needs_landlord_review. Root claude.md's #4 frontend priority ("agent
+   *  trace / audit"): the other half of a defensible approval record,
+   *  alongside the draft's own clause citations and skeptic concerns. */
+  reviewedByName: string | null;
+  reviewedAt: string | null;
 };
 
 /** Parses a bare "YYYY-MM-DD" calendar date directly from its components,

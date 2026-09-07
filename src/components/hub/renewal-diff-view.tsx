@@ -258,6 +258,17 @@ export function RenewalDiffView({
 
         <p className="text-[11px] text-slate-500 font-medium">
           Propuesto por Mariana AI · {formatSpanishDate(selected.createdAt.slice(0, 10))}
+          {/* Who actually clicked Aprobar/Rechazar, and when — root
+           *  claude.md's #4 frontend priority ("agent trace / audit"): the
+           *  human half of a defensible approval record, alongside the
+           *  draft's own clause citations and skeptic concerns below. */}
+          {selected.reviewedByName && (
+            <>
+              {" · "}
+              {selected.status === "approved" ? "Aprobado" : "Rechazado"} por {selected.reviewedByName}
+              {selected.reviewedAt ? ` · ${formatSpanishDate(selected.reviewedAt.slice(0, 10))}` : ""}
+            </>
+          )}
         </p>
       </div>
 

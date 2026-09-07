@@ -20,6 +20,13 @@ import {
 
 const OVERDUE_CONFIRMATION_MS = 48 * 60 * 60 * 1000;
 
+const DIAGNOSIS_SOURCE_LABEL: Record<NonNullable<DiegoTicket["diagnosisSource"]>, string> = {
+  manual: "Manual del fabricante",
+  asset_register: "Expediente de equipo registrado",
+  photo: "Foto adjunta por el inquilino",
+  tenant_report: "Solo el reporte del inquilino",
+};
+
 type HistoryEntry = {
   from_status: DiegoTicket["status"] | null;
   to_status: DiegoTicket["status"];
@@ -373,7 +380,27 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                 )}
               </Field>
               <Field label="Contratista asignado">{ticket.contractorName ?? "Sin asignar"}</Field>
+              {ticket.diagnosisSource && <Field label="Base del diagnóstico">{DIAGNOSIS_SOURCE_LABEL[ticket.diagnosisSource]}</Field>}
             </dl>
+            {/* The actual clause/matrix entry Diego cited for the cost bucket
+             *  above — root claude.md's #4 frontend priority ("agent trace /
+             *  audit"): an approval in the Inbox is only defensible if the
+             *  landlord can see exactly what backed it, not just the
+             *  conclusion. Real column (tickets.lease_clause_citation), was
+             *  written by every triage run but never reached the frontend
+             *  before this. */}
+            {ticket.leaseClauseCitation && (
+              <div className="mt-3.5 border-t border-slate-100 pt-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cita de cláusula / matriz</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-800">&ldquo;{ticket.leaseClauseCitation}&rdquo;</p>
+              </div>
+            )}
+            {ticket.diagnosisQuestion && (
+              <div className="mt-3.5 border-t border-slate-100 pt-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pregunta que hizo Diego IA</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-800">{ticket.diagnosisQuestion}</p>
+              </div>
+            )}
           </Card>
 
           {/* 3 · SKEPTIC AI AUDIT CARD */}
@@ -412,6 +439,26 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                   <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Creado</dt>
                   <dd className="text-slate-700">{formatTimestamp(ticket.createdAt)}</dd>
                 </div>
+                {ticket.priorityRationale && (
+                  <div>
+                    <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Por qué esta prioridad ({ticket.priority})
+                    </dt>
+                    <dd className="text-slate-700">{ticket.priorityRationale}</dd>
+                  </div>
+                )}
+                {ticket.jd05Applied && (
+                  <div>
+                    <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Atribución de costo
+                    </dt>
+                    <dd className="text-slate-700">
+                      Ni la matriz de responsabilidad ni la cláusula de mantenimiento cubrían este sistema —
+                      resuelto por el valor jurisdiccional por defecto (JD-05), no por una cláusula específica de
+                      este contrato.
+                    </dd>
+                  </div>
+                )}
                 <div>
                   <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Auditoría de Diego IA
@@ -430,6 +477,15 @@ export function DiegoTicketDrawer({ ticket, onClose }: { ticket: DiegoTicket; on
                       Claves de jurisdicción sin resolver
                     </dt>
                     <dd className="text-slate-700">{ticket.unresolvedKeys.join(", ")}</dd>
+                  </div>
+                )}
+                {ticket.approvedByName && (
+                  <div>
+                    <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Aprobado por</dt>
+                    <dd className="text-slate-700">
+                      {ticket.approvedByName}
+                      {ticket.approvedAt ? ` — ${formatTimestamp(ticket.approvedAt)}` : ""}
+                    </dd>
                   </div>
                 )}
               </dl>

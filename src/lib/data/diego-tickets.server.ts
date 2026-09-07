@@ -69,6 +69,43 @@ export type DiegoTicket = {
    *  fetch (tenant-portal.server.ts) — the escalation UI that reads this
    *  is landlord-only. */
   pendingConfirmationSince: string | null;
+
+  // — Agent provenance/trace fields, root claude.md's #4 frontend priority
+  // ("agent trace / audit"). All real columns Diego's triage workflow
+  // already writes (diego-triage.ts) but that never reached the frontend
+  // before this — no new schema, no new writes. Always null from the
+  // tenant portal's own fetch (tenant-portal.server.ts): a tenant has no
+  // business reason to see the landlord's internal cost-attribution
+  // reasoning or who on the landlord's team approved it.
+  /** draft.lease_clause_citation — the specific clause or responsibility-
+   *  matrix entry Diego cited for cost_bucket, verbatim. Null when nothing
+   *  resolved it (cost_bucket lands on PENDIENTE in that case). */
+  leaseClauseCitation: string | null;
+  /** draft.diagnosis_source — where the diagnosis came from: manual
+   *  lookup, the asset register, a submitted photo, or the tenant's own
+   *  report text alone. */
+  diagnosisSource: "manual" | "asset_register" | "photo" | "tenant_report" | null;
+  /** draft.diagnostic_question_asked — the one clarifying question Diego
+   *  asked to narrow the diagnosis, when it asked one. */
+  diagnosisQuestion: string | null;
+  /** agent_decisions.ai_draft.draft.priority_rationale — why this
+   *  severity, in Diego's own words. Null for a ticket predating the
+   *  agent_decisions write (2026-08-23) or if that insert ever failed
+   *  silently (it's fire-and-forget, not part of the ticket transaction). */
+  priorityRationale: string | null;
+  /** agent_decisions.ai_draft.draft.jd05_applied — true when cost
+   *  attribution fell through to the jurisdictional default (JD-05)
+   *  because neither the responsibility matrix nor the lease's own
+   *  maintenance clause covered the fault's system. Worth flagging
+   *  distinctly: a JD-05 fallback is weaker evidence than a matrix hit or
+   *  a cited clause, which is exactly the kind of thing a defensible
+   *  approval needs to surface, not bury. Null alongside priorityRationale
+   *  when no agent_decisions row exists. */
+  jd05Applied: boolean | null;
+  /** profiles.full_name (or email) for tickets.approved_by — who actually
+   *  clicked Aprobar. Null until a landlord resolves the Tier 3 gate. */
+  approvedByName: string | null;
+  approvedAt: string | null;
 };
 
 export type DiegoKPIs = {
@@ -97,6 +134,7 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       tenant_entity, reporter_name, raw_report, diagnosis_answer, created_at, updated_at,
       work_performed, final_cost, unresolved_jd_keys, warranty_covered,
       skeptic_flagged, skeptic_concerns,
+      lease_clause_citation, diagnosis_source, diagnosis_question, approved_by, approved_at,
       locale_id, locales ( unit_number, properties ( name ) ),
       contractors ( name ),
       assets ( name, model, make, manual_url )
@@ -125,6 +163,11 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     warranty_covered: boolean | null;
     skeptic_flagged: boolean;
     skeptic_concerns: string[] | null;
+    lease_clause_citation: string | null;
+    diagnosis_source: DiegoTicket["diagnosisSource"];
+    diagnosis_question: string | null;
+    approved_by: string | null;
+    approved_at: string | null;
     locale_id: string | null;
     locales: { unit_number: string; properties: { name: string } | null } | null;
     contractors: { name: string } | null;
@@ -154,6 +197,35 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
     }
   }
 
+  // Same "batch-fetch profiles by id" pattern audit-log.server.ts already
+  // uses for approved_by — one query for every approver on this page,
+  // not one per ticket.
+  const approverIds = [...new Set(rows.map((t) => t.approved_by).filter((v): v is string => !!v))];
+  const { data: approverProfiles } = approverIds.length
+    ? await supabase.from("profiles").select("id, email, full_name").in("id", approverIds)
+    : { data: [] };
+  const approverById = new Map((approverProfiles ?? []).map((p) => [p.id, p]));
+
+  // agent_decisions.ai_draft carries priority_rationale/jd05_applied —
+  // Diego's two draft fields that never got a flat column on tickets
+  // itself (unlike lease_clause_citation/diagnosis_source above). Scoped
+  // to this page's own ticket ids, same batching reasoning as the
+  // approver-profile fetch.
+  const ticketIds = rows.map((t) => t.id);
+  const { data: decisionRows } = ticketIds.length
+    ? await supabase
+        .from("agent_decisions")
+        .select("ticket_id, ai_draft")
+        .eq("skill", "maintenance-dispatcher")
+        .in("ticket_id", ticketIds)
+    : { data: [] };
+  const decisionByTicketId = new Map(
+    (decisionRows ?? []).map((d) => [
+      d.ticket_id as string,
+      d.ai_draft as { draft?: { priority_rationale?: string; jd05_applied?: boolean } },
+    ]),
+  );
+
   const tickets: DiegoTicket[] = rows.map((t) => {
     const unresolvedKeys = t.unresolved_jd_keys ?? [];
     return {
@@ -182,6 +254,13 @@ export async function fetchDiegoTickets(): Promise<{ tickets: DiegoTicket[]; kpi
       assetName: t.assets ? resolveAssetDisplayName(t.assets) : null,
       warrantyCovered: t.warranty_covered ?? false,
       pendingConfirmationSince: pendingConfirmationSinceById.get(t.id) ?? null,
+      leaseClauseCitation: t.lease_clause_citation,
+      diagnosisSource: t.diagnosis_source,
+      diagnosisQuestion: t.diagnosis_question,
+      priorityRationale: decisionByTicketId.get(t.id)?.draft?.priority_rationale ?? null,
+      jd05Applied: decisionByTicketId.get(t.id)?.draft?.jd05_applied ?? null,
+      approvedByName: t.approved_by ? (approverById.get(t.approved_by)?.full_name ?? approverById.get(t.approved_by)?.email ?? null) : null,
+      approvedAt: t.approved_at,
     };
   });
 

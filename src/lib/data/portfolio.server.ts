@@ -164,10 +164,22 @@ export async function fetchPortfolio(): Promise<Portfolio> {
   const { data: renewalRows, error: renewalsError } = await supabase
     .from("lease_renewals")
     .select(
-      "id, renewal_number, source_lease_id, tenant_entity, status, current_end_date, new_start_date, new_end_date, current_base_rent_monthly, new_base_rent_monthly, escalation_pct, escalation_method, draft_markdown, skeptic_flagged, skeptic_concerns, created_at, rejection_reason, last_edited_by, last_edited_reasoning, landlord_feedback",
+      "id, renewal_number, source_lease_id, tenant_entity, status, current_end_date, new_start_date, new_end_date, current_base_rent_monthly, new_base_rent_monthly, escalation_pct, escalation_method, draft_markdown, skeptic_flagged, skeptic_concerns, created_at, rejection_reason, last_edited_by, last_edited_reasoning, landlord_feedback, reviewed_by, reviewed_at",
     )
     .order("created_at", { ascending: false });
   if (renewalsError) throw new Error(renewalsError.message);
+
+  // Who approved/rejected each renewal, and when — root claude.md's #4
+  // frontend priority ("agent trace / audit"): reviewed_by/reviewed_at
+  // were written by lease-renewal.ts's markReviewed on every resolution
+  // but never selected here before, so the diff view had no way to show
+  // them. Same batch-fetch-profiles-by-id pattern as diego-tickets.server.ts's
+  // approver lookup.
+  const reviewerIds = [...new Set((renewalRows ?? []).map((r) => r.reviewed_by).filter((v): v is string => !!v))];
+  const { data: reviewerProfiles } = reviewerIds.length
+    ? await supabase.from("profiles").select("id, email, full_name").in("id", reviewerIds)
+    : { data: [] };
+  const reviewerById = new Map((reviewerProfiles ?? []).map((p) => [p.id, p]));
 
   const renewalsByLeaseId = new Map<string, LeaseRenewalSummary[]>();
   for (const r of renewalRows ?? []) {
@@ -192,6 +204,8 @@ export async function fetchPortfolio(): Promise<Portfolio> {
       lastEditedBy: r.last_edited_by as string | null,
       lastEditedReasoning: r.last_edited_reasoning as string | null,
       landlordFeedback: r.landlord_feedback as string | null,
+      reviewedByName: r.reviewed_by ? (reviewerById.get(r.reviewed_by as string)?.full_name ?? reviewerById.get(r.reviewed_by as string)?.email ?? null) : null,
+      reviewedAt: r.reviewed_at as string | null,
     });
     renewalsByLeaseId.set(r.source_lease_id as string, list);
   }
@@ -339,6 +353,8 @@ Referencia de jurisdicción: México · mx.md v1.0 (2026-08-04). Claves citables
         lastEditedBy: null,
         lastEditedReasoning: null,
         landlordFeedback: null,
+        reviewedByName: null,
+        reviewedAt: null,
       };
 
       // Persist asynchronously to DB so portfolio queries remain fast

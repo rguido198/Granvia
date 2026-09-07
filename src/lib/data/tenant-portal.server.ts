@@ -147,6 +147,17 @@ export async function fetchTenantPortalData(localeId?: string): Promise<{
       // Landlord-only escalation UI reads this — see its doc comment in
       // diego-tickets.server.ts. The tenant portal never needs it.
       pendingConfirmationSince: null,
+      // Landlord-only agent provenance/trace — a tenant has no reason to
+      // see the landlord's internal cost-attribution reasoning or who on
+      // the landlord's team approved it. See diego-tickets.server.ts's
+      // own doc comments on these fields.
+      leaseClauseCitation: null,
+      diagnosisSource: null,
+      diagnosisQuestion: null,
+      priorityRationale: null,
+      jd05Applied: null,
+      approvedByName: null,
+      approvedAt: null,
     };
   });
 
