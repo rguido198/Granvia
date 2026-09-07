@@ -2410,7 +2410,7 @@ export function LandlordDashboard({
                           <button
                             onClick={() => {
                               setEventNotified((prev) => ({ ...prev, [event.id]: true }));
-                              triggerToast(`Correo enviado a ${event.responsible} (${event.responsibleEmail}) sobre "${event.title}".`);
+                              triggerToast(`Evento "${event.title}" marcado como revisado.`);
                             }}
                             disabled={isNotified}
                             className={`font-bold px-3 py-1.5 rounded-lg text-[11px] transition-all whitespace-nowrap border ${
@@ -2419,7 +2419,7 @@ export function LandlordDashboard({
                                 : "bg-white hover:bg-[var(--console-accent-soft)] text-[var(--console-accent)] border-[var(--console-accent)] cursor-pointer"
                             }`}
                           >
-                            {isNotified ? "Notificado ✓" : "Notificar por Correo"}
+                            {isNotified ? "Revisado ✓" : "Marcar como Revisado"}
                           </button>
                         </div>
                       </div>
