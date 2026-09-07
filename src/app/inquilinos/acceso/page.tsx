@@ -24,8 +24,13 @@ export default function TenantLoginPage() {
           <h1 className="mt-3 text-center font-display text-2xl font-bold leading-tight text-ink">
             Tu operación, en orden.
           </h1>
+          {/* No CAM ledger — this engagement contracted Diego + Mariana
+           *  only, not Renata/cam-allocator (tenant-portal.tsx's own doc
+           *  comment). This copy claimed one anyway; found live 2026-09-07
+           *  auditing mobile, same shape as the false "confirmation email"
+           *  claim already fixed on the leasing-inquiry form. */}
           <p className="mt-2 text-center text-xs leading-relaxed text-ink-500">
-            Reporta incidencias, revisa el estatus de tus solicitudes y tu ledger CAM en un solo lugar.
+            Reporta incidencias y revisa el estatus de tus solicitudes en un solo lugar.
           </p>
 
           <TenantLoginForm />
