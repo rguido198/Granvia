@@ -1549,11 +1549,16 @@ export function LandlordDashboard({
           browser's own chrome eating into it) had nowhere for the nav+Pulso block to
           go once it no longer fit above the footer session card: the fixed box doesn't
           grow, so the card just rendered past the bottom edge, off-screen and
-          unreachable — there was no scrollbar to bring it back. justify-between still
-          pins the footer to the bottom on a tall-enough viewport; this only changes
-          what happens once content stops fitting. */}
+          unreachable — there was no scrollbar to bring it back.
+          No justify-between — that used to stretch the gap between the nav/Pulso
+          block and the footer session card to fill whatever vertical space a tall
+          viewport left, pinning the account card into the very bottom corner
+          instead of keeping it near the content it belongs to. Plain top-to-bottom
+          stacking (space-y-4 already provides the gap) leaves the footer right
+          after Pulso, further up, and its position no longer depends on how tall
+          the screen happens to be. */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] overflow-y-auto bg-white border-r border-hairline/80 shrink-0 flex flex-col justify-between p-4 space-y-4 text-left transition-all duration-200 lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] overflow-y-auto bg-white border-r border-hairline/80 shrink-0 flex flex-col p-4 space-y-4 text-left transition-all duration-200 lg:static lg:z-auto lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${sidebarCollapsed ? "lg:w-20" : "lg:w-72"}`}
       >
