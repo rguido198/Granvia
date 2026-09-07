@@ -1,5 +1,6 @@
 import "server-only";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { resolveAssetDisplayName } from "@/lib/data/equipment-assets.server";
 
 export type CapexVerdict =
   | "RECHAZADO_RESPONSABILIDAD_INQUILINO"
@@ -70,9 +71,20 @@ export async function fetchCapexCases(): Promise<CapexCase[]> {
   if (ticketsError) throw new Error(ticketsError.message);
 
   const assetIds = [...new Set((rows ?? []).map((r) => r.asset_id).filter((id): id is string => !!id))];
-  const assetById = new Map<string, { name: string | null; category: string | null; model: string | null; serial_number: string | null }>();
+  const assetById = new Map<
+    string,
+    { name: string | null; category: string | null; model: string | null; make: string | null; serial_number: string | null; manual_url: string | null }
+  >();
   if (assetIds.length > 0) {
-    const { data: assets } = await supabase.from("assets").select("id, name, category, model, serial_number").in("id", assetIds);
+    // make + manual_url: rows seeded before the assets table's own `name`
+    // column existed carry the display name inside manual_url's JSON blob
+    // instead (see resolveAssetDisplayName's doc comment) — without these,
+    // any CapEx case tied to one of those legacy assets read `name` as null
+    // and showed "Sin activo asociado" despite a real asset being linked.
+    const { data: assets } = await supabase
+      .from("assets")
+      .select("id, name, category, model, make, serial_number, manual_url")
+      .in("id", assetIds);
     for (const a of assets ?? []) assetById.set(a.id, a);
   }
 
@@ -92,7 +104,9 @@ export async function fetchCapexCases(): Promise<CapexCase[]> {
       id: r.id,
       ticketNumber: r.ticket_number,
       tenant: r.tenant_entity,
-      expenseType: asset?.name ? `${asset.name}${asset.category ? ` (${asset.category})` : ""}` : "Sin activo asociado",
+      expenseType: asset
+        ? `${resolveAssetDisplayName(asset)}${asset.category ? ` (${asset.category})` : ""}`
+        : "Sin activo asociado",
       amount,
       isQuestionable: r.skeptic_flagged,
       verdict,
