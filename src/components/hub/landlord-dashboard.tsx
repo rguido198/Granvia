@@ -1814,7 +1814,12 @@ export function LandlordDashboard({
             very wide screens — a table-specific wider cap is a separate,
             deliberately deferred follow-up (tables are the one thing here
             that gets strictly better with more width; cards don't). */}
-        <div className="p-6 sm:p-8 space-y-8 max-w-[1600px] w-full mx-auto">
+        {/* pt trimmed vs. px/pb: the sticky header above already carries its
+            own border + shadow as a visual boundary, so the full p-8 top
+            gutter here just stacked on top of each section's own internal
+            card padding, reading as one oversized dead zone before any real
+            content — found live 2026-09-07 on the Rent Roll tab. */}
+        <div className="px-6 sm:px-8 pt-3 sm:pt-4 pb-6 sm:pb-8 space-y-8 max-w-[1600px] w-full mx-auto">
           {activeTab === "rentroll" && (
             <Fragment>
             <div className="bg-white border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 animate-fadeIn shadow-xs">
