@@ -93,6 +93,15 @@ export class DiegoTriageWorkflow extends WorkflowEntrypoint<
       // .sendEvent({ type: `ticket-approval-${ticketId}`, payload: {...} }).
       // 30-day timeout: generous enough that a slow landlord never loses the
       // decision outright, unlike Vercel createHook's unbounded wait.
+      //
+      // try/catch covers ONLY waitForEvent. "mark approval resolved" sits
+      // outside it deliberately — it used to be inside, so any failure in
+      // that write was silently swallowed by the same catch and reported as
+      // an ordinary timeout: the landlord's approve click reached the
+      // workflow, the DB row never actually updated, and nothing
+      // distinguished that from nobody having reviewed it (see
+      // lease-renewal.ts's identical fix, same bug).
+      let decision: { approved: boolean };
       try {
         const approvalEvent = await step.waitForEvent<{ approved: boolean }>(
           "await ticket approval",
@@ -101,20 +110,20 @@ export class DiegoTriageWorkflow extends WorkflowEntrypoint<
             timeout: "30 days",
           },
         );
-        const decision = approvalEvent.payload;
-        await step.do("mark approval resolved", () =>
-          markApprovalResolved(this.env, ticketId, decision.approved),
-        );
-        return {
-          ticketId,
-          status: decision.approved ? "dispatched" : "closed_administrative",
-        };
+        decision = approvalEvent.payload;
       } catch {
         // Timed out waiting for a landlord decision — leave the ticket at
         // needs_approval; a human can still resolve it manually, this just
         // stops the workflow instance from staying alive forever.
         return { ticketId, status: "needs_approval" as const };
       }
+      await step.do("mark approval resolved", () =>
+        markApprovalResolved(this.env, ticketId, decision.approved),
+      );
+      return {
+        ticketId,
+        status: decision.approved ? "dispatched" : "closed_administrative",
+      };
     }
 
     await step.do("mark dispatched", () => markDispatched(this.env, ticketId));

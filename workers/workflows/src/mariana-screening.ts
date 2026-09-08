@@ -430,6 +430,15 @@ export class MarianaScreeningWorkflow extends WorkflowEntrypoint<
     // outcome, including BAJO with a clean score, suspends for a landlord
     // decision. Woken by the review UI sending an event of type
     // `lease-application-review-${applicationId}`.
+    //
+    // try/catch covers ONLY waitForEvent, turning a genuine 30-day timeout
+    // into a clean "still pending" result. "mark reviewed" sits outside it
+    // deliberately — it used to be inside, so any failure in that write was
+    // silently swallowed by the same catch and reported as an ordinary
+    // timeout: the landlord's approve click reached the workflow, the DB row
+    // never actually updated, and nothing distinguished that from nobody
+    // having reviewed it (see lease-renewal.ts's identical fix, same bug).
+    let decision: { approved: boolean };
     try {
       const reviewEvent = await step.waitForEvent<{ approved: boolean }>(
         "await application review",
@@ -438,18 +447,16 @@ export class MarianaScreeningWorkflow extends WorkflowEntrypoint<
           timeout: "30 days",
         },
       );
-      const decision = reviewEvent.payload;
-      await step.do("mark reviewed", () =>
-        markReviewed(this.env, applicationId, decision.approved),
-      );
-      return {
-        applicationId,
-        status: decision.approved
-          ? ("approved" as const)
-          : ("rejected" as const),
-      };
+      decision = reviewEvent.payload;
     } catch {
       return { applicationId, status: "needs_landlord_review" as const };
     }
+    await step.do("mark reviewed", () =>
+      markReviewed(this.env, applicationId, decision.approved),
+    );
+    return {
+      applicationId,
+      status: decision.approved ? ("approved" as const) : ("rejected" as const),
+    };
   }
 }

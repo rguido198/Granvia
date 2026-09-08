@@ -372,27 +372,34 @@ export class LeaseRenewalWorkflow extends WorkflowEntrypoint<
     // renewal terms and addendums must be formally approved by the landlord
     // before being presented to the tenant. Woken by the review UI sending
     // an event of type `lease-renewal-review-${renewalId}`.
+    //
+    // The try/catch below covers ONLY waitForEvent — it exists to turn a
+    // genuine 30-day timeout into a clean "still pending" result instead of
+    // crashing the instance. "mark reviewed" deliberately sits OUTSIDE it:
+    // it used to be inside, so any failure in that write (a transient
+    // Supabase error, anything) was silently swallowed by the same catch and
+    // reported as an ordinary timeout — the landlord's approve click would
+    // reach the workflow, the DB row would never actually update, and
+    // nothing distinguished that from nobody having reviewed it at all.
+    // Left outside, a write failure now throws normally, which Workflows
+    // retries per step.do's own policy instead of discarding it.
+    type ReviewDecision = { approved: boolean; reviewedById?: string; rejectionReason?: string };
+    let decision: ReviewDecision;
     try {
-      const reviewEvent = await step.waitForEvent<{
-        approved: boolean;
-        reviewedById?: string;
-        rejectionReason?: string;
-      }>("await renewal review", {
+      const reviewEvent = await step.waitForEvent<ReviewDecision>("await renewal review", {
         type: `lease-renewal-review-${renewalId}`,
         timeout: "30 days",
       });
-      const decision = reviewEvent.payload;
-      await step.do("mark reviewed", () =>
-        markReviewed(renewalId, decision.approved, decision.reviewedById, decision.rejectionReason),
-      );
-      return {
-        renewalId,
-        status: decision.approved
-          ? ("approved" as const)
-          : ("rejected" as const),
-      };
+      decision = reviewEvent.payload;
     } catch {
       return { renewalId, status: "needs_landlord_review" as const };
     }
+    await step.do("mark reviewed", () =>
+      markReviewed(renewalId, decision.approved, decision.reviewedById, decision.rejectionReason),
+    );
+    return {
+      renewalId,
+      status: decision.approved ? ("approved" as const) : ("rejected" as const),
+    };
   }
 }
