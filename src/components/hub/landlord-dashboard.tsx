@@ -1789,7 +1789,21 @@ export function LandlordDashboard({
             {!sidebarCollapsed && (
               <>
                 <div className="min-w-0 flex-1">
-                  <p className="group-hover:underline font-mono text-xs font-bold text-ink truncate">{SESSION_EMAIL}</p>
+                  {/* Confirmed live: this line was clipping by ~9px
+                      (166px content vs 157px available) — title is kept as a
+                      hover fallback for desktop, but `title` never fires on
+                      a tap on mobile Safari at all, and this is a sidebar a
+                      phone user hits constantly, so a tooltip alone doesn't
+                      actually fix it there. tracking-tight on a monospace
+                      face reliably claws back more than 9px, which removes
+                      the clipping outright instead of just making it
+                      inspectable. */}
+                  <p
+                    title={SESSION_EMAIL}
+                    className="group-hover:underline font-mono text-xs font-bold text-ink tracking-tighter truncate"
+                  >
+                    {SESSION_EMAIL}
+                  </p>
                   <p className="text-[11px] text-ink-500 font-semibold truncate">Administrador General</p>
                 </div>
                 <svg className="h-4 w-4 text-ink-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
