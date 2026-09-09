@@ -63,6 +63,8 @@ export function ConsoleShell({
   initialTicketId,
   initialTab,
   initialCopilotPrompt,
+  sessionEmail,
+  sessionFullName,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -98,6 +100,12 @@ export function ConsoleShell({
    *  both copilotOpen and submitCopilotQuestion, so it consumes this
    *  itself rather than ConsoleShell doing anything with it. */
   initialCopilotPrompt?: string;
+  /** The real authenticated landlord's own identity — see
+   *  landlord-dashboard.tsx's doc comment on the same props for what this
+   *  replaced (a hardcoded placeholder account in the sidebar footer card,
+   *  regardless of who was actually logged in). */
+  sessionEmail: string;
+  sessionFullName: string;
 }) {
   const [view, setView] = useState<ConsoleView>("propietario");
   const [fontSizeLevel, setFontSizeLevel] = useState<"normal" | "large" | "xlarge">("normal");
@@ -473,6 +481,8 @@ export function ConsoleShell({
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           triggerToast={triggerToast}
+          sessionEmail={sessionEmail}
+          sessionFullName={sessionFullName}
         />
       ) : (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">

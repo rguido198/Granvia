@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageFade } from "@/components/ui";
+import { getCurrentProfile } from "@/lib/auth/server";
 import { ConsoleShell } from "@/components/hub/console-shell";
 import { buildConsoleData } from "@/lib/console-data.server";
 import { fetchDiegoTickets } from "@/lib/data/diego-tickets.server";
@@ -52,6 +53,15 @@ export default async function ConsolaPage({
   const { ticket, tab, copilotPrompt } = await searchParams;
   const data = buildConsoleData();
 
+  // middleware.ts already verified this session and matched role === "landlord"
+  // before this page could render, so profile is never actually null here —
+  // the fallbacks exist only to keep this a plain string type for
+  // ConsoleShell/LandlordDashboard rather than threading a nullable prop
+  // through both for a case that can't reach them.
+  const profile = await getCurrentProfile();
+  const sessionEmail = profile?.email ?? "—";
+  const sessionFullName = profile?.fullName ?? "Administrador";
+
   const { tickets: diegoTickets, kpis: diegoKpis } = await fetchDiegoTickets();
   const localeOptions = await fetchLocaleOptions();
   const contractors = await fetchContractors();
@@ -95,6 +105,8 @@ export default async function ConsolaPage({
         initialTicketId={ticket}
         initialTab={tab === "legal" || tab === "maint" ? tab : undefined}
         initialCopilotPrompt={copilotPrompt}
+        sessionEmail={sessionEmail}
+        sessionFullName={sessionFullName}
       />
     </PageFade>
   );

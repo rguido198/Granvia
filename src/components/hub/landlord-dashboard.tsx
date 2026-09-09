@@ -120,20 +120,6 @@ function SortableHeader<K extends string>({
   );
 }
 
-// Same hardcoded account text the footer session card has always shown —
-// LandlordDashboard doesn't receive the authenticated session's email as a
-// prop, so this is named as a constant rather than re-typed inline, not
-// upgraded to a live value (that wiring lives outside this component).
-const SESSION_EMAIL = "m.hage@lagranvia.com.mx";
-
-/** "m.hage" → "MH" — initials for the sidebar's avatar tile. Never a photo. */
-function emailInitials(email: string): string {
-  const local = email.split("@")[0] ?? "";
-  const parts = local.split(/[.\-_]+/).filter(Boolean);
-  const initials = parts.length >= 2 ? parts[0][0] + parts[1][0] : local.slice(0, 2);
-  return initials.toUpperCase();
-}
-
 function nameInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -734,6 +720,8 @@ export function LandlordDashboard({
   sidebarOpen,
   setSidebarOpen,
   triggerToast,
+  sessionEmail,
+  sessionFullName,
 }: {
   data: ConsoleData;
   diegoTickets: DiegoTicket[];
@@ -785,6 +773,12 @@ export function LandlordDashboard({
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   triggerToast: (msg: string) => void;
+  /** The real authenticated landlord's own identity (profiles.email/
+   *  full_name via getCurrentProfile() in consola/page.tsx) — replaces the
+   *  SESSION_EMAIL placeholder the sidebar footer card used to hardcode
+   *  regardless of who was actually logged in. */
+  sessionEmail: string;
+  sessionFullName: string;
 }) {
   const {
     maintenanceEvents,
@@ -1764,45 +1758,41 @@ export function LandlordDashboard({
 
         {/* Footer Session Badge — avatar (real initials, no fabricated photo)
             + name/email + settings affordance, closer to PrimeStay's
-            profile-card pattern than the previous plain text+dot row. The
-            email itself is the same account text this card has always shown;
-            LandlordDashboard isn't handed the authenticated session identity
-            as a prop (that lives further up, outside this component's
-            scope), so this only restyles the container — it doesn't invent
-            a different identity. Collapses to just the avatar (tooltip
-            carries the email) in the icon rail — same treatment as the nav
-            items above it. */}
+            profile-card pattern than the previous plain text+dot row.
+            sessionEmail/sessionFullName are the real authenticated
+            landlord's own identity (getCurrentProfile() in
+            consola/page.tsx) — this used to hardcode a fake placeholder
+            account regardless of who was actually logged in, confirmed live
+            2026-09-08 and wired to the real profile here. Collapses to just
+            the avatar (tooltip carries the email) in the icon rail — same
+            treatment as the nav items above it. */}
         <div className="pt-4 border-t border-hairline space-y-3 text-left">
           <div
             onClick={() => {
               selectTab("rbac");
               triggerToast("Abriendo Consola de Control de Acceso & Permisos RBAC...");
             }}
-            title={sidebarCollapsed ? SESSION_EMAIL : undefined}
+            title={sidebarCollapsed ? sessionEmail : undefined}
             className={`flex items-center rounded-xl bg-slate-50 hover:bg-slate-100 border border-hairline transition-all cursor-pointer group text-left ${
               sidebarCollapsed ? "justify-center p-2" : "gap-2.5 p-3"
             }`}
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white text-xs font-bold">
-              {emailInitials(SESSION_EMAIL)}
+              {nameInitials(sessionFullName)}
             </span>
             {!sidebarCollapsed && (
               <>
                 <div className="min-w-0 flex-1">
-                  {/* Confirmed live: this line was clipping by ~9px
-                      (166px content vs 157px available) — title is kept as a
-                      hover fallback for desktop, but `title` never fires on
-                      a tap on mobile Safari at all, and this is a sidebar a
-                      phone user hits constantly, so a tooltip alone doesn't
-                      actually fix it there. tracking-tight on a monospace
-                      face reliably claws back more than 9px, which removes
-                      the clipping outright instead of just making it
-                      inspectable. */}
+                  {/* tracking-tighter: confirmed live 2026-09-07 this line
+                      clips by a handful of px in a 288px sidebar otherwise
+                      (title is kept as a hover fallback for desktop, but it
+                      never fires on a mobile Safari tap, so closing the gap
+                      outright is what actually matters here). */}
                   <p
-                    title={SESSION_EMAIL}
+                    title={sessionEmail}
                     className="group-hover:underline font-mono text-xs font-bold text-ink tracking-tighter truncate"
                   >
-                    {SESSION_EMAIL}
+                    {sessionEmail}
                   </p>
                   <p className="text-[11px] text-ink-500 font-semibold truncate">Administrador General</p>
                 </div>
